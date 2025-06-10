@@ -23,7 +23,9 @@ public class ChannelMaterialsA:BasicMaterialLayer{
   public override void render(SpriteBatch sb, Camera c){
     MaterialPipe.gd.SetRenderTarget(bgtex);
     MaterialPipe.gd.Clear(Color.Transparent);
-    sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, null, c.Matrix);
+    
+    sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, null, GameplayRenderer.instance.Camera.Matrix);
+    DebugConsole.Write(c.Matrix.ToString());
     foreach(IMaterialObject b in bgItemsDraw){
       b.renderMaterial(this, sb, c);
     }

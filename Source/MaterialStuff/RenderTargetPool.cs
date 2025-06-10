@@ -69,6 +69,7 @@ public static class RenderTargetPool{
       nheight = ((nheight+35)/36)*64;
     }
     if(currentHeight == nheight && currentWidth == nwidth) return;
+    DebugConsole.Write($"Resizing {Pool.Count} buffers to {nwidth} {nheight}");
     for(int i=0; i<Pool.Count; i++){
       Pool[i] = new RenderTarget2D(Engine.Instance.GraphicsDevice,nwidth,nheight);
     }

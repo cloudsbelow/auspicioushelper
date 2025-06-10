@@ -37,6 +37,8 @@ public static class MaterialPipe {
   public static void GameplayRender(On.Celeste.GameplayRenderer.orig_Render orig, GameplayRenderer self, Scene scene){
     orderFlipped = false;
     //DebugConsole.Write($"{scene.Tracker.GetEntities<LayerMarkingEntity>().Count} {layers.Count}");
+    var camdim = ExtendedCameraIop.cameraSize();
+    RenderTargetPool.Resize(camdim.Item1,camdim.Item2);
     if(transroutine!=null) transroutine.Update();
     if(layers.Count==0){
       orig(self, scene);

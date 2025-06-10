@@ -160,6 +160,7 @@ float4 main(float4 color : COLOR0, float2 pos : TEXCOORD0) : SV_Target {
 	float sv = drand(float3(wpos.x,wpos.y,st));
 	float sr = drand(float3(wpos.x,wpos.y,time))*(1-quiet)+quiet*(os2noderivskew(float3(wpos.x,wpos.y,time*3)/1.5)*0.7+0.5);
 	float4 bg=partAt(pos);
+	//return float4(pos.x,1,0,1);
 	float sparks=(sv>0.98)*(1-mod(time-pto,1));
 	if(matval.r == 1.){
 		bool centers = matAt(pos,1,0).r*matAt(pos,-1,0).r*matAt(pos, 0,1).r*matAt(pos, 0,-1).r;
