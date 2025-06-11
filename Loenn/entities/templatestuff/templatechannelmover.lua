@@ -4,7 +4,7 @@ local aelperLib = require("mods").requireFromPlugin("libraries.aelper_lib")
 
 local entity = {}
 
-entity.name = "auspicioushelper/TemplateChannelmover"
+entity.name = aelperLib.register_template_name("auspicioushelper/TemplateChannelmover")
 entity.depth = -13000
 entity.nodeLimits = {1,-1}
 entity.nodeLineRenderType = "line"

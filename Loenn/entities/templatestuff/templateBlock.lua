@@ -4,7 +4,7 @@ local aelperLib = require("mods").requireFromPlugin("libraries.aelper_lib")
 
 local entity = {}
 
-entity.name = "auspicioushelper/TemplateBlock"
+entity.name = aelperLib.register_template_name("auspicioushelper/TemplateBlock")
 entity.depth = -13000
 
 local sfxs = {

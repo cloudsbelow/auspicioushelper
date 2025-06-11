@@ -402,6 +402,7 @@ entities.auspicioushelper/TemplateZipmover.attributes.description.propegateRidin
 entities.auspicioushelper/TemplateZipmover.attributes.description.lastNodeIsKnot=Make the last node a stop even if it is not stacked. Can be disabled to allow for crooked paths on the last segment of a looping path.
 entities.auspicioushelper/TemplateZipmover.attributes.name._loenn_display_template=[LÖNN] Display Template
 
-### silly
+### UI
 
 ui.menubar.auspicioushelper_legacyicons=Use Legacy Template Icons [Auspicious Helper]
+ui.menubar.auspicioushelper_cleartemplatecache=Clear Template Cache [Auspicious Helper]
