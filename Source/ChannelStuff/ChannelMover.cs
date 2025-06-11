@@ -47,7 +47,7 @@ public class ChannelMover:Solid, IChannelUser, IMaterialObject{
   public override void Render()
   {
     base.Render();
-    Draw.Rect(Position, width, height, Color.AliceBlue);
+    Draw.Rect(Position, width, height, Color.Red);
   }
   public void registerMaterials(){
     ChannelBaseEntity.layerA?.planDraw(this);

@@ -276,10 +276,11 @@ public class Anti0fZone:Entity{
       }
 
       bool flag = false;
+      if(hs) flag |= srast.prog(p,step,dosolids,dowalljumps);
+      if(flag || exitNormal.OrShortcircuit(p)) return true;
       if(doholdables) flag |= hrast.prog(p,step);
       if(doplayercolliders) flag |= crast.prog(p,step);
       if(dotriggers) flag |= trast.prog(p,step);
-      if(hs) flag |= srast.prog(p,step,dosolids,dowalljumps);
       return flag;
     }
     //This function is what someone deeply scared of floating point misrepresentation writes.

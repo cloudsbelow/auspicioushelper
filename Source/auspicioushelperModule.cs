@@ -116,6 +116,7 @@ public class auspicioushelperModule : EverestModule {
         base.LoadContent(firstLoad);
         SpeedrunToolIop.hooks.enable();
         CommunalHelperIop.load();
+        ExtendedCameraIop.load();
         auspicioushelperGFX.loadContent();
         MaterialPipe.setup();
         DebugConsole.Write("Loading content");
