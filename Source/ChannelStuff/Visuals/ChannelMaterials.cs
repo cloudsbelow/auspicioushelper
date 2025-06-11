@@ -9,13 +9,19 @@ namespace Celeste.Mod.auspicioushelper;
 //OK to be sort of fair I intended to do a custom rasterMats for this but decided not.
 public class ChannelMaterialsA:BasicMaterialLayer{
   private List<IMaterialObject> bgItemsDraw = new List<IMaterialObject>();
-  public RenderTarget2D bgtex;
+  public RenderTargetPool.RenderTargetHandle bgtex = new(false);
   public bool enabled=>info.enabled;
   //public override RenderTarget2D outtex => bgtex;
   public ChannelMaterialsA():base([null,auspicioushelperGFX.LoadShader("emptynoise/channelmats")],new LayerFormat{
     clearWilldraw=true, depth = -13000
-  }){
-    bgtex = new RenderTarget2D(Engine.Instance.GraphicsDevice, 320, 180);
+  }){}
+  public override void onEnable() {
+    base.onEnable();
+    bgtex.Claim();
+  }
+  public override void onRemove() {
+    base.onRemove();
+    bgtex.Free();
   }
   public void planDrawBG(IMaterialObject t){
     if(info.enabled) bgItemsDraw.Add(t);
@@ -24,8 +30,7 @@ public class ChannelMaterialsA:BasicMaterialLayer{
     MaterialPipe.gd.SetRenderTarget(bgtex);
     MaterialPipe.gd.Clear(Color.Transparent);
     
-    sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, null, GameplayRenderer.instance.Camera.Matrix);
-    DebugConsole.Write(c.Matrix.ToString());
+    StartSb(sb,null,c);
     foreach(IMaterialObject b in bgItemsDraw){
       b.renderMaterial(this, sb, c);
     }
