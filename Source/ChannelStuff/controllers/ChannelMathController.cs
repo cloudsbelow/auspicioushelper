@@ -10,35 +10,55 @@ using Celeste.Mod.Entities;
 using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using Monocle;
+using System.Collections;
 
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/ChannelMathController")]
 public class ChannelMathController:Entity{
   byte[] op = null;
-  int[] reg;
+  int[] basereg;
+  HashSet<int[]> toUpdate = null;
   enum Op:byte{
     noop, loadZero, loadI, loadImmediateInt, loadChannel, storeChannel, copy,
     startAccInit0, startAccInit1, startAccInitImm, startAccInitReg, startAcc, finishAcc,
     mult, div, mod, add, sub, lshift, rshift, and, or, xor, land, lor, max, min, take,
     multI, divI, modI, addI, subI, lshiftI, rshiftI, andI, orI, xorI, landI, lorI, maxI, minI, takeI,
     eq,ne,le,ge,less,greater, eqI,neI,leI,geI,lessI,greaterI, not, lnot,
-    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi
+    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, yield, yieldI, exit
   }
   List<string> usedChannels = new List<string>();
   bool runImmediately;
-  bool needsrun=false;
   bool debug=false;
   int period=0;
   int periodTimer=0;
+  bool channelChanged;
+  enum MultiType {
+    AttachedMultiple, ReplacePrevious, BlockIfActive, DetatchedMultiple
+  }
+  enum ActivationCond {
+    Interval, Change, IntervalOrChange, IntervalAndChange, Auto
+  }
+  MultiType multi;
+  ActivationCond activ;
+  HashSet<string> notifyingChannels=null;
+  HashSet<int> notifyingRegs=null; 
+  bool runWhenAwake;
   public ChannelMathController(EntityData d, Vector2 offset):base(new Vector2(0,0)){
     runImmediately = d.Bool("run_immediately",false);
-    int p = d.Int("custom_polling_rate",0);
-    if(d.Bool("every_frame")) p=1;
-    if(p>0){
-      period = p;
-      periodTimer = 1;
+    runWhenAwake = d.Bool("run_when_awake",true);
+    period = d.Int("custom_polling_rate",0);
+    if(d.Bool("every_frame")) period=1;
+    multi = d.Enum<MultiType>("multi_type",MultiType.BlockIfActive);
+    activ = d.Enum<ActivationCond>("activation_cond",ActivationCond.Auto);
+    if(activ == ActivationCond.Auto) activ = period>0?ActivationCond.Interval:ActivationCond.Change;
+    string notifying = d.Attr("notifying_override","");
+    if(!string.IsNullOrWhiteSpace(notifying)){
+      notifyingChannels=new(Util.listparseflat(notifying,true,true));
+      notifyingRegs=new([-1]);
     }
+    if(multi==MultiType.AttachedMultiple) toUpdate=new();
+
     debug = d.Bool("debug",false);
     var bin=Convert.FromBase64String(d.Attr("compiled_operations",""));
     if(bin.Length<2){
@@ -50,6 +70,8 @@ public class ChannelMathController:Entity{
       DebugConsole.Write("Invalid version for mathcontroller");
       return;
     }
+    
+
     int numUsing = BitConverter.ToUInt16(bin, 2);
     int numReg = BitConverter.ToUInt16(bin,4);
     int opsOffset = BitConverter.ToUInt16(bin,6);
@@ -60,42 +82,84 @@ public class ChannelMathController:Entity{
       usedChannels.Add(Encoding.ASCII.GetString(bin,coffset,len));
       coffset+=len;
     }
-    reg = new int[numReg];
+    basereg = new int[numReg];
     op = new byte[opsLength];
     Array.Copy(bin, opsOffset, op, 0, opsLength);
-    needsrun = true;
   }
-  public override void Added(Scene scene){
-    base.Added(scene);
+  public override void Awake(Scene scene){
+    base.Awake(scene);
+    HashSet<string> used=new();
     for(int i=0; i<usedChannels.Count; i++){
       int ridx=i;
       string ch = usedChannels[i];
-      reg[i]=ChannelState.readChannel(ch);
+      basereg[i]=ChannelState.readChannel(ch);
       Add(new ChannelTracker(ch,(val)=>changeReg(ridx,val)));
       if(debug) DebugConsole.Write("watching channel "+ch.ToString()+" on register "+i.ToString());
+      used.Add(ch);
+      if(notifyingChannels!=null && notifyingChannels.Contains(ch))notifyingRegs.Add(i);
     }
+    if(notifyingChannels!=null)foreach(var ch in notifyingChannels){
+      if(!used.Contains(ch))Add(new ChannelTracker(ch,(val)=>changeReg(-1,val)));
+    }
+    if(runWhenAwake)Add(activeCoroutine = new Coroutine(run8bitsimple()));
+  }
+  bool locked;
+  Coroutine activeCoroutine;
+  void tryActivate(){
+    if((multi==MultiType.BlockIfActive && numActive>0)||locked) return;
+    locked=true;
+    if(activ switch{
+      ActivationCond.Interval=>periodTimer<=0,
+      ActivationCond.Change=>channelChanged,
+      ActivationCond.IntervalOrChange=>periodTimer<=0||channelChanged,
+      ActivationCond.IntervalAndChange=>periodTimer<=0&&channelChanged,
+      _=>false,
+    }){
+      periodTimer=period; channelChanged=false;
+      if(numActive>0 && multi==MultiType.ReplacePrevious)Remove(activeCoroutine);
+      IEnumerator routine = run8bitsimple();
+      if(routine.MoveNext()){
+        Add(activeCoroutine = new Coroutine(routine));
+        if(routine.Current is float f)activeCoroutine.waitTimer = f;
+        if(routine.Current is int i)activeCoroutine.waitTimer=i;
+      }
+    }
+    locked=false;
   }
   private void changeReg(int ridx, int nval){
-    if(debug) DebugConsole.Write("register "+ridx.ToString()+" set to "+nval.ToString());
-    reg[ridx]=nval;
-    if(runImmediately) run8bitsimple();
-    else needsrun=true;
+    if(ridx!=-1){
+      if(debug) DebugConsole.Write($"Mathcontroller: register {ridx} listening to {usedChannels[ridx]} changed to {nval}");
+      basereg[ridx]=nval;
+      if(toUpdate!=null) foreach(var reg in toUpdate) reg[ridx]=nval; 
+    } else {
+      if(debug) DebugConsole.Write($"Mathcontroller: a non-register notifying channel changed to {nval}");
+    }
+    if(notifyingRegs==null||notifyingRegs.Contains(ridx)){
+      channelChanged=true;
+      if(runImmediately)tryActivate();
+    }
   }
   public override void Update(){
     base.Update();
-    if((period != 0 && --periodTimer<=0) || (period == 0 && !runImmediately && needsrun)){
-      run8bitsimple();
-      needsrun = false;
-      periodTimer = period;
-    }
+    periodTimer--;
+    tryActivate();
   }
-  public void run8bitsimple(){
+  int numActive=0;
+  public IEnumerator run8bitsimple(){
     int iptr = 0;
-    int ridx = 0;
-    int len = 0;
+    int ridx;
+    int len;
     int acc=0;
     int sptr=0;
     string channel = "";
+    numActive++;
+    int[] reg=basereg;
+    if(multi==MultiType.AttachedMultiple||multi==MultiType.DetatchedMultiple){
+      reg=new int[basereg.Length];
+      Array.Copy(basereg,reg,basereg.Length);
+      if(multi==MultiType.AttachedMultiple) toUpdate.Add(reg);
+    }
+    if(debug) DebugConsole.Write("starting");
     while(iptr<op.Length){
       switch((Op)op[iptr++]){
         case Op.loadZero: reg[op[iptr++]]=0; break;
@@ -190,13 +254,13 @@ public class ChannelMathController:Entity{
         case Op.setsptrI: sptr = op[iptr++]; break;
         case Op.loadsptr: reg[op[iptr++]]=sptr; break; 
 
-        case Op.iops: reg[op[iptr++]] = interop(1,0,ref iptr); break;
-        case Op.iopsi: reg[op[iptr++]] = interop(1,1,ref iptr); break;
-        case Op.iopsii: reg[op[iptr++]] = interop(1,2,ref iptr); break;
-        case Op.iopss: reg[op[iptr++]] = interop(2,0,ref iptr); break;
-        case Op.iopssi: reg[op[iptr++]] = interop(2,1,ref iptr); break;
-        case Op.iopssii: reg[op[iptr++]] = interop(2,2,ref iptr); break;
-        case Op.iopvsvi: reg[op[iptr++]] = interop(op[iptr++],op[iptr++],ref iptr); break;
+        case Op.iops: reg[op[iptr++]] = interop(1,0,ref iptr, reg); break;
+        case Op.iopsi: reg[op[iptr++]] = interop(1,1,ref iptr, reg); break;
+        case Op.iopsii: reg[op[iptr++]] = interop(1,2,ref iptr, reg); break;
+        case Op.iopss: reg[op[iptr++]] = interop(2,0,ref iptr, reg); break;
+        case Op.iopssi: reg[op[iptr++]] = interop(2,1,ref iptr, reg); break;
+        case Op.iopssii: reg[op[iptr++]] = interop(2,2,ref iptr, reg); break;
+        case Op.iopvsvi: reg[op[iptr++]] = interop(op[iptr++],op[iptr++],ref iptr, reg); break;
 
         case Op.jnz:
           if(reg[op[iptr++]]!=0) goto case Op.j;
@@ -207,13 +271,24 @@ public class ChannelMathController:Entity{
         case Op.j:
           iptr = BitConverter.ToInt32(op,iptr);
           break;
-        
+        case Op.yield:
+          if(debug)DebugConsole.Write($"Yielding!");
+          yield return ((float)reg[op[iptr++]])*0.01f; break;
+        case Op.yieldI:
+          if(debug)DebugConsole.Write($"Yielding!");
+          yield return 0.01f*(sbyte)op[iptr++]; break;
+        case Op.exit:
+          goto end;
         default: break;
       }
     }
+    end:
+      numActive--;
+      if(multi==MultiType.AttachedMultiple) toUpdate.Remove(reg);
+      yield break;
   }
   static Dictionary<string, Func<List<string>,List<int>,int>> iopFuncs = new();
-  public int interop(int stringCount, int intCount, ref int iptr){
+  public int interop(int stringCount, int intCount, ref int iptr, int[] reg){
     List<string> strs = new List<string>();
     List<int> ints = new List<int>();
     for(int i=0; i<stringCount; i++){
