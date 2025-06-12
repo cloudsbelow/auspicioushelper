@@ -28,10 +28,12 @@ entity.fieldInformation = {
         options = {"https://cloudsbelow.neocities.org/celestestuff/mathcompiler"}
     },
     multi_type = {
-      options = multiOptions
+      options = multiOptions,
+      editable = false,
     },
     activation_cond = {
-      options = activOptions
+      options = activOptions,
+      editable = false,
     }
 }
 
