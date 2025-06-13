@@ -162,6 +162,7 @@ public static class Util{
     fent:
       if(stripout) o.Add(stripEnclosure(v.Trim()));
       else o.Add(v.Trim());
+      if(idx>=str.Length) return o;
       v="";
       goto parsevalue;
   }

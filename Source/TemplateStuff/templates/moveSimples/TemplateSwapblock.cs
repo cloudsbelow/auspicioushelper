@@ -47,7 +47,7 @@ public class TemplateSwapblock:Template{
         target = Math.Max(target-1,0);
         speed = 0f;
         if(movesfx!=null)Audio.Stop(movesfx);
-        movesfx = Audio.Play("event:/game/05_mirror_temple/swapblock_return", Position);
+        movesfx = Audio.Play("event:/game/05_mirror_temple/swapblock_return", virtLoc);
       }
     }
     if(progress!=target){
@@ -74,7 +74,7 @@ public class TemplateSwapblock:Template{
   }
   public void activate(){
     if(movesfx!=null)Audio.Stop(movesfx);
-    movesfx = Audio.Play("event:/game/05_mirror_temple/swapblock_move", Center);
+    movesfx = Audio.Play("event:/game/05_mirror_temple/swapblock_move", virtLoc);
     returnTimer = 0.8f;
     returning = false;
     if(!returnable)target+=1;

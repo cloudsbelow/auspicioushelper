@@ -90,11 +90,13 @@ public class ChannelBooster : ChannelBaseEntity, IMaterialObject, ISimpleEnt, IB
     reversed,
     none,
   }
-  public static string getSpriteString(BoosterType t){
+  public static string getSpriteString(BoosterType t, EntityData d, int i){
+    string s = i==0?"state0_customsprite":"state1_customsprite";
+    if(!string.IsNullOrWhiteSpace(d.Attr(s,""))) return d.Attr(s);
     return t switch{
-      BoosterType.reversed => "whiteboosterbasic",
-      BoosterType.none => "noneboosterbasic",
-      _=>"blackboosterbasic"
+      BoosterType.reversed => "auspicioushelper_whiteboosterbasic",
+      BoosterType.none => "auspicioushelper_noneboosterbasic",
+      _=>"auspicioushelper_blackboosterbasic"
     };
   }
   public static Color getMaterialColor(BoosterType t){
@@ -141,9 +143,9 @@ public class ChannelBooster : ChannelBaseEntity, IMaterialObject, ISimpleEnt, IB
       _=>BoosterType.normal
     };
     for(int i=0; i<2; i++){
-      Add(bgsprites[i] = auspicioushelperGFX.spriteBank.Create(getSpriteString(state[i])));
+      Add(bgsprites[i] = GFX.SpriteBank.Create(getSpriteString(state[i],data,i)));
     }
-    Add(innersprite = auspicioushelperGFX.spriteBank.Create("genericboostermat"));
+    Add(innersprite = GFX.SpriteBank.Create("auspicioushelper_genericboostermat"));
     innersprite.Visible = false;
     channel = data.Attr("channel","");
     selfswitching = data.Bool("self_activating", false);
@@ -196,7 +198,7 @@ public class ChannelBooster : ChannelBaseEntity, IMaterialObject, ISimpleEnt, IB
         player.Speed+=parent.gatheredLiftspeed;
         player.LiftSpeed = parent.gatheredLiftspeed;
       } else if(parent != null && player.liftSpeedTimer>0){
-        player.Speed+=player.LiftSpeed;
+        player.Speed+=player.LiftBoost;
       }
     }
     if(selfswitching){

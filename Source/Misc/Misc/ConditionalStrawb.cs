@@ -46,6 +46,8 @@ public class ConditionalStrawb:Entity, IStrawberry{
   public EntityData data;
   public bool deathless;
   public bool persistOnDie;
+  VertexLight light;
+  Tween lightTween;
   public ConditionalStrawb(EntityData data, Vector2 offset, EntityID id):base(data.Position+offset){
     idstr = data.Attr("strawberry_id");
     this.id=id;
@@ -53,7 +55,14 @@ public class ConditionalStrawb:Entity, IStrawberry{
     base.Collider = new Hitbox(14f, 14f, -7f, -7f);
     Add(new PlayerCollider(OnPlayer));
     Add(new MirrorReflection());
+    Add(light = new VertexLight(Color.White, 1f, 16, 24));
+    light.Visible=false;
+    Add(lightTween = light.CreatePulseTween());
+
     Add(follower = new Follower(id, null, OnLoseLeader));
+    string spritestr = data.Attr("sprites","auspicioushelper_conditionalstrawb");
+    if(string.IsNullOrWhiteSpace(spritestr)) spritestr = "auspicioushelper_conditionalstrawb";
+    Add(sprite = GFX.SpriteBank.Create(spritestr));
     follower.FollowDelay = 0.3f;
     otherpos=data.Nodes.Count() == 0?null:data.Nodes[0]+offset;
 
@@ -86,6 +95,8 @@ public class ConditionalStrawb:Entity, IStrawberry{
     state=Strawb.idling;
     Collidable = true;
     sprite.Visible=true;
+    light.Visible=true;
+    lightTween.Start();
     Add(new DashListener(OnDash));
     if(data.Bool("fly_on_ch",false)){
       string ch = data.Attr("fly_channel","");
@@ -98,7 +109,6 @@ public class ConditionalStrawb:Entity, IStrawberry{
   }
   public override void Added(Scene scene){
     base.Added(scene);
-    Add(sprite = auspicioushelperGFX.spriteBank.Create("conditionalstrawb"));
     Collidable=false;
     sprite.Visible=false;
     if(isGhost) sprite.Color = new Color(100,100,255,144);

@@ -15,7 +15,9 @@ channelBooster.placements = {
       triggerTemplates = false,
       give_liftspeed = false,
       channel = "",
-      self_activating = false
+      self_activating = false,
+      state0_customsprite = "",
+      state1_customsprite = "",
     }
   }
 }

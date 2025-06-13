@@ -24,7 +24,7 @@ entity.placements = {
       propegateRiding = false,
       lastNodeIsKnot = true,
       
-      _loenn_display_template = true,
+      _loenn_display_template = false,
     }
   }
 }

@@ -26,7 +26,7 @@ entity.placements = {
       winged=false,
       wingedfollower=false,
       persist_on_death=false,
-      sprites=""
+      sprites="auspicioushelper_conditionalstrawb"
     }
   }
 }

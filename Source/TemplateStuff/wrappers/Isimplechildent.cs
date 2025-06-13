@@ -10,7 +10,9 @@ namespace Celeste.Mod.auspicioushelper.Wrappers;
 
 public interface ISimpleEnt:ITemplateChild{
   Template.Propagation ITemplateChild.prop => Template.Propagation.Shake;
+  bool detatched=>false;
   void ITemplateChild.AddAllChildren(List<Entity> l){
+    if(detatched) return;
     l.Add((Entity)this);
   }
   void ITemplateChild.addTo(Scene s){
@@ -22,10 +24,18 @@ public interface ISimpleEnt:ITemplateChild{
     }
   }
   void ITemplateChild.destroy(bool particles){
+    if(detatched) return;
     ((Entity) this).RemoveSelf();
   }
   Vector2 toffset {get;set;}
   void ITemplateChild.parentChangeStat(int vis, int col, int act){
+    if(detatched) return;
+    Entity s = (Entity)this;
+    if(vis!=0) s.Visible=vis>0;
+    if(col!=0) s.Collidable = col>0;
+    if(act!=0) s.Active = act>0;
+  }
+  void defaultPCS(int vis, int col, int act){
     Entity s = (Entity)this;
     if(vis!=0) s.Visible=vis>0;
     if(col!=0) s.Collidable = col>0;
@@ -36,6 +46,7 @@ public interface ISimpleEnt:ITemplateChild{
     ((Entity)this).Depth+=parent.depthoffset;
   }
   void ITemplateChild.relposTo(Vector2 vector, Vector2 liftspeed){
+    if(detatched) return;
     ((Entity) this).Position = vector+toffset;
   }
 }

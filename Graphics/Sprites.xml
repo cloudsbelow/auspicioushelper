@@ -1,9 +1,45 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Sprites>
+  <!-- This demonstrates how to use the channelsprite. case0 corresponds to the channel being 0 etc -->
   <auspicioushelper_example1 path="objects/auspicioushelper/" start="case0">
     <Justify x="0.5" y="0.5"/>
     <Loop id="case0" path="channelbooster/whitewhole" delay="0.1" frames="0"/>
     <Loop id="case1" path="channelbooster/booster/booster" delay="0.06" frames="18-25"/>
     <Loop id="case2" path="channelbooster/blackwhole" delay="0.1" frames="0"/>
   </auspicioushelper_example1>
+
+
+
+
+
+  <auspicioushelper_whiteboosterbasic path="objects/auspicioushelper/channelbooster/" start="loop">
+    <Justify x="0.5" y="0.5"/>
+    <Loop id="loop" path="whitewhole" delay="0.1" frames="0"/>
+    <Loop id="inside" path="whitewhole" delay="0.1" frames="0"/>
+    <Loop id="spin" path="booster/booster" delay="0.06" frames="18-25"/>
+    <Anim id="pop" path="booster/booster" delay="0.08" frames="9-17"/>
+  </auspicioushelper_whiteboosterbasic>
+  <auspicioushelper_blackboosterbasic path="objects/auspicioushelper/channelbooster/" start="loop">
+    <Justify x="0.5" y="0.5"/>
+    <Loop id="loop" path="blackwhole" delay="0.1" frames="0"/>
+    <Loop id="inside" path="blackwhole" delay="0.1" frames="0"/>
+    <Loop id="spin" path="booster/booster" delay="0.06" frames="18-25"/>
+    <Anim id="pop" path="booster/booster" delay="0.08" frames="9-17"/>
+  </auspicioushelper_blackboosterbasic>
+  <auspicioushelper_noneboosterbasic path="objects/auspicioushelper/channelbooster/" start="loop">
+    <Justify x="0.5" y="0.5"/>
+    <Loop id="loop" path="none" delay="0.1" frames="0"/>
+    <Loop id="inside" path="none" delay="0.1" frames="0"/>
+    <Loop id="spin" path="booster/booster" delay="0.06" frames="18-25"/>
+    <Anim id="pop" path="booster/booster" delay="0.08" frames="9-17"/>
+  </auspicioushelper_noneboosterbasic>
+  <auspicioushelper_genericboostermat path="objects/auspicioushelper/channelbooster/" start="sit">
+    <Justify x="0.5" y="0.5"/>
+    <Loop id="sit" path="bubblecircle" delay="1" frames="0"/>
+  </auspicioushelper_genericboostermat>
+  <auspicioushelper_conditionalstrawb path="objects/auspicioushelper/conditionalstrawb/" start="idle">
+    <Justify x="0.5" y="0.5"/>
+    <Loop id="idle" path="silverwinged/wings" delay=".08" frames="0-8,0-8,0-7,9"/>
+    <Anim id="collect" path="silverwinged/wings" delay=".16" frames="7-9"/>
+  </auspicioushelper_conditionalstrawb>
 </Sprites>

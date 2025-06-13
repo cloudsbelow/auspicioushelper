@@ -23,7 +23,7 @@ entity.placements = {
       impact_sfx = "event:/game/general/fallblock_impact",
       shake_sfx = "event:/game/general/fallblock_shake",
       
-      _loenn_display_template = true,
+      _loenn_display_template = false,
     }
   }
 }

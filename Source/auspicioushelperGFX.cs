@@ -10,7 +10,6 @@ using System.Xml;
 
 namespace Celeste.Mod.auspicioushelper;
 public static class auspicioushelperGFX {
-  public static SpriteBank spriteBank {get; set;}
   public static Dictionary<string, Effect> effects = new Dictionary<string, Effect>();
 
   public static IGraphicsDeviceService graphicsDeviceService;
@@ -41,8 +40,5 @@ public static class auspicioushelperGFX {
       DebugConsole.Write("Failed to load shader Effects/"+path+" with exception "+ err.ToString());
     }
     return null;
-  }
-  public static void loadContent(){
-    spriteBank = new SpriteBank(GFX.Game, "Graphics/auspicioushelper/Sprites.xml");
   }
 }
