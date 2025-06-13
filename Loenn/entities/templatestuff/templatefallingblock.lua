@@ -4,7 +4,7 @@ local aelperLib = require("mods").requireFromPlugin("libraries.aelper_lib")
 
 local entity = {}
 
-entity.name = "auspicioushelper/TemplateFallingblock"
+entity.name = aelperLib.register_template_name("auspicioushelper/TemplateFallingblock")
 entity.depth = -13000
 
 local directions = {"down","up","left","right"}
