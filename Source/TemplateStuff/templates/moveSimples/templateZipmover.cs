@@ -110,6 +110,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
       triggered=true;
       triggerNextFrame=false;
     }
+    sfx.Position = spos.pos;
     base.Update();
   }
   

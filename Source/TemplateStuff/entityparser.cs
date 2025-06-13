@@ -163,17 +163,13 @@ public static class EntityParser{
     });
     clarify("bigSpinner", Types.unwrapped, static (Level l, LevelData ld, Vector2 o, EntityData e)=>new Wrappers.Bumperw(e,o));
 
-    parseMap["refill"] = Types.unwrapped;
-    loaders["refill"] = (Level l, LevelData ld, Vector2 offset, EntityData e)=>(Entity) new Wrappers.RefillW(e,offset);
-    parseMap["touchSwitch"] = Types.basic;
-    loaders["touchSwitch"] = (Level l, LevelData ld, Vector2 offset, EntityData e)=>(Entity) new TouchSwitch(e,offset);
-    parseMap["strawberry"] = Types.basic;
-    loaders["strawberry"] = (Level l, LevelData ld, Vector2 offset, EntityData e)=>{
+    clarify("refill",Types.unwrapped,(Level l, LevelData ld, Vector2 offset, EntityData e)=>(Entity) new Wrappers.RefillW(e,offset));
+    clarify("strawberry",Types.unwrapped,(Level l, LevelData ld, Vector2 offset, EntityData e)=>{
       EntityID id = new EntityID(ld.Name,e.ID);
       DebugConsole.Write("Trying to template berry: "+ id.ToString());
       if(l.Session.DoNotLoad.Contains(id)) return null;
-      return (Entity) new Strawberry(e,offset,new EntityID(ld.Name,e.ID));
-    };
+      return (Entity) new StrawbW(e,offset,new EntityID(ld.Name,e.ID));
+    });
 
     clarify("movingPlatform",Types.platformbasic,static(Level l, LevelData d, Vector2 o, EntityData e)=>{
       MovingPlatform movingPlatform = new MovingPlatform(e, o);
