@@ -66,7 +66,7 @@ public static class RenderTargetPool{
     }
     if(!force){
       nwidth = ((nwidth+63)/64)*64;
-      nheight = ((nheight+35)/36)*64;
+      nheight = ((nheight+35)/36)*36;
     }
     if(currentHeight == nheight && currentWidth == nwidth) return;
     DebugConsole.Write($"Resizing {Pool.Count} buffers to {nwidth} {nheight}");

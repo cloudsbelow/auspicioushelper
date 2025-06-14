@@ -39,6 +39,7 @@ public static class MaterialPipe {
     //DebugConsole.Write($"{scene.Tracker.GetEntities<LayerMarkingEntity>().Count} {layers.Count}");
     var camdim = ExtendedCameraIop.cameraSize();
     RenderTargetPool.Resize(camdim.Item1,camdim.Item2);
+    //ExtendedCameraIop.printCamerastatus(scene as Level);
     if(transroutine!=null) transroutine.Update();
     if(layers.Count==0){
       orig(self, scene);

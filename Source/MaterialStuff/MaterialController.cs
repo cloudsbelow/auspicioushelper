@@ -53,6 +53,11 @@ public interface IDeclareLayers{
 [Tracked]
 internal class MaterialController:Entity, IDeclareLayers{
   static Dictionary<string, IMaterialLayer> loadedMats = new Dictionary<string, IMaterialLayer>();
+  static MaterialController(){
+    auspicioushelperModule.OnEnterMap.enroll(new ScheduledAction(()=>{
+      loadedMats.Clear(); return false;
+    }, "clear material cache"));
+  }
   EntityData e;
   internal string identifier;
   public IMaterialLayer load(EntityData e){

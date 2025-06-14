@@ -53,7 +53,7 @@ public abstract class Spline{
   public virtual Vector2 getNormalization(float t, Vector2 pos, NType a=NType.absolute){
     return pos-getPos(t);
   }
-  public virtual float getDist(float start, float end, float step=0.05f){
+  public virtual float getDist(float start, float end, float step=0.02f){
     float len=0;
     Vector2 lpos = getPos(start);
     while(start+step<=end){
@@ -64,15 +64,15 @@ public abstract class Spline{
     len+=(getPos(end)-lpos).Length();
     return len;
   }
-  public virtual float getDt(float start, float dist, float step=0.05f){
+  public virtual float getDt(float start, float dist, float step=0.02f){
     Vector2 lpos = getPos(start);
+    if(Math.Sign(step)!=Math.Sign(dist)) step = -step;
+    dist = Math.Abs(dist);
     float cdt = step;
     for(int i=0; i<10000; i++){ //this should be large enough please.
       Vector2 npos = getPos(start+cdt);
       float len = (npos-lpos).Length();
-      //DebugConsole.Write(len.ToString());
       if(len>dist){
-        //DebugConsole.Write(len.ToString()+" "+dist.ToString()+" "+cdt.ToString());
         return cdt+step*(dist/len-1);
       }
       dist-=len;
@@ -118,17 +118,17 @@ public class SplineAccessor{
     done = towardsNext(amount);
     return pos;
   }
-  public bool towardsNextDist(float dist, float step=0.05f){
+  public bool towardsNextDist(float dist, float step=0.02f){
     float amount = spline.getDt(t,dist,step);
     return towardsNext(amount);
   }
-  public bool towardsNextDist(float dist, out Vector2 pos, float step=0.05f){
+  public bool towardsNextDist(float dist, out Vector2 pos, float step=0.02f){
     float amount = spline.getDt(t,dist,step);
     var val = towardsNext(amount);
     pos=this.pos;
     return val;
   }
-  public Vector2 towardsNextDist(float dist, out bool done, float step=0.05f){
+  public Vector2 towardsNextDist(float dist, out bool done, float step=0.02f){
     float amount = spline.getDt(t,dist,step);
     done=towardsNext(amount);
     return pos;
@@ -138,7 +138,7 @@ public class SplineAccessor{
     pos = spline.getPos(t,normalization,n);
     return pos;
   }
-  public Vector2 moveDist(float dist, float step=0.05f){
+  public Vector2 moveDist(float dist, float step=0.02f){
     t += spline.getDt(t,dist,step);
     pos = spline.getPos(t,normalization,n);
     return pos;

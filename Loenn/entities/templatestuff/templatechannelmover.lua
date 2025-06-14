@@ -9,6 +9,8 @@ entity.depth = -13000
 entity.nodeLimits = {1,-1}
 entity.nodeLineRenderType = "line"
 
+
+local easings = {"Linear", "Smoothstep", "SineInOut", "SineIn", "QuadIn"}
 entity.placements = {
   {
     name = "main",
@@ -18,6 +20,8 @@ entity.placements = {
       channel = "",
       move_time=1.8,
       asymmetry=1.0,
+      easing = "Linear",
+      complete_and_switch=false,
       
       _loenn_display_template = true,
     }
@@ -26,6 +30,7 @@ entity.placements = {
 entity.fieldInformation = {
     move_time = {minimumValue=0},
     asymmetry = {minimumValue=0},
+    easing = {options=easings, editable=false},
 }
 
 function entity.selection(room, entity)

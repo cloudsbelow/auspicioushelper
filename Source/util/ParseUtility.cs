@@ -285,4 +285,17 @@ public static class Util{
     derivative = 2*val;
     return QuadIn(val);
   }
+  public static float SineIn(float val)=>-MathF.Cos(MathF.PI*val/2)+1;
+  public static float SineIn(float val, out float derivative){
+    derivative = MathF.PI*MathF.Sin(MathF.PI*val/2)/2;
+    return SineIn(val);
+  }
+  public static float Smoothstep(float val){
+    val = Math.Clamp(val,0,1);
+    return 2*val*val*(1.5f-val);
+  }
+  public static float Smoothstep(float val, out float derivative){
+    derivative = MathF.Max(0,6*val*(1-val));
+    return Smoothstep(val);
+  }
 }
