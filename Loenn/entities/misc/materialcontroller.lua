@@ -11,17 +11,15 @@ materialcontroller.placements = {
   {
     name = "main",
     data = {
-      path="",
+      passes="",
       identifier="",
       params="",
+      textures="",
       depth = 0,
       Fade_in = "Linear",
       fadeOut = "Linear",
-      independent = true,
       quadFirst = true,
       always = true,
-      useprev = false,
-      usebg = false,
       drawInScene = true,
       reload=false
     }

@@ -10,7 +10,7 @@ entity.nodeLimits = {1,-1}
 entity.nodeLineRenderType = "line"
 
 
-local easings = {"Linear", "Smoothstep", "SineInOut", "SineIn", "QuadIn"}
+local easings = {"Linear","SineIn","SineOut","SineInOut","QuadIn","QuadOut","CubeIn","CubeOut","Smoothstep","QuartIn","QuartOut","QuintIn","QuintOut"}
 entity.placements = {
   {
     name = "main",
@@ -21,7 +21,9 @@ entity.placements = {
       move_time=1.8,
       asymmetry=1.0,
       easing = "Linear",
-      complete_and_switch=false,
+      complete=false,
+      alternateEasing=true,
+      shake=false,
       
       _loenn_display_template = true,
     }

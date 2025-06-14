@@ -13,6 +13,11 @@ public static class auspicioushelperGFX {
   public static Dictionary<string, Effect> effects = new Dictionary<string, Effect>();
 
   public static IGraphicsDeviceService graphicsDeviceService;
+  public static GraphicsDevice gd{get{
+    if (graphicsDeviceService == null)  
+      graphicsDeviceService = Engine.Instance.Content.ServiceProvider.GetService(typeof(IGraphicsDeviceService)) as IGraphicsDeviceService;
+    return graphicsDeviceService.GraphicsDevice;
+  }}
 
   //from ShaderHelper
   public static VirtualShader LoadShader(string path)=>LoadExternShader("auspicioushelper/"+path);
@@ -21,7 +26,7 @@ public static class auspicioushelperGFX {
     //-well I don't even know what this is doing <3
     if (graphicsDeviceService == null)  
       graphicsDeviceService = Engine.Instance.Content.ServiceProvider.GetService(typeof(IGraphicsDeviceService)) as IGraphicsDeviceService;
-    ModAsset asset = Everest.Content.Get("Effects/"+path+".cso",true);
+    ModAsset asset = Everest.Content.Get(Util.concatPaths("Effects",path)+".cso",true);
     if (asset == null){
       DebugConsole.Write("Failed to fetch shader at Effects/"+path);
       return null;
@@ -30,7 +35,7 @@ public static class auspicioushelperGFX {
       Effect returnV = new Effect(graphicsDeviceService.GraphicsDevice, asset.Data);
       Effect returnQ = null;
       try {
-        ModAsset qasset = Everest.Content.Get("Effects/"+path+"_quiet.cso",true);
+        ModAsset qasset = Everest.Content.Get(Util.concatPaths("Effects",path)+"_quiet.cso",true);
         if(qasset!=null) returnQ = new Effect(graphicsDeviceService.GraphicsDevice, qasset.Data);
       }catch(Exception err2){
         DebugConsole.Write("Failed to load quiet shader Effects/"+path+"_quiet with exception "+ err2.ToString());

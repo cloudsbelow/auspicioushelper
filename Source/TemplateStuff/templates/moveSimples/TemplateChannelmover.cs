@@ -19,10 +19,9 @@ public class TemplateChannelmover:Template, IChannelUser{
   public override Vector2 virtLoc => Position+sprog*movevec;
   float sprog;
   bool toggle = false;
-  enum Easing {
-    Linear, Smoothstep, SineInOut, SineIn, QuadIn
-  }
-  Easing easing;
+  bool altern = false;
+  bool doshake = false;
+  Util.Easings easing;
   public TemplateChannelmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateChannelmover(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
@@ -30,12 +29,21 @@ public class TemplateChannelmover:Template, IChannelUser{
     channel = d.Attr("channel","");
     relspd = 1/d.Float("move_time",1);
     asym = d.Float("asymmetry",1f);
-    easing = d.Enum<Easing>("easing",Easing.Linear);
-    toggle = d.Bool("complete_and_switch",false);
+    easing = d.Enum<Util.Easings>("easing",Util.Easings.Linear);
+    toggle = d.Bool("complete",false);
+    altern = d.Bool("alternateEasing",true);
+    if(d.Bool("complete_and_switch",false)){
+      toggle = altern = true;
+    }
+    doshake = d.Bool("shake",false);
   }
   float ndir;
   public void setChVal(int val){
     ndir = (val&1)==1?1:-1*asym;
+    if(altern && !toggle){
+      if(ndir>0) prog = Util.getEasingPreimage(easing, sprog);
+      else prog=1-Util.getEasingPreimage(easing,1-sprog);
+    }
   }
   public override void addTo(Scene scene){
     ChannelState.watch(this);
@@ -50,19 +58,12 @@ public class TemplateChannelmover:Template, IChannelUser{
     lprog = prog;
     prog = System.Math.Clamp(prog+dir*relspd*Engine.DeltaTime,0,1);
     if(lprog != prog){
-      float x = toggle && dir<0?1-prog:prog;
-      float deriv=1;
-      float y = easing switch {
-        Easing.Linear=>x,
-        Easing.QuadIn=>Util.QuadIn(x,out deriv),
-        Easing.SineIn=>Util.SineIn(x,out deriv),
-        Easing.SineInOut=>Util.SineInOut(x,out deriv),
-        Easing.Smoothstep=>Util.Smoothstep(x,out deriv),
-        _=>x
-      };
-      sprog = toggle && dir<0?1-y:y;
+      float x = altern && dir<0?1-prog:prog;
+      float y = Util.ApplyEasing(easing, x, out var deriv);
+      sprog = altern && dir<0?1-y:y;
       ownLiftspeed = dir*relspd*movevec*deriv;
       childRelposSafe();
+      if((prog==1||prog==0)&&doshake)shake(0.2f);
     } else {
       ownLiftspeed = Vector2.Zero;
     }

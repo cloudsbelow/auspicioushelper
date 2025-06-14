@@ -307,6 +307,7 @@ entities.auspicioushelper/TemplateFallingblock.attributes.name._loenn_display_te
 entities.auspicioushelper/templateFiller.placements.name.main=Template Filler
 entities.auspicioushelper/templateFiller.placements.description.main=Place this entity so that it's covering your desired group of objects, and then it can be used as a template (make sure the room name starts with "zztemplates-")
 entities.auspicioushelper/templateFiller.attributes.description.template_name=The name of this template. When using this template, specify it like <roomname>/<templatename>, assuming this template is placed in a room named "zztemplates-<roomname>"
+entities.auspicioushelper/templateFiller.attributes.name._loenn_display_template=[LÖNN] Display Template
 
 # Template Holdable
 entities.auspicioushelper/templateholdable.placements.name.main=Template Holdable

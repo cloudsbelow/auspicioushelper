@@ -77,6 +77,7 @@ public static class RenderTargetPool{
     currentHeight = nheight;
   }
   public static void Clear(){
+    foreach(var v in Pool) v.Dispose();
     Pool.Clear();
     available.Clear();
     for(int i=maxCanUse-1; i>=0; i--){

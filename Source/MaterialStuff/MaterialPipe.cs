@@ -30,7 +30,7 @@ public static class MaterialPipe {
   }
   public static bool dirty;
   public static GraphicsDevice gd;
-  static bool orderFlipped;
+  public static bool orderFlipped{get;private set;}
   public static Camera camera;
   static bool needsImmUpdate;
 

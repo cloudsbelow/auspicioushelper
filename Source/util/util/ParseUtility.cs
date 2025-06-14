@@ -10,7 +10,7 @@ using Microsoft.Xna.Framework;
 using System;
 
 namespace Celeste.Mod.auspicioushelper;
-public static class Util{
+public static partial class Util{
 
   public static Color hexToColor(string hex){
     hex = hex.TrimStart('#');
@@ -59,10 +59,21 @@ public static class Util{
     high = high-low;
     return t/high;
   }
+  public static string concatPaths(string a, string b){
+    if(string.IsNullOrWhiteSpace(a)) return b.Trim();
+    if(string.IsNullOrWhiteSpace(b)) return a.Trim();
+    a=a.Trim();
+    b=b.Trim();
+    bool ae=a[^1]=='/';
+    bool be=b[0]=='/';
+    if(ae != be) return a+b;
+    if(ae && be) return a+b.Substring(1);
+    return a+"/"+b;
+  }
   static Dictionary<char,char> escape = new Dictionary<char, char>{
     {'{','}'}, {'[',']'}, {'(',')'},
   };
-  public static Dictionary<string,string> kvparseflat(string str, bool strip=false){
+  public static Dictionary<string,string> kvparseflat(string str, bool strip=false, bool stripout=false){
     if(strip) str=stripEnclosure(str);
     Stack<char> unescaped = new Stack<char>();
     var o = new Dictionary<string,string>();
@@ -114,7 +125,10 @@ public static class Util{
       v+=str[idx]; idx++; goto parsestring;
 
     fent:
-      o.Add(k.Trim(),v.Trim());
+      bool flag;
+      if(stripout) flag=o.TryAdd(k.Trim(),stripEnclosure(v.Trim()));
+      else flag = o.TryAdd(k.Trim(),v.Trim());
+      if(!flag) DebugConsole.Write($"Parsed dictionary has two identical keys {k}:\n {str}");
       k=""; v="";
       goto parsekey;
   }
@@ -257,45 +271,5 @@ public static class Util{
       }
     }
     public static implicit operator Func<T1, bool>(FunctionList<T1> fl) => fl.Invoke;
-  }
-
-  public static float SineInOut(float val)=>-MathF.Cos(MathF.PI*val)/2+0.5f;
-  public static float SineInOut(float val, out float derivative){
-    derivative = MathF.PI*MathF.Sin(MathF.PI*val)/2;
-    return SineInOut(val);
-  }
-  public static float Approach(float val, float target, float amount, out int sign){
-    if(val == target){
-      sign = 0; return val;
-    }
-    if(val>target){
-      sign = -MathF.Sign(amount);
-      return MathF.Max(target, val-amount);
-    }
-    sign = MathF.Sign(amount);
-    return MathF.Min(target, val+amount);
-  }
-  public static float Spike(float val)=>MathF.Max(0,1-Math.Abs(2*val-1));
-  public static float Spike(float val, out float derivative){
-    derivative = val>0.5f?-2:2;
-    return Spike(val);
-  }
-  public static float QuadIn(float val)=>val*val;
-  public static float QuadIn(float val, out float derivative){
-    derivative = 2*val;
-    return QuadIn(val);
-  }
-  public static float SineIn(float val)=>-MathF.Cos(MathF.PI*val/2)+1;
-  public static float SineIn(float val, out float derivative){
-    derivative = MathF.PI*MathF.Sin(MathF.PI*val/2)/2;
-    return SineIn(val);
-  }
-  public static float Smoothstep(float val){
-    val = Math.Clamp(val,0,1);
-    return 2*val*val*(1.5f-val);
-  }
-  public static float Smoothstep(float val, out float derivative){
-    derivative = MathF.Max(0,6*val*(1-val));
-    return Smoothstep(val);
   }
 }

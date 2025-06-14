@@ -5,6 +5,8 @@ local entity = {}
 
 entity.name = "auspicioushelper/ChannelSprite"
 entity.depth = 2000
+entity.nodeLimits = {0,1}
+entity.nodeLineRenderType = "line"
 
 edge_types = {"loop","clamp","hide"}
 entity.placements = {
@@ -16,9 +18,8 @@ entity.placements = {
       edge_type = "loop",
       xml_spritename = "auspicioushelper_example1",
       cases=3,
-      offsetX=0,
-      offsetY=0,
-      depth=2
+      depth=2,
+      materialIdentifiers="",
     }
   }
 }
@@ -28,12 +29,6 @@ entity.fieldInformation = {
     editable=false
   },
   cases = {
-    fieldType="integer"
-  },
-  offsetX = {
-    fieldType="integer"
-  },
-  offsetY = {
     fieldType="integer"
   },
   depth = {
