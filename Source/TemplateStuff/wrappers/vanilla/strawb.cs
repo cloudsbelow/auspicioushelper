@@ -12,6 +12,5 @@ public class StrawbW:Strawberry, ISimpleEnt{
     return sd=sd||Follower.HasLeader;
   }}
   public StrawbW(EntityData d, Vector2 o, EntityID id):base(d,o,id){
-    DebugConsole.Write("here");
   }
 }

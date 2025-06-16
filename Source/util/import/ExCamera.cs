@@ -38,7 +38,7 @@ public static class ExtendedCameraIop{
   public static void load(){
     typeof(ExCameraIop).ModInterop();
     if(ExCameraIop.ExtendedCameraHooksEnabled!=null){
-      DebugConsole.Write("setting up ExCamera hooks");
+      DebugConsole.Write("Doing exCamera setup");
       enabled=true;
     }
   }

@@ -35,6 +35,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
     dash,
     rideAutomatic,
     dashAutomatic,
+    manual
   }
   ActivationType atype;
   public TemplateZipmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
@@ -55,6 +56,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
       "dash"=>ActivationType.dash,
       "rideAutomatic"=>ActivationType.rideAutomatic,
       "dashAutomatic"=>ActivationType.dashAutomatic,
+      "manual"=>ActivationType.manual,
       _=>ActivationType.ride,
     };
     if(!d.Bool("propegateRiding"))prop &= ~Propagation.Riding;

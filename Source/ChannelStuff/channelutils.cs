@@ -122,6 +122,7 @@ public static class ChannelState{
   public static void SetChannel(string ch, int state){
     int idx=0;
     for(;idx<ch.Length;idx++) if(ch[idx]=='[')break;
+    if(idx!=ch.Length) return;
     string clean = ch.Substring(0,idx);
     SetChannelRaw(clean,state);
     if(modifiers.TryGetValue(clean, out var ms)){

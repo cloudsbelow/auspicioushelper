@@ -229,7 +229,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     return new(q,s);
   }
 
-  public void OnTrigger(StaticMover sm){
+  public virtual void OnTrigger(StaticMover sm){
     triggered = true;
   }
   static void smtHook(On.Celeste.Platform.orig_OnStaticMoverTrigger orig, Platform p, StaticMover sm){

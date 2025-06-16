@@ -22,6 +22,7 @@ entity.placements = {
       max_speed = 130,
       impact_sfx = "event:/game/general/fallblock_impact",
       shake_sfx = "event:/game/general/fallblock_shake",
+      set_trigger_channel=false,
       
       _loenn_display_template = false,
     }

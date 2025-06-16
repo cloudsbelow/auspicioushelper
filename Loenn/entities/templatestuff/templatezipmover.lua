@@ -10,7 +10,7 @@ entity.nodeLimits = {1,-1}
 entity.nodeLineRenderType = "line"
 
 local rtypes = {"loop","none", "normal"}
-local atypes = {"ride","rideAutomatic","dash","dashAutomatic"}
+local atypes = {"ride","rideAutomatic","dash","dashAutomatic","manual"}
 
 entity.placements = {
   {

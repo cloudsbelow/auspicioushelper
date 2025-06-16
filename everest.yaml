@@ -9,3 +9,5 @@
       Version: 3.0.0
     - Name: CommunalHelper
       Version: 1.21.1
+    - Name: ExtendedCameraDynamics
+      Version: 1.0.8

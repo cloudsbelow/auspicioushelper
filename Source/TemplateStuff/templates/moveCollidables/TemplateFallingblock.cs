@@ -21,6 +21,8 @@ public class TemplateFallingblock:TemplateMoveCollidable{
   string ShakeSfx = "event:/game/general/fallblock_shake";
   float maxspeed;
   float gravity;
+  bool setTch=false;
+  UpdateHook upd;
   public TemplateFallingblock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
     basefalldir = d.Attr("direction") switch{
@@ -37,6 +39,10 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     ShakeSfx = d.Attr("shake_sfx","event:/game/general/fallblock_shake");
     maxspeed = d.Float("max_speed",130f);
     gravity = d.Float("gravity", 500);
+    setTch = d.Bool("set_trigger_channel",false) && !string.IsNullOrWhiteSpace(tch);
+
+    Add(new Coroutine(Sequence()));
+    if(setTch)Add(upd = new UpdateHook());
   }
   IEnumerator Sequence(){
     float speed;
@@ -44,7 +50,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     while(!hasRiders<Player>() && !triggered){
       yield return null;
     }
-    triggered = true;
+    OnTrigger(null);
     disconnect();
     shake(0.2f);
     Audio.Play(ShakeSfx,Position);
@@ -94,7 +100,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     if(!string.IsNullOrWhiteSpace(tch)){
       if(ChannelState.readChannel(tch)!=0) triggered = true;
       else Add(new ChannelTracker(tch,(int val)=>{
-        if(val!=0) triggered=true;
+        if(val!=0) OnTrigger(null);
       }));
     }
     if(!string.IsNullOrWhiteSpace(rch)){
@@ -103,6 +109,18 @@ public class TemplateFallingblock:TemplateMoveCollidable{
         falldir = val==0?basefalldir:-basefalldir;
       }));
     }
-    Add(new Coroutine(Sequence()));
+  }
+  bool triggerNextFrame;
+  public override void Update() {
+    if(triggerNextFrame && !triggered){
+      triggered=true;
+      triggerNextFrame=false;
+    }
+    base.Update();
+  }
+  public override void OnTrigger(StaticMover sm) {
+    if(!setTch || upd.updatedThisFrame) triggered = true;
+    else triggerNextFrame = true;
+    if(setTch) ChannelState.SetChannel(tch,1);
   }
 }

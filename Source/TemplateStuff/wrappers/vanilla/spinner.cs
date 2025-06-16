@@ -10,12 +10,13 @@ using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper.Wrappers;
+[Tracked]
 public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   public Template parent {get;set;} 
   static int uidctr = 0;
   int id;
   public static CrystalColor GetColor(EntityData d){
-    if(!Enum.TryParse<CrystalColor>(d.Attr("color"), ignoreCase: true, out var res)) return res;
+    if(Enum.TryParse<CrystalColor>(d.Attr("color"), ignoreCase: true, out var res)) return res;
     return CrystalColor.Blue;
   }
   public Spinner(EntityData d, Vector2 offset):base(d.Position+offset, false, GetColor(d)){
@@ -80,7 +81,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
       Add(new Image(mTexture.GetSubtexture(0, 10, 14, 14)).SetOrigin(12f, 2f).SetColor(color));
     }
 
-    foreach (CrystalStaticSpinner entity in base.Scene.Tracker.GetEntities<CrystalStaticSpinner>()){
+    foreach (CrystalStaticSpinner entity in base.Scene.Tracker.GetEntities<Spinner>()){
       if(entity is Spinner o){
         if(parent != o.parent) continue;
         if (o.id > id && (entity.Position - Position).LengthSquared() < 576f){

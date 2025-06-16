@@ -17,6 +17,7 @@ public interface IBooster{
   void PlayerBoosted(Player player, Vector2 direction);
   void PlayerReleased();
   void PlayerDied();
+  void PlayerBoostEnded(Player player){}
   public static void startBoostPlayer(Player p, Entity s){
     hooks.enable();
     inst.Center = s.Center;
@@ -41,13 +42,21 @@ public interface IBooster{
       } catch(Exception){}
     } else orig(self);
   }
+  static void boostEndHandler(On.Celeste.Player.orig_BoostEnd orig, Player p){
+    if(p.CurrentBooster is SentinalBooster){
+      lastUsed.PlayerBoostEnded(p);
+    }
+    orig(p);
+  }
   static HookManager hooks = new HookManager(()=>{
     On.Celeste.Booster.PlayerBoosted += boostHandler;
     On.Celeste.Booster.PlayerDied += dieHandler;
     On.Celeste.Booster.PlayerReleased += releasedHandler;
+    On.Celeste.Player.BoostEnd+=boostEndHandler;
   }, void ()=>{
     On.Celeste.Booster.PlayerBoosted -= boostHandler;
     On.Celeste.Booster.PlayerDied -= dieHandler;
     On.Celeste.Booster.PlayerReleased -= releasedHandler;
+    On.Celeste.Player.BoostEnd-=boostEndHandler;
   },auspicioushelperModule.OnEnterMap);
 }
