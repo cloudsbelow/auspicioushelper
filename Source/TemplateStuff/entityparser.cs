@@ -93,7 +93,7 @@ public static class EntityParser{
       case Types.removeSMbasic:
         List<StaticMover> SMRemove = new List<StaticMover>();
         foreach(Component c in e.Components) if(c is StaticMover sm){
-          new DynamicData(sm).Set("__auspiciousTParent", t);
+          new DynamicData(sm).Set("__auspiciousSM", new SmInfo(t,e));
           SMRemove.Add(sm);
           smhooks.enable();
         }
@@ -107,10 +107,24 @@ public static class EntityParser{
       currentParent = null;
       return null;
   }
+  public class SmInfo{
+    public Template parent;
+    public Entity entity;
+    public SmInfo(Template p, Entity e){
+      this.parent = p; this.entity = e;
+    }
+    public static SmInfo getInfo(StaticMover sm){
+      var smd = new DynamicData(sm);
+      if(smd.TryGet<SmInfo>("__auspiciousSM", out var info)){
+        return info;
+      }
+      return new SmInfo(null,null);
+    }
+  }
   static void triggerPlatformsHook(On.Celeste.StaticMover.orig_TriggerPlatform orig, StaticMover sm){
     var smd = new DynamicData(sm);
-    if(smd.TryGet<Template>("__auspiciousTParent", out var parent)){
-      parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(sm);
+    if(smd.TryGet<SmInfo>("__auspiciousSM", out var info)){
+      info.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(sm);
     }
     else orig(sm);
   }

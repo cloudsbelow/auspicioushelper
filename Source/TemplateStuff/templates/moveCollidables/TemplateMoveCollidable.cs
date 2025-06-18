@@ -29,6 +29,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     triggerHooks.enable();
   }
   bool dislocated = false;
+  public bool detatched=>dislocated;
   
   MipGridCollisionCacher mgcc = new();
   public override void relposTo(Vector2 loc, Vector2 liftspeed) {
@@ -83,6 +84,12 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     public List<MipGrid> grids=new();
     public FloatRect bounds = FloatRect.empty;
     public HashSet<Solid> gotten;
+    public bool Collide(FloatRect f){
+      if(!bounds.CollideFr(f)) return false;
+      foreach(var g in grids) if(g.collideFr(f)) return true;
+      foreach(var r in rects) if(r.CollideFr(f)) return true;
+      return false;
+    }
   }
   QueryBounds getQinfo(FloatRect f, HashSet<Solid> exclude){
     QueryBounds res  =new();
@@ -94,7 +101,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     }
     return res;
   }
-  QueryIn getQself(){
+  public QueryIn getQself(){
     QueryIn res = new();
     FloatRect bounds = FloatRect.empty;
     var all = GetChildren<Solid>(Propagation.Shake);

@@ -136,6 +136,7 @@ public class auspicioushelperModule : EverestModule {
         On.Celeste.ChangeRespawnTrigger.OnEnter += ChangerespawnHandler;
         DebugConsole.Write("Loading");
         ConditionalStrawb.hooks.enable();
+        SpringTracker.hooks.enable();
         MapHider.uncache();
         
         typeof(Anti0fIopExp).ModInterop();

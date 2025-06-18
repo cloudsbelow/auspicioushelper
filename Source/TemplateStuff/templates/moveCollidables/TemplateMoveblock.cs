@@ -82,7 +82,7 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
     moving:
       yield return null;
       speed = Calc.Approach(speed,maxspeed,acceleration*Engine.DeltaTime);
-      Query qs = getq(new Vector2(speed+maxleniency,speed+maxleniency).Ceiling());
+      Query qs = getq(new Vector2(speed*Engine.DeltaTime+maxleniency,speed*Engine.DeltaTime+maxleniency).Ceiling());
       bool collideflag;
       Vector2 movevec = movedir;
       Player p = Scene.Tracker.GetEntity<Player>();
