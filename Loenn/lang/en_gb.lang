@@ -1,5 +1,6 @@
 # hiiii -kyfex
-mods.auspicioushelper.name=Auspicious Helper
+# all lowercase no space for mod name :P
+mods.auspicioushelper.name=auspicioushelper
 
 # .channel = The channel to listen to
 
@@ -366,6 +367,20 @@ entities.auspicioushelper/TemplateMoveblock.attributes.description.cansteer=If t
 entities.auspicioushelper/TemplateMoveblock.attributes.description.movesfx=The sound to play while this template is moving
 entities.auspicioushelper/TemplateMoveblock.attributes.description.max_leniency=The maximum amount of pixels this template can corner correct to avoid being stuck
 entities.auspicioushelper/TemplateMoveblock.attributes.name._loenn_display_template=[LÖNN] Display Template
+
+# Template Push Block
+entities.auspicioushelper/TemplatePushBlock.placements.name.main=Template Move Block
+entities.auspicioushelper/TemplatePushBlock.placements.description.main=A move block that can be made with a template
+entities.auspicioushelper/TemplatePushBlock.attributes.description.template=The name of the template to use. (<room>/<name>)
+entities.auspicioushelper/TemplatePushBlock.attributes.description.depthoffset=How much to offset the depth of contained entities
+entities.auspicioushelper/TemplatePushBlock.attributes.description.NoPhysicsTime=Gravity and drag disabled for this time period after dash hit
+entities.auspicioushelper/TemplatePushBlock.attributes.description.speedFromDash=Speed gained when player dashes into this block
+entities.auspicioushelper/TemplatePushBlock.attributes.description.terminalVelocity=Fastest downward speed
+entities.auspicioushelper/TemplatePushBlock.attributes.description.movementLeniency=Will corner correct movement by up to this amount
+entities.auspicioushelper/TemplatePushBlock.attributes.description.BounceStrengthFromWall=When hitting a wall, how much speed to recoil back with
+entities.auspicioushelper/TemplatePushBlock.attributes.description.ownSpringRecoil=Speed gotten when entity uses a spring attached to this block (newton's third law)
+entities.auspicioushelper/TemplatePushBlock.attributes.description.startDisconnected=Will immidately fall and not move with attached parent template
+entities.auspicioushelper/TemplatePushBlock.attributes.name._loenn_display_template=[LÖNN] Display Template
 
 #i dunno
 #it is wymiki's house
