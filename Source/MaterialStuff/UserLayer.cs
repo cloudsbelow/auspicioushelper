@@ -64,7 +64,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       }break;
     }
   }
-  
+  List<Tuple<int,ITexture>> textures;
   internal static UserLayer make(EntityData d){
     VirtualShaderList list = new();
     foreach(string p in Util.listparseflat(d.Attr("passes"),true,true)){
@@ -103,7 +103,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
           break;
       }
     }
-    return new UserLayer(d,list,l);
+    return new UserLayer(d,list,l){textures=textures};
   }  
   public IFadingLayer.FadeTypes fadeTypeIn {get;set;} = IFadingLayer.FadeTypes.Linear;
   public IFadingLayer.FadeTypes fadeTypeOut {get;set;} = IFadingLayer.FadeTypes.Linear;
@@ -118,6 +118,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
   }
   public override void render(SpriteBatch sb, Camera c) {
     foreach(var a in chset)a(); 
+    foreach(var t in textures) MaterialPipe.gd.Textures[t.Item1] = t.Item2;
     base.render(sb, c);
   }
 }

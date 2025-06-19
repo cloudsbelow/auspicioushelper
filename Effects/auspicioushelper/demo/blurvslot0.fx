@@ -1,15 +1,13 @@
 
 
 sampler2D TextureSampler : register(s0);
-texture2D materialTex : register(t1);
-sampler2D materialSamp : register(s1);
 
 
 uniform float2 pscale;
 uniform float time;
 
 float4 valAt(float2 pos, float offsetx, float offsety){
-    return tex2D(materialSamp,pos+float2(offsetx,offsety)*pscale);
+    return tex2D(TextureSampler,pos+float2(offsetx,offsety)*pscale);
 }
 
 float4 main(float4 color : COLOR0, float2 pos : TEXCOORD0) : SV_Target {
@@ -23,7 +21,7 @@ float4 main(float4 color : COLOR0, float2 pos : TEXCOORD0) : SV_Target {
   for (int i = -radius; i <= radius; i++) {
       float x = float(i);
       float weight = exp(-(x * x) / denom);
-      sum += valAt(pos, i, 0) * weight;
+      sum += valAt(pos, 0, i) * weight;
       totalWeight += weight;
   }
   return sum / totalWeight;

@@ -64,7 +64,10 @@ internal class MaterialController:Entity, IDeclareLayers{
   public IMaterialLayer load(EntityData e){
     string path=e.Attr("path","")+e.Attr("passes","");
     identifier=e.Attr("identifier");
-    if(string.IsNullOrWhiteSpace(identifier)) identifier = path+"###"+e.Attr("params","");
+    if(string.IsNullOrWhiteSpace(identifier)){
+      identifier = path+"###"+e.Attr("params","");
+      if(!string.IsNullOrWhiteSpace(e.Attr("textures",""))) identifier+="###"+e.Attr("textures");
+    }
     bool reload = e.Bool("reload",false);
     if(path.Length == 0)return null;
     IMaterialLayer l = null;

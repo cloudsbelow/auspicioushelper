@@ -37,7 +37,6 @@ public class DashSwitchW:DashSwitch, ISimpleEnt{
   public override void Awake(Scene scene){
     pressedTarget = Position+pressDirection*8;
     base.Awake(scene);
-    DebugConsole.Write($"Depth: {Depth}");
   }
   public override void Update(){
     startY = parent.virtLoc.Y+origtoffset.Y;
