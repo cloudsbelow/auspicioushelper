@@ -75,7 +75,10 @@ public static class RenderTargetPool{
     }
     currentWidth = nwidth;
     currentHeight = nheight;
+    auspicioushelperGFX.gd.SetRenderTarget(zero);
+    auspicioushelperGFX.gd.Clear(Color.Red);
   }
+  public static RenderTargetHandle zero;
   public static void Clear(){
     foreach(var v in Pool) v.Dispose();
     Pool.Clear();
@@ -84,6 +87,9 @@ public static class RenderTargetPool{
       available.Push(i);
     }
     state++;
+    zero = new RenderTargetHandle(true);
+    auspicioushelperGFX.gd.SetRenderTarget(zero);
+    auspicioushelperGFX.gd.Clear(Color.Red);
     Resize(320,180,true);
   }
 }

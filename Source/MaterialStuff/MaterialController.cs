@@ -62,7 +62,7 @@ internal class MaterialController:Entity, IDeclareLayers{
   EntityData e;
   internal string identifier;
   public IMaterialLayer load(EntityData e){
-    string path=e.Attr("path","");
+    string path=e.Attr("path","")+e.Attr("passes","");
     identifier=e.Attr("identifier");
     if(string.IsNullOrWhiteSpace(identifier)) identifier = path+"###"+e.Attr("params","");
     bool reload = e.Bool("reload",false);

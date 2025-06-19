@@ -47,7 +47,7 @@ public class OverrideVisualComponent:Component, IMaterialObject{
   public float _depth=>(float)Entity.actualDepth;
   public bool shouldRemove=>Entity.Scene==null;
   public void renderMaterial(IMaterialLayer l, Camera c){
-    if(ovis && Entity.Scene!=null) Entity.Render();
+    if(ovis && Entity.Scene!=null)Entity.Render();
   }
 }
 public interface IOverrideVisuals{
@@ -82,12 +82,12 @@ public interface IOverrideVisuals{
 }
 [CustomEntity("auspicioushelper/MaterialTemplate")]
 public class MaterialTemplate:TemplateDisappearer, IOverrideVisuals{
-  public List<OverrideVisualComponent> comps {get;set;}
-  public HashSet<OverrideVisualComponent> toRemove {get;}
+  public List<OverrideVisualComponent> comps  {get;set;}= new();
+  public HashSet<OverrideVisualComponent> toRemove {get;} = new();
   public bool dirty {get;set;}
   bool invis;
   public MaterialTemplate(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
-  public MaterialTemplate(EntityData d, Vector2 offset, int depthoffset):base(d,offset,depthoffset){
+  public MaterialTemplate(EntityData d, Vector2 offset, int depthoffset):base(d,offset+d.Position,depthoffset){
     invis = d.Bool("dontNormalRender",true);
     lident = d.Attr("identifier","");
     if(string.IsNullOrWhiteSpace(lident)) DebugConsole.Write("No layer specified for material template");

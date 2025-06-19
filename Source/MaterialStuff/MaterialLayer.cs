@@ -145,7 +145,7 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
   bool dirtyWilldraw=false;
   public List<IMaterialObject> willdraw=new();
   public virtual bool checkdo(){
-    return layerformat.alwaysRender || willdraw.Count>0;
+    return layerformat.quadfirst || layerformat.alwaysRender || willdraw.Count>0;
   }
   public static void StartSb(SpriteBatch sb, Effect e=null, Camera c=null){
     sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, e, c?.Matrix??Matrix.Identity);
@@ -153,6 +153,7 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
   public virtual void rasterMats(SpriteBatch sb,Camera c){
     if(dirtyWilldraw){
       willdraw.Sort((a,b)=>b._depth.CompareTo(a._depth));
+      DebugConsole.Write("Sorting");
       dirtyWilldraw = false;
     }
     foreach(var o in willdraw){
@@ -164,12 +165,11 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
   }
   public virtual bool drawMaterials => layerformat.quadfirst || willdraw.Count!=0;
   public virtual void render(SpriteBatch sb, Camera c){
-    if(toRemove.Count>0 || dirtyWilldraw){
+    if(toRemove.Count>0){
       List<IMaterialObject> nlist = new();
       foreach(var o in willdraw) if(!toRemove.Contains(o))nlist.Add(o);
       toRemove.Clear();
       willdraw=nlist;
-      dirtyWilldraw = false;
     }
     passes.setbaseparams();
     GraphicsDevice gd = MaterialPipe.gd;
@@ -181,8 +181,7 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
         StartSb(sb,passes[i],c);
         if(layerformat.quadfirst){
           Vector2 tlc = c.ScreenToCamera(Vector2.Zero);
-          Vector2 size = c.CameraToScreen(RenderTargetPool.size)-tlc;
-          sb.Draw(Draw.Pixel.Texture.Texture_Safe, new Rectangle((int)tlc.X,(int)tlc.Y,(int)size.X,(int)size.Y),Color.White);
+          sb.Draw(RenderTargetPool.zero, tlc, Color.White);
         }
         rasterMats(sb,c);
         sb.End();

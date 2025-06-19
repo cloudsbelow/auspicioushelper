@@ -36,7 +36,11 @@ public class VirtualShader{
     if(quiet!=null)quiet.Parameters[key]?.SetValue(t);
   }
   public void setparamvalex(string key, float t) {
-    shader.Parameters[key]?.SetValue(t);
+    //DebugConsole.Write($"HereFloat {key} {t}");
+    if(shader.Parameters[key]!=null){
+      shader.Parameters[key].SetValue(t);
+      //DebugConsole.Write($" SETTING {key} {t}");
+    }
     if(quiet!=null)quiet.Parameters[key]?.SetValue(t);
   }
   public void setparamvalex(string key, int t) {

@@ -22,9 +22,10 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
   Action getparamsetter(string key, string channel, float mult){
     return ()=>{
       float val = mult*(float)ChannelState.readChannel(channel);
-      DebugConsole.Write($"{key} {val}");
-      if(Calc.NextFloat(Calc.Random)<0.1f)passes.setparamvalex(key,val+0.0001f);
-      else passes.setparamvalex(key,val);
+      //DebugConsole.Write($"{key} {val}");
+      //if(Calc.NextFloat(Calc.Random)<0.1f)passes.setparamvalex(key,val+0.0001f);
+      //else passes.setparamvalex(key,val);
+      passes.setparamvalex(key,val);
     };
   }
   static Regex chr = new Regex(@"@(\w*(?:\[[^]]+\])?)((?:[*\/][\d\.]+)?)", RegexOptions.Compiled);
@@ -52,10 +53,10 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
         case >='0' and <='9': case '.':
           if(val.Contains('.')){
             float.TryParse(val, out var f);
-            passes.setparamvalex(val,f);
+            passes.setparamvalex(key,f);
           } else {
             int.TryParse(val, out var i);
-            passes.setparamvalex(val,i);
+            passes.setparamvalex(key,i);
           }
           break;
         default:
@@ -114,5 +115,9 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
     } catch(Exception err){
       DebugConsole.Write($"error setting shader params: {err}");
     }
+  }
+  public override void render(SpriteBatch sb, Camera c) {
+    foreach(var a in chset)a(); 
+    base.render(sb, c);
   }
 }
