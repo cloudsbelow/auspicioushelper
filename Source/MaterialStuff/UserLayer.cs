@@ -78,6 +78,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       depth = d.Float("depth",-2),
       quadfirst = d.Bool("quadFirst", false),
       alwaysRender = d.Bool("always", true),
+      drawInScene = d.Bool("drawInScene",true),
     };
     foreach(var p in Util.kvparseflat(d.Attr("textures"),true,true)){
       if(p.Key=="0")DebugConsole.Write($"Warning: Binding to texture 0 is strange. Use 00 to hide this message");

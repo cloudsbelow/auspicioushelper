@@ -8,25 +8,25 @@ sampler2D materialSamp : register(s1);
 uniform float2 pscale;
 uniform float time;
 
+float4 maskAt(float2 pos, float offsetx, float offsety){
+    return tex2D(TextureSampler,pos+float2(offsetx,offsety)*pscale);
+}
+
 float4 valAt(float2 pos, float offsetx, float offsety){
     return tex2D(materialSamp,pos+float2(offsetx,offsety)*pscale);
 }
 
-uniform float sigma;
 float4 main(float4 color : COLOR0, float2 pos : TEXCOORD0) : SV_Target {
-  float4 sum = float4(0,0,0,0);
-  float totalWeight = 0.0;
-
-  float denom = 2.0 * sigma * sigma;
-  int radius = 12;
-
-  for (int i = -radius; i <= radius; i++) {
-      float x = float(i);
-      float weight = exp(-(x * x) / denom);
-      sum += valAt(pos, i, 0) * weight;
-      totalWeight += weight;
+	float4 mask = maskAt(pos,0,0);
+  if(mask.a<0.5){
+    return float4(0,0,0,0);
   }
-  return sum / totalWeight;
+  if(mask.r>0.9){
+    return float4(1,1,1,1);
+  }
+  float4 other = valAt(pos,0,0);
+  float4 composite = other*0.7+float4(0.2,0.2,0.2,0.3);
+  return composite;
 }
 
 technique BasicTech {
