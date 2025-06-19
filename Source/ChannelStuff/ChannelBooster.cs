@@ -314,7 +314,7 @@ public class ChannelBooster : ChannelBaseEntity, IMaterialEnt, ISimpleEnt, IBoos
     base.Render();
     sprite.Position = position;
   }
-  public void renderMaterial(IMaterialLayer l, SpriteBatch sb, Camera c){
+  public void renderMaterial(IMaterialLayer l, Camera c){
     if(respawnTimer<=0 && sprite.Visible){
       innersprite.Position = sprite.Position.Floor();
       innersprite.Render();

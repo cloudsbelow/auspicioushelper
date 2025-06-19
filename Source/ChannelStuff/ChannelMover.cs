@@ -45,12 +45,11 @@ public class ChannelMover:Solid, IChannelUser, IMaterialEnt{
       MoveTo(prog*p1+(1-prog)*p0);
     }
   }
-  public override void Render()
-  {
+  public override void Render(){
     base.Render();
     Draw.Rect(Position, width, height, Color.Red);
   }
-  public void renderMaterial(IMaterialLayer l, SpriteBatch sb, Camera c){
-    sb.Draw(Draw.Pixel.Texture.Texture_Safe,new Rectangle((int) Position.X, (int) Position.Y,(int) width, (int) height), Draw.Pixel.ClipRect, new Color(1,0,0,255));
+  public void renderMaterial(IMaterialLayer l, Camera c){
+    Draw.SpriteBatch.Draw(Draw.Pixel.Texture.Texture_Safe,new Rectangle((int) Position.X, (int) Position.Y,(int) width, (int) height), Draw.Pixel.ClipRect, new Color(1,0,0,255));
   }
 }

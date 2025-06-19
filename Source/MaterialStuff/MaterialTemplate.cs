@@ -3,6 +3,7 @@
 
 
 using System.Collections.Generic;
+using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
@@ -33,7 +34,7 @@ public class OverrideVisualComponent:Component, IMaterialObject{
   public static void Override(Scene s){
     foreach(OverrideVisualComponent v in s.Tracker.GetComponents<OverrideVisualComponent>()){
       if(!v.overriden) v.ovis = v.Entity.Visible;
-      v.Entity.Visible = v.nvis;
+      v.Entity.Visible = v.nvis && v.ovis;
       v.overriden = true;
     }
   }
@@ -45,13 +46,16 @@ public class OverrideVisualComponent:Component, IMaterialObject{
   }
   public float _depth=>(float)Entity.actualDepth;
   public bool shouldRemove=>Entity.Scene==null;
+  public void renderMaterial(IMaterialLayer l, Camera c){
+    if(ovis && Entity.Scene!=null) Entity.Render();
+  }
 }
 public interface IOverrideVisuals{
   List<OverrideVisualComponent> comps {get;set;}
   HashSet<OverrideVisualComponent> toRemove {get;} 
   bool dirty {set;}
   void AddC(OverrideVisualComponent comp) {comps.Add(comp); dirty=true;}
-  void RemoveC(OverrideVisualComponent comp) {toRemove.Add(comp); dirty=true;}
+  void RemoveC(OverrideVisualComponent comp) {toRemove.Add(comp); dirty=true; if(toRemove.Count>64)FixList();}
   void FixList(){
     List<OverrideVisualComponent> nlist = new();
     foreach(OverrideVisualComponent v in comps){
@@ -76,27 +80,33 @@ public interface IOverrideVisuals{
     foreach(var comp in comps) if(comp.ovis) comp.Entity.Render();
   }
 }
-public class MaterialTemplate:TemplateDisappearer, IOverrideVisuals, IMaterialEnt{
+[CustomEntity("auspicioushelper/MaterialTemplate")]
+public class MaterialTemplate:TemplateDisappearer, IOverrideVisuals{
   public List<OverrideVisualComponent> comps {get;set;}
   public HashSet<OverrideVisualComponent> toRemove {get;}
   public bool dirty {get;set;}
+  bool invis;
   public MaterialTemplate(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
-  public MaterialTemplate(EntityData d, Vector2 offset, int depthoffset):base(d,offset,depthoffset){}
+  public MaterialTemplate(EntityData d, Vector2 offset, int depthoffset):base(d,offset,depthoffset){
+    invis = d.Bool("dontNormalRender",true);
+    lident = d.Attr("identifier","");
+    if(string.IsNullOrWhiteSpace(lident)) DebugConsole.Write("No layer specified for material template");
+  }
   string lident;
-  IMaterialLayer l;
+  IMaterialLayer layer;
   public override void addTo(Scene scene) {
     base.addTo(scene);
     List<Entity> l = new();
     AddAllChildren(l);
-    foreach(var e in l) if(!(e is Template)) e.Add(new OverrideVisualComponent(this));
-  }
-  public override void Awake(Scene scene) {
-    base.Awake(scene);
-    l = MaterialController.getLayer(lident);
-    if(l!=null) l.
-  }
-  public void renderMaterial(IMaterialLayer l, SpriteBatch sb, Camera c){
-    if(dirty) (this as IOverrideVisuals).FixList();
-    (this as IOverrideVisuals).OverrideRender();
+    layer = MaterialController.getLayer(lident);
+    if(layer == null){
+      DebugConsole.Write($"Layer {lident} not found");
+    }
+    foreach(var e in l) if(!(e is Template)){
+      var c = new OverrideVisualComponent(this);
+      e.Add(c);
+      layer.addEnt(c);
+    }
+    (this as IOverrideVisuals).PrepareList(!invis);
   }
 }

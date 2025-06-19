@@ -48,9 +48,9 @@ public class ChannelBlock:ChannelBaseEntity, IMaterialEnt {
       Draw.HollowRect(Position, width, height, Color.Red);
     }
   }
-  public void renderMaterial(IMaterialLayer l, SpriteBatch sb, Camera c){
+  public void renderMaterial(IMaterialLayer l, Camera c){
     if(curstate == SolidState.there){
-      sb.Draw(Draw.Pixel.Texture.Texture_Safe, new Rectangle((int)Position.X, (int)Position.Y, (int)width, (int)height), Draw.Pixel.ClipRect, new Color(1,0,0,255));
+      Draw.SpriteBatch.Draw(Draw.Pixel.Texture.Texture_Safe, new Rectangle((int)Position.X, (int)Position.Y, (int)width, (int)height), Draw.Pixel.ClipRect, new Color(1,0,0,255));
     }
   }
 }

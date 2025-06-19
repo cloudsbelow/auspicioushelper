@@ -50,7 +50,7 @@ public interface IMaterialLayer{
 }
 public interface IMaterialObject{
   void registerMaterials(){}
-  void renderMaterial(IMaterialLayer l, SpriteBatch sb, Camera c);
+  void renderMaterial(IMaterialLayer l, Camera c);
   bool shouldRemove=>false;
   float _depth=>0;
 }
@@ -153,21 +153,23 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
   public virtual void rasterMats(SpriteBatch sb,Camera c){
     if(dirtyWilldraw){
       willdraw.Sort((a,b)=>b._depth.CompareTo(a._depth));
+      dirtyWilldraw = false;
     }
     foreach(var o in willdraw){
       if(o.shouldRemove) removeEnt(o);
       else {
-        o.renderMaterial(this,sb,c);
+        o.renderMaterial(this,c);
       }
     }
   }
   public virtual bool drawMaterials => layerformat.quadfirst || willdraw.Count!=0;
   public virtual void render(SpriteBatch sb, Camera c){
-    if(toRemove.Count>0){
+    if(toRemove.Count>0 || dirtyWilldraw){
       List<IMaterialObject> nlist = new();
-      foreach(var o in willdraw) if(!toRemove.Contains(o)) nlist.Add(o);
+      foreach(var o in willdraw) if(!toRemove.Contains(o))nlist.Add(o);
       toRemove.Clear();
       willdraw=nlist;
+      dirtyWilldraw = false;
     }
     passes.setbaseparams();
     GraphicsDevice gd = MaterialPipe.gd;
@@ -194,7 +196,10 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
 
   HashSet<IMaterialObject> toRemove = new();
   public void addEnt(IMaterialObject o){
-    willdraw.Add(o); dirtyWilldraw = true;
+    if(info.enabled){
+      willdraw.Add(o); 
+      dirtyWilldraw = true;
+    }
   }
   public void removeEnt(IMaterialObject o){
     toRemove.Add(o);

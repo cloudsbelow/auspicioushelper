@@ -97,7 +97,9 @@ public static class MaterialPipe {
       }
     }
     gd.SetRenderTarget(GameplayBuffers.Gameplay);
+    OverrideVisualComponent.Override(scene);
     orig(self, scene);
+    OverrideVisualComponent.Restore(scene);
     gd.SamplerStates[1]=SamplerState.LinearClamp;
     gd.SamplerStates[2]=SamplerState.LinearClamp;
   }

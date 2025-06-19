@@ -14,7 +14,7 @@ public class ChannelMaterialsA:BasicMaterialLayer{
   //public override RenderTarget2D outtex => bgtex;
   public ChannelMaterialsA():base([null,auspicioushelperGFX.LoadShader("emptynoise/channelmats")],new LayerFormat{
     depth = -13000
-  }){}
+  }){DebugConsole.Write("constructing channel material layer");}
   public override void onEnable() {
     base.onEnable();
     bgtex.Claim();
@@ -32,7 +32,7 @@ public class ChannelMaterialsA:BasicMaterialLayer{
     
     StartSb(sb,null,c);
     foreach(IMaterialObject b in bgItemsDraw){
-      b.renderMaterial(this, sb, c);
+      b.renderMaterial(this, c);
     }
     sb.End();
     MaterialPipe.gd.Textures[1]=bgtex;

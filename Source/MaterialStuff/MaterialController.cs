@@ -91,6 +91,7 @@ internal class MaterialController:Entity, IDeclareLayers{
   }
   public MaterialController(EntityData e,Vector2 v):base(new Vector2(0,0)){
     this.e=e;
+    declareLayers();
   }
   public void declareLayers(){
     if(!string.IsNullOrEmpty(identifier) && loadedMats.TryGetValue(identifier, out var l)){
@@ -109,6 +110,5 @@ internal class MaterialController:Entity, IDeclareLayers{
   }
   public override void Added(Scene scene){
     base.Added(scene);
-    declareLayers();
   }
 }

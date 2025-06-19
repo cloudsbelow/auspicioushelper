@@ -134,7 +134,7 @@ public class CassetteMaterialLayer:BasicMaterialLayer{
       if(e.Scene != null && e.Depth<=info.depth) e.Render();
     }
     foreach(IMaterialObject e in trying){
-      e.renderMaterial(this, sb, c);
+      e.renderMaterial(this, c);
     }
   }
   public override bool checkdo(){

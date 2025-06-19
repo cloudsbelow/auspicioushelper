@@ -134,12 +134,9 @@ public class TemplateCassetteBlock:TemplateDisappearer, IMaterialObject, IChanne
       if(doBoost)Add(new Coroutine(bumpUp()));
     }
   }
-  public void renderMaterial(IMaterialLayer l, SpriteBatch s, Camera c){
+  public void renderMaterial(IMaterialLayer l, Camera c){
     if(there == State.there) return;
-    SpriteBatch origsb = Draw.SpriteBatch;
-    Draw.SpriteBatch = s;
     foreach(Entity e in todraw) if(e.Scene != null && e.Depth<=l.depth)e.Render();
-    Draw.SpriteBatch = origsb;
   }
   public override void Update(){
     base.Update();

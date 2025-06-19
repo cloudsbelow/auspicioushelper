@@ -150,13 +150,10 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
   public void OnTrigger(StaticMover othersm){
     if(ridingTrigger) sm?.TriggerPlatform();
   }
-  public void renderMaterial(IMaterialLayer l, SpriteBatch s, Camera c){
-    SpriteBatch origsb = Draw.SpriteBatch;
-    Draw.SpriteBatch = s;
+  public void renderMaterial(IMaterialLayer l, Camera c){
     foreach(Entity e in todraw){
       if(e.Scene != null && e.Depth<=l.depth)e.Render();
     } 
-    Draw.SpriteBatch = origsb;
   }
   bool cachedCol = true;
 

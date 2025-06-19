@@ -87,8 +87,8 @@ public class ChannelReskinnedSpinner:Entity, IMaterialEnt{
     /*Draw.SpriteBatch.Draw(innersprite.Texture.Texture_Safe, Position, innersprite.ClipRect, new Color(1,1,1,1), 
       (float)Math.PI/2*(randomSeed & 3), new Vector2(12f, 12f), 1, (randomSeed&4) !=0?SpriteEffects.FlipHorizontally:SpriteEffects.None, 0f);*/
   }
-  public void renderMaterial(IMaterialLayer l, SpriteBatch sb, Camera c){
-    sb.Draw(sprite.Texture.Texture_Safe, Position, sprite.ClipRect, Color.White, 
+  public void renderMaterial(IMaterialLayer l, Camera c){
+    Draw.SpriteBatch.Draw(sprite.Texture.Texture_Safe, Position, sprite.ClipRect, Color.White, 
       ((float)Math.PI/2)*(float)(randomSeed & 3), origin,1,(randomSeed&4) !=0?SpriteEffects.FlipHorizontally:SpriteEffects.None,0);
     // Vector2 pos = Position-new Vector2(2,2);
     // if(state[currentState]!=BoosterType.none)pos+=sprite.Position;
