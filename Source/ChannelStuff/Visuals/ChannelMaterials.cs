@@ -13,7 +13,7 @@ public class ChannelMaterialsA:BasicMaterialLayer{
   public bool enabled=>info.enabled;
   //public override RenderTarget2D outtex => bgtex;
   public ChannelMaterialsA():base([null,auspicioushelperGFX.LoadShader("emptynoise/channelmats")],new LayerFormat{
-    clearWilldraw=true, depth = -13000
+    depth = -13000
   }){}
   public override void onEnable() {
     base.onEnable();
@@ -38,8 +38,5 @@ public class ChannelMaterialsA:BasicMaterialLayer{
     MaterialPipe.gd.Textures[1]=bgtex;
     bgItemsDraw.Clear();
     base.render(sb,c);
-  }
-  public void planDraw(IMaterialObject o){
-    if(info.enabled) willdraw.Add(o);
   }
 }

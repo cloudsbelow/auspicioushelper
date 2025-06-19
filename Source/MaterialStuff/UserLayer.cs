@@ -77,12 +77,12 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       depth = d.Float("depth",-2),
       quadfirst = d.Bool("quadFirst", false),
       alwaysRender = d.Bool("always", true),
-      clearWilldraw = false,
     };
     foreach(var p in Util.kvparseflat(d.Attr("textures"),true,true)){
-      if(p.Key=="0")DebugConsole.Write($"Warning: Binding to texture 0 can have consequences. Use 00 to hide this message");
-      if(!int.TryParse(p.Key.Trim(),out var idx)||idx>15) DebugConsole.Write($"Invalid texture slot {idx}");
-      switch(p.Value.ToLower()){
+      if(p.Key=="0")DebugConsole.Write($"Warning: Binding to texture 0 is strange. Use 00 to hide this message");
+      if(!int.TryParse(p.Key.Trim(),out var idx)||idx>15||idx<0) DebugConsole.Write($"Invalid texture slot {p.Key}");
+      else if(string.IsNullOrWhiteSpace(p.Value)) DebugConsole.Write($"Invalid texutre resource at {idx}"); 
+      else switch(p.Value.ToLower()){
         case "bg": case "background": 
           l.useBg=true;
           textures.Add(new(idx,ITexture.bgWrapper));
@@ -92,10 +92,12 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
           textures.Add(new(idx,ITexture.gpWrapper));
           break;
         default:
-          if(p.Value[0]=='/'){
-
-          } else {
-
+          switch(p.Value[0]){
+            case '/': //photo
+              break;
+            case '$': //child layer
+              textures.Add(new(idx, new ITexture.UserLayerWrapper(p.Value.Substring(1))));
+              break;
           }
           break;
       }

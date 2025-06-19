@@ -53,6 +53,7 @@ public interface IDeclareLayers{
 [Tracked]
 internal class MaterialController:Entity, IDeclareLayers{
   static Dictionary<string, IMaterialLayer> loadedMats = new Dictionary<string, IMaterialLayer>();
+  public static IMaterialLayer getLayer(string ident)=>loadedMats.TryGetValue(ident, out var layer)?layer:null;
   static MaterialController(){
     auspicioushelperModule.OnEnterMap.enroll(new ScheduledAction(()=>{
       loadedMats.Clear(); return false;

@@ -37,7 +37,7 @@ public class ChannelMathController:Entity{
     AttachedMultiple, ReplacePrevious, BlockIfActive, DetatchedMultiple
   }
   enum ActivationCond {
-    Interval, Change, IntervalOrChange, IntervalAndChange, Auto
+    Interval, Change, IntervalOrChange, IntervalAndChange, Auto, OnlyAwake,
   }
   MultiType multi;
   ActivationCond activ;
@@ -52,6 +52,7 @@ public class ChannelMathController:Entity{
     multi = d.Enum<MultiType>("multi_type",MultiType.BlockIfActive);
     activ = d.Enum<ActivationCond>("activation_cond",ActivationCond.Auto);
     if(activ == ActivationCond.Auto) activ = period>0?ActivationCond.Interval:ActivationCond.Change;
+    if(activ == ActivationCond.OnlyAwake) runWhenAwake = true;
     string notifying = d.Attr("notifying_override","");
     if(!string.IsNullOrWhiteSpace(notifying)){
       notifyingChannels=new(Util.listparseflat(notifying,true,true));

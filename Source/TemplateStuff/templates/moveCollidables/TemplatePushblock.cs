@@ -36,7 +36,10 @@ public class TemplatePushblock:TemplateMoveCollidable{
       }
       if(dir.Y !=0) nophysicstime = giveNoPhysics;
       if(dir.Y == -1) speed.Y = -dashSpeed;
-      if(dir.Y == 1) speed.Y = Math.Max(dashSpeed,speed.Y);
+      if(dir.Y == 1){
+        speed.Y = Math.Max(dashSpeed,speed.Y);
+        return DashCollisionResults.NormalOverride;
+      }
       return DashCollisionResults.Rebound;
     };
     giveNoPhysics = d.Float("NoPhysicsTime", 0.3f);

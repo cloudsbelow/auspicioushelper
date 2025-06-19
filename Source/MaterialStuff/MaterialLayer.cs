@@ -45,10 +45,18 @@ public interface IMaterialLayer{
   bool checkdo();
   void onRemove(){}
   void onEnable(){}
+  void addEnt(IMaterialObject o){}
+  void removeEnt(IMaterialObject o){}
 }
 public interface IMaterialObject{
-  public void registerMaterials(){}
-  public void renderMaterial(IMaterialLayer l, SpriteBatch sb, Camera c);
+  void registerMaterials(){}
+  void renderMaterial(IMaterialLayer l, SpriteBatch sb, Camera c);
+  bool shouldRemove=>false;
+  float _depth=>0;
+}
+public interface IMaterialEnt:IMaterialObject{
+  float IMaterialObject._depth => (float)(this as Entity).actualDepth;
+  bool IMaterialObject.shouldRemove=>(this as Entity).Scene==null;
 }
 
 [Tracked]
@@ -117,7 +125,6 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
     public bool alwaysRender=false;
     public bool quadfirst=false;
     public bool useBg=false;
-    public bool clearWilldraw=false;
     public bool drawInScene=true;
   }
   bool IMaterialLayer.drawInScene=>layerformat.drawInScene;
@@ -135,6 +142,7 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
   public virtual void onRemove(){
     foreach(var h in handles)h.Free();
   }
+  bool dirtyWilldraw=false;
   public List<IMaterialObject> willdraw=new();
   public virtual bool checkdo(){
     return layerformat.alwaysRender || willdraw.Count>0;
@@ -143,10 +151,24 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
     sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, e, c?.Matrix??Matrix.Identity);
   }
   public virtual void rasterMats(SpriteBatch sb,Camera c){
-    foreach(var o in willdraw) o.renderMaterial(this,sb,c);
+    if(dirtyWilldraw){
+      willdraw.Sort((a,b)=>b._depth.CompareTo(a._depth));
+    }
+    foreach(var o in willdraw){
+      if(o.shouldRemove) removeEnt(o);
+      else {
+        o.renderMaterial(this,sb,c);
+      }
+    }
   }
   public virtual bool drawMaterials => layerformat.quadfirst || willdraw.Count!=0;
   public virtual void render(SpriteBatch sb, Camera c){
+    if(toRemove.Count>0){
+      List<IMaterialObject> nlist = new();
+      foreach(var o in willdraw) if(!toRemove.Contains(o)) nlist.Add(o);
+      toRemove.Clear();
+      willdraw=nlist;
+    }
     passes.setbaseparams();
     GraphicsDevice gd = MaterialPipe.gd;
     for(int i=0; i<passes.Count; i++){
@@ -168,6 +190,13 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
         sb.End();
       }
     }
-    if(layerformat.clearWilldraw) willdraw.Clear();
+  }
+
+  HashSet<IMaterialObject> toRemove = new();
+  public void addEnt(IMaterialObject o){
+    willdraw.Add(o); dirtyWilldraw = true;
+  }
+  public void removeEnt(IMaterialObject o){
+    toRemove.Add(o);
   }
 }

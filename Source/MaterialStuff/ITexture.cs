@@ -12,16 +12,21 @@ public abstract class ITexture{
   public static implicit operator Texture2D(ITexture h)=>h.tex;
 
   public class UserLayerWrapper:ITexture{
-    UserLayer l;
+    IMaterialLayer l = null;
+    string i;
     public override Texture2D tex{get{
-      if(!l.info.enabled){
+      if(l == null){
+        l = MaterialController.getLayer(i);
+        if(l == null) DebugConsole.Write($"Tried to access the layer {i} which does not exist");
+      }
+      if(!l.enabled){
         DebugConsole.Write("Trying to use disabled texture as input");
         return null;
       }
       return l.outtex;
     }}
-    public UserLayerWrapper(UserLayer l){
-      this.l=l;
+    public UserLayerWrapper(string ident){
+      i=ident;
     }
   }
   public class ImageWrapper:ITexture{

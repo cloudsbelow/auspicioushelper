@@ -11,7 +11,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/ChannelReskinnedSpinner")]
-public class ChannelReskinnedSpinner:Entity, IMaterialObject{
+public class ChannelReskinnedSpinner:Entity, IMaterialEnt{
 
   public float offset;
   public int randomSeed;
@@ -49,6 +49,7 @@ public class ChannelReskinnedSpinner:Entity, IMaterialObject{
   }
   public override void Awake(Scene scene){
     if(ChannelBaseEntity.layerA?.enabled??false) otherVisible = false;
+    ChannelBaseEntity.layerA?.addEnt(this);
   }
   private bool InView(){
     Camera c = (base.Scene as Level).Camera;
@@ -85,9 +86,6 @@ public class ChannelReskinnedSpinner:Entity, IMaterialObject{
       ((float)Math.PI/2)*(float)(randomSeed & 3), origin,1,(randomSeed&4) !=0?SpriteEffects.FlipHorizontally:SpriteEffects.None,0);
     /*Draw.SpriteBatch.Draw(innersprite.Texture.Texture_Safe, Position, innersprite.ClipRect, new Color(1,1,1,1), 
       (float)Math.PI/2*(randomSeed & 3), new Vector2(12f, 12f), 1, (randomSeed&4) !=0?SpriteEffects.FlipHorizontally:SpriteEffects.None, 0f);*/
-  }
-  public void registerMaterials(){
-    ChannelBaseEntity.layerA.planDraw(this);
   }
   public void renderMaterial(IMaterialLayer l, SpriteBatch sb, Camera c){
     sb.Draw(sprite.Texture.Texture_Safe, Position, sprite.ClipRect, Color.White, 

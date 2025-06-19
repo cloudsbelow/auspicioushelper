@@ -8,7 +8,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [Tracked]
 [CustomEntity("auspicioushelper/ChannelBlock")]
-public class ChannelBlock:ChannelBaseEntity, IMaterialObject {
+public class ChannelBlock:ChannelBaseEntity, IMaterialEnt {
   public bool inverted;
   public float width;
   public float height;
@@ -33,12 +33,9 @@ public class ChannelBlock:ChannelBaseEntity, IMaterialObject {
   }
   public override void Added(Scene scene){
     base.Added(scene);
+    layerA?.addEnt(this);
     scene.Add(solid = new Solid(Position, width, height, safe));
     solid.Collidable = curstate == SolidState.there;
-    //Add(sprite=GFX.SpriteBank.Create("auspicioushelper_example1"));
-    //sprite.Position=new Vector2(10,10);
-    //DebugConsole.Write(sprite.ToString());
-    //DebugConsole.Write(sprite.CurrentAnimationID);
   }
   public override void setChVal(int val){
     curstate = (val&1) != (inverted?1:0)?SolidState.there:SolidState.gone;
@@ -50,14 +47,6 @@ public class ChannelBlock:ChannelBaseEntity, IMaterialObject {
     } else {
       Draw.HollowRect(Position, width, height, Color.Red);
     }
-    // just old testing stuff <3
-    //Draw.SpriteBatch.Draw(ChannelBaseEntity.layerA.bgtex, new Rectangle((int)Position.X, (int)Position.Y, (int)width, (int)height), Color.White);
-    //Draw.SpriteBatch.Draw(ChannelBaseEntity.layerA.outtex, new Rectangle((int)Position.X, (int)Position.Y-(int)height-2, (int)width, (int)height), Color.White);
-    //Draw.SpriteBatch.Draw(ChannelBaseEntity.layerA.mattex, new Rectangle((int)Position.X, (int)Position.Y+(int)height+2, (int)width, (int)height), Color.White);
-  }
-
-  public void registerMaterials(){
-    layerA?.planDraw(this);
   }
   public void renderMaterial(IMaterialLayer l, SpriteBatch sb, Camera c){
     if(curstate == SolidState.there){

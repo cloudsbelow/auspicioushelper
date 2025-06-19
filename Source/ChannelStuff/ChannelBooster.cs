@@ -15,7 +15,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [Tracked]
 [CustomEntity("auspicioushelper/ChannelBooster")]
-public class ChannelBooster : ChannelBaseEntity, IMaterialObject, ISimpleEnt, IBooster{
+public class ChannelBooster : ChannelBaseEntity, IMaterialEnt, ISimpleEnt, IBooster{
   public void parentChangeStat(int vis, int col, int act){
     if(vis!=0) Visible=vis>0;
     if(col!=0) Collidable=col>0;
@@ -156,6 +156,7 @@ public class ChannelBooster : ChannelBaseEntity, IMaterialObject, ISimpleEnt, IB
   public override void Added(Scene scene)
   {
     base.Added(scene);
+    layerA?.addEnt(this);
     Image image = new Image(GFX.Game["objects/booster/outline"]);
     image.CenterOrigin();
     image.Color = Color.White * 0.75f;
@@ -312,9 +313,6 @@ public class ChannelBooster : ChannelBaseEntity, IMaterialObject, ISimpleEnt, IB
     sprite.Position = position.Floor();
     base.Render();
     sprite.Position = position;
-  }
-  public void registerMaterials(){
-    layerA?.planDraw(this);
   }
   public void renderMaterial(IMaterialLayer l, SpriteBatch sb, Camera c){
     if(respawnTimer<=0 && sprite.Visible){

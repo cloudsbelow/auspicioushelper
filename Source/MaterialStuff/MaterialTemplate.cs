@@ -4,12 +4,13 @@
 
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
 [Tracked]
-public class OverrideVisualComponent:Component{
+public class OverrideVisualComponent:Component, IMaterialObject{
   public bool ovis;
   public bool nvis;
   public bool overriden;
@@ -42,6 +43,8 @@ public class OverrideVisualComponent:Component{
       v.overriden = false;
     }
   }
+  public float _depth=>(float)Entity.actualDepth;
+  public bool shouldRemove=>Entity.Scene==null;
 }
 public interface IOverrideVisuals{
   List<OverrideVisualComponent> comps {get;set;}
@@ -58,6 +61,7 @@ public interface IOverrideVisuals{
     comps = nlist;
   }
   void PrepareList(bool newvisibility){
+    if(toRemove.Count>0)FixList();
     double ldepth=double.PositiveInfinity;
     bool nsort=false;
     foreach(var v in comps){
@@ -66,18 +70,33 @@ public interface IOverrideVisuals{
       if(v.Entity.actualDepth>ldepth) nsort=true;
     }
     if(nsort) comps.Sort((a,b)=>b.Entity.actualDepth.CompareTo(a.Entity.actualDepth));
+    dirty = false;
+  }
+  void OverrideRender(){
+    foreach(var comp in comps) if(comp.ovis) comp.Entity.Render();
   }
 }
-public class MaterialTemplate:TemplateDisappearer, IOverrideVisuals{
+public class MaterialTemplate:TemplateDisappearer, IOverrideVisuals, IMaterialEnt{
   public List<OverrideVisualComponent> comps {get;set;}
   public HashSet<OverrideVisualComponent> toRemove {get;}
   public bool dirty {get;set;}
   public MaterialTemplate(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public MaterialTemplate(EntityData d, Vector2 offset, int depthoffset):base(d,offset,depthoffset){}
+  string lident;
+  IMaterialLayer l;
   public override void addTo(Scene scene) {
     base.addTo(scene);
     List<Entity> l = new();
     AddAllChildren(l);
     foreach(var e in l) if(!(e is Template)) e.Add(new OverrideVisualComponent(this));
+  }
+  public override void Awake(Scene scene) {
+    base.Awake(scene);
+    l = MaterialController.getLayer(lident);
+    if(l!=null) l.
+  }
+  public void renderMaterial(IMaterialLayer l, SpriteBatch sb, Camera c){
+    if(dirty) (this as IOverrideVisuals).FixList();
+    (this as IOverrideVisuals).OverrideRender();
   }
 }
