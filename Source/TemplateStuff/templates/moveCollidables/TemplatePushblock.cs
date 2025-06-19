@@ -37,7 +37,7 @@ public class TemplatePushblock:TemplateMoveCollidable{
       if(dir.Y !=0) nophysicstime = giveNoPhysics;
       if(dir.Y == -1) speed.Y = -dashSpeed;
       if(dir.Y == 1){
-        speed.Y = Math.Max(dashSpeed,speed.Y);
+        if(!grounded)speed.Y = Math.Max(dashSpeed,speed.Y);
         return DashCollisionResults.NormalOverride;
       }
       return DashCollisionResults.Rebound;
@@ -58,10 +58,12 @@ public class TemplatePushblock:TemplateMoveCollidable{
     base.Awake(scene);
     if(startDisconnected)disconnect();
   }
+  bool grounded;
   public override void Update() {
     if(detatched){
       var q = getq((speed*Engine.DeltaTime).Abs()+Vector2.UnitY);
-      bool grounded = speed.Y>=0 && TestMoveLeniency(q.q,q.s, 1, Vector2.UnitY, leniency, Vector2.UnitX)==Vector2.Zero;
+      grounded = speed.Y==0 && TestMoveLeniency(q.q,q.s, 1, Vector2.UnitY, 0, Vector2.UnitX)==Vector2.Zero;
+      if(grounded && speed==Vector2.Zero) nophysicstime = giveNoPhysics;
       if(!grounded || speed.Y>terminalVelocity){
         if(nophysicstime<=0)speed.Y = Calc.Approach(speed.Y,terminalVelocity,gravity*Engine.DeltaTime);
       }

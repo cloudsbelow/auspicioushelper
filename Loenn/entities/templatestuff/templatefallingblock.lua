@@ -24,7 +24,7 @@ entity.placements = {
       shake_sfx = "event:/game/general/fallblock_shake",
       set_trigger_channel=false,
       
-      _loenn_display_template = false,
+      _loenn_display_template = true,
     }
   }
 }

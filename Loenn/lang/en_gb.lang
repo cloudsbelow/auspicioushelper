@@ -369,8 +369,8 @@ entities.auspicioushelper/TemplateMoveblock.attributes.description.max_leniency=
 entities.auspicioushelper/TemplateMoveblock.attributes.name._loenn_display_template=[LÖNN] Display Template
 
 # Template Push Block
-entities.auspicioushelper/TemplatePushBlock.placements.name.main=Template Move Block
-entities.auspicioushelper/TemplatePushBlock.placements.description.main=A move block that can be made with a template
+entities.auspicioushelper/TemplatePushBlock.placements.name.main=Template Push Block
+entities.auspicioushelper/TemplatePushBlock.placements.description.main=A block that can be pushed with dashes or springs. Full world collision.
 entities.auspicioushelper/TemplatePushBlock.attributes.description.template=The name of the template to use. (<room>/<name>)
 entities.auspicioushelper/TemplatePushBlock.attributes.description.depthoffset=How much to offset the depth of contained entities
 entities.auspicioushelper/TemplatePushBlock.attributes.description.NoPhysicsTime=Gravity and drag disabled for this time period after dash hit
@@ -418,6 +418,14 @@ entities.auspicioushelper/TemplateZipmover.attributes.description.propegateRidin
 entities.auspicioushelper/TemplateZipmover.attributes.description.lastNodeIsKnot=Make the last node a stop even if it is not stacked. Can be disabled to allow for crooked paths on the last segment of a looping path.
 entities.auspicioushelper/TemplateZipmover.attributes.name._loenn_display_template=[LÖNN] Display Template
 
+# Material Tempalte
+entities.auspicioushelper/MaterialTemplate.placements.description.main=A template that can be drawn to material layers
+entities.auspicioushelper/MaterialTemplate.attributes.description.template=The name of the template to use. (<room>/<name>)
+entities.auspicioushelper/MaterialTemplate.attributes.description.depthoffset=How much to offset the depth of contained entities
+entities.auspicioushelper/MaterialTemplate.attributes.description.dontNormalRender=Don't render stuff in this template in the normal gameplay render step
+entities.auspicioushelper/MaterialTemplate.attributes.description.identifier=The layer to draw entities in this template to
+entities.auspicioushelper/MaterialTemplate.attributes.name.identifier=Layer identifier
+entities.auspicioushelper/MaterialTemplate.attributes.name._loenn_display_template=[LÖNN] Display Template
 ### UI
 
 ui.menubar.auspicioushelper_legacyicons=Use Legacy Template Icons [Auspicious Helper]
