@@ -10,8 +10,8 @@ float4 valAt(float2 pos, float offsetx, float offsety){
     return tex2D(TextureSampler,pos+float2(offsetx,offsety)*pscale);
 }
 
+uniform float sigma;
 float4 main(float4 color : COLOR0, float2 pos : TEXCOORD0) : SV_Target {
-	float sigma = 5.0;
   float4 sum = float4(0,0,0,0);
   float totalWeight = 0.0;
 

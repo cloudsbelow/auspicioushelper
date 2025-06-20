@@ -14,9 +14,9 @@ entity.placements = {
       template = "",
       depthoffset=5,
 
-      NoPhysicsTime = 0.3,
+      NoPhysicsTime = "0.3",
       speedFromDash = 100,
-      horizontalDrag = 300,
+      horizontalDrag = "300",
       movementLeniency = 4,
       startDisconnected = true,
       hitSprings = true,

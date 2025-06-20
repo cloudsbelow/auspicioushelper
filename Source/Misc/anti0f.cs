@@ -54,9 +54,18 @@ public class Anti0fZone:Entity{
 
   class HoldableRaster:LinearRaster<Holdable>{
     public void Fill(Player p, Vector2 step, float maxt){
-      FloatRect f = new FloatRect(p);
+      FloatRect f = new FloatRect(p)._expand(1,1);
       Fill(p.Scene.Tracker.GetComponents<Holdable>().Select(
-        h=>new ACol<Holdable>(f.ISweep(h.Entity.Collider,-step),(Holdable)h)
+        h=>{
+          Holdable o = (Holdable) h;
+          Collider origc = h.Entity.Collider;
+          if(o.PickupCollider!=null){
+            h.Entity.Collider = o.PickupCollider;
+          }
+          var res =  new ACol<Holdable>(f.ISweep(h.Entity.Collider,-step),(Holdable)h);
+          h.Entity.Collider = origc;
+          return res;
+        }
       ),maxt);
     }
     public bool prog(Player p, float step){
@@ -373,7 +382,7 @@ public class Anti0fZone:Entity{
       return true;
     reconsile:
       totalfrac += frac;
-      DebugConsole.Write($"Reconsiling: {p.Speed} {frac} {totalfrac} {_ispeed} {dist}");
+      //DebugConsole.Write($"Reconsiling: {p.Speed} {frac} {totalfrac} {_ispeed} {dist}");
       if(exit() || totalfrac>=1) goto exit;
       dist = _ispeed*Engine.DeltaTime*(1-totalfrac);
       if(dist == Vector2.Zero) goto exit;

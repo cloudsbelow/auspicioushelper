@@ -25,7 +25,7 @@ public class TemplatePushblock:TemplateMoveCollidable{
   float giveNoPhysicsDash = 0.3f;
   float giveNoPhysicsStill = 0.2f;
   float giveNoPhysicsSpring = 0.25f;
-  float giveNoPhysicsOwnSpring = 0.15f;
+  float giveNoPhysicsOwnSpring = 0.3f;
   float dashSpeed = 100;
   float ownSpringRecoil = 60;
   string ImpactSfx = "event:/game/general/fallblock_impact";
@@ -56,7 +56,7 @@ public class TemplatePushblock:TemplateMoveCollidable{
     var drags = Util.csparseflat(d.Attr("horizontalDrag","300"));
     if(drags.Length>0){
       drag = drags[0];
-      floordrag = drags[1];
+      floordrag = drags[0]*2;
     } 
     if(drags.Length>1) floordrag = drags[1];
     leniency = d.Int("movementLeniency",4);
@@ -83,7 +83,7 @@ public class TemplatePushblock:TemplateMoveCollidable{
         if(nophysicstime<=0)speed.Y = Calc.Approach(speed.Y,terminalVelocity,gravity*Engine.DeltaTime);
       }
       if(nophysicstime<=0 || alwaysDrag) speed.X = Calc.Approach(speed.X,0,Engine.DeltaTime*(grounded?floordrag:drag));
-      else nophysicstime-=Engine.DeltaTime;
+      if(nophysicstime>0) nophysicstime-=Engine.DeltaTime;
       if(speed!=Vector2.Zero){
         if(MoveHCollide(q, speed.X*Engine.DeltaTime, leniency, speed)){
           speed.X = -speed.X*reflectX;
