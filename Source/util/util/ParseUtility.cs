@@ -193,6 +193,7 @@ public static partial class Util{
     return str;
   }
   public static float[] csparseflat(string str){
+    if(string.IsNullOrWhiteSpace(str)) return [];
     return str.Split(",").Select(s=>{
       float.TryParse(s, out var l);
       return l;

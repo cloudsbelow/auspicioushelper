@@ -20,6 +20,7 @@ entity.placements = {
       movementLeniency = 4,
       startDisconnected = true,
       hitSprings = true,
+      alwaysDrag = false,
       terminalVelocity = 130,
       gravity = 500,
       BounceStrengthFromWall = 0.4,
