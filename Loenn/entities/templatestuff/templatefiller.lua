@@ -18,14 +18,14 @@ entity.placements = {
       width = 8,
       height = 8,
       template_name = "",
-      
-      _loenn_display_template = true,
     }
   }
 }
 
 local oldTemplateNames = {}
 function entity.sprite(room, entity)
+    if entity._loenn_display_template ~= nil then entity._loenn_display_template = nil end
+  
     local oldTemplateName = oldTemplateNames[entity._id]
     if oldTemplateName ~= nil and oldTemplateName ~= entity.template_name then
         aelperLib.update_template(entity, room, {oldName=oldTemplateName})
