@@ -1,15 +1,21 @@
 
 
 
+using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.auspicioushelper.Wrappers;
 
+[CustomEntity("auspicioushelper/CustomRefill")]
 public class RefillW:Refill,ISimpleEnt {
   public Template parent {get;set;}
   public Template.Propagation prop=>Template.Propagation.None;
+  public float respawnTime = 2.5f;
   public RefillW(EntityData d, Vector2 offset):base(d,offset){
     hooks.enable();
+    respawnTime = d.Float("respawnTimer",2.5f);
+    if(respawnTime!=2.5f) Get<PlayerCollider>().OnCollide = CustomOnPlayer;
   }
   public Vector2 toffset {get;set;}
   public void setOffset(Vector2 ppos){
@@ -33,6 +39,15 @@ public class RefillW:Refill,ISimpleEnt {
       }
     }
     if(act!=0) Active = act>0;
+  }
+  void CustomOnPlayer(Player p){
+    if (p.UseRefill(twoDashes)){
+      Audio.Play(twoDashes ? "event:/new_content/game/10_farewell/pinkdiamond_touch" : "event:/game/general/diamond_touch", Position);
+      Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
+      Collidable = false;
+      Add(new Coroutine(RefillRoutine(p)));
+      respawnTimer = respawnTime;
+    }
   }
 
   static void respawnHook(On.Celeste.Refill.orig_Respawn orig, Refill self){
