@@ -7,6 +7,7 @@ local logging = require("logging")
 local depths = require("consts.object_depths")
 local matrix = require("utils.matrix")
 local state = require("loaded_state")
+local celesteRender = require("celeste_render")
 
 local templates = {}
 
@@ -22,6 +23,14 @@ if not $(viewMenu):find(item -> item[1] == "auspicioushelper_legacyicons") then
         function() return settings.auspicioushelper_legacyicons or false end
     })
 end
+if not $(viewMenu):find(item -> item[1] == "auspicioushelper_showtemplates_global") then
+    table.insert(viewMenu,{
+        "auspicioushelper_showtemplates_global",
+        function() settings.auspicioushelper_showtemplates_global = not settings.auspicioushelper_showtemplates_global end,
+        "checkbox",
+        function() return settings.auspicioushelper_showtemplates_global or false end
+    })
+end
 if false and not $(editMenu):find(item -> item[1] == "auspicioushelper_cleartemplatecache") then
     table.insert(editMenu,{
         "auspicioushelper_cleartemplatecache",
@@ -32,6 +41,9 @@ if false and not $(editMenu):find(item -> item[1] == "auspicioushelper_cleartemp
         "checkbox",
         function() return false end
     })
+end
+if settings.auspicioushelper_showtemplates_global == nil then 
+    settings.auspicioushelper_showtemplates_global = true
 end
 
 --#####--
@@ -203,7 +215,8 @@ aelperLib.get_entity_draw = function(icon_name)
         if entity._loenn_display_template == nil then entity._loenn_display_template = true end
         
         local shouldError = false
-        if "zztemplates-"..string.sub(entity.template,1,#room.name-#"zztemplates-") == room.name then
+        if settings.auspicioushelper_showtemplates_global and
+            "zztemplates-"..string.sub(entity.template,1,#room.name-#"zztemplates-") == room.name then
             for _,maybeFiller in pairs(room.entities) do
                 if maybeFiller._name == "auspicioushelper/templateFiller" and
                     entity.x>=maybeFiller.x and entity.y>=maybeFiller.y and
@@ -214,8 +227,10 @@ aelperLib.get_entity_draw = function(icon_name)
                 end
             end
         end
-        if not shouldError and entity._loenn_display_template then shouldError = aelperLib.draw_template_sprites(entity.template, entity.x, entity.y, room, 
-            false, viewport and viewport.__auspicioushelper_alreadyDrawn).recursiveError end--todo: replace false with whether or not this entity is slected
+        if not shouldError and entity._loenn_display_template and settings.auspicioushelper_showtemplates_global then
+            shouldError = aelperLib.draw_template_sprites(entity.template, entity.x, entity.y, room, 
+            false, viewport and viewport.__auspicioushelper_alreadyDrawn).recursiveError --todo: replace false with whether or not this entity is slected
+        end
             
         drawableSprite.fromTexture(shouldError and "loenn/auspicioushelper/template/error" or aelperLib.getIcon("loenn/auspicioushelper/template/"..icon_name), {
             x=entity.x,
