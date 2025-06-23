@@ -18,19 +18,27 @@ entity.placements = {
       width = 8,
       height = 8,
       template_name = "",
+      
+      oldTemplateName = nil,
     }
   }
 }
+entity.fieldInformation = {
+    oldTemplateName = {
+        fieldType = "string",
+        valueTransformer = function() return nil end,
+        displayTransformer = function() return "" end,
+        editable = false,
+    }
+}
 
-local oldTemplateNames = {}
 function entity.sprite(room, entity)
     if entity._loenn_display_template ~= nil then entity._loenn_display_template = nil end
   
-    local oldTemplateName = oldTemplateNames[entity._id]
-    if oldTemplateName ~= nil and oldTemplateName ~= entity.template_name then
-        aelperLib.update_template(entity, room, {oldName=oldTemplateName})
+    if entity.oldTemplateName ~= entity.template_name then
+        aelperLib.update_template(entity, room, {oldName=entity.oldTemplateName})
     end
-    oldTemplateNames[entity._id] = aelperLib.templateID_from_entity(entity, room)
+    entity.oldTemplateName = aelperLib.templateID_from_entity(entity, room)
     
     return drawableRectangle.fromRectangle("bordered", entity.x, entity.y, entity.width, entity.height, 
         {195/255, 138/255, 255/255,0.3}, {195/255*0.65, 138/255*0.65, 255/255*0.65,1}) 

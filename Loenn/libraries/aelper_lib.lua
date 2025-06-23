@@ -86,6 +86,7 @@ aelperLib.update_template = function(entity, room, data)
 
     if data.oldName then delete_template(entity, oldName) end
     local template_name = aelperLib.templateID_from_entity(entity, room)
+    if template_name == nil then return end--room isnt zztemplates
     templates[template_name] = templates[template_name] or {}
     
     table.insert(templates[template_name], {entity, room})
@@ -208,6 +209,7 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
     return alreadyDrawn
 end
 aelperLib.templateID_from_entity = function(entity, room)
+    if string.sub(room.name, 1, #"zztemplates-") ~= "zztemplates-" then return nil end
     return string.sub(room.name, #"zztemplates-"+1).."/"..entity.template_name
 end
 aelperLib.get_entity_draw = function(icon_name)
@@ -241,6 +243,18 @@ end
 
 aelperLib.getIcon = function(name)
     return settings.auspicioushelper_legacyicons and (name.."_legacy") or name
+end
+
+aelperLib.log = function(...)
+    local toPrint = "[Auspicious Helper] "
+    for i,v in ipairs({...}) do
+        if i ~= 1 then
+            toPrint = toPrint..", "
+        end
+        toPrint = toPrint..tostring(v)
+    end
+
+    logging.info(toPrint)
 end
 
 return aelperLib
