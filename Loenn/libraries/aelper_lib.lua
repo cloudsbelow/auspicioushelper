@@ -5,9 +5,9 @@ local decals = require("decals")
 local utils = require("utils")
 local logging = require("logging")
 local depths = require("consts.object_depths")
-local matrix = require("utils.matrix")
-local state = require("loaded_state")
 local celesteRender = require("celeste_render")
+
+--#####--
 
 local templates = {}
 
@@ -255,6 +255,20 @@ aelperLib.log = function(...)
     end
 
     logging.info(toPrint)
+end
+
+--#####--
+
+local initialTemplatesLoad = false
+local orig_celesteRender_drawMap = celesteRender.drawMap
+function celesteRender.drawMap(state)
+    if not initialTemplatesLoad then
+        initialTemplatesLoad = true
+        orig_celesteRender_drawMap(state)
+    end
+    local res = orig_celesteRender_drawMap(state)
+
+    return res
 end
 
 return aelperLib
