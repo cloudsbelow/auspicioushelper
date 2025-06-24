@@ -48,6 +48,18 @@ internal static class MarkedRoomParser{
         temp.ChildEntities.Add(d);
       }
     }
+    foreach(EntityData d in l.Triggers){
+      var hits = rects.collidePointAll(d.Position);
+      bool w=false;
+      if(hits.Count >0) w = EntityParser.generateLoader(d, l);
+      if(!w) continue;
+      foreach(int handle in hits){
+        string tid = handleDict[handle];
+        templates.TryGetValue(tid, out var temp);
+        if(temp == null) continue;
+        temp.ChildEntities.Add(d);
+      }
+    }
     foreach(DecalData d in l.FgDecals){
       var hits = rects.collidePointAll(d.Position);
       foreach(int handle in hits){

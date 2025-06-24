@@ -11,6 +11,7 @@ using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System.Collections;
+using Celeste.Mod.auspicioushelper.channelmath;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -289,6 +290,7 @@ public class ChannelMathController:Entity{
       yield break;
   }
   static Dictionary<string, Func<List<string>,List<int>,int>> iopFuncs = new();
+  public static ChannelMathController callingController = null;
   public int interop(int stringCount, int intCount, ref int iptr, int[] reg){
     List<string> strs = new List<string>();
     List<int> ints = new List<int>();
@@ -305,9 +307,13 @@ public class ChannelMathController:Entity{
       return 0;
     }
     try{
-      return f(strs, ints);
+      callingController = this;
+      int res = f(strs, ints);
+      callingController = null;
+      return res;
     }catch(Exception ex){
       DebugConsole.Write($"Mathcontroller interop {strs[0]} failed {ex}");
+      callingController = null;
       return 0;
     }
   }
@@ -396,7 +402,9 @@ public class ChannelMathController:Entity{
     registerInterop("timeSinceTrans",(List<string> strs, List<int> ints)=>{
       return (int)UpdateHook.TimeSinceTransMs;
     });
+    FmodIop.cbs.enable();
   }
-
-  static HookManager hooks = new HookManager(setupDefaultInterop,void ()=>{}).enable();
+  static ChannelMathController(){
+    setupDefaultInterop();
+  }
 }
