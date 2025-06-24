@@ -3,6 +3,9 @@
 mods.auspicioushelper.name=auspicioushelper
 
 # .channel = The channel to listen to
+# .template=The name of the template to use. (<room>/<name>)
+# .depthoffset=How much to offset the depth of contained entities
+# ._loenn_display_template=[LÖNN] Display Template
 
 ### Triggers
 
@@ -425,7 +428,9 @@ entities.auspicioushelper/MaterialTemplate.attributes.description.dontNormalRend
 entities.auspicioushelper/MaterialTemplate.attributes.description.identifier=The layer to draw entities in this template to
 entities.auspicioushelper/MaterialTemplate.attributes.name.identifier=Layer identifier
 entities.auspicioushelper/MaterialTemplate.attributes.name._loenn_display_template=[LÖNN] Display Template
+
 ### UI
 
 ui.menubar.auspicioushelper_legacyicons=Use Legacy Template Icons [Auspicious Helper]
+ui.menubar.auspicioushelper_showtemplates_global=Draw Templates [Auspicious Helper]
 ui.menubar.auspicioushelper_cleartemplatecache=Clear Template Cache [Auspicious Helper]

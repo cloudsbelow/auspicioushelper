@@ -7,6 +7,7 @@ local logging = require("logging")
 local depths = require("consts.object_depths")
 local matrix = require("utils.matrix")
 local state = require("loaded_state")
+local celesteRender = require("celeste_render")
 
 local templates = {}
 
@@ -22,6 +23,14 @@ if not $(viewMenu):find(item -> item[1] == "auspicioushelper_legacyicons") then
         function() return settings.auspicioushelper_legacyicons or false end
     })
 end
+if not $(viewMenu):find(item -> item[1] == "auspicioushelper_showtemplates_global") then
+    table.insert(viewMenu,{
+        "auspicioushelper_showtemplates_global",
+        function() settings.auspicioushelper_showtemplates_global = not settings.auspicioushelper_showtemplates_global end,
+        "checkbox",
+        function() return settings.auspicioushelper_showtemplates_global or false end
+    })
+end
 if false and not $(editMenu):find(item -> item[1] == "auspicioushelper_cleartemplatecache") then
     table.insert(editMenu,{
         "auspicioushelper_cleartemplatecache",
@@ -32,6 +41,9 @@ if false and not $(editMenu):find(item -> item[1] == "auspicioushelper_cleartemp
         "checkbox",
         function() return false end
     })
+end
+if settings.auspicioushelper_showtemplates_global == nil then 
+    settings.auspicioushelper_showtemplates_global = true
 end
 
 --#####--
@@ -74,6 +86,7 @@ aelperLib.update_template = function(entity, room, data)
 
     if data.oldName then delete_template(entity, oldName) end
     local template_name = aelperLib.templateID_from_entity(entity, room)
+    if template_name == nil then return end--room isnt zztemplates
     templates[template_name] = templates[template_name] or {}
     
     table.insert(templates[template_name], {entity, room})
@@ -196,6 +209,7 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
     return alreadyDrawn
 end
 aelperLib.templateID_from_entity = function(entity, room)
+    if string.sub(room.name, 1, #"zztemplates-") ~= "zztemplates-" then return nil end
     return string.sub(room.name, #"zztemplates-"+1).."/"..entity.template_name
 end
 aelperLib.get_entity_draw = function(icon_name)
@@ -203,7 +217,8 @@ aelperLib.get_entity_draw = function(icon_name)
         if entity._loenn_display_template == nil then entity._loenn_display_template = true end
         
         local shouldError = false
-        if "zztemplates-"..string.sub(entity.template,1,#room.name-#"zztemplates-") == room.name then
+        if settings.auspicioushelper_showtemplates_global and
+            "zztemplates-"..string.sub(entity.template,1,#room.name-#"zztemplates-") == room.name then
             for _,maybeFiller in pairs(room.entities) do
                 if maybeFiller._name == "auspicioushelper/templateFiller" and
                     entity.x>=maybeFiller.x and entity.y>=maybeFiller.y and
@@ -214,8 +229,10 @@ aelperLib.get_entity_draw = function(icon_name)
                 end
             end
         end
-        if not shouldError and entity._loenn_display_template then shouldError = aelperLib.draw_template_sprites(entity.template, entity.x, entity.y, room, 
-            false, viewport and viewport.__auspicioushelper_alreadyDrawn).recursiveError end--todo: replace false with whether or not this entity is slected
+        if not shouldError and entity._loenn_display_template and settings.auspicioushelper_showtemplates_global then
+            shouldError = aelperLib.draw_template_sprites(entity.template, entity.x, entity.y, room, 
+            false, viewport and viewport.__auspicioushelper_alreadyDrawn).recursiveError --todo: replace false with whether or not this entity is slected
+        end
             
         drawableSprite.fromTexture(shouldError and "loenn/auspicioushelper/template/error" or aelperLib.getIcon("loenn/auspicioushelper/template/"..icon_name), {
             x=entity.x,
@@ -226,6 +243,18 @@ end
 
 aelperLib.getIcon = function(name)
     return settings.auspicioushelper_legacyicons and (name.."_legacy") or name
+end
+
+aelperLib.log = function(...)
+    local toPrint = "[Auspicious Helper] "
+    for i,v in ipairs({...}) do
+        if i ~= 1 then
+            toPrint = toPrint..", "
+        end
+        toPrint = toPrint..tostring(v)
+    end
+
+    logging.info(toPrint)
 end
 
 return aelperLib
