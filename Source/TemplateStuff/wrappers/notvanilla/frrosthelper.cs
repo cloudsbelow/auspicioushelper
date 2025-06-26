@@ -1,5 +1,6 @@
 
 
+using System;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Mdb;
 using Monocle;
@@ -41,5 +42,19 @@ public static class FrostHelperStuff{
         return null;
       });
     },()=>{});
+  }
+
+
+  public static class SpinnerWrapper{
+    static Type baseType;
+    static SpinnerWrapper(){
+      if(!CursedIopHelper.isLoaded("FrostHelper")) return;
+      baseType = CursedIopHelper.getType("FrostHelper","FrostHelper.CustomSpinner");
+      if(baseType == null){
+        DebugConsole.Write("Could not resolve frosthelper spinner type");
+        return;
+      }
+    }
+    
   }
 }

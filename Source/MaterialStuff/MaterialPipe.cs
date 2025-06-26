@@ -36,10 +36,8 @@ public static class MaterialPipe {
 
   public static void GameplayRender(On.Celeste.GameplayRenderer.orig_Render orig, GameplayRenderer self, Scene scene){
     orderFlipped = false;
-    //DebugConsole.Write($"{scene.Tracker.GetEntities<LayerMarkingEntity>().Count} {layers.Count}");
     var camdim = ExtendedCameraIop.cameraSize();
     RenderTargetPool.Resize(camdim.Item1,camdim.Item2);
-    //ExtendedCameraIop.printCamerastatus(scene as Level);
     if(transroutine!=null) transroutine.Update();
     if(layers.Count==0){
       orig(self, scene);
@@ -55,9 +53,11 @@ public static class MaterialPipe {
     }
     if(dirty) layers.Sort((a, b) => -a.depth.CompareTo(b.depth));
     dirty=false;
-    if(needsImmUpdate){
+    if(blockedAddingEnt.Count>0 || needsImmUpdate){
+      foreach(var e in blockedAddingEnt) scene.Add(e);
       scene.Entities.UpdateLists();
-      needsImmUpdate=false;
+      blockedAddingEnt.Clear();
+      needsImmUpdate = false;
     }
 
     double curdepth = float.PositiveInfinity;
@@ -139,6 +139,7 @@ public static class MaterialPipe {
     transroutine = null;
     yield break;
   }
+  static List<LayerMarkingEntity> blockedAddingEnt = new();
   public static void addLayer(IMaterialLayer l){
     if(!leaving.Remove(l)) entering.Add(l);
     toRemove.Remove(l);
@@ -147,7 +148,10 @@ public static class MaterialPipe {
     if(l.markingEntity!=null) throw new Exception("Layer marking entities are leaking");
     if(Engine.Instance.scene is Level lv)lv.Add(new LayerMarkingEntity(l));
     else if(Engine.Instance.scene is LevelLoader ld) ld.Level.Add(new LayerMarkingEntity(l));
-    else throw new Exception($"Cannot add layer outside level/levelloader. scene is {Engine.Instance.scene}"); 
+    else{
+      DebugConsole.Write($"Dangerously adding layer {l} - this should only occur when reloading assets");
+      blockedAddingEnt.Add(new LayerMarkingEntity(l));
+    }
     l.onEnable();
     if(layers.Contains(l)) return;
     dirty = true;

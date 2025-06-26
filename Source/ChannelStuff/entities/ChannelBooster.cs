@@ -31,7 +31,7 @@ public class ChannelBooster : ChannelBaseEntity, IMaterialEnt, ISimpleEnt, IBoos
     if(outline!=null) outline.Position = npos;
     Vector2 poffset=insideplayer!=null?insideplayer.ExactPosition-Position:Vector2.Zero;
     if(!BoostingPlayer && sprite!=null && sprite.CurrentAnimationID != "pop") Position = npos;
-    if(insideplayer!=null){
+    if(insideplayer!=null && !insideplayer.Dead){
       insideplayer.MoveTowardsX(npos.X+poffset.X,100);
       insideplayer.MoveTowardsY(npos.Y+poffset.Y,100);
       insideplayer.boostTarget = npos;

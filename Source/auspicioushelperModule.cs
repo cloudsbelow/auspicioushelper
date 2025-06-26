@@ -97,11 +97,15 @@ public class auspicioushelperModule : EverestModule {
         //foreach (ModAsset item in Everest.Content.Map.Values.Where((ModAsset asset) => asset.Type == typeof(AssetTypeMap)))
         //if(Settings.HideHelperMaps && !MapHider.isHiding)MapHider.hideListed();
         //DebugConsole.Write(Engine.Instance.scene.ToString());
-        ChannelState.unwatchAll();
-        if(Engine.Instance.scene is LevelLoader l){
-            MarkedRoomParser.parseMapdata(l.Level.Session.MapData);
+        try {
+            ChannelState.unwatchAll();
+            if(Engine.Instance.scene is LevelLoader l){
+                MarkedRoomParser.parseMapdata(l.Level.Session.MapData);
+            }
+            DebugConsole.Write(Engine.Scene?.ToString()??"null scene");
+        } catch (Exception ex){
+            Logger.Warn("auspicioushelper","I don't know wtf happened here maybe this log can illuminate\n"+ex.ToString());
         }
-        DebugConsole.Write(Engine.Scene.ToString());
         if(Session != null){
             try{
                 Session.load(false);

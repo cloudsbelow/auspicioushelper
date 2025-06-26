@@ -24,19 +24,41 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     hooks.enable();
   }
   bool hvisible = true;
+  bool hcollidable = true;
+  bool scollidable = false;
+  bool inView = false;
   public override void Update(){
-    if(!hvisible){
-      Visible = hvisible;
-      return;
+    if(!inView){
+      Collidable = false;
+      if(InView()){
+        inView=true;
+        if(!expanded) CreateSprites();
+        if(color == CrystalColor.Rainbow) UpdateHue();
+      }
+      Visible = hvisible && inView;
+    } else {
+      base.Update();
+      if(color == CrystalColor.Rainbow && base.Scene.OnInterval(0.08f, offset)) UpdateHue();
+      if (base.Scene.OnInterval(0.25f, offset) && !InView()){
+        inView = false; Visible = false; Collidable = false;
+      }
+      if (base.Scene.OnInterval(0.05f, offset)){
+        Player entity = base.Scene.Tracker.GetEntity<Player>();
+        if(entity != null) scollidable = Math.Abs(entity.X - base.X) < 128f && Math.Abs(entity.Y - base.Y) < 128f;
+      }
+      Collidable = hcollidable && scollidable;
+      Visible = hvisible && inView;
     }
-    base.Update();
   }
   public void parentChangeStat(int vis, int col, int act){
     if(vis!=0){
       hvisible = vis>0;
       Visible = vis>0;
     }
-    if(col!=0) Collidable = col>0;
+    if(col!=0){
+      hcollidable = col>0;
+      Collidable = col>0;
+    }
     if(act!=0) Active = act>0;
   }
   public Vector2 toffset {get;set;}
