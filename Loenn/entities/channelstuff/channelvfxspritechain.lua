@@ -28,16 +28,9 @@ channelspritechain.placements = {
 --     depth="integer"
 --   }
 -- }
-function channelspritechain.sprite(room, entity)
-  color = {1, 1, 1, 1}
-  local sprite = drawableSprite.fromTexture("util/rect", nil)
-  sprite.useRelativeQuad(0, 0, entity.width, entity.height) 
-  sprite.color = color 
-  return sprite
-end
 
 function channelspritechain.rectangle(room, entity)
-  return utils.rectangle(entity.x, entity.y, entity.width, entity.height)
+  return utils.rectangle(entity.x-4, entity.y-4, 8, 8)
 end
 
 return channelspritechain

@@ -48,13 +48,20 @@ end
 
 --#####--
 
+local aelperLib = {}
+
 local dark_multiplier = 0.65
 
 function delete_template(entity, oldName)
+    --aelperLib.log("deleting:", entity.template_name)
+    for k,v in ipairs(templates) do
+        aelperLib.log(k, #v)
+    end
+    
     for k, v in ipairs(templates[oldName or entity.template_name] or {}) do
         if v == entity then
             table.remove(templates[oldName or entity.template_name], k)
-            break
+            --break
         end
     end
     if #(templates[oldName or entity.template_name] or {nil}) == 0 then
@@ -63,7 +70,6 @@ function delete_template(entity, oldName)
 end
 
 
-local aelperLib = {}
 aelperLib.channel_color = {230/255, 167/255, 50/255}
 aelperLib.channel_color_halfopacity = {aelperLib.channel_color[1], aelperLib.channel_color[2], aelperLib.channel_color[3], 0.5}
 aelperLib.channel_color_dark = {aelperLib.channel_color[1]*dark_multiplier, aelperLib.channel_color[2]*dark_multiplier, aelperLib.channel_color[3]*dark_multiplier}
@@ -89,6 +95,9 @@ aelperLib.update_template = function(entity, room, data)
     if template_name == nil then return end--room isnt zztemplates
     templates[template_name] = templates[template_name] or {}
     
+    for _,v in ipairs(templates[template_name]) do
+        if v[1] == entity then return end
+    end
     table.insert(templates[template_name], {entity, room})
 end
 local template_entity_names = {}
@@ -112,50 +121,52 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
         data[1].y - (data[1].nodes or {{y=data[1].y}})[1].y,
     }
     for _,entity in ipairs(data[2].entities) do
-        if not alreadyDrawn[entity._id] and 
-            entity.x > data[1].x-(entity.width or 0.01) and entity.x < data[1].x+data[1].width and
-            entity.y > data[1].y-(entity.height or 0.01) and entity.y < data[1].y+data[1].height then
-                
-            alreadyDrawn[entity._id]=true
-    
-            local movedEntity = utils.deepcopy(entity)
-            movedEntity.x=x + (entity.x - data[1].x) + offset[1]
-            movedEntity.y=y + (entity.y - data[1].y) + offset[2]
-            if movedEntity.nodes then
-                for _,node in ipairs(movedEntity.nodes) do
-                    node.x = x + (node.x - data[1].x) + offset[1]
-                    node.y = y + (node.y - data[1].y) + offset[2]
-                end
-            end
-            local toInsert = ({entities.getEntityDrawable(movedEntity._name, nil, room, movedEntity, 
-                {__auspicioushelper_alreadyDrawn=alreadyDrawn})})[1]
-            if toInsert.draw == nil then 
-                for _,v in ipairs(toInsert) do table.insert(toDraw, {
-                    func=v,
-                    depth=(type(entity.depth) == "func" and entity.depth(room, movedEntity, nil) or entity.depth) or 0}) end
-            else table.insert(toDraw, {
-                func=toInsert,
-                depth=(type(entity.depth) == "func" and entity.depth(room, movedEntity, nil) or entity.depth) or 0})
-            end
-        
-            if movedEntity.nodes then
-                for index,node in ipairs(movedEntity.nodes) do
-                    local visibility = entities.nodeVisibility(nil, movedEntity)
-                    if visibility == "always" or (visibility == "selected" and selected) then 
+        pcall(function() 
+            if not alreadyDrawn[entity._id] and 
+                entity.x > data[1].x-(entity.width or 0.01) and entity.x < data[1].x+data[1].width and
+                entity.y > data[1].y-(entity.height or 0.01) and entity.y < data[1].y+data[1].height then
                     
-                        toInsert = ({entities.getNodeDrawable(movedEntity._name, nil, room, movedEntity, node, index, nil)})[1]
-                        if toInsert.draw == nil then 
-                            for _,v in ipairs(toInsert) do table.insert(toDraw, {
-                                func=v,
-                                depth=(type(entity.depth) == "func" and entity.depth(room, movedEntity, nil) or entity.depth) or 0}) end
-                        else table.insert(toDraw, {
-                            func=toInsert,
-                            depth=(type(entity.depth) == "func" and entity.depth(room, movedEntity, nil) or entity.depth) or 0})
+                alreadyDrawn[entity._id]=true
+        
+                local movedEntity = utils.deepcopy(entity)
+                movedEntity.x=x + (entity.x - data[1].x) + offset[1]
+                movedEntity.y=y + (entity.y - data[1].y) + offset[2]
+                if movedEntity.nodes then
+                    for _,node in ipairs(movedEntity.nodes) do
+                        node.x = x + (node.x - data[1].x) + offset[1]
+                        node.y = y + (node.y - data[1].y) + offset[2]
+                    end
+                end
+                local toInsert = ({entities.getEntityDrawable(movedEntity._name, entities.registeredEntities[movedEntity._name], room, movedEntity, 
+                    {__auspicioushelper_alreadyDrawn=alreadyDrawn})})[1]
+                if toInsert.draw == nil then 
+                    for _,v in ipairs(toInsert) do table.insert(toDraw, {
+                        func=v,
+                        depth=(type(entity.depth) == "func" and entity.depth(room, movedEntity, nil) or entity.depth) or 0}) end
+                else table.insert(toDraw, {
+                    func=toInsert,
+                    depth=(type(entity.depth) == "func" and entity.depth(room, movedEntity, nil) or entity.depth) or 0})
+                end
+            
+                if movedEntity.nodes then
+                    for index,node in ipairs(movedEntity.nodes) do
+                        local visibility = entities.nodeVisibility("entities", movedEntity)
+                        if visibility == "always" or (visibility == "selected" and selected) then 
+                        
+                            toInsert = ({entities.getNodeDrawable(movedEntity._name, nil, room, movedEntity, node, index, nil)})[1]
+                            if toInsert.draw == nil then 
+                                for _,v in ipairs(toInsert) do table.insert(toDraw, {
+                                    func=v,
+                                    depth=(type(entity.depth) == "func" and entity.depth(room, movedEntity, nil) or entity.depth) or 0}) end
+                            else table.insert(toDraw, {
+                                func=toInsert,
+                                depth=(type(entity.depth) == "func" and entity.depth(room, movedEntity, nil) or entity.depth) or 0})
+                            end
                         end
                     end
                 end
             end
-        end
+        end)
     end
     for _,entity in ipairs(data[2].decalsBg) do
         if entity.x >= data[1].x-(entity.width or 0) and entity.x <= data[1].x+data[1].width and
@@ -266,9 +277,7 @@ function celesteRender.drawMap(state)
         initialTemplatesLoad = true
         orig_celesteRender_drawMap(state)
     end
-    local res = orig_celesteRender_drawMap(state)
-
-    return res
+    return orig_celesteRender_drawMap(state)
 end
 
 return aelperLib
