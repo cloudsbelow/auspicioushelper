@@ -41,6 +41,7 @@ public class TemplateFakewall:TemplateDisappearer{
   bool dontOnTransitionInto;
   int ddepth;
   float fadespeed;
+  bool persistent = true;
   public TemplateFakewall(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateFakewall(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
@@ -48,9 +49,10 @@ public class TemplateFakewall:TemplateDisappearer{
     dontOnTransitionInto = d.Bool("dontOnTransitionInto");
     ddepth = d.Int("disappear_depth",-13000);
     fadespeed = d.Float("fade_speed",1);
+    persistent = d.Bool("persistent",true);
   }
   public override void addTo(Scene scene){
-    if(auspicioushelperModule.Session.brokenTempaltes.Contains(fullpath) && false){
+    if(auspicioushelperModule.Session.brokenTempaltes.Contains(fullpath) && persistent){
       RemoveSelf();
     } else {
       base.addTo(scene);

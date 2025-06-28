@@ -29,6 +29,7 @@ entity.placements = {
       propagateRiding = true,
       propagateShaking = true,
       breaksfx = "event:/game/general/wall_break_stone",
+      exitBlockBehavior = false,
       
       _loenn_display_template = true,
     }

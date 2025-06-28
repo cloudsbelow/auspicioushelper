@@ -17,6 +17,7 @@ entity.placements = {
       dontOnTransitionInto = false,
       disappear_depth = -13000,
       fade_speed = 1,
+      persistent = true,
       
       _loenn_display_template = true,
     }

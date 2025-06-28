@@ -132,9 +132,7 @@ public partial class Util{
     n = r.Read7BitEncodedInt();
     for(int i=0; i<n; i++) d.BgDecals.Add(ReadDecaldata(r));
     d.Solids = r.ReadString();
-    DebugConsole.Write(d.Solids);
     d.Bg = r.ReadString();
-    DebugConsole.Write(d.Bg);
     d.Bounds.X=0;
     d.Bounds.Y=0;
     return d;

@@ -2,6 +2,7 @@
 
 
 
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.Entities;
@@ -19,6 +20,7 @@ class TemplateBlock:TemplateDisappearer{
   bool candash;
   bool persistent;
   string breaksfx;
+  bool isExitBlock;
   public TemplateBlock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
     uvis = d.Bool("visible",true);
@@ -42,13 +44,48 @@ class TemplateBlock:TemplateDisappearer{
     }
     if(!d.Bool("propagateRiding",true))prop&=~Propagation.Riding;
     if(!d.Bool("propagateShaking",true))prop&=~Propagation.Shake;
+    isExitBlock = d.Bool("exitBlockBehavior",false);
   }
   public override void addTo(Scene scene){
     if(persistent && auspicioushelperModule.Session.brokenTempaltes.Contains(fullpath)){
       RemoveSelf();
     } else {
       base.addTo(scene);
-      setVisColAct(uvis,ucol,uact);
+      if(isExitBlock) setVisColAct(false,false,false);
+      else setVisColAct(uvis,ucol,uact);
+      Active = true;
     }
+  }
+
+  public override void Awake(Scene scene) {
+    base.Awake(scene);
+    if(isExitBlock){
+      Player p = Scene.Tracker.GetEntity<Player>();
+      if(p!=null && !hasInside(p))setVisColAct(uvis,ucol,uact);
+      else Add(new Coroutine(appearSequence()));
+    }
+  }
+
+  IEnumerator appearSequence(){
+    while(true){
+      Player p = Scene.Tracker.GetEntity<Player>();
+      if(p!=null && !hasInside(p)) break;
+      yield return null;
+    }
+    Audio.Play("event:/game/general/passage_closed_behind", Position);
+    List<Entity> c = new();
+    AddAllChildren(c);
+    setVisColAct(false,ucol,uact);
+    if(!uvis) yield break;
+    FadeMaterialLayer f = new FadeMaterialLayer(c,8000);
+    f._alpha=0;
+    MaterialPipe.addLayer(f);
+    MaterialPipe.indicateImmidiateAddition();
+    yield return null;
+    while((f._alpha = f._alpha+Engine.DeltaTime)<1){
+      yield return null;
+    }
+    MaterialPipe.removeLayer(f);
+    setVisibility(true);
   }
 }
