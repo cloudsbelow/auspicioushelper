@@ -62,7 +62,7 @@ public class ChannelMathController:Entity{
     if(multi==MultiType.AttachedMultiple) toUpdate=new();
 
     debug = d.Bool("debug",false);
-    var bin=Convert.FromBase64String(d.Attr("compiled_operations",""));
+    var bin=Convert.FromBase64String(d.Attr("compiled_operations","").Trim());
     if(bin.Length<2){
       DebugConsole.Write("Invalid instructions - too short");
       return;
