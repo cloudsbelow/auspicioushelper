@@ -31,6 +31,7 @@ public class auspicioushelperModuleSettings : EverestModuleSettings {
   public void CreateEvilEntry(TextMenu menu, bool ingame){
     if(!ingame) return;
     menu.Add(new TextMenu.Button("Pack template rooms to log").Pressed(()=>{
+      Audio.Play(SFX.ui_main_savefile_rename_start);
       EvilPackedTemplateRoom.PackTemplatesEvil();
     }));
   }

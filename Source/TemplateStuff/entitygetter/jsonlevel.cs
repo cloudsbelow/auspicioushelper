@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Text;
 using Celeste;
 using Celeste.Mod.Entities;
@@ -26,20 +27,24 @@ public class EvilPackedTemplateRoom:Entity{
     }));
   }
   public EvilPackedTemplateRoom(EntityData d,Vector2 offset):base(Vector2.Zero){
-    string dat = d.Attr("EncodedRooms", "");
+    string dat = d.Attr("EncodedRooms", "").Trim();
     DebugConsole.Write("Thing constructed");
     if(string.IsNullOrEmpty(dat)) return;
     if(parsed.TryGetValue(d.ID, out var l)){
       MarkedRoomParser.AddDynamicRooms(l);
     } else try {
       var arr = Convert.FromBase64String(dat);
-      var r = new BinaryReader(new MemoryStream(arr),Encoding.UTF8);
-      int version = r.ReadInt16();
+      var stream = new MemoryStream(arr);
+      using var header = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true);
+      int version = header.ReadInt16();
       if(version>latestVersion || version<=0) throw new Exception("Invalid version");
-      int nrooms = r.ReadInt16();
+      int nrooms = header.ReadInt16();
       if(nrooms>4096) throw new Exception("somehow I doubt having 4096+ packed tempalte rooms is valid; throwing this to be safe");
+
+      var brotli = new BrotliStream(stream, CompressionMode.Decompress);
+      var r = new BinaryReader(brotli,Encoding.UTF8);
       List<MarkedRoomParser.TemplateRoom> rooms = new();
-      for(int i=0; i<nrooms; i++) rooms.Add(MarkedRoomParser.parseLeveldata(Util.ReadLeveldata(r)));
+      for(int i=0; i<nrooms; i++) rooms.Add(MarkedRoomParser.parseLeveldata(Util.ReadLeveldata(r), true));
       MarkedRoomParser.AddDynamicRooms(rooms);
       parsed.Add(d.ID, rooms);
     } catch(Exception ex){
@@ -49,10 +54,14 @@ public class EvilPackedTemplateRoom:Entity{
   }
   public static void PackTemplatesEvil(){
     using var ms = new MemoryStream();
-    using var w = new BinaryWriter(ms, Encoding.UTF8, leaveOpen:true);
-    w.Write((short)latestVersion);
-    w.Write((short) MarkedRoomParser.staticRooms.Count);
-    foreach(var pair in MarkedRoomParser.staticRooms) Util.Write(w,pair.Value.d,pair.Key,latestVersion);
+    using (var header = new BinaryWriter(ms, Encoding.UTF8, leaveOpen: true)){
+      header.Write((short)latestVersion);
+      header.Write((short) MarkedRoomParser.staticRooms.Count);
+    }
+    using(var brotli = new BrotliStream(ms, CompressionLevel.Optimal, leaveOpen: true))
+    using(var w = new BinaryWriter(brotli, Encoding.UTF8, leaveOpen:true)){
+      foreach(var pair in MarkedRoomParser.staticRooms) Util.Write(w,pair.Value.d,pair.Key,latestVersion);
+    }
     string str = Convert.ToBase64String(ms.ToArray());
     Logger.Info("auspicioushelper","\n\n========SERIALIZED ZZTEMPLATES ROOMS========\n"+str+"\n=========END ZZTEMPLATES ROOMS==========\n\n");
     DebugConsole.Write("\n\n========SERIALIZED ZZTEMPLATES ROOMS========\n"+str+"\n=========END ZZTEMPLATES ROOMS==========\n\n");

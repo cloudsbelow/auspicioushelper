@@ -104,7 +104,7 @@ public class auspicioushelperModule : EverestModule {
             }
             DebugConsole.Write(Engine.Scene?.ToString()??"null scene");
         } catch (Exception ex){
-            Logger.Warn("auspicioushelper","I don't know wtf happened here maybe this log can illuminate\n"+ex.ToString());
+            Logger.Warn("auspicioushelper","I don't know what happened here maybe this log can illuminate\n"+ex.ToString());
         }
         if(Session != null){
             try{

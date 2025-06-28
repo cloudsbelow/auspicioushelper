@@ -117,21 +117,30 @@ public partial class Util{
   public static LevelData ReadLeveldata(BinaryReader r, int version=1){
     if(version!=1) throw new Exception("versioning error");
     LevelData d = (LevelData)RuntimeHelpers.GetUninitializedObject(typeof(LevelData));
+    d.Name = r.ReadString();
+    DebugConsole.Write($"Got smuggled room: {d.Name}");
     d.Entities = new();
     int n = r.Read7BitEncodedInt();
+    DebugConsole.Write($"{n} entities");
     for(int i=0; i<n; i++) d.Entities.Add(ReadEntitydata(r));
     d.Triggers = new();
     n = r.Read7BitEncodedInt();
+    DebugConsole.Write($"{n} triggers");
     for(int i=0; i<n; i++) d.Triggers.Add(ReadEntitydata(r));
     d.FgDecals = new();
     n = r.Read7BitEncodedInt();
+    DebugConsole.Write($"{n} fgdecals");
     for(int i=0; i<n; i++) d.FgDecals.Add(ReadDecaldata(r));
     d.BgDecals = new();
     n = r.Read7BitEncodedInt();
+    DebugConsole.Write($"{n} bgdecals");
     for(int i=0; i<n; i++) d.BgDecals.Add(ReadDecaldata(r));
     d.Solids = r.ReadString();
+    DebugConsole.Write(d.Solids);
     d.Bg = r.ReadString();
-    d.Position = Vector2.Zero;
+    DebugConsole.Write(d.Bg);
+    d.Bounds.X=0;
+    d.Bounds.Y=0;
     return d;
   }
 

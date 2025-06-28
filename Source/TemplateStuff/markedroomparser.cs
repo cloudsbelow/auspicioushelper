@@ -14,8 +14,10 @@ internal static class MarkedRoomParser{
     public string Name=>d.Name;
     bool simulatedRoom;
     public Dictionary<string, templateFiller> templates;
-    public TemplateRoom(Dictionary<string, templateFiller> parsedTemplates, bool simulated){
+    public TemplateRoom(LevelData data, Dictionary<string, templateFiller> parsedTemplates, bool simulated){
+      d=data;
       templates=parsedTemplates;
+      foreach(var pair in templates)pair.Value.room = this; 
       simulatedRoom=simulated;
     }
   }
@@ -120,7 +122,7 @@ internal static class MarkedRoomParser{
         pair.Value.initStatic(fgt,bgt);
       }
     }
-    return new TemplateRoom(templates, simulatedRoom);
+    return new TemplateRoom(l,templates, simulatedRoom);
   }
   internal static void parseMapdata(MapData m){
     staticRooms.Clear();
@@ -129,7 +131,7 @@ internal static class MarkedRoomParser{
     foreach(LevelData l in m.Levels){
       if(l.Name.StartsWith(sigstr+"-")||l.Name == sigstr){
         DebugConsole.Write("Parsing "+l.Name);
-        string prefix = l.Name == sigstr?"":l.Name.Substring(sigstr.Length+1)+"/";
+        string prefix = l.Name == sigstr?"":l.Name.Substring(sigstr.Length+1);
         staticRooms.Add(prefix,parseLeveldata(l));
       }
     }
