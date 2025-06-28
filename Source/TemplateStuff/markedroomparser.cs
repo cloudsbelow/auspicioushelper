@@ -2,23 +2,41 @@
 
 
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using Celeste.Editor;
 using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 internal static class MarkedRoomParser{
+  public class TemplateRoom{
+    public LevelData d;
+    public string Name=>d.Name;
+    bool simulatedRoom;
+    public Dictionary<string, templateFiller> templates;
+    public TemplateRoom(Dictionary<string, templateFiller> parsedTemplates, bool simulated){
+      templates=parsedTemplates;
+      simulatedRoom=simulated;
+    }
+  }
+  public static Dictionary<string, TemplateRoom> staticRooms = new();
+  static Dictionary<string, TemplateRoom> dynamicRooms = new();
+  public static void AddDynamicRooms(List<TemplateRoom> rooms){
+    foreach(var room in rooms) dynamicRooms[room.Name] = room;
+  }
 
-  internal static Dictionary<string, templateFiller> templates = new Dictionary<string, templateFiller>();
   internal static string sigstr = "zztemplates";
-  internal static void parseLeveldata(LevelData l, string prefix){
+  const int tilepadding = 8;
+  internal static TemplateRoom parseLeveldata(LevelData l, bool simulatedRoom = false){
     var rects = new StaticCollisiontree();
     var handleDict = new Dictionary<int, string>();
+    Dictionary<string, templateFiller> templates = new();
     foreach(EntityData d in l.Entities){
       if(d.Name == "auspicioushelper/templateFiller"){
         templateFiller t = new templateFiller(d, l.Position){
           roomdat = l
         }; //we are in frame of room <3
-        string id = prefix+t.name;
+        string id = t.name;
         if(templates.ContainsKey(id)){
           DebugConsole.Write("Multiple templates with the same identifier "+id);
           continue;
@@ -92,17 +110,59 @@ internal static class MarkedRoomParser{
         });
       }
     }
+    
+    if(simulatedRoom){
+      var fgtd = Util.toCharmap(l.Solids, tilepadding);
+      var bgtd = Util.toCharmap(l.Bg, tilepadding);
+      var fgt = new SolidTiles(-Vector2.One*tilepadding*8,fgtd);
+      var bgt = new BackgroundTiles(-Vector2.One*tilepadding*8,bgtd);
+      foreach(var pair in templates){
+        pair.Value.initStatic(fgt,bgt);
+      }
+    }
+    return new TemplateRoom(templates, simulatedRoom);
   }
   internal static void parseMapdata(MapData m){
-    templates.Clear();
+    staticRooms.Clear();
+    dynamicRooms.Clear();
     EntityMarkingFlag.clear();
     foreach(LevelData l in m.Levels){
       if(l.Name.StartsWith(sigstr+"-")||l.Name == sigstr){
         DebugConsole.Write("Parsing "+l.Name);
         string prefix = l.Name == sigstr?"":l.Name.Substring(sigstr.Length+1)+"/";
-        parseLeveldata(l, prefix);
-
+        staticRooms.Add(prefix,parseLeveldata(l));
       }
     }
+  }
+  public static bool getTemplate(string templatestr, Template parent, Scene scene, out templateFiller filler){
+    string[] ts = templatestr.Split('/');
+    for(int idx = ts.Length-1; idx>=0; idx--){
+      string b = "";
+      for(int i=0; i<idx; i++)b+=ts[i];
+      string e = "";
+      for(int i=idx; i<ts.Length; i++)e+=ts[i];
+      TemplateRoom dr=null;
+      if(idx==0){
+        if(parent!=null){
+          if(parent.t.room.templates.TryGetValue(e, out filler)) return true;
+        } else {
+          string ldn = (scene as Level).Session.LevelData.Name;
+          if(dynamicRooms.TryGetValue(ldn, out dr)){
+            if(dr.templates.TryGetValue(e, out filler)) return true;
+          }
+          if(staticRooms.TryGetValue(ldn,out dr)){
+            if(dr.templates.TryGetValue(e, out filler)) return true;
+          }
+        }
+      }
+      if(dynamicRooms.TryGetValue(b, out dr)){
+        if(dr.templates.TryGetValue(e, out filler)) return true;
+      }
+      if(staticRooms.TryGetValue(b,out dr)){
+        if(dr.templates.TryGetValue(e, out filler)) return true;
+      }
+    }
+    filler = null;
+    return false;
   }
 }

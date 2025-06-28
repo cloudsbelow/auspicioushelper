@@ -29,6 +29,7 @@ public class templateFiller:Entity{
   internal List<EntityData> ChildEntities = new();
   Vector2 leveloffset;
   Vector2 tiletlc => leveloffset+Position;
+  internal MarkedRoomParser.TemplateRoom room;
   internal templateFiller(EntityData d, Vector2 offset):base(d.Position){
     this.Collider = new Hitbox(d.Width, d.Height);
     name = d.Attr("template_name","");
@@ -124,7 +125,7 @@ public class templateFiller:Entity{
           }
         }
       } else {
-        ret.SpriteOverlay = new AnimatedTiles(intercept.w,intercept.h,intercept.bank);
+        ret.SpriteOverlay = new AnimatedTiles(intercept.w,intercept.h,intercept.bank){Visible=false,Active=false};
       } 
       intercept = null;
       return ret;
@@ -156,6 +157,20 @@ public class templateFiller:Entity{
       Vector2 sto = ((tiletlc-st.Position)/8).Round();
       Bgt = new();
       Bgt.Fill(st.Tiles, st.AnimatedTiles,(int)sto.X,(int)sto.Y,tr.Width,tr.Height);
+    }
+  }
+  public void initStatic(SolidTiles solid, BackgroundTiles back){
+    if(created) return;
+    created = true;
+    if(fgt!=null){
+      Vector2 sto = ((tiletlc-solid.Position)/8).Round();
+      Fgt = new(); 
+      Fgt.Fill(solid.Tiles, solid.AnimatedTiles,(int)sto.X,(int)sto.Y,tr.Width,tr.Height);
+    }
+    if(bgt!=null){
+      Vector2 sto = ((tiletlc-back.Position)/8).Round();
+      Bgt = new(); 
+      Bgt.Fill(back.Tiles, back.AnimatedTiles,(int)sto.X,(int)sto.Y,tr.Width,tr.Height);
     }
   }
   public void AddTilesTo(Template tem){

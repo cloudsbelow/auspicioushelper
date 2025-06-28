@@ -8,6 +8,7 @@ using Celeste.Editor;
 using Monocle;
 using Microsoft.Xna.Framework;
 using System;
+using System.Text.RegularExpressions;
 
 namespace Celeste.Mod.auspicioushelper;
 public static partial class Util{
@@ -180,6 +181,17 @@ public static partial class Util{
       v="";
       goto parsevalue;
   }
+  public static VirtualMap<char> toCharmap(string s, int padding=0){
+    Regex regex = new Regex("\\r\\n|\\n\\r|\\n|\\r");
+    string[] arr = regex.Split(s);
+    VirtualMap<char> vm = new(arr.Max(x=>x.Length)+2*padding,arr.Length+2*padding);
+    for(int row=0; row<arr.Length; row++){
+      for(int col=0; col<arr[row].Length; col++){
+        vm[col+padding,row+padding] = arr[row][col];
+      }
+    }
+    return vm;
+  }
   public static string stripEnclosure(string str){
     if(str == "") return "";
     if(str[0] == '\"' && str[str.Length-1] == '\"') return str.Substring(1,str.Length-2);
@@ -273,4 +285,5 @@ public static partial class Util{
     }
     public static implicit operator Func<T1, bool>(FunctionList<T1> fl) => fl.Invoke;
   }
+  
 }

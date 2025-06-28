@@ -26,6 +26,14 @@ public class auspicioushelperModuleSettings : EverestModuleSettings {
       _tryQuietShader = value;
     }
   }
+
+  public bool Evil {get;set;}=false;
+  public void CreateEvilEntry(TextMenu menu, bool ingame){
+    if(!ingame) return;
+    menu.Add(new TextMenu.Button("Pack template rooms to log").Pressed(()=>{
+      EvilPackedTemplateRoom.PackTemplatesEvil();
+    }));
+  }
   /*private bool _hideHelperMaps = false;
   [SettingSubText("Choose rules for hiding maps below")]
   public bool HideHelperMaps {

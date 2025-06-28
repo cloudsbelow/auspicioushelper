@@ -35,6 +35,11 @@ public class ScheduledAction{
     enteredInto.Clear();
   }
 }
+public class PersistantAction:ScheduledAction{
+  public PersistantAction(Action a):base(()=>{
+    a(); return false;
+  }){}
+}
 
 public class ActionList{
   private HashSet<ScheduledAction> funcs=new HashSet<ScheduledAction>();

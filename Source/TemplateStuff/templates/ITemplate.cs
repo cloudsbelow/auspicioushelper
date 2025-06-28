@@ -82,11 +82,9 @@ public class Template:Entity, ITemplateChild{
   public Vector2 toffset = Vector2.Zero;
   public Wrappers.BasicMultient basicents = null;
   public DashCollision OnDashCollide = null;
+  string templateStr;
   public Template(EntityData data, Vector2 pos, int depthoffset):base(pos){
-    string templateStr = data.Attr("template","");
-    if(!MarkedRoomParser.templates.TryGetValue(templateStr, out t)){
-      DebugConsole.Write($"No template found with identifier \"{templateStr}\" in {this} at {Position}");
-    }
+    templateStr = data.Attr("template","");
     this.depthoffset = depthoffset;
     this.Visible = false;
     Depth = 10000+depthoffset;
@@ -186,10 +184,10 @@ public class Template:Entity, ITemplateChild{
       DebugConsole.Write("Something has gone terribly wrong in recursive adding process");
     }
     Scene = scene;
-    if(basicents != null){
-      DebugConsole.Write("Weird if this happens but nothing is actually wrong");
-      basicents.sceneadd(scene);
+    if(!MarkedRoomParser.getTemplate(templateStr, parent, scene, out t)){
+      DebugConsole.Write($"No template found with identifier \"{templateStr}\" in {this} at {Position}");
     }
+    if(basicents != null)basicents.sceneadd(scene);
     scene.Add(this);
     makeChildren(scene);
   }

@@ -10,8 +10,8 @@ using Microsoft.Xna.Framework.Design;
 namespace Celeste.Mod.auspicioushelper.channelmath;
 
 public static class FmodIop{
-  static Dictionary<int, EventInstance> evs;
-  static HashSet<int> trusted;
+  static Dictionary<int, EventInstance> evs=new();
+  static HashSet<int> trusted = new();
   static int handleCtr = 0;
   static int GetPlayHandle(string thing, Vector2 pos){
     int handle = ++handleCtr;
@@ -82,4 +82,4 @@ public static class FmodIop{
     trusted.Clear();
     return false;
   },auspicioushelperModule.OnReset);
-}
+} 
