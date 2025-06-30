@@ -119,6 +119,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     base.Update();
   }
   public override void OnTrigger(TriggerInfo sm) {
+    if(!TriggerInfo.TestPass(sm,this)) return;
     if(!setTch || upd.updatedThisFrame) triggered = true;
     else triggerNextFrame = true;
     if(setTch) ChannelState.SetChannel(tch,1);

@@ -9,6 +9,7 @@ using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
+using Celeste.Mod.auspicioushelper.Wrappers;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -148,7 +149,11 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
     }
   }
   public void OnTrigger(TriggerInfo info){
-    if(ridingTrigger) sm?.TriggerPlatform();
+    if(ridingTrigger){
+      Template parent = sm?.Platform?.Get<ChildMarker>()?.parent;
+      if(parent!=null) parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(info);
+      else if(TriggerInfo.TestPass(info,this)) sm?.TriggerPlatform();
+    }
   }
   public void renderMaterial(IMaterialLayer l, Camera c){
     foreach(Entity e in todraw){

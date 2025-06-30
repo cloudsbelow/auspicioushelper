@@ -193,6 +193,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
   }
   public bool triggered;
   public void OnTrigger(TriggerInfo info){
+    if(!TriggerInfo.TestPass(info,this)) return;
     //DebugConsole.Write($"{Position} triggered {upd.updatedThisFrame}");
     if(upd.updatedThisFrame) triggered = true;
     else triggerNextFrame = true;

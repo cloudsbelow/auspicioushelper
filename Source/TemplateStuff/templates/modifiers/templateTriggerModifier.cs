@@ -4,15 +4,19 @@
 using System;
 using System.Collections.Generic;
 using Celeste.Mod.auspicioushelper.Wrappers;
+using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
+[CustomEntity("auspicioushelper/TemplateTriggerModifier")]
 public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   bool triggerOnTouch;
   HashSet<TouchInfo.Type> advtouch = new();
-  bool propegateTouch;
+  bool passTrigger;
+  bool hideTrigger;
+  bool blockTrigger;
   string channel;
   public TemplateTriggerModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateTriggerModifier(EntityData d, Vector2 offset, int depthoffset)
@@ -20,18 +24,23 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     foreach(string s in Util.listparseflat(d.Attr("advancedTouchOptions",""),true)){
       if(Enum.TryParse<TouchInfo.Type>(s,out var res))advtouch.Add(res);
     }
-    triggerOnTouch = d.Bool("ontouch",false);
+    triggerOnTouch = d.Bool("triggerontouch",false);
     if(triggerOnTouch || advtouch.Count>0) hooks.enable();
     channel = d.Attr("channel",null);
     if(!d.Bool("propegateRiding",true)) prop &= ~Propagation.Riding;
     if(!d.Bool("propegateInside",true)) prop &= ~Propagation.Inside;
     if(!d.Bool("propegateShake",true)) prop &= ~Propagation.Shake;
     if(!d.Bool("propegateDashHit",true)) prop &= ~Propagation.DashHit;
+    passTrigger = d.Bool("propegateTrigger",false);
+    hideTrigger = d.Bool("hideTrigger",false);
+    blockTrigger = d.Bool("blockTrigger",false);
   }
   ITemplateTriggerable triggerParent;
+  TemplateTriggerModifier modifierParent;
   public override void addTo(Scene scene) {
     base.addTo(scene);
     triggerParent = parent?.GetFromTree<ITemplateTriggerable>();
+    modifierParent = parent?.GetFromTree<TemplateTriggerModifier>();
     if(!string.IsNullOrWhiteSpace(channel)){
       Add(new ChannelTracker(channel, (int val)=>{
         if(val!=0) OnTrigger(new ChannelInfo(channel));
@@ -40,11 +49,16 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   }
 
   public void OnTrigger(TriggerInfo sm){
-    if(triggerParent == null) return;
+    if(triggerParent == null || blockTrigger) return;
+    if(hideTrigger){
+      modifierParent?.OnTrigger(sm);
+      return;
+    }
     if(sm is TouchInfo tinfo){
       if(triggerOnTouch != advtouch.Contains(tinfo.ty)) triggerParent.OnTrigger(tinfo.asUsable());
+      else modifierParent?.OnTrigger(tinfo);
     } else {
-      triggerParent.OnTrigger(sm);
+      if(passTrigger)triggerParent.OnTrigger(sm);
     }
   }
   class TouchInfo:TriggerInfo{

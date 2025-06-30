@@ -28,6 +28,11 @@ public abstract class TriggerInfo{
     }
   }
   public virtual bool shouldTrigger=>true;
+  public static bool TestPass(TriggerInfo info, Template t){
+    bool use = info == null || info.shouldTrigger;
+    if(!use) t.parent?.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(info);
+    return use;
+  }
 }
 public interface ITemplateTriggerable{
   void OnTrigger(TriggerInfo s);
@@ -254,7 +259,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
   }
 
   public virtual void OnTrigger(TriggerInfo info){
-    triggered = true;
+    if(TriggerInfo.TestPass(info,this)) triggered = true;
   }
   static void smtHook(On.Celeste.Platform.orig_OnStaticMoverTrigger orig, Platform p, StaticMover sm){
     if(p is ITemplateChild c){
