@@ -33,8 +33,16 @@ public class auspicioushelperModuleSettings : EverestModuleSettings {
     menu.Add(new TextMenu.Button("Pack template rooms to log").Pressed(()=>{
       Audio.Play(SFX.ui_main_savefile_rename_start);
       EvilPackedTemplateRoom.PackTemplatesEvil();
-    }));
+    }).AddDescription(menu,"Log.txt's template rooms to string format for use in evil packed rooms entity"));
   }
+
+  private bool _crashOnFail = false;
+  [SettingSubText("Crash the game when you have invalid templates. For mappers.")]
+  public bool CrashOnFail{
+    get=>_crashOnFail;
+    set=>_crashOnFail=value;
+  }
+
   /*private bool _hideHelperMaps = false;
   [SettingSubText("Choose rules for hiding maps below")]
   public bool HideHelperMaps {

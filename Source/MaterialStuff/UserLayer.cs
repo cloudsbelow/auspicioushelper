@@ -40,7 +40,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
         case '@': 
           var match = chr.Match(val);
           if (!match.Success){
-            DebugConsole.Write($"Error parsing channel string {val}"); break;
+            DebugConsole.WriteFailure($"Error parsing channel string {val}"); break;
           }
           string ch = match.Groups[1].Value;
           float mult = 1;
@@ -60,7 +60,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
           }
           break;
         default:
-          DebugConsole.Write($"Don't know how to parse {val}"); break;
+          DebugConsole.WriteFailure($"Don't know how to parse {val}"); break;
       }break;
     }
   }
@@ -82,8 +82,8 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
     };
     foreach(var p in Util.kvparseflat(d.Attr("textures"),true,true)){
       if(p.Key=="0")DebugConsole.Write($"Warning: Binding to texture 0 is strange. Use 00 to hide this message");
-      if(!int.TryParse(p.Key.Trim(),out var idx)||idx>15||idx<0) DebugConsole.Write($"Invalid texture slot {p.Key}");
-      else if(string.IsNullOrWhiteSpace(p.Value)) DebugConsole.Write($"Invalid texutre resource at {idx}"); 
+      if(!int.TryParse(p.Key.Trim(),out var idx)||idx>15||idx<0) DebugConsole.WriteFailure($"Invalid texture slot {p.Key}");
+      else if(string.IsNullOrWhiteSpace(p.Value)) DebugConsole.WriteFailure($"Invalid texutre resource at {idx}"); 
       else switch(p.Value.ToLower()){
         case "bg": case "background": 
           l.useBg=true;
@@ -114,7 +114,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
         setparamval(pair.Key,pair.Value);
       }
     } catch(Exception err){
-      DebugConsole.Write($"error setting shader params: {err}");
+      DebugConsole.WriteFailure($"error setting shader params: {err}");
     }
   }
   public override void render(SpriteBatch sb, Camera c) {

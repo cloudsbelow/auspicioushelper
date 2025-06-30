@@ -190,7 +190,7 @@ public class Template:Entity, ITemplateChild{
     }
     Scene = scene;
     if(!MarkedRoomParser.getTemplate(templateStr, parent, scene, out t)){
-      DebugConsole.Write($"No template found with identifier \"{templateStr}\" in {this} at {Position}");
+      DebugConsole.WriteFailure($"No template found with identifier \"{templateStr}\" in {this} at {Position}");
     }
     if(basicents != null)basicents.sceneadd(scene);
     scene.Add(this);

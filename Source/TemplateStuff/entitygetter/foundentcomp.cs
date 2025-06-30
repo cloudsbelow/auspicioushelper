@@ -70,7 +70,7 @@ public class FoundEntity:Component{
           return method;
       }
 
-      DebugConsole.Write($"The reflection process on entity {e?.ToString()} failed at index {i} looking for {path[i]} on {o?.ToString()}");
+      DebugConsole.WriteFailure($"The reflection process on entity {e?.ToString()} failed at index {i} looking for {path[i]} on {o?.ToString()}");
       return 0;
     }
     return o;

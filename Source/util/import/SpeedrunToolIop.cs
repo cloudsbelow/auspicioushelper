@@ -82,7 +82,7 @@ internal static class SpeedrunToolIop{
           toDeregister.Add(registerfn.Invoke(null, o));
         }
       } catch (Exception ex) {
-        DebugConsole.Write($"Failed to register static types: {ex}");
+        DebugConsole.WriteFailure($"Failed to register static types: {ex}");
       }
     }while(false);
     do{
@@ -93,7 +93,7 @@ internal static class SpeedrunToolIop{
           null, (object)loadState, null, null, null, null
         }));
       } catch(Exception ex){
-        DebugConsole.Write($"Failed to register action: {ex}");
+        DebugConsole.WriteFailure($"Failed to register action: {ex}");
       }
     }while(false);
   }

@@ -17,10 +17,10 @@ public abstract class ITexture{
     public override Texture2D tex{get{
       if(l == null){
         l = MaterialController.getLayer(i);
-        if(l == null) DebugConsole.Write($"Tried to access the layer {i} which does not exist");
+        if(l == null) DebugConsole.WriteFailure($"Tried to access the layer {i} which does not exist");
       }
       if(!l.enabled){
-        DebugConsole.Write("Trying to use disabled texture as input");
+        DebugConsole.WriteFailure("Trying to use disabled texture as input");
         return null;
       }
       return l.outtex;
@@ -52,7 +52,7 @@ public abstract class ITexture{
   public class BgWrapper:ITexture{
     public override Texture2D tex{get{
       if(!MaterialPipe.orderFlipped){
-        DebugConsole.Write("Tried to use the background texture without flipping renderer");
+        DebugConsole.WriteFailure("Tried to use the background texture without flipping renderer");
         return null;
       }
       return GameplayBuffers.Level;

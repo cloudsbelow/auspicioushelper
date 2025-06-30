@@ -40,7 +40,7 @@ internal static class MarkedRoomParser{
         }; //we are in frame of room <3
         string id = t.name;
         if(templates.ContainsKey(id)){
-          DebugConsole.Write("Multiple templates with the same identifier "+id);
+          DebugConsole.WriteFailure("Multiple templates with the same identifier "+id);
           continue;
         }
         int handle = rects.add(new FloatRect(t));

@@ -46,7 +46,7 @@ public class EntityMarkingFlag:Entity{
       flagged[cl] = identifier;
       DebugConsole.Write($"Registered looker for {sig} of {identifier}");
     } catch(Exception ex){
-      DebugConsole.Write($"Your ID path could not be parsed: {sig} causes error \n{ex}\n"+
+      DebugConsole.WriteFailure($"Your ID path could not be parsed: {sig} causes error \n{ex}\n"+
       "Please remember to format your path to match: \\d+(/\\d+)*");
     }
   }
@@ -87,7 +87,7 @@ public class EntityMarkingFlag:Entity{
     // }
     return;
     bad:
-      DebugConsole.Write("Failed to add hook to entity finder");
+      DebugConsole.WriteFailure("Failed to add hook to entity finder");
   }
   static ILHook llhook;
   public static void AddHook(On.Monocle.Scene.orig_Add_Entity orig, Scene self, Entity e){

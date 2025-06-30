@@ -26,7 +26,7 @@ public class TemplateDisappearer:Template{
   }
   int permute(bool action, ref bool activator, bool other){
     if(action == activator){
-      DebugConsole.Write("THIS SHOULD NOT HAPPEN - CODE IS BORKED");
+      DebugConsole.WriteFailure("THIS SHOULD NOT HAPPEN - CODE IS BORKED");
       return 0;
     }
     activator = action;

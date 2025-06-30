@@ -54,13 +54,13 @@ public class templateFiller:Entity{
       for(int j=0; j<tr.Width; j++){
         int r = i+tr.Top;
         int c = j+tr.Left;
-        if(r<fglines.Length && c<fglines[r].Length){
+        if(r>=0 && c>=0 && r<fglines.Length && c<fglines[r].Length){
           fgtiles[j,i]=fglines[r][c];
           keepfg |= fglines[r][c]!='0';
         } else {
           fgtiles[j,i]='0';
         }
-        if(r<bglines.Length && c<bglines[r].Length){
+        if(r>=0 && c>=0 && r<bglines.Length && c<bglines[r].Length){
           bgtiles[j,i]=bglines[r][c];
           keepbg |= bglines[r][c]!='0';
         } else {

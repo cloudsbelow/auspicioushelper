@@ -69,7 +69,7 @@ public class ChannelMathController:Entity{
     }
     int version = BitConverter.ToUInt16(bin);
     if(version!=1){
-      DebugConsole.Write("Invalid version for mathcontroller");
+      DebugConsole.WriteFailure("Invalid version for mathcontroller");
       return;
     }
     
@@ -303,7 +303,7 @@ public class ChannelMathController:Entity{
       ints.Add(reg[op[iptr++]]);
     }
     if(!iopFuncs.TryGetValue(strs[0], out var f)){
-      DebugConsole.Write($"Interop function {strs[0]} not yet registered");
+      DebugConsole.WriteFailure($"Interop function {strs[0]} not yet registered");
       return 0;
     }
     try{
@@ -319,7 +319,7 @@ public class ChannelMathController:Entity{
   }
   public static void registerInterop(string identifier, Func<List<string>,List<int>,int> function){
     if(!iopFuncs.TryAdd(identifier,function)){
-      DebugConsole.Write($"Interop registration collision at {identifier}");
+      DebugConsole.WriteFailure($"Interop registration collision at {identifier}");
     }
   }
   public static void deregisterInterop(string identifier, Func<List<string>,List<int>,int> function){

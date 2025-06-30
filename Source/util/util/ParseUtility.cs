@@ -96,7 +96,7 @@ public static partial class Util{
         idx++; goto fent;
       }
       if(idx >= str.Length){
-        DebugConsole.Write("PARSE ERROR: "+str);
+        DebugConsole.WriteFailure("PARSE ERROR: "+str);
         return null;
       }
       if(escape.TryGetValue(str[idx], out var esc)){
@@ -114,7 +114,7 @@ public static partial class Util{
 
     parsestring:
       if(idx == str.Length){
-        DebugConsole.Write("PARSE ERROR: "+str);
+        DebugConsole.WriteFailure("PARSE ERROR: "+str);
       }
       if(escapeNext){
         escapeNext = false; 
@@ -145,7 +145,7 @@ public static partial class Util{
         idx++; goto fent;
       }
       if(idx >= str.Length){
-        DebugConsole.Write("PARSE ERROR: "+str);
+        DebugConsole.WriteFailure("PARSE ERROR: "+str);
         return null;
       }
       if(escape.TryGetValue(str[idx], out var esc)){
@@ -163,7 +163,7 @@ public static partial class Util{
 
     parsestring:
       if(idx == str.Length){
-        DebugConsole.Write("PARSE ERROR: "+str);
+        DebugConsole.WriteFailure("PARSE ERROR: "+str);
       }
       if(escapeNext){
         escapeNext = false; 
@@ -198,7 +198,7 @@ public static partial class Util{
     if(escape.TryGetValue(str[0],out var esc)){
       if(str[str.Length-1]==esc)return str.Substring(1,str.Length-2);
       else {
-        DebugConsole.Write("Enclosing characters not symmetric: "+str);
+        DebugConsole.WriteFailure("Enclosing characters not symmetric: "+str);
         return str;
       }
     }

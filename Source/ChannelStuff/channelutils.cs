@@ -50,7 +50,7 @@ public static class ChannelState{
         default: success = false; break;
       }
       if(!success && s.Length>0){
-        DebugConsole.Write($"Improper modifier {s} - parsed as op {m} and val {y}");
+        DebugConsole.WriteFailure($"Improper modifier {s} - parsed as op {m} and val {y}");
       }
     }
     public int apply(int x){
@@ -110,7 +110,6 @@ public static class ChannelState{
     else return addModifier(ch);
   }
   static void SetChannelRaw(string ch, int state){
-    //DebugConsole.Write($"{ch}: {readChannel(ch)} -> {state}");
     if(readChannel(ch) == state) return;
     channelStates[ch] = state;
     if (watching.TryGetValue(ch, out var list)) {
@@ -172,7 +171,6 @@ public static class ChannelState{
   }
   static int addModifier(string ch){
     int idx=0;
-    //DebugConsole.Write(ch);
     for(;idx<ch.Length;idx++) if(ch[idx]=='[')break;
     string clean = ch.Substring(0,idx);
 
