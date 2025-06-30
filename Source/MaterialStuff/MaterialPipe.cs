@@ -192,7 +192,7 @@ public static class MaterialPipe {
     c.EmitDelegate(backdropReorderDetour);
     c.EmitBrtrue(target);
     bad:
-    DebugConsole.Write($"Failed to add background reordering hook");
+    DebugConsole.WriteFailure($"Failed to add background reordering hook");
   }
   public static void setup(){
     dirty=true;

@@ -28,7 +28,7 @@ public static class auspicioushelperGFX {
       graphicsDeviceService = Engine.Instance.Content.ServiceProvider.GetService(typeof(IGraphicsDeviceService)) as IGraphicsDeviceService;
     ModAsset asset = Everest.Content.Get(Util.concatPaths("Effects",path)+".cso",true);
     if (asset == null){
-      DebugConsole.Write("Failed to fetch shader at Effects/"+path);
+      DebugConsole.WriteFailure("Failed to fetch shader at Effects/"+path);
       return null;
     }
     try{
@@ -42,7 +42,7 @@ public static class auspicioushelperGFX {
       }
       return new VirtualShader(returnV,returnQ);
     }catch(Exception err){
-      DebugConsole.Write("Failed to load shader Effects/"+path+" with exception "+ err.ToString());
+      DebugConsole.WriteFailure("Failed to load shader Effects/"+path+" with exception "+ err.ToString());
     }
     return null;
   }

@@ -48,7 +48,7 @@ public class EvilPackedTemplateRoom:Entity{
       MarkedRoomParser.AddDynamicRooms(rooms);
       parsed.Add(d.ID, rooms);
     } catch(Exception ex){
-      DebugConsole.Write("Could not load your packed template room: \n"+ex.ToString());
+      DebugConsole.WriteFailure("Could not load your packed template room: \n"+ex.ToString());
       Logger.Warn("auspicioushelper",$"Could not load your packed template room with id {d.ID}: \n"+ex.ToString());
     }
   }

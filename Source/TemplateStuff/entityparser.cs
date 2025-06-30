@@ -16,6 +16,7 @@ public static class EntityParser{
     platformbasic,
     platformdisobedient,
     unwrapped,
+    template,
     basic,
     removeSMbasic,
     initiallyerrors,
@@ -37,7 +38,9 @@ public static class EntityParser{
       }
       try{
         Entity t = loader(l,ld,Vector2.Zero,d);
-        if(t is Platform){
+        if(t is Template){
+          etype = parseMap[d.Name] = Types.template;
+        }else if(t is Platform){
           etype = parseMap[d.Name] = Types.platformbasic;
         }else if(t is Actor || t is ITemplateChild){
           etype = parseMap[d.Name] = Types.unwrapped;
@@ -63,6 +66,11 @@ public static class EntityParser{
       etype = parseMap[d.Name];
       if(etype == Types.unable || etype==Types.initiallyerrors) return null;
     }
+    if(etype == Types.template){
+      if(string.IsNullOrWhiteSpace(d.Attr("template"))){
+        return null;
+      }
+    }
     
     var loader = getLoader(d.Name);
     if(loader == null) return null;
@@ -83,7 +91,7 @@ public static class EntityParser{
           DebugConsole.Write("Wrongly classified!!! "+d.Name);
           goto done;
         }
-      case Types.unwrapped:
+      case Types.unwrapped: case Types.template:
         return e;
       case Types.basic:
         if(e!=null){

@@ -88,4 +88,10 @@ public static class DebugConsole {
     consoleThread = null;
     open = false;
   }
+  public static void WriteFailure(string s){
+    Write(s);
+    if(auspicioushelperModule.Settings?.CrashOnFail??false){
+      throw new Exception(s);
+    }
+  }
 }

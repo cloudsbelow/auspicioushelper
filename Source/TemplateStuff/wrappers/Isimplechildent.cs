@@ -20,7 +20,7 @@ public interface ISimpleEnt:ITemplateChild{
       s.Add(e);
       e.Scene = s;
     } else {
-      DebugConsole.Write($"{this} implements simpleent wihtout being entity");
+      DebugConsole.WriteFailure($"{this} implements simpleent wihtout being entity");
     }
   }
   void ITemplateChild.destroy(bool particles){
