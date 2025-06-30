@@ -251,9 +251,20 @@ aelperLib.get_entity_draw = function(icon_name)
         }):draw()
     end
 end
-
+local hasLegacy = {
+    tblk=true,
+    tcass=true,
+    tchan=true,
+    tfake=true,
+    tfall=true,
+    tmoon=true,
+    tmovr=true,
+    tstat=true,
+    tswap=true,
+    tzip=true
+}
 aelperLib.getIcon = function(name)
-    return settings.auspicioushelper_legacyicons and (name.."_legacy") or name
+    return (settings.auspicioushelper_legacyicons and hasLegacy[name]) and (name.."_legacy") or name
 end
 
 aelperLib.log = function(...)
