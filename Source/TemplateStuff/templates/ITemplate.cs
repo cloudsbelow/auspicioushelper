@@ -18,6 +18,7 @@ public interface ITemplateChild{
   Template.Propagation prop {get=>Template.Propagation.All;}
   void relposTo(Vector2 loc, Vector2 liftspeed);
   void addTo(Scene s){}
+  void templateAwake(){}
   void parentChangeStat(int vis, int col, int act);
   bool hasRiders<T>() where T : Actor{
     return false;
@@ -157,7 +158,7 @@ public class Template:Entity, ITemplateChild{
   public void setOffset(Vector2 ppos){
     this.toffset = Position-ppos;
   }
-  void makeChildren(Scene scene){
+  void makeChildren(Scene scene, bool recursive = false){
     if(t==null) return;
     //if(t.bgt!=null) addEnt(new Wrappers.BgTiles(t,virtLoc,depthoffset));
     //if(t.fgt!=null) addEnt(fgt=new Wrappers.FgTiles(t, virtLoc, depthoffset));
@@ -178,6 +179,10 @@ public class Template:Entity, ITemplateChild{
       };
       AddBasicEnt(e, simoffset+d.Position-virtLoc);
     }
+    if(!recursive) templateAwake();
+  }
+  public virtual void templateAwake(){
+    foreach(var c in children) c.templateAwake();
   }
   public virtual void addTo(Scene scene){
     if(Scene != null){
@@ -189,7 +194,7 @@ public class Template:Entity, ITemplateChild{
     }
     if(basicents != null)basicents.sceneadd(scene);
     scene.Add(this);
-    makeChildren(scene);
+    makeChildren(scene, parent!=null);
   }
   public override void Added(Scene scene){
     if(Scene == null){

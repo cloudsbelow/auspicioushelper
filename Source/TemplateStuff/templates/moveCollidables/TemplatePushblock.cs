@@ -84,6 +84,7 @@ public class TemplatePushblock:TemplateMoveCollidable{
       }
       if(nophysicstime<=0 || alwaysDrag) speed.X = Calc.Approach(speed.X,0,Engine.DeltaTime*(grounded?floordrag:drag));
       if(nophysicstime>0) nophysicstime-=Engine.DeltaTime;
+      ownLiftspeed = speed;
       if(speed!=Vector2.Zero){
         if(MoveHCollide(q, speed.X*Engine.DeltaTime, leniency, speed)){
           speed.X = -speed.X*reflectX;
