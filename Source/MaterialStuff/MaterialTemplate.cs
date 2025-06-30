@@ -86,11 +86,13 @@ public class MaterialTemplate:TemplateDisappearer, IOverrideVisuals{
   public HashSet<OverrideVisualComponent> toRemove {get;} = new();
   public bool dirty {get;set;}
   bool invis;
+  bool collidable = true;
   public MaterialTemplate(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public MaterialTemplate(EntityData d, Vector2 offset, int depthoffset):base(d,offset+d.Position,depthoffset){
     invis = d.Bool("dontNormalRender",true);
     lident = d.Attr("identifier","");
     if(string.IsNullOrWhiteSpace(lident)) DebugConsole.Write("No layer specified for material template");
+    Collidable = d.Bool("collidable",true);
   }
   string lident;
   IMaterialLayer layer;
@@ -108,5 +110,6 @@ public class MaterialTemplate:TemplateDisappearer, IOverrideVisuals{
       layer.addEnt(c);
     }
     (this as IOverrideVisuals).PrepareList(!invis);
+    if(!collidable)setCollidability(false);
   }
 }

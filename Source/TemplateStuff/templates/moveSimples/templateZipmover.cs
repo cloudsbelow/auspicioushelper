@@ -192,11 +192,11 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
     sfx.Stop();
   }
   public bool triggered;
-  public void OnTrigger(StaticMover sm){
+  public void OnTrigger(TriggerInfo info){
     //DebugConsole.Write($"{Position} triggered {upd.updatedThisFrame}");
     if(upd.updatedThisFrame) triggered = true;
     else triggerNextFrame = true;
     if(channel != null) ChannelState.SetChannel(channel,1);
-    if((prop&Propagation.Riding)!=0 && parent!=null)parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(sm);
+    if((prop&Propagation.Riding)!=0 && parent!=null)parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(info);
   }
 }

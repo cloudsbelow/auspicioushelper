@@ -114,10 +114,10 @@ public class TemplatePushblock:TemplateMoveCollidable{
       }
     }
   }
-  public override void OnTrigger(StaticMover sm) {
-    base.OnTrigger(sm);
+  public override void OnTrigger(TriggerInfo info) {
+    base.OnTrigger(info);
     if(ownSpringRecoil == 0) return;
-    Entity e = EntityParser.SmInfo.getInfo(sm).entity;
+    Entity e = info?.entity;
     if(e is Spring s){
       if(s.Orientation == Spring.Orientations.Floor) speed.Y=Math.Min(speed.Y+ownSpringRecoil,terminalVelocity);
       if(s.Orientation == Spring.Orientations.WallLeft) speed.X-=ownSpringRecoil;

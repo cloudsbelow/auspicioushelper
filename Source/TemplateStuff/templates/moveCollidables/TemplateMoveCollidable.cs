@@ -12,8 +12,25 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
+public abstract class TriggerInfo{
+  public Template parent;
+  public Entity entity;
+  public class SmInfo:TriggerInfo{
+    public SmInfo(Template p, Entity e){
+      this.parent = p; this.entity = e;
+    }
+    public static SmInfo getInfo(StaticMover sm){
+      var smd = new DynamicData(sm);
+      if(smd.TryGet<SmInfo>("__auspiciousSM", out var info)){
+        return info;
+      }
+      return new SmInfo(null,sm.Entity);
+    }
+  }
+  public virtual bool shouldTrigger=>true;
+}
 public interface ITemplateTriggerable{
-  void OnTrigger(StaticMover s);
+  void OnTrigger(TriggerInfo s);
 }
 public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{ 
   public override Vector2 gatheredLiftspeed => dislocated?ownLiftspeed:base.gatheredLiftspeed;
@@ -236,16 +253,16 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     return new(q,s);
   }
 
-  public virtual void OnTrigger(StaticMover sm){
+  public virtual void OnTrigger(TriggerInfo info){
     triggered = true;
   }
   static void smtHook(On.Celeste.Platform.orig_OnStaticMoverTrigger orig, Platform p, StaticMover sm){
     if(p is ITemplateChild c){
-      c.parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(sm);
+      c.parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(TriggerInfo.SmInfo.getInfo(sm));
     } else {
       ChildMarker m = p.Get<ChildMarker>();
       if(m!=null){
-        m.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(sm);
+        m.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(TriggerInfo.SmInfo.getInfo(sm));
       }
     }
     orig(p,sm);

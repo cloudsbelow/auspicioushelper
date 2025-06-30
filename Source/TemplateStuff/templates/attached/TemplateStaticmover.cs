@@ -147,7 +147,7 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
       if(hasRiders<Player>()) sm.TriggerPlatform();
     }
   }
-  public void OnTrigger(StaticMover othersm){
+  public void OnTrigger(TriggerInfo info){
     if(ridingTrigger) sm?.TriggerPlatform();
   }
   public void renderMaterial(IMaterialLayer l, Camera c){

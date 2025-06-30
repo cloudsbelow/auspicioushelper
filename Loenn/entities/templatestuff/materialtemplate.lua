@@ -15,6 +15,7 @@ entity.placements = {
       depthoffset=5,
       dontNormalRender=true,
       identifier="",
+      collidable=true,
       
       _loenn_display_template = true,
     }

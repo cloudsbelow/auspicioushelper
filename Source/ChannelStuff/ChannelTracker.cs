@@ -9,11 +9,11 @@ public class ChannelTracker : Component, IChannelUser{
   public string channel {get; set;}
   public int value;
   Action<int> onChannelChange;
-  public ChannelTracker(string channel, Action<int> onChannelChange):base(true, false){
+  public ChannelTracker(string channel, Action<int> onChannelChange, bool immediateInvoke = false):base(false, false){
     this.channel=channel;
     this.onChannelChange=onChannelChange;
-    ChannelState.watch(this);
-    value = ChannelState.readChannel(channel);
+    value = ChannelState.watch(this);
+    if(immediateInvoke) onChannelChange(value);
   }
   public void setChVal(int val){
     value = val;
