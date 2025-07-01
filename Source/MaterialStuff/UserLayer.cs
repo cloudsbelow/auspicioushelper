@@ -13,7 +13,8 @@ using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
-public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettableDepth{
+public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettableDepth, CachedUserMaterial{
+  public string identifier {get;set;}
   public float depth {set{
     info.depth=value;
     if(info.markingEnt!=null)info.markingEnt.Depth = (int)info.depth;

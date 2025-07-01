@@ -7,7 +7,8 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 //I have become the c# abstraction-enraptured person lmao like actually what is this haha
 //OK to be sort of fair I intended to do a custom rasterMats for this but decided not.
-public class ChannelMaterialsA:BasicMaterialLayer{
+public class ChannelMaterialsA:BasicMaterialLayer, CachedUserMaterial{
+  public string identifier {get;set;}
   private List<IMaterialObject> bgItemsDraw = new List<IMaterialObject>();
   public RenderTargetPool.RenderTargetHandle bgtex = new(false);
   public bool enabled=>info.enabled;

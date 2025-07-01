@@ -15,6 +15,7 @@ internal static class SpeedrunToolIop{
   internal static List<object> toDeregister = new List<object>();
   static void loadState(Dictionary<Type, Dictionary<string, object>> values, Level level){
     try{
+    MaterialPipe.fixFromSrt();
     ChannelState.unwatchAll();
     PortalGateH.intersections.Clear();
     foreach(Entity e in Engine.Instance.scene.Entities){
@@ -61,8 +62,6 @@ internal static class SpeedrunToolIop{
       typeof(RenderTargetPool), new string[] { "available"}
     }, new object[]{
       typeof(MaterialPipe), new string[] {"layers", "leaving", "entering", "toremove"}
-    }, new object[]{
-      typeof(MaterialController), new string[] {"loadedMats"}
     }, new object[]{
       typeof(CassetteMaterialLayer), new string[] {"layers"}
     }, new object[]{

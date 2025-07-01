@@ -181,6 +181,9 @@ public static class MaterialPipe {
     foreach(IMaterialLayer l in leaving) removeLayer(l);
     leaving.Clear();
   }
+  public static void fixFromSrt(){
+    foreach(var l in layers) if(l is CachedUserMaterial c)  MaterialController.fixmat(c);
+  }
 
   static void reorderBg(ILContext ctx){
     ILCursor c = new ILCursor(ctx);

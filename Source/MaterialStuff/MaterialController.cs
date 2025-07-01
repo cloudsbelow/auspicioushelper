@@ -48,11 +48,14 @@ public interface ISettableDepth{
 public interface IDeclareLayers{
   void declareLayers();
 }
+public interface CachedUserMaterial:IMaterialLayer{
+  string identifier {get;set;}
+}
 
 [CustomEntity("auspicioushelper/MaterialController")]
 [Tracked]
 internal class MaterialController:Entity, IDeclareLayers{
-  static Dictionary<string, IMaterialLayer> loadedMats = new Dictionary<string, IMaterialLayer>();
+  static Dictionary<string, CachedUserMaterial> loadedMats = new();
   public static IMaterialLayer getLayer(string ident)=>loadedMats.TryGetValue(ident, out var layer)?layer:null;
   static MaterialController(){
     auspicioushelperModule.OnEnterMap.enroll(new ScheduledAction(()=>{
@@ -61,7 +64,7 @@ internal class MaterialController:Entity, IDeclareLayers{
   }
   EntityData e;
   internal string identifier;
-  public IMaterialLayer load(EntityData e){
+  public CachedUserMaterial load(EntityData e){
     string path=e.Attr("path","")+e.Attr("passes","");
     identifier=e.Attr("identifier");
     if(string.IsNullOrWhiteSpace(identifier)){
@@ -70,7 +73,7 @@ internal class MaterialController:Entity, IDeclareLayers{
     }
     bool reload = e.Bool("reload",false);
     if(path.Length == 0)return null;
-    IMaterialLayer l = null;
+    CachedUserMaterial l = null;
     if(reload && loadedMats.TryGetValue(identifier, out l)){
       if(l.enabled) MaterialPipe.removeLayer(l);
       loadedMats.Remove(identifier);
@@ -85,6 +88,7 @@ internal class MaterialController:Entity, IDeclareLayers{
           loadedMats[identifier]=l;
         }
       }
+      l.identifier = identifier;
     }
     if(loadedMats.TryGetValue(identifier, out var layer)){
       MaterialPipe.addLayer(layer);
@@ -110,6 +114,9 @@ internal class MaterialController:Entity, IDeclareLayers{
         MaterialPipe.dirty = true;
       }
     }
+  }
+  public static void fixmat(CachedUserMaterial c){
+    loadedMats[c.identifier] = c;
   }
   public override void Added(Scene scene){
     base.Added(scene);
