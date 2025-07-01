@@ -141,10 +141,16 @@ public static class MaterialPipe {
   }
   static List<LayerMarkingEntity> blockedAddingEnt = new();
   public static void addLayer(IMaterialLayer l){
-    if(!leaving.Remove(l)) entering.Add(l);
-    toRemove.Remove(l);
-    if(l.enabled) return;
+    if(!leaving.Remove(l))entering.Add(l);
+    if(l.enabled){
+      // if(!layers.Contains(l)){
+      //   DebugConsole.Write("Speedruntool badness happened");
+      //   removeLayer(l);
+      // }else return;
+      return;
+    }
     l.enabled=true;
+    toRemove.Remove(l);
     if(l.markingEntity!=null) throw new Exception("Layer marking entities are leaking");
     if(Engine.Instance.scene is Level lv)lv.Add(new LayerMarkingEntity(l));
     else if(Engine.Instance.scene is LevelLoader ld) ld.Level.Add(new LayerMarkingEntity(l));

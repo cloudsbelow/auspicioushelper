@@ -45,6 +45,7 @@ public interface ITemplateChild{
   void AddAllChildren(List<Entity> list);
   void setOffset(Vector2 ppos){}
   void destroy(bool particles);
+  bool shouldAddAsChild=>true;
 }
 public interface IChildShaker{
   Vector2 lastShake {get;set;}
@@ -148,9 +149,12 @@ public class Template:Entity, ITemplateChild{
   internal Wrappers.FgTiles fgt = null;
   public void addEnt(ITemplateChild c){
     c.parent = this;
-    children.Add(c);
+    if(c.shouldAddAsChild)children.Add(c);
     if(c is Template ct){
       ct.depthoffset+=depthoffset;
+      if(t.hasChainBehavior){
+        //ct.t = t.nextChain();
+      }
     }
     c.addTo(Scene);
     c.setOffset(virtLoc);
@@ -189,8 +193,8 @@ public class Template:Entity, ITemplateChild{
       DebugConsole.Write("Something has gone terribly wrong in recursive adding process");
     }
     Scene = scene;
-    if(!MarkedRoomParser.getTemplate(templateStr, parent, scene, out t)){
-      DebugConsole.WriteFailure($"No template found with identifier \"{templateStr}\" in {this} at {Position}");
+    if(t==null && !MarkedRoomParser.getTemplate(templateStr, parent, scene, out t)){
+      DebugConsole.Write($"No template found with identifier \"{templateStr}\" in {this} at {Position}");
     }
     if(basicents != null)basicents.sceneadd(scene);
     scene.Add(this);

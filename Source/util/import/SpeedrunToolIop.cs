@@ -62,6 +62,8 @@ internal static class SpeedrunToolIop{
     }, new object[]{
       typeof(MaterialPipe), new string[] {"layers", "leaving", "entering", "toremove"}
     }, new object[]{
+      typeof(MaterialController), new string[] {"loadedMats"}
+    }, new object[]{
       typeof(CassetteMaterialLayer), new string[] {"layers"}
     }, new object[]{
       typeof(ChannelBaseEntity), new string[] {"layerA"}

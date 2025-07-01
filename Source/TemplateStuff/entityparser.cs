@@ -66,14 +66,14 @@ public static class EntityParser{
       etype = parseMap[d.Name];
       if(etype == Types.unable || etype==Types.initiallyerrors) return null;
     }
+    var loader = getLoader(d.Name);
+    if(loader == null) return null;
     if(etype == Types.template){
       if(string.IsNullOrWhiteSpace(d.Attr("template"))){
-        return null;
+        return t==null?loader(l,ld,simoffset,d):null;
       }
     }
     
-    var loader = getLoader(d.Name);
-    if(loader == null) return null;
     currentParent = t;
     Entity e = loader(l,ld,simoffset,d);
     if(e==null) goto done;

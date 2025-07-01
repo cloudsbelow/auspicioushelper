@@ -184,4 +184,21 @@ public class templateFiller:Entity{
       tem.addEnt(new BgTiles(this, tem.virtLoc, tem.depthoffset));
     }
   }
+  
+
+  public bool hasChainBehavior=>chain!=null;
+  public class ChainBehavior{
+    
+  }
+  ChainBehavior chain=null;
+  
+  public static templateFiller MkNestingFiller(EntityData internalTemplate){
+    var f=new templateFiller();
+    f.created = true;
+    f.Fgt = null;
+    f.Bgt = null;
+    f.ChildEntities.Add(internalTemplate);
+    f.Position = internalTemplate.Position;
+    return f;
+  }
 }
