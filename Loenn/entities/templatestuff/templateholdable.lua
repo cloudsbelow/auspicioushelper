@@ -6,7 +6,7 @@ local aelperLib = require("mods").requireFromPlugin("libraries.aelper_lib")
 
 local entity = {}
 
-entity.name = aelperLib.register_template_name("auspicioushelper/templateholdable")
+entity.name = "auspicioushelper/templateholdable"--aelperLib.register_template_name()
 entity.depth = -100000
 entity.nodeLimits = {0,1}
 entity.nodeLineRenderType = "none"
