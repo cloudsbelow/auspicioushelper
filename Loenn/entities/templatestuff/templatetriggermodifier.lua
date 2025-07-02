@@ -6,7 +6,26 @@ local entity = {}
 
 entity.name = aelperLib.register_template_name("auspicioushelper/TemplateTriggerModifier")
 entity.depth = -13000
-
+entity.fieldInformation = {
+    advancedTouchOptions={
+        fieldType="list",
+        elementDefault="jump",
+        elementOptions = {
+            fieldType = "string",
+            options={
+                "collideV", 
+                "collideH", 
+                "jump", 
+                "climbjump", 
+                "walljump", 
+                "wallbounce", 
+                "super", 
+                "grounded", 
+                "climbing"
+            }
+        }
+    }
+}
 
 entity.placements = {
   {
