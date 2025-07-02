@@ -33,7 +33,8 @@ public class TemplateBehaviorChain:Entity{
           if(e.Name == "auspicioushelper/TemplateBehaviorChain") yield return Get(e.Nodes,source);
           else yield return e;
         } else {
-          DebugConsole.WriteFailure($"Did not find empty template at {n} in {source} with path {source.fullpath}");
+          if(source!=null)DebugConsole.WriteFailure($"Did not find empty template at {n} in {source} with path {source.fullpath}");
+          else DebugConsole.WriteFailure($"Did not find empty template at {n}");
         }
       }
     }
@@ -64,9 +65,15 @@ public class TemplateBehaviorChain:Entity{
     nodes = d.Nodes;
     dat=d;
     templateStr = d.Attr("template","");
+    if(string.IsNullOrWhiteSpace(templateStr)){
+      ScopedPosition.Add(d);
+    }
   }
   public override void Added(Scene scene) {
     base.Added(scene);
+    if(string.IsNullOrWhiteSpace(templateStr)){
+      RemoveSelf(); return;
+    }
     if(!MarkedRoomParser.getTemplate(templateStr, null, scene, out var t)){
       DebugConsole.Write($"No template found with identifier \"{templateStr}\" in {this} at {Position}");
     }

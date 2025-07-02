@@ -118,6 +118,7 @@ public class TemplatePushblock:TemplateMoveCollidable{
   public override void OnTrigger(TriggerInfo info) {
     if(!TriggerInfo.TestPass(info,this)) return;
     base.OnTrigger(info);
+    if(!detatched) disconnect();
     if(ownSpringRecoil == 0) return;
     Entity e = info?.entity;
     if(e is Spring s){
