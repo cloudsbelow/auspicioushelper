@@ -187,10 +187,7 @@ public class templateFiller:Entity{
   
 
   public bool hasChainBehavior=>chain!=null;
-  public class ChainBehavior{
-    
-  }
-  ChainBehavior chain=null;
+  Util.EnumeratorStack<EntityData> chain=null;
   
   public static templateFiller MkNestingFiller(EntityData internalTemplate){
     var f=new templateFiller();
