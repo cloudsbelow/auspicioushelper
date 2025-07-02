@@ -33,13 +33,13 @@ public static class EntityParser{
   internal static void clarify(List<string> names, Types t, Level.EntityLoader loader){
     foreach(var name in names) clarify(name, t, loader);
   }
-  public static bool generateLoader(EntityData d, LevelData ld = null, Level l = null){
+  public static Types generateLoader_(EntityData d, LevelData ld, Level l){
     if(!parseMap.TryGetValue(d.Name, out var etype) || (l!=null && etype == Types.initiallyerrors)){
       Level.EntityLoader loader = Level.EntityLoaders.GetValueOrDefault(d.Name)??skitzoGuess(d.Name);
       if(loader == null){
         parseMap[d.Name] = Types.unable;
         DebugConsole.Write($"No loader found for ${d.Name}");
-        return false;
+        return Types.unable;
       }
       try{
         Entity t = loader(l,ld,Vector2.Zero,d);
@@ -59,7 +59,12 @@ public static class EntityParser{
         etype = parseMap[d.Name] = l!=null?Types.unable:Types.initiallyerrors;
       }
     }
-    return etype!=Types.unable;
+    return etype;
+  }
+  public static bool generateLoader(EntityData d, LevelData ld, Level l=null)=>generateLoader_(d,ld,l)!=Types.unable;
+  public static bool generateLoader(EntityData d, LevelData ld, Level l, out Types typ){
+    typ=generateLoader_(d,ld,l);
+    return typ!=Types.unable;
   }
   public static Template currentParent {get; private set;} = null;
   public static Entity create(EntityData d, Level l, LevelData ld, Vector2 simoffset, Template t, string path){
@@ -79,7 +84,7 @@ public static class EntityParser{
     if(loader == null) return null;
     if(etype == Types.template){
       if(string.IsNullOrWhiteSpace(d.Attr("template")) && t.t.chain==null){
-        TemplateBehaviorChain.ScopedPosition.Add(d,t);
+        DebugConsole.WriteFailure($"Empty template did not get culled from template room");
         return null;
       }
     }

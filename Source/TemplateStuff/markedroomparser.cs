@@ -10,15 +10,22 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 internal static class MarkedRoomParser{
   public class TemplateRoom{
+    public Dictionary<Vector2, EntityData> emptyTemplates = new();
     public LevelData d;
     public string Name=>d.Name;
-    bool simulatedRoom;
     public Dictionary<string, templateFiller> templates;
-    public TemplateRoom(LevelData data, Dictionary<string, templateFiller> parsedTemplates, bool simulated){
+    public TemplateRoom(LevelData data){
       d=data;
+    }
+    public TemplateRoom setTemplates(Dictionary<string, templateFiller> parsedTemplates){
       templates=parsedTemplates;
       foreach(var pair in templates)pair.Value.room = this; 
-      simulatedRoom=simulated;
+      return this;
+    }
+    public void addEmpty(EntityData d){
+      if(!emptyTemplates.TryAdd(d.Position,d)){
+        DebugConsole.WriteFailure("overlapping empty templates");
+      }
     }
   }
   public static Dictionary<string, TemplateRoom> staticRooms = new();
@@ -33,6 +40,7 @@ internal static class MarkedRoomParser{
     var rects = new StaticCollisiontree();
     var handleDict = new Dictionary<int, string>();
     Dictionary<string, templateFiller> templates = new();
+    var room = new TemplateRoom(l);
     foreach(EntityData d in l.Entities){
       if(d.Name == "auspicioushelper/templateFiller"){
         templateFiller t = new templateFiller(d, l.Position){
@@ -59,7 +67,14 @@ internal static class MarkedRoomParser{
       //DebugConsole.Write("Looking at entity "+d.Name);
       var hits = rects.collidePointAll(d.Position);
       bool w=false;
-      if(hits.Count >0) w = EntityParser.generateLoader(d, l);
+      EntityParser.Types typ=EntityParser.Types.unable;
+      if(hits.Count >0) w = EntityParser.generateLoader(d, l, null, out typ);
+      if(typ==EntityParser.Types.template || d.Name == "auspicioushelper/TemplateBehaviorChain"){
+        if(string.IsNullOrWhiteSpace(d.Attr(""))){
+          room.addEmpty(d);
+          continue;
+        }
+      }
       if(!w) continue;
       foreach(int handle in hits){
         string tid = handleDict[handle];
@@ -122,7 +137,7 @@ internal static class MarkedRoomParser{
         pair.Value.initStatic(fgt,bgt);
       }
     }
-    return new TemplateRoom(l,templates, simulatedRoom);
+    return room.setTemplates(templates);
   }
   internal static void parseMapdata(MapData m){
     staticRooms.Clear();

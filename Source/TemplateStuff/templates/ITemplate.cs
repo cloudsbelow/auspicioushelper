@@ -93,7 +93,7 @@ public class Template:Entity, ITemplateChild{
     this.ownidpath=getOwnID(data);
     skiphooks.enable();
     if(string.IsNullOrEmpty(templateStr)){
-      TemplateBehaviorChain.ScopedPosition.Add(data,null);
+      TemplateBehaviorChain.AddEmptyTemplate(data);
     }
   }
   public virtual void relposTo(Vector2 loc, Vector2 liftspeed){
