@@ -381,7 +381,7 @@ entities.auspicioushelper/TemplatePushBlock.attributes.description.terminalVeloc
 entities.auspicioushelper/TemplatePushBlock.attributes.description.movementLeniency=Will corner correct movement by up to this amount
 entities.auspicioushelper/TemplatePushBlock.attributes.description.BounceStrengthFromWall=When hitting a wall, how much speed to recoil back with
 entities.auspicioushelper/TemplatePushBlock.attributes.description.ownSpringRecoil=Speed gotten when entity uses a spring attached to this block (newton's third law)
-entities.auspicioushelper/TemplatePushBlock.attributes.description.startDisconnected=Will immidately fall and not move with attached parent template
+entities.auspicioushelper/TemplatePushBlock.attributes.description.startDisconnected=Will immedately fall and not move with attached parent template
 entities.auspicioushelper/TemplatePushBlock.attributes.name._loenn_display_template=[LÖNN] Display Template
 
 #i dunno
@@ -428,6 +428,42 @@ entities.auspicioushelper/MaterialTemplate.attributes.description.dontNormalRend
 entities.auspicioushelper/MaterialTemplate.attributes.description.identifier=The layer to draw entities in this template to
 entities.auspicioushelper/MaterialTemplate.attributes.name.identifier=Layer identifier
 entities.auspicioushelper/MaterialTemplate.attributes.name._loenn_display_template=[LÖNN] Display Template
+
+# Kevin Template
+entities.auspicioushelper/TemplateKevin.placements.description.main=A kevin block that can be made with a template
+entities.auspicioushelper/TemplateKevin.attributes.description.template=The name of the template to use. (<room>/<name>)
+entities.auspicioushelper/TemplateKevin.attributes.description.maxspeed=The top speed of this template
+entities.auspicioushelper/TemplateKevin.attributes.description.acceleration=The acceleration of this template
+entities.auspicioushelper/TemplateKevin.attributes.description.returnSpeed=The return speed of this template
+entities.auspicioushelper/TemplateKevin.attributes.description.left=Whether you can hit the left side
+entities.auspicioushelper/TemplateKevin.attributes.description.right=Whether you can hit the right side
+entities.auspicioushelper/TemplateKevin.attributes.description.top=Whether you can hit the top side
+entities.auspicioushelper/TemplateKevin.attributes.description.bottom=Whether you can hit the bottom side
+entities.auspicioushelper/TemplateKevin.attributes.name._loenn_display_template=[LÖNN] Display Template
+
+# Template Behavior chain
+entities.auspicioushelper/TemplateBehaviorChain.placements.description.main=An easy way to apply attributes from multiple template types to one template
+entities.auspicioushelper/TemplateBehaviorChain.attributes.description.template=The name of the template to use. (<room>/<name>)
+entities.auspicioushelper/TemplateBehaviorChain.attributes.name._loenn_display_template=[LÖNN] Display Template
+
+# Template trigger modifier
+entities.auspicioushelper/TemplateTriggerModifier.placements.description.main=A template wrapper that changes the any child templates are triggered
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.template=The name of the template to use. (<room>/<name>)
+entities.auspicioushelper/TemplateTriggerModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
+entities.auspicioushelper/TemplateTriggerModifier.attributes.name.propegateRiding=Propagate Riding
+entities.auspicioushelper/TemplateTriggerModifier.attributes.name.propegateInside=Propagate Inside
+entities.auspicioushelper/TemplateTriggerModifier.attributes.name.propegateShake=Propagate Shake
+entities.auspicioushelper/TemplateTriggerModifier.attributes.name.propegateDashHit=Propagate Dash Hit
+entities.auspicioushelper/TemplateTriggerModifier.attributes.name.propegateTrigger=Propagate Trigger
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.advancedTouchOptions=Additional, more fine-grained ways to trigger this template
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.triggerOnTouch=
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propegateRiding=
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propegateInside=
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propegateShake=
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propegateDashHit=
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propegateTrigger=
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.hideTrigger=
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.blockTrigger=
 
 ### UI
 
