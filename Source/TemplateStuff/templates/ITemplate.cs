@@ -206,6 +206,7 @@ public class Template:Entity, ITemplateChild{
   public override void Added(Scene scene){
     if(string.IsNullOrWhiteSpace(templateStr) && t==null){
       RemoveSelf();
+      Active = false;
       return;
     }
     if(Scene == null){

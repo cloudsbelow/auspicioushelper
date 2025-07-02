@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Runtime.CompilerServices;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -21,6 +22,7 @@ public static class EntityParser{
     removeSMbasic,
     initiallyerrors,
   }
+  public static LevelData DefaultLD;
   static Dictionary<string, Types> parseMap = new Dictionary<string, Types>();
   static Dictionary<string, Level.EntityLoader> loaders = new Dictionary<string, Level.EntityLoader>();
   internal static void clarify(string name, Types t, Level.EntityLoader loader){
@@ -61,6 +63,7 @@ public static class EntityParser{
   }
   public static Template currentParent {get; private set;} = null;
   public static Entity create(EntityData d, Level l, LevelData ld, Vector2 simoffset, Template t, string path){
+    ld=ld??DefaultLD;
     if(!parseMap.TryGetValue(d.Name,out var etype)){
       DebugConsole.Write($"Encountered unknown {d.Name}");
       parseMap[d.Name] = etype = Types.initiallyerrors;
@@ -134,6 +137,9 @@ public static class EntityParser{
     On.Celeste.StaticMover.TriggerPlatform-=triggerPlatformsHook;
   },auspicioushelperModule.OnEnterMap);
   static EntityParser(){
+    DefaultLD = (LevelData)RuntimeHelpers.GetUninitializedObject(typeof(LevelData));
+    DefaultLD.Name = "ohmygoodnessiwanttodie";
+
     clarify("dreamBlock",     Types.platformbasic, static (l,ld,offset,e) => new DreamBlock(e, offset));
     clarify("jumpThru",       Types.platformbasic, static (l,ld,offset,e) => new JumpThruW(e, offset));
     clarify("glider",         Types.unwrapped,     static (l,ld,offset,e) => new Glider(e, offset));

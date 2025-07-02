@@ -8,7 +8,7 @@ public static class HookVanilla{
   static void heartPlayerTemplateHook(On.Celeste.HeartGem.orig_OnPlayer orig, HeartGem self, Player p){
     ChildMarker cm= self.Get<ChildMarker>();
     orig(self,p);
-    if(cm!=null) cm.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(null);
+    if(cm!=null) new TriggerInfo.EntInfo("Heart",cm.Entity).PassTo(cm.parent);
   }
   static HookManager heartHooks = new HookManager(()=>{
     On.Celeste.HeartGem.OnPlayer+=heartPlayerTemplateHook;

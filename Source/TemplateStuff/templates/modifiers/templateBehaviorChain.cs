@@ -52,7 +52,7 @@ public class TemplateBehaviorChain:Entity{
     public templateFiller NextFiller(){
       EntityData e = stack.Next();
       if(e==null) return final;
-      return templateFiller.MkNestingFiller(e,this);
+      return templateFiller.MkNestingFiller(e,this).setRoomdat(final.roomdat);
     }
     public EntityData NextEnt(){
       return stack.Next();

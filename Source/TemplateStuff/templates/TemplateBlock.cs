@@ -12,7 +12,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateBlock")]
-class TemplateBlock:TemplateDisappearer{
+class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
   public TemplateBlock(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   bool uvis;
   bool ucol;
@@ -21,6 +21,8 @@ class TemplateBlock:TemplateDisappearer{
   bool persistent;
   string breaksfx;
   bool isExitBlock;
+  bool triggerable;
+  bool triggerOnBreak;
   public TemplateBlock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
     uvis = d.Bool("visible",true);
@@ -34,17 +36,34 @@ class TemplateBlock:TemplateDisappearer{
         if (!candash && p.StateMachine.State != 5 && p.StateMachine.State != 10){
           return DashCollisionResults.NormalCollision;
         }
-        setCollidability(false);
-        Audio.Play(breaksfx,Position);
-        destroy(true);
-        if(persistent) auspicioushelperModule.Session.brokenTempaltes.Add(fullpath);
+        breakBlock();
         return DashCollisionResults.Rebound;
       };
       prop &= ~Propagation.DashHit;
     }
     if(!d.Bool("propagateRiding",true))prop&=~Propagation.Riding;
     if(!d.Bool("propagateShaking",true))prop&=~Propagation.Shake;
+    triggerable=d.Bool("triggerable",false);
+    triggerOnBreak=d.Bool("triggerOnBreak",false);
     isExitBlock = d.Bool("exitBlockBehavior",false);
+  }
+  bool broken=false;
+  public void breakBlock(){
+    if(broken) return;
+    setCollidability(false);
+    Audio.Play(breaksfx,Position);
+    destroy(true);
+    if(persistent) auspicioushelperModule.Session.brokenTempaltes.Add(fullpath);
+    broken=true;
+    if(triggerOnBreak) new TriggerInfo.EntInfo("TemplateBlock",this).Pass(this); 
+  }
+  public void OnTrigger(TriggerInfo info){
+    if(!triggerable){
+      info.Pass(this);
+      return;
+    }
+    if(!info.TestPass(this)) return;
+    breakBlock();
   }
   public override void addTo(Scene scene){
     if(persistent && auspicioushelperModule.Session.brokenTempaltes.Contains(fullpath)){

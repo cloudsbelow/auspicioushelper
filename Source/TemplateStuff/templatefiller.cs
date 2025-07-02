@@ -198,4 +198,8 @@ public class templateFiller:Entity{
     f.chain = chain;
     return f;
   }
+  public templateFiller setRoomdat(LevelData ld){
+    roomdat = ld;
+    return this;
+  }
 }

@@ -76,12 +76,14 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       use = true;
       return this;
     }
+    public override string category => "touch/"+ty.ToString();
   }
   class ChannelInfo:TriggerInfo{
     public string channel;
     public ChannelInfo(string ch){
       channel = ch;
     }
+    public override string category => "channel/"+channel;
   }
   static void triggerFromArr(List<Entity> l, TouchInfo t){
     foreach(Entity p in l) p.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(t);

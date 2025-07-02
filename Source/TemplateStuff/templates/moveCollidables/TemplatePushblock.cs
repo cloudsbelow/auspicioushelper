@@ -75,6 +75,7 @@ public class TemplatePushblock:TemplateMoveCollidable{
   }
   bool grounded;
   public override void Update() {
+    base.Update();
     if(detatched){
       var q = getq((speed*Engine.DeltaTime).Abs()+Vector2.UnitY);
       grounded = speed.Y==0 && TestMoveLeniency(q.q,q.s, 1, Vector2.UnitY, 0, Vector2.UnitX)==Vector2.Zero;

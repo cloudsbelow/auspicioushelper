@@ -178,7 +178,7 @@ public class ChannelBooster : ChannelBaseEntity, IMaterialEnt, ISimpleEnt, IBoos
       IBooster.startBoostPlayer(player, this);
       Audio.Play("event:/game/04_cliffside/greenbooster_enter", Position);
       sprite.Play("inside");
-      if(trigger) parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(null);
+      if(trigger) new TriggerInfo.EntInfo("ChannelBooster",this).Pass(this); 
       //sprite.FlipX = player.Facing == Facings.Left;
     }
   }

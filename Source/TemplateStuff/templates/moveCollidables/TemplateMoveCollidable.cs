@@ -26,6 +26,15 @@ public abstract class TriggerInfo{
       }
       return new SmInfo(null,sm.Entity);
     }
+    public override string category => "staticmover/"+entity.ToString();
+  }
+  public class EntInfo:TriggerInfo{
+    string ev;
+    public EntInfo(string type, Entity e){
+      ev = type;
+      entity=e;
+    }
+    public override string category=>"entity/"+ev;
   }
   public virtual bool shouldTrigger=>true;
   public static bool TestPass(TriggerInfo info, Template t){
@@ -33,6 +42,16 @@ public abstract class TriggerInfo{
     if(!use) t.parent?.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(info);
     return use;
   }
+  public void Pass(ITemplateChild t){
+    t.parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(this);
+  }
+  public void PassTo(Template t){
+    t?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(this);
+  }
+  public bool TestPass(Template t){
+    return TestPass(this,t);
+  }
+  public abstract string category {get;}
 }
 public interface ITemplateTriggerable{
   void OnTrigger(TriggerInfo s);
