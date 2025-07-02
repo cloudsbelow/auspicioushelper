@@ -24,7 +24,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     foreach(string s in Util.listparseflat(d.Attr("advancedTouchOptions",""),true)){
       if(Enum.TryParse<TouchInfo.Type>(s,out var res))advtouch.Add(res);
     }
-    triggerOnTouch = d.Bool("triggerontouch",false);
+    triggerOnTouch = d.Bool("triggerOnTouch",false);
     if(triggerOnTouch || advtouch.Count>0) hooks.enable();
     channel = d.Attr("channel",null);
     if(!d.Bool("propegateRiding",true)) prop &= ~Propagation.Riding;

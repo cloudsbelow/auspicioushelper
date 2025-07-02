@@ -80,7 +80,9 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
     tileTypes = t.fgt;
     OnDashCollide = (Player p, Vector2 dir)=>((ITemplateChild) this).propegateDashHit(p,dir);
   }
-  public void setOffset(Vector2 ppos){}
+  public void setOffset(Vector2 ppos){
+    Add(new ChildMarker(parent));
+  }
   public override void Added(Scene scene){
     base.Added(scene);
     bounds = new FloatRect(SceneAs<Level>().Bounds);

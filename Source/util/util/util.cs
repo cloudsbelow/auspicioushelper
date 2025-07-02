@@ -9,6 +9,9 @@ namespace Celeste.Mod.auspicioushelper;
 public partial class Util{
   public class EnumeratorStack<T>{
     Stack<IEnumerator> stack = new();
+    public EnumeratorStack(IEnumerator e){
+      stack.Push(e);
+    }
     public T Next(){
       if(stack.Count==0) return default(T);
       if(stack.Peek().MoveNext()){

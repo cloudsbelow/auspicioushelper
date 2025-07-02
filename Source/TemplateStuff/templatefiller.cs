@@ -186,16 +186,16 @@ public class templateFiller:Entity{
   }
   
 
-  public bool hasChainBehavior=>chain!=null;
-  Util.EnumeratorStack<EntityData> chain=null;
+  internal TemplateBehaviorChain.Chain chain=null;
   
-  public static templateFiller MkNestingFiller(EntityData internalTemplate){
+  public static templateFiller MkNestingFiller(EntityData internalTemplate,TemplateBehaviorChain.Chain chain = null){
     var f=new templateFiller();
     f.created = true;
     f.Fgt = null;
     f.Bgt = null;
     f.ChildEntities.Add(internalTemplate);
     f.Position = internalTemplate.Position;
+    f.chain = chain;
     return f;
   }
 }

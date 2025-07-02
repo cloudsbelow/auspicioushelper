@@ -61,9 +61,11 @@ public static class EntityParser{
   }
   public static Template currentParent {get; private set;} = null;
   public static Entity create(EntityData d, Level l, LevelData ld, Vector2 simoffset, Template t, string path){
-    if(!parseMap.TryGetValue(d.Name,out var etype) || etype == Types.unable){
-      return null;
+    if(!parseMap.TryGetValue(d.Name,out var etype)){
+      DebugConsole.Write($"Encountered unknown {d.Name}");
+      parseMap[d.Name] = etype = Types.initiallyerrors;
     }
+    if(etype == Types.unable) return null;
     if(etype == Types.initiallyerrors){
       if(!generateLoader(d,ld,l)) return null;
       etype = parseMap[d.Name];
@@ -73,8 +75,9 @@ public static class EntityParser{
     var loader = getLoader(d.Name);
     if(loader == null) return null;
     if(etype == Types.template){
-      if(string.IsNullOrWhiteSpace(d.Attr("template"))){
-        return t==null?loader(l,ld,simoffset,d):null;
+      if(string.IsNullOrWhiteSpace(d.Attr("template")) && t.t.chain==null){
+        TemplateBehaviorChain.ScopedPosition.Add(d,t);
+        return null;
       }
     }
     

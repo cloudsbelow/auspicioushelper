@@ -15,7 +15,7 @@ entity.placements = {
       template = "",
       depthoffset=5,
       advancedTouchOptions = "",
-      triggerontouch = false,
+      triggerOnTouch = false,
       channel = "",
       propegateRiding = true,
       propegateInside = true,
@@ -32,6 +32,6 @@ entity.placements = {
 function entity.rectangle(room, entity)
     return utils.rectangle(entity.x-8, entity.y-8, 16, 16)
 end
-entity.draw = aelperLib.get_entity_draw("tblk")
+entity.draw = aelperLib.get_entity_draw("ttrig")
 
 return entity

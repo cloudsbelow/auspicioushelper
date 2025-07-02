@@ -2,6 +2,8 @@
 
 using System;
 using System.Collections.Generic;
+using Celeste.Editor;
+using Iced.Intel;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Mdb;
 using Mono.CompilerServices.SymbolWriter;
@@ -37,7 +39,6 @@ public static class FrostHelperStuff{
     }
   }
 
-  [Tracked]
   public class SpinnerWrapper:UpdateHook, ISimpleWrapper{
     public Entity wrapped {get;set;}
     public Vector2 toffset {get;set;}
@@ -45,37 +46,49 @@ public static class FrostHelperStuff{
     static Type spinnerType = null;
     static Util.FieldHelper<int> AttachGroup;
     static Util.FieldHelper<float> TimingOffset;
+    static Util.FieldHelper<bool> Expanded;
+    static Util.FieldHelper<bool> RegisteredToRenderers;
+    static Util.FieldHelper<List<Image>> Images;
     static Func<object, bool> InView;
     static Action<object> RegisterToRenders;
-    static Action<object> UnregisterFromRenderers;
+    static Action<object,Scene> UnregisterFromRenderers;
     static Action<object,bool> SetVisible;
     static Action<object> CreateSpritesOrig;
     static Action<object> UpdateHue;
     public SpinnerWrapper(Entity spinner, EntityData dat):base(){
-      beforeAction = CustomUpdate;
+      afterAction = CustomUpdate;
       wrapped = spinner;
       if(spinnerType == null && spinner != null){
         spinnerType = spinner.GetType();
-        AttachGroup = new Util.FieldHelper<int>(spinnerType, "AttachGroup");
-        TimingOffset = new Util.FieldHelper<float>(spinnerType,"offset");
+        AttachGroup = new(spinnerType, "AttachGroup");
+        TimingOffset = new(spinnerType,"offset");
+        Expanded = new(spinnerType,"expanded");
+        RegisteredToRenderers = new(spinnerType,"RegisteredToRenderers",true);
+        Images = new(spinnerType,"_images",true);
         InView = Util.instanceFunc<bool>(spinnerType, "InView");
         RegisterToRenders = Util.instanceAction(spinnerType,"RegisterToRenderers");
-        UnregisterFromRenderers = Util.instanceAction(spinnerType,"UnregisterFromRenderers");
+        UnregisterFromRenderers = Util.instanceAction<Scene>(spinnerType,"UnregisterFromRenderers");
         SetVisible = Util.instanceAction<bool>(spinnerType, "SetVisible");
         CreateSpritesOrig = Util.instanceAction(spinnerType,"CreateSprites");
         UpdateHue = Util.instanceAction(spinnerType,"UpdateHue");
+        CassetteMaterialLayer.stupididiotdumbpompusthings.Add(spinnerType,(Entity e)=>{
+          e.Get<SpinnerWrapper>()?.RenderTheUgh();
+        });
       }
       int og = AttachGroup.get(wrapped);
       if(og==-1) AttachGroup.set(wrapped,HashCode.Combine(EntityParser.currentParent,og));
       offset = TimingOffset.get(wrapped);
-      DebugConsole.Write($"here: {offset} {og}");
       rainbow = dat.Bool("rainbow", false);
       hascollider = dat.Bool("collidable", true);
+      wrapped.Visible = false;
+      wrapped.Add(this);
+      StaticMover sm = null;
+      while((sm = wrapped.Get<StaticMover>())!=null)wrapped.Remove(sm);
     }
-    bool parentvis;
-    bool ownvis;
-    bool parentcol;
-    bool owncol;
+    bool parentvis=true;
+    bool ownvis=false;
+    bool parentcol=true;
+    bool owncol=false;
     float offset;
     bool rainbow;
     bool hascollider;
@@ -89,7 +102,7 @@ public static class FrostHelperStuff{
           SetVisible(wrapped, true);
           if(rainbow) UpdateHue(wrapped);
         } else {
-          UnregisterFromRenderers(wrapped);
+          UnregisterFromRenderers(wrapped,null);
           SetVisible(wrapped, false);
         }
       }
@@ -98,10 +111,19 @@ public static class FrostHelperStuff{
       field = nval;
       wrapped.Collidable = parentcol && owncol;
     }
+    bool stratosphere = false;
+    const int stratosphereHeight = -30000;
     void CustomUpdate(){
+      if(stratosphere){
+        wrapped.Position.Y-=stratosphereHeight;
+        stratosphere = false;
+      }
+      if(RegisteredToRenderers.get(wrapped) && !wrapped.Visible) UnregisterFromRenderers(wrapped,Scene);
+      if(wrapped.Visible!=ownvis && parentvis) setVis(ref ownvis, ownvis);
       if(!ownvis){
         setCol(ref owncol, false);
         if(InView(wrapped)){
+          if(!Expanded.get(wrapped)) expandGood();
           setVis(ref ownvis, true);
         }
       } else {
@@ -118,17 +140,32 @@ public static class FrostHelperStuff{
       if(vis!=0) setVis(ref parentvis, vis>0);
       if(col!=0) setCol(ref parentcol, col>0);
     }
+    public void setOffset(Vector2 ppos){
+      toffset=wrapped.Position-Vector2.UnitY*(stratosphere?stratosphereHeight:0)-ppos;
+    }
     void expandGood(){
       List<Entity> oldSts = Scene.Tracker.Entities[typeof(SolidTiles)];
       Scene.Tracker.Entities[typeof(SolidTiles)] = parent.fgt==null?[]:[parent.fgt];
+      bool flag=false;
+      if(parent.fgt?.Collidable==false)parent.fgt.Collidable = flag = true;
       CreateSpritesOrig(wrapped);
+      if(flag) parent.fgt.Collidable=false;
       Scene.Tracker.Entities[typeof(SolidTiles)] = oldSts;
     }
     public void addTo(Scene s){
       s.Add(wrapped);
       wrapped.Scene = s;
-      if(InView(wrapped))expandGood();
+      if(InView(wrapped)){
+        wrapped.Position.Y+=stratosphereHeight;
+        stratosphere=true;
+      }
       wrapped.Active = false;
+    }
+    public void RenderTheUgh(){
+      if(wrapped.Visible) return;
+      foreach(Image i in Images.get(wrapped)){
+        i.Render();
+      }
     }
   }
 
@@ -139,7 +176,6 @@ public static class FrostHelperStuff{
       return null;
     });
     EntityParser.clarify(["FrostHelper/IceSpinner","FrostHelperExt/CustomBloomSpinner"], EntityParser.Types.unwrapped, (l,d,o,e)=>{
-      DebugConsole.Write("frosthelper setup");
       if(Level.EntityLoaders.TryGetValue("FrostHelper/IceSpinner",out var orig)) 
         EntityParser.currentParent.addEnt(new SpinnerWrapper(orig(l,d,o,e),e));
       return null;

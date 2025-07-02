@@ -92,6 +92,9 @@ public class Template:Entity, ITemplateChild{
     Depth = 10000+depthoffset;
     this.ownidpath=getOwnID(data);
     skiphooks.enable();
+    if(string.IsNullOrEmpty(templateStr)){
+      TemplateBehaviorChain.ScopedPosition.Add(data,null);
+    }
   }
   public virtual void relposTo(Vector2 loc, Vector2 liftspeed){
     Position = loc+toffset;
@@ -152,8 +155,8 @@ public class Template:Entity, ITemplateChild{
     if(c.shouldAddAsChild)children.Add(c);
     if(c is Template ct){
       ct.depthoffset+=depthoffset;
-      if(t.hasChainBehavior){
-        //ct.t = t.nextChain();
+      if(t.chain!=null){
+        ct.t=t.chain.NextFiller();
       }
     }
     c.addTo(Scene);
@@ -201,6 +204,10 @@ public class Template:Entity, ITemplateChild{
     makeChildren(scene, parent!=null);
   }
   public override void Added(Scene scene){
+    if(string.IsNullOrWhiteSpace(templateStr) && t==null){
+      RemoveSelf();
+      return;
+    }
     if(Scene == null){
       //DebugConsole.Write($"Got top-level template {this} of {t?.name}");
       addTo(scene);

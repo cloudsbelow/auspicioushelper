@@ -5,7 +5,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 
-[Tracked]
+[Tracked(true)]
 public class UpdateHook:Component{
   public Action beforeAction=null;
   public Action afterAction=null;
