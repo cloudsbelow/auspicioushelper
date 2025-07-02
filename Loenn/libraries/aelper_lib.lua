@@ -83,6 +83,7 @@ end
 aelperLib.channel_spriteicon_entitycenter = function(entity)
     return aelperLib.channel_spriteicon(entity.x+(entity.width or 0)/2, entity.y+(entity.height or 0)/2)
 end
+
 aelperLib.update_template = function(entity, room, data)
     data = data or {}
     if data.deleting then 
