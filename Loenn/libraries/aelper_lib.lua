@@ -100,9 +100,9 @@ aelperLib.update_template = function(entity, room, data)
     end
     table.insert(templates[template_name], {entity, room})
 end
-local template_entity_names = {}
+aelperLib.template_entity_names = {}
 aelperLib.register_template_name = function(name)
-    template_entity_names[name]=true
+    aelperLib.template_entity_names[name]=true
     return name
 end
 aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDrawn)
@@ -249,6 +249,7 @@ aelperLib.get_entity_draw = function(icon_name)
             x=entity.x,
             y=entity.y,
         }):draw()
+        
     end
 end
 local hasLegacy = {
