@@ -7,7 +7,6 @@ local entity = {}
 entity.name = aelperLib.register_template_name("auspicioushelper/TemplateKevin")
 entity.depth = -13000
 
-
 entity.placements = {
   {
     name = "Template Kevin",
@@ -29,6 +28,6 @@ entity.placements = {
 function entity.rectangle(room, entity)
     return utils.rectangle(entity.x-8, entity.y-8, 16, 16)
 end
-entity.draw = aelperLib.get_entity_draw("tblk")
+entity.draw = aelperLib.get_entity_draw("tkevin")
 
 return entity
