@@ -20,7 +20,9 @@ public class UpdateHook:Component{
     updatedThisFrame = true;
   }
   internal static int framenum;
+  public static Player cachedPlayer;
   internal static void updateHook(On.Celeste.Level.orig_Update update, Level self){
+    cachedPlayer = self.Tracker.GetEntity<Player>();
     foreach(UpdateHook u in self.Tracker.GetComponents<UpdateHook>()){
       u.updatedThisFrame = false;
       if(u.beforeAction!=null)u.beforeAction();

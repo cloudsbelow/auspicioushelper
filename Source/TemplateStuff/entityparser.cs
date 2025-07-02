@@ -28,6 +28,9 @@ public static class EntityParser{
     parseMap[name] = t;
     loaders[name] = loader;
   }
+  internal static void clarify(List<string> names, Types t, Level.EntityLoader loader){
+    foreach(var name in names) clarify(name, t, loader);
+  }
   public static bool generateLoader(EntityData d, LevelData ld = null, Level l = null){
     if(!parseMap.TryGetValue(d.Name, out var etype) || (l!=null && etype == Types.initiallyerrors)){
       Level.EntityLoader loader = Level.EntityLoaders.GetValueOrDefault(d.Name)??skitzoGuess(d.Name);
@@ -66,6 +69,7 @@ public static class EntityParser{
       etype = parseMap[d.Name];
       if(etype == Types.unable || etype==Types.initiallyerrors) return null;
     }
+    currentParent = t;
     var loader = getLoader(d.Name);
     if(loader == null) return null;
     if(etype == Types.template){
@@ -74,7 +78,6 @@ public static class EntityParser{
       }
     }
     
-    currentParent = t;
     Entity e = loader(l,ld,simoffset,d);
     if(e==null) goto done;
     if(path!=null && EntityMarkingFlag.flagged.TryGetValue(path+$"/{d.ID}",out var ident)){
@@ -346,6 +349,6 @@ public static class EntityParser{
     return null;
   }
   public static void defaultModdedSetup(){
-    Wrappers.FrostHelperStuff.Staticbumperwrapper.clarify.enable();
+    FrostHelperStuff.setup();
   }
 }

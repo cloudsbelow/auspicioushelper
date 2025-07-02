@@ -41,7 +41,7 @@ public class TemplateBehaviorChain:Entity{
   }
   Vector2[] nodes;
   public TemplateBehaviorChain(EntityData d, Vector2 o):base(d.Position+o){
-
+    nodes = d.Nodes;
   }
   public override void Added(Scene scene) {
     base.Added(scene);
