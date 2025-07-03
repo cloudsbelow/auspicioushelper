@@ -42,7 +42,6 @@ public static class EntityParser{
     loaders[name] = createComp;
   }
   public static Entity createComp(Level l, LevelData d, Vector2 o, EntityData e){
-    DebugConsole.Write("Creating component!");
     Component c = cloaders[e.Name](l,d,o,e);
     if(c!=null){
       currentParent.addEnt(new IopControlled(c));

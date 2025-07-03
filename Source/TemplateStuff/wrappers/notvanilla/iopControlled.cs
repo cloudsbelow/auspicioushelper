@@ -66,7 +66,6 @@ public class IopControlled:ITemplateChild{
     e=c.Entity;
   }
   public void addTo(Scene s){
-    DebugConsole.Write("here!");
     if(AddTo!=null)AddTo(s);
     List<Entity> l_ = new();
     lloc = parent.virtLoc;
