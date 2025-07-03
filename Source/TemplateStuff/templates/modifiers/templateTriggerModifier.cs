@@ -39,6 +39,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     hideTrigger = d.Bool("hideTrigger",false);
     blockTrigger = d.Bool("blockTrigger",false);
     delay = d.Float("delay",-1);
+    if(delay>=0) delayed = new();
     foreach(string s in Util.listparseflat(d.Attr("blockFilter"),true,true)){
       if(blockManager == null) blockManager = new();
       blockManager.Add(s);
@@ -88,7 +89,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     base.Update();
     if(delay<0) return;
     activeTime+=Engine.DeltaTime;
-    while(delayed.Count>0 && activeTime<=delayed.Peek().Item1){
+    while(delayed.Count>0 && activeTime>delayed.Peek().Item1){
       HandleTrigger(delayed.Dequeue().Item2);
     }
   }

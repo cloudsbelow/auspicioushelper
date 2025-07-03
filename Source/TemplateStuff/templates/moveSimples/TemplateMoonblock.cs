@@ -32,6 +32,7 @@ public class TemplateMoonblock:Template{
     dashmagn = d.Float("dash_influence",8);
     sinephase = d.Bool("useCustomStartphase",false)?d.Float("startphase",0): Calc.Random.NextFloat(MathF.PI*2);
     OnDashCollide = OnDash;
+    offset = Vector2.UnitY*floatamp*MathF.Sin(sinephase*floatfreq);
   }
   DashCollisionResults OnDash(Player p, Vector2 ddir){
     if(dashease<0.2f){

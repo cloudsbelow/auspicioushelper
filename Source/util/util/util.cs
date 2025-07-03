@@ -75,10 +75,12 @@ public partial class Util{
     class TrieNode{
       Dictionary<char, TrieNode> n;
       public bool isEnding {get; private set;}=false;
-      public bool Test(char c, ref TrieNode next)=>n?.TryGetValue(c,out next)??false;
+      public bool isSuperEnding=false;
+      public bool Test(char c, ref TrieNode next)=>(!isSuperEnding)&&(n?.TryGetValue(c,out next)??false);
       public void Add(string s, int idx){
         if(idx<s.Length){
           if(n==null) n=new();
+          if(s[idx]=='*')isSuperEnding=true;
           if(!n.TryGetValue(s[idx], out var next)){
             n.Add(s[idx],next = new TrieNode());
           }
@@ -96,7 +98,7 @@ public partial class Util{
         if(idx==s.Length) return cur.isEnding;
         if(s[idx]=='*') return true;
       } while(cur.Test(s[idx++],ref cur));
-      return false;
+      return cur?.isSuperEnding??false;
     }
   }
 }
