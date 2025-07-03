@@ -204,16 +204,17 @@ public class Template:Entity, ITemplateChild{
     makeChildren(scene, parent!=null);
   }
   public override void Added(Scene scene){
-    if(string.IsNullOrWhiteSpace(templateStr) && t==null){
-      RemoveSelf();
-      Active = false;
-      return;
-    }
-    if(Scene == null){
+    bool flag = string.IsNullOrWhiteSpace(templateStr) && t==null;
+    if(Scene == null && !flag){
       //DebugConsole.Write($"Got top-level template {this} of {t?.name}");
       addTo(scene);
     }
     base.Added(scene);
+    if(flag){
+      Active = false;
+      RemoveSelf();
+      return;
+    }
   }
   public void AddBasicEnt(Entity e, Vector2 offset){
     if(basicents == null){

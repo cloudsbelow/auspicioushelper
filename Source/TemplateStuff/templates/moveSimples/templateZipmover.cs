@@ -189,7 +189,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
   }
   public override void Removed(Scene scene){
     base.Removed(scene);
-    sfx.Stop();
+    sfx?.Stop();
   }
   public bool triggered;
   public void OnTrigger(TriggerInfo info){

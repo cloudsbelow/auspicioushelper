@@ -171,6 +171,6 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
   }
   public override void Removed(Scene scene) {
     base.Removed(scene);
-    movesfx.Stop();
+    movesfx?.Stop();
   }
 }
