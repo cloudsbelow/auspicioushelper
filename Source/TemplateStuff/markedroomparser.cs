@@ -30,6 +30,7 @@ internal static class MarkedRoomParser{
   }
   public static Dictionary<string, TemplateRoom> staticRooms = new();
   static Dictionary<string, TemplateRoom> dynamicRooms = new();
+  public static void clearDynamicRooms()=>dynamicRooms.Clear();
   public static void AddDynamicRooms(List<TemplateRoom> rooms){
     foreach(var room in rooms) dynamicRooms[room.Name] = room;
   }

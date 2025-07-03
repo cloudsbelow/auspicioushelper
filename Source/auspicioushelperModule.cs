@@ -42,6 +42,7 @@ public class auspicioushelperModule : EverestModule {
         ChannelState.unwatchTemporary();
         tinyCleanup();
         UpdateHook.TimeSinceTransMs=0;
+        MarkedRoomParser.clearDynamicRooms();
 
         OnReset.run();
         OnNewScreen.run();

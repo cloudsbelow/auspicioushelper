@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Celeste.Mod.auspicioushelper;
 public partial class Util{
@@ -30,7 +31,7 @@ public partial class Util{
     }
   }
 
-    public class FunctionList<T1>{
+  public class FunctionList<T1>{
     List<Func<T1,bool>> funcs = new();
     public enum InvocationMode{
       And, AndShortcircut, Or, OrShortcircuit
@@ -68,5 +69,34 @@ public partial class Util{
       }
     }
     public static implicit operator Func<T1, bool>(FunctionList<T1> fl) => fl.Invoke;
+  }
+
+  public class Trie{
+    class TrieNode{
+      Dictionary<char, TrieNode> n;
+      public bool isEnding {get; private set;}=false;
+      public bool Test(char c, ref TrieNode next)=>n?.TryGetValue(c,out next)??false;
+      public void Add(string s, int idx){
+        if(idx<s.Length){
+          if(n==null) n=new();
+          if(!n.TryGetValue(s[idx], out var next)){
+            n.Add(s[idx],next = new TrieNode());
+          }
+          next.Add(s,idx+1);
+        } else isEnding = true;
+      }
+    }
+    TrieNode root = new TrieNode();
+    public void Add(string s)=>root.Add(s,0);
+    public bool Test(string s){
+      if(s == null) return false;
+      TrieNode cur = root;
+      int idx = 0;
+      do{
+        if(idx==s.Length) return cur.isEnding;
+        if(s[idx]=='*') return true;
+      } while(cur.Test(s[idx++],ref cur));
+      return false;
+    }
   }
 }

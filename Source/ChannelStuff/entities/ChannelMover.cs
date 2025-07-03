@@ -1,3 +1,4 @@
+using System;
 using Celeste.Mod.auspicioushelper;
 using Celeste.Mod.auspicioushelper.iop;
 using Celeste.Mod.Entities;
@@ -66,7 +67,7 @@ public class ChannelMover:Solid, IChannelUser, IMaterialEnt{
       RepositionCB = (Vector2 nloc, Vector2 liftspeed)=>{
         p0 = offset0+nloc;
         p1 = offset1+nloc;
-        MoveTo(loc, dir*relspd*(p1-p0)+liftspeed);
+        MoveTo(loc, (Math.Round(prog)!=prog?dir*relspd*(p1-p0):Vector2.Zero)+liftspeed);
       },
       SetOffsetCB = (Vector2 ppos)=>{
         offset0 = p0-ppos;

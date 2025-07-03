@@ -67,6 +67,7 @@ public class IopControlled:ITemplateChild{
   }
   public void addTo(Scene s){
     if(AddTo!=null)AddTo(s);
+    own.parent.set(iopTarget,parent);
     List<Entity> l_ = new();
     lloc = parent.virtLoc;
     if(AddSelf!=null)AddSelf(l_);

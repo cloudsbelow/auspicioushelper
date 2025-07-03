@@ -18,6 +18,10 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   bool hideTrigger;
   bool blockTrigger;
   string channel;
+  float delay;
+  bool log;
+  Util.Trie blockManager;
+
   public TemplateTriggerModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateTriggerModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
@@ -34,9 +38,16 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     passTrigger = d.Bool("propagateTrigger",false);
     hideTrigger = d.Bool("hideTrigger",false);
     blockTrigger = d.Bool("blockTrigger",false);
+    delay = d.Float("delay",-1);
+    foreach(string s in Util.listparseflat(d.Attr("blockFilter"),true,true)){
+      if(blockManager == null) blockManager = new();
+      blockManager.Add(s);
+    }
+    log = d.Bool("log",false);
   }
   ITemplateTriggerable triggerParent;
   TemplateTriggerModifier modifierParent;
+  UpdateHook upd;
   public override void addTo(Scene scene) {
     base.addTo(scene);
     triggerParent = parent?.GetFromTree<ITemplateTriggerable>();
@@ -46,10 +57,13 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
         if(val!=0) OnTrigger(new ChannelInfo(channel));
       },true));
     }
+    if(delay>=0) Add(upd = new UpdateHook());
   }
 
-  public void OnTrigger(TriggerInfo sm){
-    if(triggerParent == null || blockTrigger) return;
+  Queue<Tuple<float, TriggerInfo>> delayed;
+  float activeTime = 0;
+  public void HandleTrigger(TriggerInfo sm){
+    if(triggerParent == null) return;
     if(hideTrigger){
       modifierParent?.OnTrigger(sm);
       return;
@@ -59,6 +73,23 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       else modifierParent?.OnTrigger(tinfo);
     } else {
       if(passTrigger)triggerParent.OnTrigger(sm);
+    }
+  }
+  public void OnTrigger(TriggerInfo sm){
+    if(log) DebugConsole.Write($"From trigger modifier: ",sm?.category);
+    if(blockTrigger!=(blockManager?.Test(sm?.category)??false)) return;
+    if(delay<0) HandleTrigger(sm);
+    else{
+      if(upd.updatedThisFrame) delayed.Enqueue(new(activeTime+delay,sm));
+      else delayed.Enqueue(new(activeTime+delay+Engine.DeltaTime,sm));
+    }
+  }
+  public override void Update() {
+    base.Update();
+    if(delay<0) return;
+    activeTime+=Engine.DeltaTime;
+    while(delayed.Count>0 && activeTime<=delayed.Peek().Item1){
+      HandleTrigger(delayed.Dequeue().Item2);
     }
   }
   class TouchInfo:TriggerInfo{

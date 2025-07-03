@@ -253,6 +253,10 @@ public class Template:Entity, ITemplateChild{
       }
     }
   }
+  public DashCollisionResults dashHit(Player p, Vector2 dir){
+    if(OnDashCollide!=null) return OnDashCollide(p,dir);
+    else return ((ITemplateChild)this).propagateDashhit(p,dir);
+  }
   public List<T> GetChildren<T>(Propagation p = Propagation.None){
     List<Entity> list = new();
     if(p == Propagation.None) AddAllChildren(list);

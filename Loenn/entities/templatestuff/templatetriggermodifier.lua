@@ -43,6 +43,9 @@ entity.placements = {
       propagateTrigger = true,
       hideTrigger = false,
       blockTrigger = false,
+      delay = -1,
+      blockFilter = "",
+      log=false,
       
       _loenn_display_template = true,
     }

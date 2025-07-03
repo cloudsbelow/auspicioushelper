@@ -101,8 +101,8 @@ public static class TemplateIopExp{
     if(target is Template te) new ExternInfo(source).PassTo(te);
   }
   public static DashCollisionResults registerDashhit(Entity target, Player p, Vector2 dir){
-    if(target is ITemplateChild te) return te.propagateDashhit(p,dir);
-    return DashCollisionResults.NormalOverride;
+    if(target is Template te) return te.dashHit(p,dir);
+    return DashCollisionResults.NormalCollision;
   }
   public static void registerPlatform(Entity template, Platform solid){
     if(template is Template t)solid.Add(new ChildMarker(t));
