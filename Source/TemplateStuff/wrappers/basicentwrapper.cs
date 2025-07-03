@@ -51,6 +51,7 @@ public class BasicMultient:ITemplateChild{
   public BasicMultient(Template t){
     parent = t;
     depthoffset = t.depthoffset;
+    lloc = t.virtLoc;
   }
   public void add(Entity e, Vector2 offset){
     ents.Add(new EntEnt(e,offset));

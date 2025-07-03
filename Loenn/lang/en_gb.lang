@@ -450,18 +450,13 @@ entities.auspicioushelper/TemplateBehaviorChain.attributes.name._loenn_display_t
 entities.auspicioushelper/TemplateTriggerModifier.placements.description.main=A template wrapper that changes the any child templates are triggered
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.template=The name of the template to use. (<room>/<name>)
 entities.auspicioushelper/TemplateTriggerModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
-entities.auspicioushelper/TemplateTriggerModifier.attributes.name.propegateRiding=Propagate Riding
-entities.auspicioushelper/TemplateTriggerModifier.attributes.name.propegateInside=Propagate Inside
-entities.auspicioushelper/TemplateTriggerModifier.attributes.name.propegateShake=Propagate Shake
-entities.auspicioushelper/TemplateTriggerModifier.attributes.name.propegateDashHit=Propagate Dash Hit
-entities.auspicioushelper/TemplateTriggerModifier.attributes.name.propegateTrigger=Propagate Trigger
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.advancedTouchOptions=Additional, more fine-grained ways to trigger this template
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.triggerOnTouch=
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propegateRiding=
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propegateInside=
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propegateShake=
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propegateDashHit=
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propegateTrigger=
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateRiding=
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateInside=
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateShake=
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateDashHit=
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateTrigger=
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.hideTrigger=
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.blockTrigger=
 

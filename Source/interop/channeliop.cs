@@ -17,7 +17,7 @@ public static class ChannelIopExp{
     return ChannelState.readChannel(ch);
   }
 
-  //Set the channel at the specified string. Will propegate to all derived modified channels.
+  //Set the channel at the specified string. Will propagate to all derived modified channels.
   public static void setChannel(string ch, int val){
     ChannelState.SetChannel(ch,val);
   }

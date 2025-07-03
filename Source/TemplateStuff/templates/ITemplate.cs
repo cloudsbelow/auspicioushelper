@@ -26,7 +26,7 @@ public interface ITemplateChild{
   bool hasInside(Actor a){
     return false;
   }
-  Template.Propagation propegatesTo(Template target, Template.Propagation p = Template.Propagation.All){
+  Template.Propagation propagatesTo(Template target, Template.Propagation p = Template.Propagation.All){
     ITemplateChild c=this;
     while(c != target && c!= null && p!=Template.Propagation.None){
       if(c==target) return p;
@@ -35,10 +35,10 @@ public interface ITemplateChild{
     }
     return Template.Propagation.None;
   }
-  DashCollisionResults propegateDashHit(Player player, Vector2 direction){
+  DashCollisionResults propagateDashhit(Player player, Vector2 direction){
     if((prop&Template.Propagation.DashHit) != Template.Propagation.None && (parent!=null)){
       if(parent.OnDashCollide != null) return parent.OnDashCollide(player, direction);
-      return ((ITemplateChild)parent).propegateDashHit(player, direction);
+      return ((ITemplateChild)parent).propagateDashhit(player, direction);
     }
     return DashCollisionResults.NormalCollision;
   }

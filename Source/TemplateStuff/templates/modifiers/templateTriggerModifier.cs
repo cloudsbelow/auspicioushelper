@@ -27,11 +27,11 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     triggerOnTouch = d.Bool("triggerOnTouch",false);
     if(triggerOnTouch || advtouch.Count>0) hooks.enable();
     channel = d.Attr("channel",null);
-    if(!d.Bool("propegateRiding",true)) prop &= ~Propagation.Riding;
-    if(!d.Bool("propegateInside",true)) prop &= ~Propagation.Inside;
-    if(!d.Bool("propegateShake",true)) prop &= ~Propagation.Shake;
-    if(!d.Bool("propegateDashHit",true)) prop &= ~Propagation.DashHit;
-    passTrigger = d.Bool("propegateTrigger",false);
+    if(!d.Bool("propagateRiding",true)) prop &= ~Propagation.Riding;
+    if(!d.Bool("propagateInside",true)) prop &= ~Propagation.Inside;
+    if(!d.Bool("propagateShake",true)) prop &= ~Propagation.Shake;
+    if(!d.Bool("propagateDashHit",true)) prop &= ~Propagation.DashHit;
+    passTrigger = d.Bool("propagateTrigger",false);
     hideTrigger = d.Bool("hideTrigger",false);
     blockTrigger = d.Bool("blockTrigger",false);
   }

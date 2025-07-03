@@ -20,6 +20,7 @@ public static class EntityParser{
     template,
     basic,
     removeSMbasic,
+    iopClarified,
     initiallyerrors,
   }
   public static LevelData DefaultLD;

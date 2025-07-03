@@ -79,9 +79,9 @@ public class PortalGateH:Entity{
       Several cases to worry about:
       1. The portal going to encounter and begin intersection with an actor (Goto 2)
       2. The portal is intersecting an actor and is on its current side
-        -We must moveH the fake and propegate any hit to the real
+        -We must moveH the fake and propagate any hit to the real
       3. The portal is intersecting an actor and is on its neglected side
-        -if it is moving towards its face, we must march moveH the fake and propegate any hit to the real
+        -if it is moving towards its face, we must march moveH the fake and propagate any hit to the real
       4. Handle any vertical splinching
       
       Split into vertical and horizontal phase for each entity; (1) is of no concern for vertical
