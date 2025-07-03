@@ -1,4 +1,5 @@
 using Celeste.Mod.auspicioushelper;
+using Celeste.Mod.auspicioushelper.iop;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -10,6 +11,7 @@ namespace Celeste.Mod.auspicioushelper;
 public class ChannelMover:Solid, IChannelUser, IMaterialEnt{
   public Vector2 p0;
   public Vector2 p1;
+  public Vector2 loc => prog*p1+(1-prog)*p0;
   public float width;
   public float height;
   public float relspd;
@@ -42,7 +44,7 @@ public class ChannelMover:Solid, IChannelUser, IMaterialEnt{
     float lprog = prog;
     prog = System.Math.Clamp(prog+dir*relspd*Engine.DeltaTime,0,1);
     if(lprog != prog){
-      MoveTo(prog*p1+(1-prog)*p0);
+      MoveTo(loc, dir*relspd*(p1-p0)+tcomp?.getParentLiftspeed()??Vector2.Zero);
     }
   }
   public override void Render(){
@@ -51,5 +53,27 @@ public class ChannelMover:Solid, IChannelUser, IMaterialEnt{
   }
   public void renderMaterial(IMaterialLayer l, Camera c){
     Draw.SpriteBatch.Draw(Draw.Pixel.Texture.Texture_Safe,new Rectangle((int) Position.X, (int) Position.Y,(int) width, (int) height), Draw.Pixel.ClipRect, new Color(1,0,0,255));
+  }
+
+  TemplateIop.TemplateChildComponent tcomp = null;
+  public TemplateIop.TemplateChildComponent makeComp(){
+    Vector2 offset0=Vector2.Zero; 
+    Vector2 offset1=Vector2.Zero;
+    //This block doesn't appear or disappear so we don't need to change the default
+    //ChangeStatus. Also, it doesn't make any child entities so there's no need to change
+    //the default AddSelf
+    tcomp = new(this){
+      RepositionCB = (Vector2 nloc, Vector2 liftspeed)=>{
+        p0 = offset0+nloc;
+        p1 = offset1+nloc;
+        MoveTo(loc, dir*relspd*(p1-p0)+liftspeed);
+      },
+      SetOffsetCB = (Vector2 ppos)=>{
+        offset0 = p0-ppos;
+        offset1 = p1-ppos;
+      }
+    };
+    OnDashCollide = tcomp.RegisterDashhit;
+    return tcomp;
   }
 }

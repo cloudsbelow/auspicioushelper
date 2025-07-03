@@ -7,6 +7,7 @@ using Celeste.Mod.auspicioushelper.Wrappers;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.ModInterop;
+using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.auspicioushelper.iop;
 
@@ -60,13 +61,15 @@ public static class TemplateIop{
     //call this when your solids are hit please <3
     public DashCollisionResults RegisterDashhit(Player p, Vector2 dir)=>registerDashhit(parent, p, dir);
     public void AddPlatform()=>registerPlatform(parent, Entity);
+    public Vector2 getParentLiftspeed()=>getTemplateLiftspeed(parent);
   }
   public static Action<string, int, Level.EntityLoader> clarify;
-  public static Action<string, Func<Level, LevelData, Vector2, EntityData, TemplateChildComponent>> customClarify; 
+  public static Action<string, Func<Level, LevelData, Vector2, EntityData, Component>> customClarify; 
   public static Action<Entity, Entity> triggerTemplate;
   public static Func<Entity, Player, Vector2, DashCollisionResults> registerDashhit;
   //Call this function on any platforms your entity adds to make sure triggering propegates to the template
   public static Action<Entity, Entity> registerPlatform;
+  public static Func<Entity, Vector2> getTemplateLiftspeed;
 }
 
 [ModExportName("auspicioushelper.templates")]
@@ -84,6 +87,10 @@ public static class TemplateIopExp{
   public static void clarify(string name, int type, Level.EntityLoader loader){
     EntityParser.clarify(name, getType(type), loader);
   }
+  public static void customClarify(string name, Func<Level, LevelData, Vector2, EntityData, Component> comp){
+    DebugConsole.Write($"OAWKDOPKASD {name}");
+    EntityParser.clarifyComp(name, comp);
+  }
   public class ExternInfo:TriggerInfo{
     public ExternInfo(Entity from){
       entity = from;
@@ -99,5 +106,9 @@ public static class TemplateIopExp{
   }
   public static void registerPlatform(Entity template, Platform solid){
     if(template is Template t)solid.Add(new ChildMarker(t));
+  }
+  public static Vector2 getTemplateLiftspeed(Entity template){
+    if(template is Template t) return t.gatheredLiftspeed;
+    return Vector2.Zero;
   }
 }

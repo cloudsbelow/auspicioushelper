@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Runtime.CompilerServices;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Microsoft.Xna.Framework;
@@ -33,6 +32,22 @@ public static class EntityParser{
   }
   internal static void clarify(List<string> names, Types t, Level.EntityLoader loader){
     foreach(var name in names) clarify(name, t, loader);
+  }
+  static Dictionary<string,Func<Level,LevelData,Vector2,EntityData,Component>> cloaders = new();
+  static HashSet<string> permittedExamples = ["auspicioushelper/ChannelMover"];
+  public static void clarifyComp(string name, Func<Level,LevelData,Vector2,EntityData,Component> comploader){
+    if(name.StartsWith("auspicioushelper") && !permittedExamples.Contains(name)) return;
+    parseMap[name] = Types.iopClarified;
+    cloaders[name] = comploader;
+    loaders[name] = createComp;
+  }
+  public static Entity createComp(Level l, LevelData d, Vector2 o, EntityData e){
+    DebugConsole.Write("Creating component!");
+    Component c = cloaders[e.Name](l,d,o,e);
+    if(c!=null){
+      currentParent.addEnt(new IopControlled(c));
+    }
+    return null;
   }
   public static Types generateLoader_(EntityData d, LevelData ld, Level l){
     if(!parseMap.TryGetValue(d.Name, out var etype) || (l!=null && etype == Types.initiallyerrors)){
@@ -80,16 +95,16 @@ public static class EntityParser{
       etype = parseMap[d.Name];
       if(etype == Types.unable || etype==Types.initiallyerrors) return null;
     }
-    currentParent = t;
     var loader = getLoader(d.Name);
     if(loader == null) return null;
     if(etype == Types.template){
       if(string.IsNullOrWhiteSpace(d.Attr("template")) && t.t.chain==null){
         DebugConsole.WriteFailure($"Empty template did not get culled from template room");
-        return null;
+        goto done;
       }
     }
     
+    currentParent = t;
     Entity e = loader(l,ld,simoffset,d);
     if(e==null) goto done;
     if(path!=null && EntityMarkingFlag.flagged.TryGetValue(path+$"/{d.ID}",out var ident)){
@@ -107,6 +122,7 @@ public static class EntityParser{
           goto done;
         }
       case Types.unwrapped: case Types.template:
+        currentParent = null;
         return e;
       case Types.basic:
         if(e!=null){

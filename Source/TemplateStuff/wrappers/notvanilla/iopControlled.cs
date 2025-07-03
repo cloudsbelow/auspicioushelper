@@ -10,12 +10,11 @@ namespace Celeste.Mod.auspicioushelper.Wrappers;
 
 public class IopControlled:ITemplateChild{
   public class IopCbs{
-    Type ioptype;
+    public Type ioptype;
     public Util.FieldHelper<bool> ParentVisible;
     public Util.FieldHelper<bool> ParentCollidable;
     public Util.FieldHelper<bool> ParentActive;
     public Util.FieldHelper<Entity> parent;
-    public Util.FieldHelper<Entity> Entity;
     public Util.FieldHelper<Action<Vector2, Vector2>> RepositionCB;
     public Util.FieldHelper<Action<Vector2>> SetOffsetCB;
     public Util.FieldHelper<Action<int, int, int>> ChangeStatusCB;
@@ -28,7 +27,6 @@ public class IopControlled:ITemplateChild{
       ParentCollidable = new Util.FieldHelper<bool>(ty,"ParentCollidable");
       ParentActive = new Util.FieldHelper<bool>(ty,"ParentActive");
       parent = new Util.FieldHelper<Entity>(ty,"parent");
-      Entity = new Util.FieldHelper<Entity>(ty,"Entity");
 
       RepositionCB = new(ty, "RepositionCB", true);
       SetOffsetCB = new(ty, "SetOffsetCB", true);
@@ -39,8 +37,6 @@ public class IopControlled:ITemplateChild{
     }
   }
   static Dictionary<Type, IopCbs> cbdict=new();
-  Component iopTarget;
-  IopCbs own;
   Action<Scene> AddTo=>own.AddTo.get(iopTarget);
   Action<List<Entity>> AddSelf=>own.AddSelf.get(iopTarget);
   Action<Vector2,Vector2> RelposTo=>own.RepositionCB.get(iopTarget);
@@ -48,6 +44,8 @@ public class IopControlled:ITemplateChild{
   Action<bool> Destroy=>own.DestroyCB.get(iopTarget);
   Action<int,int,int> ParentChangeStat=>own.ChangeStatusCB.get(iopTarget);
   public Template parent {get;set;}
+  Component iopTarget;
+  IopCbs own;
   public class EntEnt{
     public Vector2 offset;
     public Vector2 lpos;
@@ -59,21 +57,27 @@ public class IopControlled:ITemplateChild{
     }
   }
   List<EntEnt> ents = new List<EntEnt>();
-  public void addTo(Scene s){
-    if(AddTo!=null){
-      AddTo(s);
-    } else {
-      s.Add(s);
+  Entity e;
+  public IopControlled(Component c){
+    if(!cbdict.TryGetValue(c.GetType(),out own)){
+      cbdict.Add(c.GetType(),own = new IopCbs(c.GetType()));
     }
+    iopTarget = c;
+    e=c.Entity;
+  }
+  public void addTo(Scene s){
+    DebugConsole.Write("here!");
+    if(AddTo!=null)AddTo(s);
     List<Entity> l_ = new();
     lloc = parent.virtLoc;
     if(AddSelf!=null)AddSelf(l_);
-    else l_.Add(own.Entity.get(iopTarget));
+    else l_.Add(e);
     foreach(Entity e in l_){
       e.Depth+=parent.depthoffset;
       if(e is Platform) e.Add(new ChildMarker(parent));
       ents.Add(new(e,e.Position-lloc));
     }
+    if(AddTo==null)foreach(Entity e in l_)s.Add(e);
   }
   public void setOffset(Vector2 ppos){
     if(SetOffset!=null) SetOffset(ppos);
@@ -140,5 +144,17 @@ public class IopControlled:ITemplateChild{
       l.Add(e.e);
     }
   }
-
+  public bool hasRiders<T>() where T:Actor{
+    if(typeof(T)==typeof(Player)) return hasPlayerRider();
+    throw new NotImplementedException();
+  }
+  public bool hasPlayerRider(){
+    foreach(var en in ents){
+      if(en.e is Platform p){
+        if(p is Solid s && s.HasPlayerRider()) return true;
+        if(p is JumpThru j && j.HasPlayerRider()) return true; 
+      }
+    }
+    return false;
+  }
 }
