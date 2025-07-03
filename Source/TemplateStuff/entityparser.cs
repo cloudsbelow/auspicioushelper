@@ -25,8 +25,8 @@ public static class EntityParser{
   public static LevelData DefaultLD;
   static Dictionary<string, Types> parseMap = new Dictionary<string, Types>();
   static Dictionary<string, Level.EntityLoader> loaders = new Dictionary<string, Level.EntityLoader>();
-  internal static void clarify(string name, Types t, Level.EntityLoader loader){
-    if(name.StartsWith("auspicioushelper")) return; //no trolling
+  internal static void clarify(string name, Types t, Level.EntityLoader loader, bool trusted=false){
+    if(name.StartsWith("auspicioushelper") && !trusted) return; //no trolling
     parseMap[name] = t;
     loaders[name] = loader;
   }

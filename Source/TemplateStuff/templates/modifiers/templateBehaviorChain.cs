@@ -22,7 +22,7 @@ public class TemplateBehaviorChain:Entity{
         DebugConsole.Write($"No template found with identifier \"{templateStr}\" in {d.Name} at {d.Position}");
         return null;
       } else return startChain(t,e,e.Position+o,l,EntityParser.currentParent);
-    });
+    },true);
   }
   public static void AddEmptyTemplate(EntityData d){
     mainRoom[d.Position] = d;

@@ -142,6 +142,7 @@ public class auspicioushelperModule : EverestModule {
         DebugConsole.Write("Loading");
         ConditionalStrawb.hooks.enable();
         SpringTracker.hooks.enable();
+        TemplateBehaviorChain.setup();
         MapHider.uncache();
         
         typeof(Anti0fIopExp).ModInterop();

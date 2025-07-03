@@ -22,10 +22,11 @@ internal static class MarkedRoomParser{
       foreach(var pair in templates)pair.Value.room = this; 
       return this;
     }
-    public void addEmpty(EntityData d){
-      if(!emptyTemplates.TryAdd(d.Position,d)){
+    public void addEmpty(EntityData e){
+      if(!emptyTemplates.TryAdd(e.Position,e)){
         DebugConsole.WriteFailure("overlapping empty templates");
       }
+      DebugConsole.Write($"adding empty {d} {e.Name}");
     }
   }
   public static Dictionary<string, TemplateRoom> staticRooms = new();
@@ -68,15 +69,14 @@ internal static class MarkedRoomParser{
       //DebugConsole.Write("Looking at entity "+d.Name);
       var hits = rects.collidePointAll(d.Position);
       bool w=false;
-      EntityParser.Types typ=EntityParser.Types.unable;
-      if(hits.Count >0) w = EntityParser.generateLoader(d, l, null, out typ);
-      if(typ==EntityParser.Types.template || d.Name == "auspicioushelper/TemplateBehaviorChain"){
-        if(string.IsNullOrWhiteSpace(d.Attr(""))){
+      w = EntityParser.generateLoader(d, l, null, out var typ);
+      if(typ==EntityParser.Types.template || d.Name == "auspicioushelper/TemplateBehaviorChain"){  
+        if(string.IsNullOrWhiteSpace(d.Attr("template"))){
           room.addEmpty(d);
           continue;
         }
       }
-      if(!w) continue;
+      if(!w || hits.Count==0) continue;
       foreach(int handle in hits){
         string tid = handleDict[handle];
         templates.TryGetValue(tid, out var temp);
