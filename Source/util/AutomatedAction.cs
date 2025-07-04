@@ -36,9 +36,9 @@ public class ScheduledAction{
   }
 }
 public class PersistantAction:ScheduledAction{
-  public PersistantAction(Action a):base(()=>{
+  public PersistantAction(Action a, string label=null):base(()=>{
     a(); return false;
-  }){}
+  }, "Persistent action: "+label){}
 }
 
 public class ActionList{

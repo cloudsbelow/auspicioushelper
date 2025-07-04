@@ -101,7 +101,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       }
       FloatRect n = new FloatRect(nx,ny,o.w,o.h);
       foreach(var grid in grids){
-        if(grid.collideFrOffset(n,offset)) return true;
+        if(grid.collideFr(n)) return true;
       }
       return false;
     }
@@ -132,7 +132,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       return false;
     }
   }
-  QueryBounds getQinfo(FloatRect f, HashSet<Solid> exclude){
+  public static QueryBounds getQinfo(FloatRect f, HashSet<Solid> exclude, Scene Scene){
     QueryBounds res  =new();
     foreach(Solid s in Scene.Tracker.GetEntities<Solid>()){
       if(!s.Collidable || exclude.Contains(s)) continue;
@@ -142,6 +142,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     }
     return res;
   }
+  public QueryBounds getQinfo(FloatRect f, HashSet<Solid> exclude)=>getQinfo(f,exclude,Scene);
   public QueryIn getQself(){
     QueryIn res = new();
     FloatRect bounds = FloatRect.empty;

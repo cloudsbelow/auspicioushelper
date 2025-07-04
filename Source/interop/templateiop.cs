@@ -88,7 +88,6 @@ public static class TemplateIopExp{
     EntityParser.clarify(name, getType(type), loader);
   }
   public static void customClarify(string name, Func<Level, LevelData, Vector2, EntityData, Component> comp){
-    DebugConsole.Write($"OAWKDOPKASD {name}");
     EntityParser.clarifyComp(name, comp);
   }
   public class ExternInfo:TriggerInfo{

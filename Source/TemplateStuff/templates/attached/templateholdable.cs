@@ -11,9 +11,24 @@ using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
+public interface ICustomHoldableRelease{
+  bool replaceNormalRelease {get;}
+  static void ReleaseHook(On.Celeste.Holdable.orig_Release orig, Holdable s, Vector2 force){
+    if(s.Entity is ICustomHoldableRelease c && c.replaceNormalRelease && s.OnRelease!=null){
+      s.OnRelease(force);
+      return;
+    }
+    orig(s,force);
+  }
+  public static HookManager hooks = new(()=>{
+    On.Celeste.Holdable.Release+=ReleaseHook;
+  },()=>{
+    On.Celeste.Holdable.Release-=ReleaseHook;
+  },auspicioushelperModule.OnEnterMap);
+}
 
 [CustomEntity("auspicioushelper/templateholdable")]
-public class TemplateHoldable:Actor{
+public class TemplateHoldable:Actor, ICustomHoldableRelease{
   TemplateDisappearer te;
   Vector2 hoffset;
   Vector2 lpos;
@@ -41,8 +56,9 @@ public class TemplateHoldable:Actor{
   float voidDieOffset = 100;
   public TemplateHoldable(EntityData d, Vector2 offset):base(d.Position+offset){
     Position+=new Vector2(d.Width/2, d.Height);
-    hoffset = d.Nodes.Length>0?(d.Nodes[0]-new Vector2(d.Width/2, d.Height)-d.Position):new Vector2(0,-d.Height/2);
+    hoffset = d.Nodes.Length>0?(d.Nodes[0]-new Vector2(d.Width/2, d.Height)):new Vector2(0,-d.Height/2);
     Collider = new Hitbox(d.Width,d.Height,-d.Width/2,-d.Height);
+    if(d.Width>8 || d.Height>11) replaceNormalRelease = true;
     lpos = Position;
     Add(Hold = new Holdable(d.Float("cannot_hold_timer",0.1f)));
     var ex = d.Int("Holdable_collider_expand",4);
@@ -159,7 +175,81 @@ public class TemplateHoldable:Actor{
       if(e is IBoundsHaver h) h.bounds = new FloatRect(-0x0fffffff,-0x0fffffff,0x1fffffff,0x1fffffff);
     }
   }
+  public bool replaceNormalRelease {get;}=false;
   void OnRelease(Vector2 force){
+    if(replaceNormalRelease){
+      FloatRect bounds;
+      int num=8;
+      Player p = Hold.Holder;
+      float boundsbottom = MathF.Min(p.Top,Bottom)+Height+p.Height;
+      if(Width>p.Width) bounds = FloatRect.fromCorners(
+        new Vector2(p.Right-Width,Top),
+        new Vector2(p.Left+Width,boundsbottom)
+      ); else bounds = FloatRect.fromCorners(
+        new Vector2(p.Left,Top),
+        new Vector2(p.Right+Width,boundsbottom)
+      );
+      bounds.expandLeft(force.X<0?num:1);
+      bounds.expandRight(force.X>0?num:1);
+      var q = TemplateMoveCollidable.getQinfo(bounds, new(te.GetChildren<Solid>()), Scene);
+      FloatRect f = new FloatRect(this);
+      if(!q.Collide(f,Vector2.Zero)) goto done;
+      if(Width>p.Width) f = new(p.Left,p.Top,p.Width,1);
+      else f = new(p.CenterX-Width/2,p.Top,Width,1);
+      if(q.Collide(f,Vector2.Zero)) goto doneFail;
+      while(Bottom<f.bottom && !q.Collide(f,-Vector2.UnitY)) f.y--;
+      float dir = force.X!=0?Math.Sign(force.X):1;
+      while(f.w<Width){
+        if(!q.Collide(f,dir*Vector2.UnitX)){
+          f.expandH(dir);
+        } else if(!q.Collide(f,-dir*Vector2.UnitX)){
+          f.expandH(-dir);
+        } else if(f.top<p.Bottom){
+          f.y++;
+        } else goto doneFail;
+        if(force.X==0) dir=-dir;
+      }
+      dir = force.X!=0?Math.Sign(force.X):1;
+      int vdir = -1;
+      while(f.h<Height){
+        if(q.Collide(f,Vector2.UnitY*vdir)){
+          float clearRight = bounds.right-f.right;
+          float clearLeft = f.left-bounds.left;
+          for(int i=1; i<(dir>0?clearRight:clearLeft); i++){
+            if(!q.Collide(f,new Vector2(dir*i,vdir))){
+              f.x+=dir*i;
+              goto next;
+            }
+          }
+          for(int i=1; i<(dir>0?clearLeft:clearRight); i++){
+            if(!q.Collide(f,new Vector2(-dir*i,vdir))){
+              f.x-=dir*i;
+              goto next;
+            }
+          }
+          if(vdir == 1)break;
+          else{
+            vdir = 1;
+            continue;
+          }
+        }
+        next:
+          if(vdir == 1) f.expandDown(1);
+          else f.expandUp(1);
+      }
+      if(f.h<Height){
+        DebugConsole.Write("Failed to find good place for holdable");
+        f.expandDown(Height-f.h);
+      }
+      Top = f.top;
+      Left = f.left;
+      //while()
+      doneFail:
+      done:
+        Hold.cannotHoldTimer=Hold.cannotHoldDelay;
+        Hold.Holder = null;
+    }
+    
     RemoveTag(Tags.Persistent);
     if(te==null) return;
     foreach (Entity e in te.GetChildren<Entity>()){
@@ -373,6 +463,7 @@ public class TemplateHoldable:Actor{
     On.Celeste.Player.IsRiding_JumpThru+=RidingJumpthruHook;
     On.Celeste.JumpThru.MoveHExact+=JumpthruMoveHHook;
     On.Celeste.JumpThru.MoveVExact+=JumpThruMoveVHook;
+    ICustomHoldableRelease.hooks.enable();
   },()=>{
     On.Celeste.Holdable.Pickup -= PickupHook;
     On.Celeste.Actor.MoveHExact-=MoveHHook;

@@ -39,6 +39,10 @@ public struct FloatRect{
   public float y;
   public float w;
   public float h;
+  public float left=>x;
+  public float right=>x+w;
+  public float top=>y;
+  public float bottom=>y+h;
   public Vector2 tlc=>new Vector2(x,y);
   public Vector2 brc=>new Vector2(x+w,y+h);
   public Vector2 trc=>new Vector2(x+w,y);
@@ -207,8 +211,44 @@ public struct FloatRect{
   public override string ToString(){
       return "FloatRect:{"+string.Format("x:{0}, y:{1}, w:{2}, h:{3}",x,y,w,h)+"} ";
   }
+  FloatRect copy(){
+    return new FloatRect(x,y,w,h);
+  }
   public void expandAll(float a){
     x-=a; y-=a; w+=a*2; h+=a*2;
+  }
+  public void expandLeft(float a){
+    x-=a; w+=a;
+  }
+  public FloatRect expandLeft_(float a)=>new FloatRect(x-a,y,w+a,h);
+  public void expandRight(float a)=>w+=a;
+  public FloatRect expandRight_(float a)=>new FloatRect(x,y,w+a,h);
+  public void expandH(float a){
+    if(a<0) expandLeft(-a);
+    else expandRight(a);
+  }
+  public FloatRect expandH_(float a){
+    var f = copy();
+    f.expandH(a);
+    return f;
+  }
+  public void expandUp(float a){
+    y-=a; h+=a;
+  }
+  public FloatRect expandUp_(float a)=>new FloatRect(x,y-a,w,h+a);
+  public void expandDown(float a)=>h+=a;
+  public FloatRect expandDown_(float a)=>new FloatRect(x,y,w,h+a);
+  public void expandV(float a){
+    if(a<0) expandUp(-a);
+    else expandDown(a);
+  }
+  public FloatRect expandV_(float a){
+    var f = copy();
+    f.expandV(a);
+    return f;
+  }
+  public bool IsInside(FloatRect o){
+    return x>=o.x && x+w<=o.x+o.w && y>=o.y && y+h<=o.y+o.h;
   }
   public FloatRect _intersect(FloatRect o){
     var c1 = Vector2.Max(tlc,o.tlc);

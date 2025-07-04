@@ -18,13 +18,9 @@ public class EvilPackedTemplateRoom:Entity{
   static Dictionary<int,List<MarkedRoomParser.TemplateRoom>> parsed = new();
   const int latestVersion = 1;
   static EvilPackedTemplateRoom(){
-    auspicioushelperModule.OnEnterMap.enroll(new ScheduledAction(()=>{
+    auspicioushelperModule.OnEnterMap.enroll(new PersistantAction(()=>{
       parsed.Clear();
-      return false;
     },"evil packed template cleanup"));
-    auspicioushelperModule.OnNewScreen.enroll(new PersistantAction(()=>{
-      DebugConsole.Write("Scene change wipe called");
-    }));
   }
   public EvilPackedTemplateRoom(EntityData d,Vector2 offset):base(Vector2.Zero){
     string dat = d.Attr("EncodedRooms", "").Trim();
