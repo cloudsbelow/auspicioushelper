@@ -63,7 +63,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   }
   public Vector2 toffset {get;set;}
   public void relposTo(Vector2 loc, Vector2 liftspeed){
-    Position=loc+toffset;
+    Position=(loc+toffset).Round();
   }
   public void setOffset(Vector2 ppos){
     toffset = Position-ppos;

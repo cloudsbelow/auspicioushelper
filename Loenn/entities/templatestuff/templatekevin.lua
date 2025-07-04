@@ -32,6 +32,6 @@ entity.placements = {
 function entity.rectangle(room, entity)
     return utils.rectangle(entity.x-8, entity.y-8, 16, 16)
 end
-entity.draw = aelperLib.get_entity_draw("tblk_legacy")
+entity.draw = aelperLib.get_entity_draw("tkevin")
 
 return entity

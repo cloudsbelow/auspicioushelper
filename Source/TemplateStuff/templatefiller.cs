@@ -34,7 +34,7 @@ public class templateFiller:Entity{
     this.Collider = new Hitbox(d.Width, d.Height);
     name = d.Attr("template_name","");
     tr = new Rectangle((int)d.Position.X/8, (int)d.Position.Y/8, d.Width/8,d.Height/8);
-    this.offset = d.Nodes.Count()>0?d.Position-d.Nodes[0]:Vector2.Zero;
+    this.offset = d.Nodes?.Length>0?d.Position-d.Nodes[0]:Vector2.Zero;
     leveloffset = offset;
   }
   internal templateFiller(){}
