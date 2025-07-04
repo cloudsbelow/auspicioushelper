@@ -259,6 +259,9 @@ entities.auspicioushelper/TemplateBlock.attributes.description.canbreak=Whether 
 entities.auspicioushelper/TemplateBlock.attributes.description.breaksfx=The sound effect to play when this template is broken
 entities.auspicioushelper/TemplateBlock.attributes.description.propagateRiding=Whether to pass player riders to parent template in compound templates
 entities.auspicioushelper/TemplateBlock.attributes.description.propagateShaking=Whether shake this block when the parent shakes when in compound template
+entities.auspicioushelper/TemplateBlock.attributes.description.exitBlockBehavior=Behave like an exit block
+entities.auspicioushelper/TemplateBlock.attributes.description.triggerable=Break from trigger events
+entities.auspicioushelper/TemplateBlock.attributes.description.triggerOnBreak=Trigger parents when broken
 entities.auspicioushelper/TemplateBlock.attributes.name._loenn_display_template=[LÖNN] Display Template
 
 # Template Cassette Block
@@ -316,7 +319,7 @@ entities.auspicioushelper/templateFiller.attributes.description.template_name=Th
 entities.auspicioushelper/templateholdable.placements.name.main=Template Holdable
 entities.auspicioushelper/templateholdable.placements.description.main=A holdable that can be made with a template
 entities.auspicioushelper/templateholdable.attributes.description.cannot_hold_timer=How long one must wait before being allowed to pick up this entity after dropping it
-entities.auspicioushelper/templateholdable.attributes.description.Holdable_collider_expand=How much the holdable collider should extend from the base collider in every direction
+entities.auspicioushelper/templateholdable.attributes.description.Holdable_collider_expand=How much the holdable collider should extend from the base. Can specify up to 4 options seperated with commas - specifying 1 will set all sides to that amount, 2 will set the top and bottom to the first and left and right to the second, etc...
 entities.auspicioushelper/templateholdable.attributes.description.slowfall=like a jelly
 entities.auspicioushelper/templateholdable.attributes.description.slowrun=Does the holdable encumber?
 entities.auspicioushelper/templateholdable.attributes.description.always_collidable=Whether this should collide with other actors even when it is being held (will not collide with the holder)
@@ -447,18 +450,21 @@ entities.auspicioushelper/TemplateBehaviorChain.attributes.description.template=
 entities.auspicioushelper/TemplateBehaviorChain.attributes.name._loenn_display_template=[LÖNN] Display Template
 
 # Template trigger modifier
-entities.auspicioushelper/TemplateTriggerModifier.placements.description.main=A template wrapper that changes the any child templates are triggered
+entities.auspicioushelper/TemplateTriggerModifier.placements.description.main=A template wrapper that changes the way parent templates recieve trigger events from children
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.template=The name of the template to use. (<room>/<name>)
 entities.auspicioushelper/TemplateTriggerModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.advancedTouchOptions=Additional, more fine-grained ways to trigger this template
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.triggerOnTouch=
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateRiding=
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateInside=
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateShake=
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateDashHit=
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateTrigger=
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.hideTrigger=
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.blockTrigger=
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.advancedTouchOptions=Touch events in this list will have the opposite behavior to triggerOnTouch. Works as either blacklist or whitelist.
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.triggerOnTouch=Trigger when player touches, jumps off of, etc
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateRiding=Child zipmovers/falling blocks will trigger from this being stood on
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateInside=Whether cassette tempaltes should care about players overlapping solids in this template while reforming
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateShake=Whether children should shake from parent templates
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateDashHit=Whether dashhits go through this template
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateTrigger=Whether to pass trigger events to parents
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.hideTrigger=Whether to hide trigger events (preventing parents from triggering.) Events are unhidden at next trigger modifier
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.blockTrigger=Block all triggers
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.log=Log any trigger types to the debug console. Used to determine what to put in white/blacklist
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.blockFilter=Works as a comma seperated white/blacklist. Trigger categories on this list have opposite behavior to the blockTrigger box. Can end strings with * for fuzzy matching
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.delay=Delay all trigger events by this amount.
 
 ### UI
 

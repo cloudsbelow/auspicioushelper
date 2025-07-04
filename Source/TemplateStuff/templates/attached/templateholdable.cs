@@ -61,8 +61,12 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     if(d.Width>8 || d.Height>11) replaceNormalRelease = true;
     lpos = Position;
     Add(Hold = new Holdable(d.Float("cannot_hold_timer",0.1f)));
-    var ex = d.Int("Holdable_collider_expand",4);
-    Hold.PickupCollider = new Hitbox(d.Width+2*ex, d.Height+2*ex, -d.Width/2-ex, -d.Height-ex);
+    var ex = Util.ciparseflat(d.Attr("Holdable_collider_expand","4"));
+    int topEx = ex.Length switch{>=1=>ex[0],_=>4};
+    int rightEx = ex.Length switch{>=2=>ex[1],>=1=>ex[0],_=>4};
+    int bottomEx = ex.Length switch{>=3=>ex[2],>=1=>ex[0],_=>4};
+    int leftEx = ex.Length switch{>=4=>ex[3],>=2=>ex[1],>=1=>ex[0],_=>4};
+    Hold.PickupCollider = new Hitbox(d.Width+rightEx+leftEx, d.Height+topEx+bottomEx, -d.Width/2-leftEx, -d.Height-topEx);
     Hold.SlowFall = d.Bool("slowfall",false);
     Hold.SlowRun = d.Bool("slowrun",true); 
     Hold.SpeedGetter = ()=>Speed;
@@ -230,6 +234,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
           if(vdir == 1)break;
           else{
             vdir = 1;
+            noGravityTimer = 0.1f;
             continue;
           }
         }

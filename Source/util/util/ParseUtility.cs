@@ -211,6 +211,13 @@ public static partial class Util{
       return l;
     }).ToArray();
   }
+  public static int[] ciparseflat(string str){
+    if(string.IsNullOrWhiteSpace(str)) return [];
+    return str.Split(",").Select(s=>{
+      int.TryParse(s, out var l);
+      return l;
+    }).ToArray();
+  }
   public static float[] toArray(Vector2 x)=>new float[]{x.X,x.Y};
   public static float[] toArray(Vector3 x)=>new float[]{x.X,x.Y,x.Z};
   public static float[] toArray(Vector4 x)=>new float[]{x.X,x.Y,x.Z,x.W};

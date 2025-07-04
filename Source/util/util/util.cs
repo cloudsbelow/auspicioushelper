@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using IL.Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 public partial class Util{

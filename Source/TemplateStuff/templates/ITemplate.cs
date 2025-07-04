@@ -312,6 +312,7 @@ public class Template:Entity, ITemplateChild{
   }
   BeforeAfterRender bar;
   IEnumerator shakeRoutine(){
+    if(bar!=null)Remove(bar);
     Add(bar = new(()=>{
       foreach(Entity e in GetChildren<Entity>(Propagation.Shake)){
         prevpos.TryAdd(e,e.Position);

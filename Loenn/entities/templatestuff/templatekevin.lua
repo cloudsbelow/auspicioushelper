@@ -16,10 +16,14 @@ entity.placements = {
       maxspeed=240,
       acceleration=500,
       returnSpeed=60,
+      leniency=4,
       left=true,
       right=true,
       top=false,
       bottom=false,
+      returning=true,
+      ImpactSfx="event:/game/general/fallblock_impact",
+      StartSfx="event:/new_content/game/10_farewell/fusebox_hit_1",
       
       _loenn_display_template = true,
     }
@@ -28,6 +32,6 @@ entity.placements = {
 function entity.rectangle(room, entity)
     return utils.rectangle(entity.x-8, entity.y-8, 16, 16)
 end
-entity.draw = aelperLib.get_entity_draw("tkevin")
+entity.draw = aelperLib.get_entity_draw("tblk_legacy")
 
 return entity

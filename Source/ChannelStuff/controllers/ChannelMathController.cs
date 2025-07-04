@@ -26,7 +26,7 @@ public class ChannelMathController:Entity{
     mult, div, mod, add, sub, lshift, rshift, and, or, xor, land, lor, max, min, take,
     multI, divI, modI, addI, subI, lshiftI, rshiftI, andI, orI, xorI, landI, lorI, maxI, minI, takeI,
     eq,ne,le,ge,less,greater, eqI,neI,leI,geI,lessI,greaterI, not, lnot,
-    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, yield, yieldI, exit
+    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, yield, yieldI, exit, yieldMs
   }
   List<string> usedChannels = new List<string>();
   bool runImmediately;
@@ -274,11 +274,14 @@ public class ChannelMathController:Entity{
           iptr = BitConverter.ToInt32(op,iptr);
           break;
         case Op.yield:
-          if(debug)DebugConsole.Write($"Yielding!");
+          if(debug)DebugConsole.Write($"Yielding for {reg[op[iptr]]*0.01f} seconds!");
           yield return ((float)reg[op[iptr++]])*0.01f; break;
         case Op.yieldI:
-          if(debug)DebugConsole.Write($"Yielding!");
+          if(debug)DebugConsole.Write($"Yielding for {(sbyte)op[iptr]*0.01f} seconds!");
           yield return 0.01f*(sbyte)op[iptr++]; break;
+        case Op.yieldMs:
+          if(debug)DebugConsole.Write($"Yielding for {reg[op[iptr]]*0.001f} seconds!");
+          yield return ((float)reg[op[iptr++]])*0.001f; break;
         case Op.exit:
           goto end;
         default: break;
