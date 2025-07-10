@@ -144,6 +144,7 @@ public class auspicioushelperModule : EverestModule {
         SpringTracker.hooks.enable();
         TemplateBehaviorChain.setup();
         MapHider.uncache();
+        TemplateDreamblockModifier.hooks.enable();
         
         typeof(Anti0fIopExp).ModInterop();
         typeof(TemplateIopExp).ModInterop();

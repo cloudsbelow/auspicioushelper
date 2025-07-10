@@ -25,7 +25,7 @@ public class FoundEntity:Component{
       DebugConsole.Write($"Failed to find the entity {d.Name} with id {id} - (maybe this entity adds itself non-standardly?)");
       return;
     }
-    DebugConsole.Write($"Found the entity {d.Name} with id {id} - position {e.Position}");
+    DebugConsole.Write($"Found the entity {d.Name} (identifier {ident}) with id {id} - position {e.Position}");
     found[ident] = this;
     e.Add(this);
   }

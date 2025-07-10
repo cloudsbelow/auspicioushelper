@@ -1,14 +1,14 @@
 
 
 using System;
+using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
-
+[CustomEntity("auspicioushelper/TemplateGluable")]
 public class TemplateGluable:Template{
   string lookingFor;
-  Vector2 lpos;
   Entity gluedto;
   int smearamount;
   Vector2[] pastLiftspeed;
@@ -33,7 +33,7 @@ public class TemplateGluable:Template{
   public TemplateGluable(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateGluable(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
-    lookingFor = d.Attr("glue_to");
+    lookingFor = d.Attr("glue_to_identifier");
     smearamount = d.Int("liftspeed_smear",4);
     pastLiftspeed = new Vector2[smearamount];
     averageSmear = d.Bool("smear_average",false);
@@ -41,27 +41,29 @@ public class TemplateGluable:Template{
   bool added = false;
   public void make(Entity e){
     Depth = e.Depth-1;
-    lpos = e.Position;
     Position = e.Position;
     added=true;
+    Scene = null;
     base.addTo(e.Scene);
   }
   public override void addTo(Scene scene){
     gluedto = FoundEntity.find(lookingFor)?.Entity;
-    if(gluedto != null) make(gluedto);
+    DebugConsole.Write($"in addTo with scene {scene} and {lookingFor}",gluedto?.Scene);
+    if(gluedto != null && gluedto.Scene!=null) make(gluedto);
   }
   public override void Awake(Scene scene){
     base.Awake(scene);
     if(!added){
       gluedto = FoundEntity.find(lookingFor)?.Entity;
-      if(gluedto != null) make(gluedto);
+      if(gluedto != null && gluedto.Scene!=null) make(gluedto);
     }
+    
   }
   public override void Update(){
     base.Update();
     if(!added){
       gluedto = FoundEntity.find(lookingFor)?.Entity;
-      if(gluedto != null) make(gluedto);
+      if(gluedto != null && gluedto.Scene!=null) make(gluedto);
       return;
     }
     if(gluedto.Scene == null){
@@ -70,12 +72,12 @@ public class TemplateGluable:Template{
       added=false;
       return;
     } 
-    if(gluedto.Position!=lpos){
-      var move = gluedto.Position-lpos;
+    if(gluedto.Position!=Position){
+      var move = gluedto.Position-Position;
       pastLiftspeed[0]+=move/Math.Max(Engine.DeltaTime,0.005f);
       evalLiftspeed();
-      relposTo(Position,ownLiftspeed);
-      lpos = gluedto.Position;
+      Position = gluedto.Position;
+      childRelposSafe();
     }
     evalLiftspeed(true);
   }

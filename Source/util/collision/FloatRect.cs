@@ -88,7 +88,7 @@ public struct FloatRect{
     h=-h;
   }
   public bool CollidePoint(Vector2 p){
-    return p.X>=x && p.Y>=y && p.X<x+w && p.Y<y+h;
+    return p.X>x && p.Y>y && p.X<x+w && p.Y<y+h;
   }
   public bool CollideRay(Vector2 p, Vector2 dir){
     Vector2 t1 = (tlc-p)/dir;

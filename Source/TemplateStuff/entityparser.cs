@@ -193,6 +193,7 @@ public static class EntityParser{
       return new Lightning(e,o);
     });
     clarify("bigSpinner", Types.unwrapped, static (l,ld,o,e)=>new Wrappers.Bumperw(e,o));
+    clarify("eyebomb", Types.basic, static (l,d,o,e)=>new Puffer(e,o));
 
     clarify("refill",Types.unwrapped,static (l,ld,offset,e)=>(Entity) new Wrappers.RefillW(e,offset));
     clarify("strawberry",Types.unwrapped,static (l,ld,offset,e)=>{
