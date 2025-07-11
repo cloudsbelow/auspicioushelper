@@ -48,7 +48,8 @@ public class TemplateChannelmover:Template, IChannelUser{
   public override void addTo(Scene scene){
     ChannelState.watch(this);
     dir = (ChannelState.readChannel(channel) &1)==1?1:-1*asym;
-    prog = dir == 1?1:0;
+    sprog = prog = dir == 1?1:0;
+    //DebugConsole.Write($"{prog} {dir} {Position} {virtLoc}");
     base.addTo(scene);
   }
   float lprog;

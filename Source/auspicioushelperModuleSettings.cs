@@ -30,10 +30,12 @@ public class auspicioushelperModuleSettings : EverestModuleSettings {
   public bool Evil {get;set;}=false;
   public void CreateEvilEntry(TextMenu menu, bool ingame){
     if(!ingame) return;
-    menu.Add(new TextMenu.Button("Pack template rooms to log").Pressed(()=>{
+    var item = new TextMenu.Button("Pack template rooms to log").Pressed(()=>{
       Audio.Play(SFX.ui_main_savefile_rename_start);
       EvilPackedTemplateRoom.PackTemplatesEvil();
-    }).AddDescription(menu,"Log.txt's template rooms to string format for use in evil packed rooms entity"));
+    });
+    menu.Add(item);
+    item.AddDescription(menu,"Log.txt's template rooms to string format for use in evil packed rooms entity");
   }
 
   private bool _crashOnFail = false;
