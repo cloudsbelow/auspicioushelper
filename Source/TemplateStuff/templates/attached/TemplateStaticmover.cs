@@ -13,6 +13,39 @@ using Celeste.Mod.auspicioushelper.Wrappers;
 
 namespace Celeste.Mod.auspicioushelper;
 
+public class StaticmoverLock:IDisposable{
+  static int locked=0;
+  static List<Tuple<StaticMover,Vector2>> enq = new();
+  public StaticmoverLock(){
+    locked++;
+  }
+  public void Dispose(){
+    if(--locked==0){
+      foreach(var pair in enq){
+        pair.Item1.OnMove(pair.Item2);
+      }
+    }
+  }
+  static public bool tryol(StaticMover s, Vector2 move){
+    if(locked==0)return false;
+    enq.Add(new(s,move));
+    return true;
+  }
+  static void SolidMove(On.Celeste.Solid.orig_MoveHExact orig, Solid s, int m){
+    using(new StaticmoverLock()) orig(s,m);
+  }
+  static void SolidMove(On.Celeste.Solid.orig_MoveVExact orig, Solid s, int m){
+    using(new StaticmoverLock()) orig(s,m);
+  }
+  public static HookManager hooks = new(()=>{
+    On.Celeste.Solid.MoveHExact+=SolidMove;
+    On.Celeste.Solid.MoveVExact+=SolidMove;
+  },()=>{
+    On.Celeste.Solid.MoveHExact-=SolidMove;
+    On.Celeste.Solid.MoveVExact-=SolidMove;
+  }, auspicioushelperModule.OnEnterMap);
+}
+
 [CustomEntity("auspicioushelper/TemplateStaticmover")]
 public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplateTriggerable{
   public override Vector2 gatheredLiftspeed=>ownLiftspeed;
@@ -34,6 +67,7 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
     ridingTrigger = d.Bool("ridingTrigger",true);
     enableUnrooted = d.Bool("EnableUnrooted");
     hooks.enable();
+    StaticmoverLock.hooks.enable();
     Add(new BeforeAfterRender(()=>{
       if(this.ownShakeVec == Vector2.Zero){
         if(!firstZeroAfter) return;
@@ -114,6 +148,7 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
         if(layer!=null) layer.removeTrying(this);
       },
       OnMove=(Vector2 move)=>{
+        if(StaticmoverLock.tryol(sm,move)) return;
         Position+=move;
         pastLiftspeed[0]+=move/Math.Max(Engine.DeltaTime,0.005f);
         evalLiftspeed();

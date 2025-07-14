@@ -56,21 +56,23 @@ public class TemplateDreamblockModifier:Template{
     }
   }
   public class SentinalDb:DreamBlock{
+    public TemplateDreamblockModifier parent;
     public SentinalDb():base(null,Vector2.Zero){}
   }
   SentinalDb fake;
   public TemplateDreamblockModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateDreamblockModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
+    hooks.enable();
     triggerOnEnter = d.Bool("triggerOnEnter",true);
     triggerOnLeave = d.Bool("triggerOnLeave",true);
     dreaming = !d.Bool("useChannel",false);
   }
   public override void addTo(Scene scene) {
     fake = (SentinalDb)RuntimeHelpers.GetUninitializedObject(typeof(SentinalDb));
+    fake.parent = this;
     fake.Position = Vector2.Zero;
     fake.Collider = new Hitbox(2000000000,2000000000,-1000000000,-1000000000);
-    new DynamicData(fake).Set("__auspiciousfake",this);
 
     base.addTo(scene);
     foreach(var e in GetChildren<Entity>()){
@@ -136,9 +138,7 @@ public class TemplateDreamblockModifier:Template{
   static void Hook(On.Celeste.DreamBlock.orig_OnPlayerExit orig, DreamBlock self, Player p){
     if(self is SentinalDb b){
       DebugConsole.Write("exiting");
-      if(new DynamicData(b).TryGet<TemplateDreamblockModifier>("__auspiciousfake", out var t)){
-        t.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new DreamInfo(true, t.triggerOnLeave, p.DashDir));
-      } 
+      b.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new DreamInfo(true, b.parent.triggerOnLeave, p.DashDir));
       return;
     }
     orig(self,p);
@@ -153,5 +153,5 @@ public class TemplateDreamblockModifier:Template{
     On.Celeste.Player.OnCollideV-=Hook;
     IL.Celeste.Player.DreamDashUpdate-=DDashIL;
     On.Celeste.DreamBlock.OnPlayerExit-=Hook;
-  });
+  },auspicioushelperModule.OnEnterMap);
 }

@@ -26,7 +26,8 @@ public class ChannelMathController:Entity{
     mult, div, mod, add, sub, lshift, rshift, and, or, xor, land, lor, max, min, take,
     multI, divI, modI, addI, subI, lshiftI, rshiftI, andI, orI, xorI, landI, lorI, maxI, minI, takeI,
     eq,ne,le,ge,less,greater, eqI,neI,leI,geI,lessI,greaterI, not, lnot,
-    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, yield, yieldI, exit, yieldMs
+    jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, yield, yieldI, exit, yieldMs,
+    triggerTrigger, triggerTriggerI
   }
   List<string> usedChannels = new List<string>();
   bool runImmediately;
@@ -45,6 +46,7 @@ public class ChannelMathController:Entity{
   HashSet<string> notifyingChannels=null;
   HashSet<int> notifyingRegs=null; 
   bool runWhenAwake;
+  Vector2[] nodes;
   public ChannelMathController(EntityData d, Vector2 offset):base(new Vector2(0,0)){
     runImmediately = d.Bool("run_immediately",false);
     runWhenAwake = d.Bool("run_when_awake",true);
@@ -60,6 +62,7 @@ public class ChannelMathController:Entity{
       notifyingRegs=new([-1]);
     }
     if(multi==MultiType.AttachedMultiple) toUpdate=new();
+    nodes = d.NodesWithPosition(offset);
 
     debug = d.Bool("debug",false);
     var bin=Convert.FromBase64String(d.Attr("compiled_operations","").Trim());
@@ -284,6 +287,8 @@ public class ChannelMathController:Entity{
           yield return ((float)reg[op[iptr++]])*0.001f; break;
         case Op.exit:
           goto end;
+        case Op.triggerTrigger: triggerNode(reg[op[iptr++]]); break;
+        case Op.triggerTriggerI: triggerNode((sbyte)op[iptr++]); break;
         default: break;
       }
     }
@@ -291,6 +296,22 @@ public class ChannelMathController:Entity{
       numActive--;
       if(multi==MultiType.AttachedMultiple) toUpdate.Remove(reg);
       yield break;
+  }
+  void triggerNode(int idx, bool all=false){
+    if(idx<0||idx>=nodes.Length) return;
+    Vector2 loc = nodes[idx];
+    Trigger smallest = null;
+    float carea = float.PositiveInfinity;
+    foreach(Trigger t in Scene.Tracker.GetEntities<Trigger>()){
+      if(t.Collidable && t.CollidePoint(loc)){
+        if(all) t.OnEnter(null);
+        else if(t.Width*t.Height<carea){
+          smallest = t;
+          carea = t.Width*t.Height;
+        }
+      }
+    }
+    smallest?.OnEnter(null);
   }
   static Dictionary<string, Func<List<string>,List<int>,int>> iopFuncs = new();
   public static ChannelMathController callingController = null;

@@ -142,9 +142,9 @@ public class auspicioushelperModule : EverestModule {
         DebugConsole.Write("Loading");
         ConditionalStrawb.hooks.enable();
         SpringTracker.hooks.enable();
+        ChannelState.hooks.enable();
         TemplateBehaviorChain.setup();
         MapHider.uncache();
-        TemplateDreamblockModifier.hooks.enable();
         
         typeof(Anti0fIopExp).ModInterop();
         typeof(TemplateIopExp).ModInterop();
