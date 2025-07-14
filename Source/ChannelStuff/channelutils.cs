@@ -122,9 +122,10 @@ public static class ChannelState{
     int idx=0;
     for(;idx<ch.Length;idx++) if(ch[idx]=='[')break;
     if(idx!=ch.Length) return;
-    string clean = ch.Substring(0,idx);
-    SetChannelRaw(clean,state);
-    if(modifiers.TryGetValue(clean, out var ms)){
+    SetChannelRaw(ch,state);
+    if(ch[0]=='$')(Engine.Instance.scene as Level)?.Session.SetFlag(ch.Substring(1),state!=0);
+    if(ch[0]=='#')(Engine.Instance.scene as Level)?.Session.SetCounter(ch.Substring(1),state);
+    if(modifiers.TryGetValue(ch, out var ms)){
       foreach(var m in ms){
         SetChannelRaw(m.outname,m.apply(state));
       }
@@ -181,10 +182,13 @@ public static class ChannelState{
       ModifierDesc mod = new ModifierDesc(ch);
       mods.Add(mod);
       return channelStates[ch] = mod.apply(readChannel(clean));
+    } else if(ch.Length>0 && (ch[0]=='@'||ch[0]=='#')){
+      if(ch[0]=='#') channelStates[ch]=(Engine.Instance.scene as Level)?.Session.GetCounter(ch.Substring(1))??0;
+      if(ch[0]=='$') channelStates[ch]=((Engine.Instance.scene as Level)?.Session.GetFlag(ch.Substring(1))??false)?1:0;
     } else {
       channelStates.TryAdd(ch,0);
-      return channelStates[ch];
     }
+    return channelStates[ch];
   }
   public static void unwatchTemporary(){
     clearModifiers();
@@ -232,6 +236,34 @@ public static class ChannelState{
     unwatchAll();
     foreach(var pair in s) channelStates[pair.Key] = pair.Value;
   }
+  static void Hook(On.Celeste.Session.orig_SetFlag orig, Session s, string f, bool v){
+    orig(s,f,v);
+    if(channelStates.ContainsKey('$'+f)) SetChannel('$'+f,v?1:0);
+  }
+  static bool Hook(On.Celeste.Session.orig_GetFlag orig, Session s, string f){
+    if(f.Length==0 || f[0]!='@' || s.Flags.Contains(f)) return orig(s,f);
+    return readChannel(f.Substring(1))!=0;
+  }
+  static void Hook(On.Celeste.Session.orig_SetCounter orig, Session s, string f, int n){
+    orig(s,f,n);
+    if(channelStates.ContainsKey('#'+f)) SetChannel('#'+f,n);
+  }
+  static int Hook(On.Celeste.Session.orig_GetCounter orig, Session s, string f){
+    if(f.Length==0 || f[0]!='@') return orig(s,f);
+    foreach(var c in s.Counters) if(c.Key==f) return c.Value;
+    return readChannel(f.Substring(1));
+  }
+  internal static HookManager hooks = new HookManager(()=>{
+    On.Celeste.Session.GetFlag+=Hook;
+    On.Celeste.Session.GetCounter+=Hook;
+    On.Celeste.Session.SetFlag+=Hook;
+    On.Celeste.Session.SetCounter+=Hook;
+  },()=>{
+    On.Celeste.Session.GetFlag-=Hook;
+    On.Celeste.Session.GetCounter-=Hook;
+    On.Celeste.Session.SetFlag-=Hook;
+    On.Celeste.Session.SetCounter-=Hook;
+  });
   public static void writeAll(){
     DebugConsole.Write("");
     DebugConsole.Write("===CHANNEL STATE===");

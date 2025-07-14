@@ -69,11 +69,58 @@ public class MipGrid{
       //DebugConsole.Write(getBlockstr(res));
       return res;
     }
-    public ulong getAreaSmeared(int x, int y, int smearH, int smearV){
-      ulong a = smearH==0?getArea(x,y):getArea(x,y)|getArea(x+smearH,y);
-      if(smearV==0) return a;
-      ulong b = smearH==0?getArea(x,y+smearV):getArea(x,y+smearV)|getArea(x+smearH,y+smearV);
+    public ulong getAreaSmeared(int x, int y, bool smearH, bool smearV){
+      ulong a = smearH?getArea(x,y)|getArea(x+1,y):getArea(x,y);
+      if(!smearV) return a;
+      ulong b = smearH?getArea(x,y+1)|getArea(x+1,y+1):getArea(x,y+1);
       return a|b;
+    }
+    public ulong getAreaSmearedFast(int x, int y, bool smearH, bool smearV){
+      int xf = (x%blockw+blockw)%blockw;
+      int yf = (y%blockh+blockh)%blockh;
+      int xb = (x-xf)/blockw;
+      int yb = (y-yf)/blockh;
+      ulong tl,tr,bl,br;
+      if(xb>=0 && yb>=0 && xb<width-1 && yb<height-1){
+        tl = getBlockFast(xb,yb);
+        tr = getBlockFast(xb+1,yb);
+        bl = getBlockFast(xb,yb+1);
+        br = getBlockFast(xb+1,yb+1);
+      } else {
+        tl = getBlock(xb,yb);
+        tr = getBlock(xb+1,yb);
+        bl = getBlock(xb,yb+1);
+        br = getBlock(xb+1,yb+1);
+      }
+      byte lmb = (byte)((0xff<<xf)&0xff);
+      ulong leftmask = BYTEMARKER*lmb;
+      byte em=0;
+      ulong rightmask = FULL^leftmask;
+      ulong res=0;
+      int yfi = blockh-yf;
+      int xfi = blockw-xf;
+      if(smearV){
+        em=(byte)((bl>>(yf*8+xf))|(br>>(yf*8)<<xfi));
+      }
+      res|=(tl&leftmask)>>(yf*8+xf);
+      res|=(tr&rightmask)>>(yf*8)<<xfi;
+      if(yf!=0){
+        res|=(bl&leftmask)<<(yfi*8)>>xf;
+        res|=(br&rightmask)<<(yfi*8+xfi);
+      }
+      if(smearH) {
+        ulong vmask = BYTEMARKER*(byte)(1<<xf);
+        ulong barres = (tr&vmask)<<(blockh-xf-1)>>yf*8;
+        if(yf!=0)barres |= (br&vmask)<<(blockh-xf-1+yfi*8);
+        if(smearV){
+          em = (byte)(em|(em>>1)+(byte)((br>>xf+8*yf)&1)*0x80);
+        }
+        res = res|((res&~BYTEMARKER)>>1)|barres;
+      }
+      if(smearV){
+        res = res | (res<<8) | ((ulong)em)>>56;
+      }
+      return res;
     }
     public ulong getAreaAligned(int x, int y){
       return getBlock(x/blockw,y/blockh);
@@ -221,7 +268,7 @@ public class MipGrid{
     Vector2 owhole = soffset.Floor();
     Vector2 ofrac = soffset-owhole;
     ulong self = layers[level].getBlock(x,y);
-    ulong other = o.layers[level].getAreaSmeared((int)owhole.X, (int)owhole.Y, ofrac.X!=0? 1:0, ofrac.Y!=0? 1:0);
+    ulong other = o.layers[level].getAreaSmeared((int)owhole.X, (int)owhole.Y, ofrac.X!=0, ofrac.Y!=0);
     ulong hit = self&other;
     // DebugConsole.Write($"{oloc} {soffset} {owhole} {ofrac}");
     // DebugConsole.Write($"{x} {y} {level}");
