@@ -91,7 +91,7 @@ public class Template:Entity, ITemplateChild{
     this.Visible = false;
     Depth = 10000+depthoffset;
     this.ownidpath=getOwnID(data);
-    skiphooks.enable();
+    MovementLock.skiphooks.enable();
     if(string.IsNullOrEmpty(templateStr)){
       TemplateBehaviorChain.AddEmptyTemplate(data);
     }
@@ -105,50 +105,11 @@ public class Template:Entity, ITemplateChild{
       c.relposTo(loc, liftspeed);
     }
   }
-  static HashSet<Actor> alreadyX = new();
-  static HashSet<Actor> alreadyY = new();
-  static bool doingMove = false;
+
+
   public void childRelposSafe(){
-    if(doingMove){
-      childRelposTo(virtLoc,gatheredLiftspeed);
-      return;
-    }
-    doingMove = true;
-    alreadyX.Clear(); alreadyY.Clear();
-    childRelposTo(virtLoc,gatheredLiftspeed);
-    alreadyX.Clear(); alreadyY.Clear();
-    doingMove = false;
+    using(new MovementLock())childRelposTo(virtLoc,gatheredLiftspeed);
   }
-  static bool moveHHook(On.Celeste.Actor.orig_MoveHExact orig, Actor self, int move, Collision cb, Solid pusher){
-    if(pusher == null && cb == null && doingMove){
-      if(alreadyX.Contains(self)) return false;
-      alreadyX.Add(self);
-      Solid.riders.Remove(self);
-      return orig(self, move, cb, pusher);
-    }
-    return orig(self, move, cb, pusher);
-  }
-  static bool moveVHook(On.Celeste.Actor.orig_MoveVExact orig, Actor self, int move, Collision cb, Solid pusher){
-    if(pusher == null && cb == null && doingMove){
-      if(alreadyY.Contains(self)){
-        return false;
-      }
-      bool flag = !orig(self, move, cb, pusher);
-      if(flag || move<0){
-        alreadyY.Add(self);
-        Solid.riders.Remove(self);
-      }
-      return flag;
-    }
-    return orig(self, move, cb, pusher);
-  }
-  static HookManager skiphooks = new HookManager(()=>{
-    On.Celeste.Actor.MoveHExact+=moveHHook;
-    On.Celeste.Actor.MoveVExact+=moveVHook;
-  },void ()=>{
-    On.Celeste.Actor.MoveHExact-=moveHHook;
-    On.Celeste.Actor.MoveVExact-=moveVHook;
-  }, auspicioushelperModule.OnEnterMap);
   internal Wrappers.FgTiles fgt = null;
   public void addEnt(ITemplateChild c){
     c.parent = this;
@@ -345,4 +306,55 @@ public class Template:Entity, ITemplateChild{
     if(parent != null) return parent.GetFromTree<T>();
     return default(T);
   }
+}
+
+
+public class MovementLock:IDisposable{
+  static HashSet<Actor> alreadyX = new();
+  static HashSet<Actor> alreadyY = new();
+  static int instances = 0;
+  static int csinstances = 0;
+  static bool canSkip=>instances>0;
+  bool always;
+  public MovementLock(bool always=true){
+    this.always=always;
+    if(always) csinstances++;
+    if(instances++==0){
+      alreadyX.Clear(); alreadyY.Clear();
+    }
+  }
+  public virtual void Dispose(){
+    if(always) csinstances--;
+    if(--instances == 0){
+      alreadyX.Clear(); alreadyY.Clear();
+    }
+  }
+  static bool moveHHook(On.Celeste.Actor.orig_MoveHExact orig, Actor self, int move, Collision cb, Solid pusher){
+    if(pusher == null && cb == null && canSkip){
+      if(alreadyX.Contains(self)) return false;
+      alreadyX.Add(self);
+      return orig(self, move, cb, pusher);
+    }
+    return orig(self, move, cb, pusher);
+  }
+  static bool moveVHook(On.Celeste.Actor.orig_MoveVExact orig, Actor self, int move, Collision cb, Solid pusher){
+    if(pusher == null && cb == null && canSkip){
+      if(alreadyY.Contains(self)){
+        return false;
+      }
+      bool flag = !orig(self, move, cb, pusher);
+      if(flag || move<0){
+        alreadyY.Add(self);
+      }
+      return flag;
+    }
+    return orig(self, move, cb, pusher);
+  }
+  public static HookManager skiphooks = new HookManager(()=>{
+    On.Celeste.Actor.MoveHExact+=moveHHook;
+    On.Celeste.Actor.MoveVExact+=moveVHook;
+  },void ()=>{
+    On.Celeste.Actor.MoveHExact-=moveHHook;
+    On.Celeste.Actor.MoveVExact-=moveVHook;
+  }, auspicioushelperModule.OnEnterMap);
 }

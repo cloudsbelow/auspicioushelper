@@ -14,18 +14,20 @@ using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.auspicioushelper;
 
-public class StaticmoverLock:IDisposable{
+public class StaticmoverLock:MovementLock,IDisposable{
   static int locked=0;
   static List<Tuple<StaticMover,Vector2>> enq = new();
-  public StaticmoverLock(){
+  public StaticmoverLock():base(false){
     locked++;
   }
-  public void Dispose(){
+  public override void Dispose(){
     if(--locked==0){
       foreach(var pair in enq){
         pair.Item1.OnMove(pair.Item2);
       }
+      enq.Clear();
     }
+    base.Dispose();
   }
   static public bool tryol(StaticMover s, Vector2 move){
     if(locked==0)return false;
@@ -234,11 +236,14 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
     }
     return res;
   }
-  static bool Hook(On.Celeste.Solid.orig_HasPlayerRider orig, Solid s){
-    if(orig(s)) return true;
-    foreach(Component c in s.Components) 
-      if(c is StaticMover sm && sm.Entity is TemplateStaticmover tsm && tsm.conveyRiding && tsm.hasRiders<Player>()) return true;
-    return false;
+  static Player Hook(On.Celeste.Solid.orig_GetPlayerRider orig, Solid s){
+    var p = orig(s);
+    if(p!=null) return p;
+    //DebugConsole.Write("Here");
+    foreach(StaticMover sm in s.staticMovers) if(sm.Entity is TemplateStaticmover tsm){
+      if(tsm.conveyRiding && tsm.hasRiders<Player>()) return UpdateHook.cachedPlayer;
+    } 
+    return null;
   }
   public override void destroy(bool particles){
     base.destroy(particles);
@@ -247,11 +252,11 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
   static HookManager hooks = new HookManager(()=>{
     On.Celeste.Platform.MoveHExactCollideSolids += MoveHPlatHook;
     On.Celeste.Platform.MoveVExactCollideSolids += MoveVPlatHook;
-    On.Celeste.Solid.HasPlayerRider += Hook;
+    On.Celeste.Solid.GetPlayerRider += Hook;
   },()=>{
     On.Celeste.Platform.MoveHExactCollideSolids -= MoveHPlatHook;
     On.Celeste.Platform.MoveVExactCollideSolids -= MoveVPlatHook;
-    On.Celeste.Solid.HasPlayerRider -= Hook;
+    On.Celeste.Solid.GetPlayerRider -= Hook;
 
   },auspicioushelperModule.OnEnterMap);
 }
