@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using Celeste.Mod.auspicioushelper.Wrappers;
+using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -23,6 +24,7 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
   string channel="";
   bool ridingTrigger;
   bool enableUnrooted = false;
+  bool conveyRiding = false;
   bool firstZeroAfter;
   
   public TemplateStaticmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
@@ -32,7 +34,8 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
     channel = d.Attr("channel","");
     pastLiftspeed = new Vector2[smearamount];
     ridingTrigger = d.Bool("ridingTrigger",true);
-    enableUnrooted = d.Bool("EnableUnrooted");
+    enableUnrooted = d.Bool("EnableUnrooted",false);
+    conveyRiding = d.Bool("conveyRiding",false);
     hooks.enable();
     Add(new BeforeAfterRender(()=>{
       if(this.ownShakeVec == Vector2.Zero){
@@ -196,17 +199,24 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
     }
     return res;
   }
-  public override void destroy(bool particles)
-  {
+  static bool Hook(On.Celeste.Solid.orig_HasPlayerRider orig, Solid s){
+    if(orig(s)) return true;
+    foreach(Component c in s.Components) 
+      if(c is StaticMover sm && sm.Entity is TemplateStaticmover tsm && tsm.conveyRiding && tsm.hasRiders<Player>()) return true;
+    return false;
+  }
+  public override void destroy(bool particles){
     base.destroy(particles);
     if(layer!=null) layer.removeTrying(this);
   }
   static HookManager hooks = new HookManager(()=>{
     On.Celeste.Platform.MoveHExactCollideSolids += MoveHPlatHook;
     On.Celeste.Platform.MoveVExactCollideSolids += MoveVPlatHook;
+    On.Celeste.Solid.HasPlayerRider += Hook;
   },()=>{
     On.Celeste.Platform.MoveHExactCollideSolids -= MoveHPlatHook;
     On.Celeste.Platform.MoveVExactCollideSolids -= MoveVPlatHook;
+    On.Celeste.Solid.HasPlayerRider -= Hook;
 
   },auspicioushelperModule.OnEnterMap);
 }

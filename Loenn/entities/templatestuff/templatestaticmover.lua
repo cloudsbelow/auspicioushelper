@@ -18,6 +18,7 @@ entity.placements = {
       smear_average = false,
       ridingTrigger = true,
       EnableUnrooted = false,
+      conveyRiding = false,
       
       _loenn_display_template = true,
     }
