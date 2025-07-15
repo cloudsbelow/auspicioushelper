@@ -27,7 +27,7 @@ public class StaticCollisiontree{
     if(!built){
       List<int> l = new List<int>();
       for(int i=0; i<rects.Count; i++){
-        if(rects[i].CollidePoint(x)) l.Add(i);
+        if(rects[i].CollidePointCompact(x)) l.Add(i);
       }
       return l;
     }

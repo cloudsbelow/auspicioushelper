@@ -90,6 +90,9 @@ public struct FloatRect{
   public bool CollidePoint(Vector2 p){
     return p.X>x && p.Y>y && p.X<x+w && p.Y<y+h;
   }
+  public bool CollidePointCompact(Vector2 p){
+    return p.X>=x && p.Y>=y && p.X<=x+w && p.Y<=y+h;
+  }
   public bool CollideRay(Vector2 p, Vector2 dir){
     Vector2 t1 = (tlc-p)/dir;
     Vector2 t2 = (brc-p)/dir;
