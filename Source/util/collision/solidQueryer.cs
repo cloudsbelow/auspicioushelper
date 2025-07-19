@@ -12,7 +12,7 @@ public enum CollisionDirection{
   none=0, up=1, right=2, down=4, left=8, yes = 16, solid=31, ground=yes|up
 }
 public static class SolidMiptree{
-  const float bsize = 16;
+  const float bsize =32;
   const float margin = 4;
   const int mipStep = 1; // each size is 1<<mipStep times larger
   struct RectCollider{
@@ -40,11 +40,12 @@ public static class SolidMiptree{
     }
     public void Add(RectCollider r){
       var low = Int2.Max(Int2.Floor((r.f.tlc-offset-new Vector2(margin,margin))/cellsize),0);
-      var high = Int2.Ceil((r.f.brc-offset+new Vector2(margin,margin))/cellsize);
+      var high = Int2.Floor((r.f.brc-offset+new Vector2(margin,margin))/cellsize);
       high = Int2.Min(high, new Int2(stride-1, height-1));
-      for(int y = low.y; y<=low.y; y++){
+      for(int y = low.y; y<=high.y; y++){
         for(int x = low.x; x<=high.x; x++){
           if(buckets[stride*y+x]==null)buckets[stride*y+x]=new();
+          //DebugConsole.Write($"Added {r.e} {r.dir} to cell {x} {y} in level with cellsize {cellsize} {stride} {height}");
           buckets[stride*y+x].Add(r);
         }
       }
@@ -93,6 +94,7 @@ public static class SolidMiptree{
   const int levelLimit = 10;
   public static Dictionary<Type, Func<Entity, CollisionDirection>> cdirdict = new();
   static public void Construct(Scene scene, IntRect bounds){
+    MaddiesIop.hooks.enable();
     offset = new Vector2(bounds.x,bounds.y);
     if(bounds.w!=lbounds.w || bounds.h!=lbounds.h){
       levels.Clear();
@@ -135,6 +137,7 @@ public static class SolidMiptree{
     RectCollider r;
     r.e=e;
     r.dir=dir;
+    //if((dir&CollisionDirection.up)==0) DebugConsole.Write($"{e},{dir}");
     if(r.dir!=CollisionDirection.none){
       r.f = new IntRect(
         (int)Math.Round(e.Left),(int)Math.Round(e.Top),

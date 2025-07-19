@@ -22,6 +22,10 @@ public class UpdateHook:Component{
   internal static int framenum;
   public static Player cachedPlayer;
   internal static void updateHook(On.Celeste.Level.orig_Update update, Level self){
+    if(self.Paused){
+      update(self);
+      return;
+    }
     cachedPlayer = self.Tracker.GetEntity<Player>();
     foreach(UpdateHook u in self.Tracker.GetComponents<UpdateHook>()){
       u.updatedThisFrame = false;
@@ -29,7 +33,7 @@ public class UpdateHook:Component{
     }
     framenum+=1; //doesn't matter if this overflows or anything <3
     update(self);
-
+  
     FastDebris.UpdateDebris(self);
     if(TimeSinceTransMs<1000000)TimeSinceTransMs+=Engine.DeltaTime*1000;
     foreach(UpdateHook u in self.Tracker.GetComponents<UpdateHook>()){

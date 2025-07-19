@@ -124,7 +124,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     return color;
   }
   public void destroy(bool yes){
-    if(yes)SpinnerDebris.CreateBurst(Scene,64,Position,parent.gatheredLiftspeed,getColor());
+    if(yes)SpinnerDebris.CreateBurst(Scene,4,Position,parent.gatheredLiftspeed,getColor());
     RemoveSelf();
   }
 

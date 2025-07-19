@@ -62,6 +62,7 @@ public class FastDebris:Actor{
     int dir=Math.Sign(num);
     Int2 pos = intpos;
     CollisionDirection d = Util.getCollisionDir(Vector2.UnitX*dir);
+    //DebugConsole.Write(d.ToString());
     for(int i=0; i!=num; i+=dir){
       Entity e = SolidMiptree.Test(new(pos.x+i+dir,pos.y),radius,d);
       if(e!=null){
@@ -98,7 +99,8 @@ public class FastDebris:Actor{
   }
   public static void UpdateDebris(Level lv){
     var l = lv.Tracker.GetEntities<FastDebris>();
-    if(l.Count<24)foreach(FastDebris e in l)e.updateCollision(false);
+    //14 chosen completely arbitrarily
+    if(l.Count<14)foreach(FastDebris e in l)e.updateCollision(false);
     else {
       SolidMiptree.Construct(lv,((IntRect)lv.Bounds).expandAll_(32));
       foreach(FastDebris e in l)e.updateCollision(true);
