@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using Celeste.Mod.auspicioushelper.Wrappers;
+using Celeste.Mod.Registry;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -227,6 +228,25 @@ public class Template:Entity, ITemplateChild{
     foreach(var li in list) if(li is T le) nlist.Add(le);
     return nlist;
   }
+  public void AddChildren(ICollection<Entity> li, Type t, Propagation p = Propagation.None){
+    List<Entity> l = new();
+    if(prop!=Propagation.None)AddAllChildrenProp(l,p);
+    else AddAllChildren(l);
+    foreach(var e in l) if(t.IsInstanceOfType(e)) li.Add(e);
+  }
+  public void AddChildren(ICollection<Entity> li, List<Type> ti, Propagation p = Propagation.None){
+    List<Entity> l = new();
+    if(prop!=Propagation.None)AddAllChildrenProp(l,p);
+    else AddAllChildren(l);
+    foreach(var e in l){
+      foreach(Type t in ti){
+        if(t.IsInstanceOfType(e)){
+          li.Add(e);
+          break;
+        } 
+      }
+    } 
+  }
   public virtual void parentChangeStat(int vis, int col, int act){
     foreach(ITemplateChild c in children){
       c.parentChangeStat(vis,col,act);
@@ -332,8 +352,9 @@ public class MovementLock:IDisposable{
   static bool moveHHook(On.Celeste.Actor.orig_MoveHExact orig, Actor self, int move, Collision cb, Solid pusher){
     if(pusher == null && cb == null && canSkip){
       if(alreadyX.Contains(self)) return false;
-      alreadyX.Add(self);
-      return orig(self, move, cb, pusher);
+      bool flag = orig(self, move, cb, pusher);
+      if(!flag) alreadyX.Add(self);
+      return flag;
     }
     return orig(self, move, cb, pusher);
   }

@@ -7,15 +7,14 @@ using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
-
+[Flags]
+public enum CollisionDirection{
+  none=0, up=1, right=2, down=4, left=8, yes = 16, solid=31,
+}
 public static class SolidMiptree{
   const float bsize = 16;
   const float margin = 4;
   const int mipStep = 1; // each size is 1<<mipStep times larger
-  [Flags]
-  public enum CollisionDirection{
-    none=0, up=1, right=2, down=4, left=8, solid=15,
-  }
   struct RectCollider{
     public IntRect f;
     public CollisionDirection dir;

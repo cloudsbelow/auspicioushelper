@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -12,50 +13,8 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
-public abstract class TriggerInfo{
-  public Template parent;
-  public Entity entity;
-  public class SmInfo:TriggerInfo{
-    public SmInfo(Template p, Entity e){
-      this.parent = p; this.entity = e;
-    }
-    public static SmInfo getInfo(StaticMover sm){
-      var smd = new DynamicData(sm);
-      if(smd.TryGet<SmInfo>("__auspiciousSM", out var info)){
-        return info;
-      }
-      return new SmInfo(null,sm.Entity);
-    }
-    public override string category => "staticmover/"+entity.ToString();
-  }
-  public class EntInfo:TriggerInfo{
-    string ev;
-    public EntInfo(string type, Entity e){
-      ev = type;
-      entity=e;
-    }
-    public override string category=>"entity/"+ev;
-  }
-  public virtual bool shouldTrigger=>true;
-  public static bool TestPass(TriggerInfo info, Template t){
-    bool use = info == null || info.shouldTrigger;
-    if(!use) t.parent?.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(info);
-    return use;
-  }
-  public void Pass(ITemplateChild t){
-    t.parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(this);
-  }
-  public void PassTo(Template t){
-    t?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(this);
-  }
-  public bool TestPass(Template t){
-    return TestPass(this,t);
-  }
-  public abstract string category {get;}
-}
-public interface ITemplateTriggerable{
-  void OnTrigger(TriggerInfo s);
-}
+
+
 public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{ 
   public override Vector2 gatheredLiftspeed => dislocated?ownLiftspeed:base.gatheredLiftspeed;
   public bool triggered;
@@ -63,16 +22,18 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
   public Vector2 exactPosition=>Position+movementCounter;
   public override Vector2 virtLoc => dislocated?Position.Round():Position;
   public bool useOwnUncollidable = false;
+  bool hitJumpthrus;
   public TemplateMoveCollidable(EntityData data, Vector2 pos, int depthoffset):base(data,pos,depthoffset){
     Position = Position.Round();
     movementCounter = Vector2.Zero;
     prop &= ~Propagation.Riding; 
     triggerHooks.enable();
+    hitJumpthrus = data.Bool("hitJumpthrus",false);
+    if(hitJumpthrus) MaddiesIop.hooks.enable();
   }
   bool dislocated = false;
   public bool detatched=>dislocated;
   
-  MipGridCollisionCacher mgcc = new();
   public override void relposTo(Vector2 loc, Vector2 liftspeed) {
     if(!dislocated) base.relposTo(loc,liftspeed);
   }
@@ -91,13 +52,20 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     setCollidability(old);
   }
   public class QueryBounds {
-    public List<FloatRect> rects=new();
+    public struct DRect{
+      public FloatRect f;
+      public CollisionDirection d;
+      public DRect(FloatRect f, CollisionDirection d=CollisionDirection.solid){
+        this.f=f; this.d=d;
+      }
+    }
+    public List<DRect> rects=new();
     public List<MipGrid> grids=new();
-    public bool Collide(FloatRect o, Vector2 offset){
+    public bool Collide(FloatRect o, Vector2 offset, CollisionDirection movedir=CollisionDirection.yes){
       float nx = MathF.Round(o.x)+offset.X;
       float ny = MathF.Round(o.y)+offset.Y;
       foreach(var rect in rects){
-        if(rect.CollideExRect(nx,ny,o.w,o.h)) return true;
+        if((movedir&rect.d)!=0 && rect.f.CollideExRect(nx,ny,o.w,o.h)) return true;
       }
       FloatRect n = new FloatRect(nx,ny,o.w,o.h);
       foreach(var grid in grids){
@@ -105,20 +73,22 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       }
       return false;
     }
-    public bool Collide(MipGrid g, Vector2 offset){
+    public bool Collide(MipGrid g, Vector2 offset, CollisionDirection movedir=CollisionDirection.yes){
       foreach(var grid in grids){
         if(grid.collideMipGridOffset(g,offset)) return true;
       }
       foreach(var rect in rects){
-        if(g.collideFrOffset(rect, -offset)) return true;
+        if((movedir&rect.d)!=0 && g.collideFrOffset(rect.f, -offset)) return true;
       }
       return false;
     }
-    public bool Collide(QueryIn q, Vector2 offset){
-      foreach(var g in q.grids) if(Collide(g,offset)) return true;
-      foreach(var r in q.rects) if(Collide(r,offset)) return true;
+    public bool Collide(QueryIn q, Vector2 offset, CollisionDirection movedir){
+      movedir = movedir|CollisionDirection.yes;
+      foreach(var g in q.grids) if(Collide(g,offset,movedir)) return true;
+      foreach(var r in q.rects) if(Collide(r,offset,movedir)) return true;
       return false;
     }
+    public bool Collide(QueryIn q, Vector2 offset)=>Collide(q,offset,Util.getCollisionDir(offset));
   }
   public class QueryIn{
     public List<FloatRect> rects=new();
@@ -132,17 +102,48 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       return false;
     }
   }
-  public static QueryBounds getQinfo(FloatRect f, HashSet<Solid> exclude, Scene Scene){
+  public static QueryBounds getQinfo(FloatRect f, HashSet<Entity> exclude, Scene Scene){
     QueryBounds res  =new();
     foreach(Solid s in Scene.Tracker.GetEntities<Solid>()){
       if(!s.Collidable || exclude.Contains(s)) continue;
       FloatRect coarseBounds = new FloatRect(s);
-      if(s.Collider is Hitbox h && f.CollideFr(coarseBounds)) res.rects.Add(coarseBounds);
+      if(s.Collider is Hitbox h && f.CollideFr(coarseBounds)) res.rects.Add(new QueryBounds.DRect(coarseBounds,CollisionDirection.solid));
       if(s.Collider is Grid g && f.CollideFr(coarseBounds)) res.grids.Add(MipGrid.fromGrid(g));
     }
     return res;
   }
-  public QueryBounds getQinfo(FloatRect f, HashSet<Solid> exclude)=>getQinfo(f,exclude,Scene);
+  public static void AddJumpthrus(FloatRect f, QueryBounds q, QueryIn s, HashSet<Entity> exclude, Scene Scene){
+    foreach(JumpThru j in Scene.Tracker.GetEntities<JumpThru>()){
+      if(!j.Collidable || exclude.Contains(j)) continue;
+      FloatRect coarseBounds = new FloatRect(j);
+      if(j.Collider is Hitbox h && f.CollideFr(coarseBounds) && !s.Collide(coarseBounds)){
+        q.rects.Add(new QueryBounds.DRect(coarseBounds,CollisionDirection.up));
+      }
+    }
+    if(MaddiesIop.jt!=null && Scene.Tracker.Entities.TryGetValue(MaddiesIop.jt, out var li)) foreach(Entity j in li){
+      if(!j.Collidable || exclude.Contains(j)) continue;
+      FloatRect coarseBounds = new FloatRect(j);
+      if(j.Collider is Hitbox h && f.CollideFr(coarseBounds) && !s.Collide(coarseBounds)){
+        var dir = MaddiesIop.side.get(j)?CollisionDirection.right:CollisionDirection.left;
+        q.rects.Add(new (coarseBounds, dir));
+      }
+    }
+    if(MaddiesIop.dt!=null && Scene.Tracker.Entities.TryGetValue(MaddiesIop.dt,out li)) foreach(Entity j in li){
+      if(!j.Collidable || exclude.Contains(j)) continue;
+      FloatRect coarseBounds = new FloatRect(j);
+      if(j.Collider is Hitbox h && f.CollideFr(coarseBounds) && !s.Collide(coarseBounds)){
+        q.rects.Add(new (coarseBounds, CollisionDirection.down));
+      }
+    }
+    if(MaddiesIop.samah!=null && Scene.Tracker.Entities.TryGetValue(MaddiesIop.samah,out li)) foreach(Entity j in li){
+      if(!j.Collidable || exclude.Contains(j)) continue;
+      FloatRect coarseBounds = new FloatRect(j);
+      if(j.Collider is Hitbox h && f.CollideFr(coarseBounds) && !s.Collide(coarseBounds)){
+        q.rects.Add(new (coarseBounds, CollisionDirection.down));
+      }
+    }
+  }
+  public QueryBounds getQinfo(FloatRect f, HashSet<Entity> exclude)=>getQinfo(f,exclude,Scene);
   public QueryIn getQself(){
     QueryIn res = new();
     FloatRect bounds = FloatRect.empty;
@@ -200,22 +201,6 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     bool res = TestMoveLeniency(q,s,amount,dirvec,maxLeniency,leniencyVec, out var v);
     return v;
   }
-  // public bool MoveBy(Vector2 amount, Vector2 liftspeed, Vector2? leniencyVec, int? maxLeniency){
-  //   Vector2 leni = leniencyVec??Vector2.Zero;
-  //   movementCounter+=amount;
-  //   if(exactPosition.Round()!=Position){
-  //     Vector2 delta = exactPosition.Round()-Position;
-  //     var ml = maxLeniency??0;
-  //     bool res;
-  //     QueryIn s = getQself();
-  //     Vector2 ex = amount.Abs()+leni.Abs()*ml;
-  //     QueryBounds q = getQinfo(s.bounds._expand(ex.X+1,ex.Y+1),s.gotten);
-  //     if(ml == 0){
-  //       Vector2 npos = 
-  //     }
-  //   }
-  //   return true;
-  // }
   public bool MoveHCollideExact(QueryBounds q, QueryIn s, int amount, int leniency, Vector2 liftspeed){
     Vector2 v = leniency==0? TestMove(q,s,amount,new Vector2(1,0)) : TestMoveLeniency(q,s,amount,new Vector2(1,0),leniency,new Vector2(0,1));
     if(v!=Vector2.Zero){
@@ -266,15 +251,21 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
   public Query getq(Vector2 maxpotentialmovemagn){
     QueryIn s = getQself();
     Vector2 v = maxpotentialmovemagn.Abs().Ceiling();
-    HashSet<Solid> toExclude = new(s.gotten);
+    //HashSet<Entity> toExclude = new(s.gotten);
+    List<Entity> l = new();
+    AddAllChildrenProp(l,Propagation.Shake);
     foreach(Solid p in s.gotten){
       foreach(StaticMover sm in p.staticMovers){
         if(sm.Entity is TemplateStaticmover smt){
-          foreach(Solid sl in smt.GetChildren<Solid>(Propagation.Shake)) toExclude.Add(sl);
+          //foreach(Solid sl in smt.GetChildren<Solid>(Propagation.Shake)) toExclude.Add(sl);
+          smt.AddAllChildrenProp(l,Propagation.Shake);
         }
       }
     }
-    QueryBounds q = getQinfo(s.bounds._expand(v.X,v.Y),toExclude);
+    HashSet<Entity> toExclude = new(l);
+    var qbounds = s.bounds._expand(v.X,v.Y);
+    QueryBounds q = getQinfo(qbounds,toExclude);
+    if(hitJumpthrus) AddJumpthrus(qbounds,q,s,toExclude,Scene);
     return new(q,s);
   }
 

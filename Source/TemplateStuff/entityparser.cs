@@ -48,6 +48,8 @@ public static class EntityParser{
     }
     return null;
   }
+  static Level dummyLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level));
+  static LevelData dummyLd = (LevelData)RuntimeHelpers.GetUninitializedObject(typeof(LevelData));
   public static Types generateLoader_(EntityData d, LevelData ld, Level l){
     if(!parseMap.TryGetValue(d.Name, out var etype) || (l!=null && etype == Types.initiallyerrors)){
       Level.EntityLoader loader = Level.EntityLoaders.GetValueOrDefault(d.Name)??skitzoGuess(d.Name);
@@ -57,7 +59,7 @@ public static class EntityParser{
         return Types.unable;
       }
       try{
-        Entity t = loader(l,ld,Vector2.Zero,d);
+        Entity t = loader(l??dummyLevel,ld??dummyLd,Vector2.Zero,d);
         if(t is Template){
           etype = parseMap[d.Name] = Types.template;
         }else if(t is Platform){

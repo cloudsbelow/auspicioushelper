@@ -30,7 +30,7 @@ public class CatRomSegDenorm{
     for(int i=1; i<n.Count; i++)ts[i]=ts[i-1]+MathF.Pow(Vector2.Distance(n[i],n[i-1]),alpha);
     for(int i=0; i<n.Count-3; i++){
       Vector2 p0=n[i]; Vector2 p1=n[i+1]; Vector2 p2=n[i+2]; Vector2 p3=n[i+3];
-      float t0=ts[i]; float t1=ts[i+1]; float t2=ts[i+2]; float t3=ts[i+4];
+      float t0=ts[i]; float t1=ts[i+1]; float t2=ts[i+2]; float t3=ts[i+3];
       Vector2 m1 = (1.0f - tension) * (t2 - t1) *
         ((p1 - p0) / (t1 - t0) - (p2 - p0) / (t2 - t0) + (p2 - p1) / (t2 - t1));
       Vector2 m2 = (1.0f - tension) * (t2 - t1) *
@@ -42,9 +42,10 @@ public class CatRomSegDenorm{
     }
   }
   // public Vector2 point(float t){
-  //   if(t<=ts[1]) return sp[0].d;
-  //   if(t>=ts[^2]) return sp[^1].a+sp[^1].b+sp[^1].c+sp[^1].d;
+  //   if(t<0) return sp[0].d;
+  //   if(t>=1) return sp[^1].a+sp[^1].b+sp[^1].c+sp[^1].d;
+  //   t=t*(ts[^2]-ts[1])+ts[1];
   //   var seg = sp[Util.bsearchLast(ts,t)-1];
-    
+
   // }
 }

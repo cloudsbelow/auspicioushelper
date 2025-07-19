@@ -98,6 +98,11 @@ public class HookManager{
     if(autoclean != null) s=new ScheduledAction(condDisable, "Hook Manager "+label);
     allhooks.Add(this);
   }
+  public HookManager(Action setup, ActionList autoclean = null, string label=""){
+    this.setup=setup; this.autoclean=autoclean;
+    if(autoclean!=null) s=new ScheduledAction(trivialDisable, "Hook Manager"+label);
+    allhooks.Add(this);
+  }
   public HookManager enable(){
     if(active) return this;
     active = true;
@@ -105,20 +110,25 @@ public class HookManager{
     if(autoclean != null) autoclean.enroll(s);
     return this;
   }
-  public bool simpleDisable(){
+  bool simpleDisable(){
     if(!active) return true;
     active = false;
     unsetup();
     return true;
   }
-  public bool condDisable(){
+  bool condDisable(){
     if(!active) return true;
     active=!condunsetup();
     return !active;
   }
+  bool trivialDisable(){
+    active=false;
+    return true;
+  }
   public bool disable(){
     if(condunsetup != null) return active = !condDisable();
-    else return simpleDisable();
+    else if(unsetup!=null) return simpleDisable();
+    else return trivialDisable();
   }
   public static void disableAll(){
     foreach(var h in allhooks){

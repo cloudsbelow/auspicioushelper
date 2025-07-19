@@ -22,10 +22,13 @@ public class StaticmoverLock:MovementLock,IDisposable{
   }
   public override void Dispose(){
     if(--locked==0){
-      foreach(var pair in enq){
-        pair.Item1.OnMove(pair.Item2);
+      if(enq.Count!=0){
+        var t = enq;
+        enq = new();
+        foreach(var pair in t){
+          pair.Item1.OnMove(pair.Item2);
+        }
       }
-      enq.Clear();
     }
     base.Dispose();
   }

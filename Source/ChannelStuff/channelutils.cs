@@ -123,8 +123,8 @@ public static class ChannelState{
     for(;idx<ch.Length;idx++) if(ch[idx]=='[')break;
     if(idx!=ch.Length) return;
     SetChannelRaw(ch,state);
-    if(ch[0]=='$')(Engine.Instance.scene as Level)?.Session.SetFlag(ch.Substring(1),state!=0);
-    if(ch[0]=='#')(Engine.Instance.scene as Level)?.Session.SetCounter(ch.Substring(1),state);
+    if(ch.Length>0&&ch[0]=='$')(Engine.Instance.scene as Level)?.Session.SetFlag(ch.Substring(1),state!=0);
+    if(ch.Length>0&&ch[0]=='#')(Engine.Instance.scene as Level)?.Session.SetCounter(ch.Substring(1),state);
     if(modifiers.TryGetValue(ch, out var ms)){
       foreach(var m in ms){
         SetChannelRaw(m.outname,m.apply(state));

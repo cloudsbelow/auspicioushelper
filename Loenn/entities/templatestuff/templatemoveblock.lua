@@ -30,6 +30,7 @@ entity.placements = {
       arrow_texture = "small",
       decal_depth = -10001,
       max_leniency=4,
+      hitJumpthrus=true,
       
       _loenn_display_template = true,
     }

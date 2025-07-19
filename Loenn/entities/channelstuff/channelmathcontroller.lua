@@ -20,6 +20,7 @@ entity.placements = {
       debug = false,
       notifying_override="",
       run_when_awake=false,
+      only_run_for_nonzero=false,
     }
   }
 }

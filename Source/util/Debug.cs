@@ -88,9 +88,10 @@ public static class DebugConsole {
     consoleThread = null;
     open = false;
   }
-  public static void WriteFailure(string s){
+  public static void WriteFailure(string s, bool alwayserror=false){
     Write(s);
-    if(auspicioushelperModule.Settings?.CrashOnFail??false){
+    Logger.Error("auspicioushelper",s);
+    if(alwayserror||(auspicioushelperModule.Settings?.CrashOnFail??false)){
       throw new Exception(s);
     }
   }

@@ -7,8 +7,56 @@ using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
+
+public interface ITemplateTriggerable{
+  void OnTrigger(TriggerInfo s);
+}
+
+public abstract class TriggerInfo{
+  public Template parent;
+  public Entity entity;
+  public class SmInfo:TriggerInfo{
+    public SmInfo(Template p, Entity e){
+      this.parent = p; this.entity = e;
+    }
+    public static SmInfo getInfo(StaticMover sm){
+      var smd = new DynamicData(sm);
+      if(smd.TryGet<SmInfo>("__auspiciousSM", out var info)){
+        return info;
+      }
+      return new SmInfo(null,sm.Entity);
+    }
+    public override string category => "staticmover/"+entity.ToString();
+  }
+  public class EntInfo:TriggerInfo{
+    string ev;
+    public EntInfo(string type, Entity e){
+      ev = type;
+      entity=e;
+    }
+    public override string category=>"entity/"+ev;
+  }
+  public virtual bool shouldTrigger=>true;
+  public static bool TestPass(TriggerInfo info, Template t){
+    bool use = info == null || info.shouldTrigger;
+    if(!use) t.parent?.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(info);
+    return use;
+  }
+  public void Pass(ITemplateChild t){
+    t.parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(this);
+  }
+  public void PassTo(Template t){
+    t?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(this);
+  }
+  public bool TestPass(Template t){
+    return TestPass(this,t);
+  }
+  public abstract string category {get;}
+}
+
 
 [CustomEntity("auspicioushelper/TemplateTriggerModifier")]
 public class TemplateTriggerModifier:Template, ITemplateTriggerable{

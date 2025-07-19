@@ -19,6 +19,9 @@ public class ChannelSwitch:ChannelBaseEntity {
   public float cooldown;
   public float maxcd;
   Sprite sprite;
+  string onsfx=null;
+  string offsfx=null;
+  string diesfx=null;
   public bool usable(){
     if(!onOnly || on){
       return !offOnly || !on;
@@ -46,27 +49,38 @@ public class ChannelSwitch:ChannelBaseEntity {
     onVal = data.Int("on_value",1);
     offVal = data.Int("off_value",0);
     maxcd = data.Float("cooldown",1f);
+    onsfx = data.Attr("onSfx","event:/game/09_core/switch_to_cold");
+    offsfx = data.Attr("offSfx","event:/game/09_core/switch_to_hot");
+    diesfx = data.Attr("diesfx","event:/game/09_core/switch_dies");
     //DebugConsole.Write("Constructed switch");
   }
   public override void Added(Scene scene){
     base.Added(scene);
     //DebugConsole.Write("Added switch");
-    on = (ChannelState.readChannel(channel)&1)==1;
+    on = getVal(ChannelState.readChannel(channel));
     if(usable()){
       sprite.Play(on?"iceLoop":"hotLoop");
     } else {
       sprite.Play(on? "iceOffLoop":"hotOffLoop");
     }
   }
+  bool getVal(int val){
+    if(val == onVal) return true;
+    else if(val == offVal) return false;
+    else if(offOnly) return false;
+    else if(onOnly) return true;
+    else return val!=0;
+  }
   public override void setChVal(int val){
-    bool nval = (val &1)==1;
+    bool nval = getVal(val);
+    //DebugConsole.Write($"{val} {onVal} {}{nval}")
     if(nval == on) return;
     on=nval;
-    Audio.Play(on ? "event:/game/09_core/switch_to_cold" : "event:/game/09_core/switch_to_hot", Position);
+    Audio.Play(on ? onsfx : offsfx, Position);
     if (usable()){
       sprite.Play(on ? "ice" : "hot");
     } else{
-      Audio.Play("event:/game/09_core/switch_dies", Position);
+      Audio.Play(diesfx, Position);
       sprite.Play(on ? "iceOff" : "hotOff");
     }
   }

@@ -19,7 +19,10 @@ channelswitch.placements = {
       seeker_toggle=false,
       on_value=1,
       off_value=0,
-      cooldown=1.0
+      cooldown=1.0,
+      onSfx="event:/game/09_core/switch_to_cold",
+      offSfx="event:/game/09_core/switch_to_hot",
+      dieSfx="event:/game/09_core/switch_dies"
     }
   }
 }

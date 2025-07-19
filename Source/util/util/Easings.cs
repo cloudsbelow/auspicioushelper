@@ -162,12 +162,13 @@ public static partial class Util{
     return ApplyEasing(easing,val,out derivative);
   }
   const int MAXITER = 100;
-  public static float getEasingPreimage(Easings easing, float target, float tolerence = 0.001f){
+  public static float getEasingPreimage(Easings easing, float target, float tolerence = 0.0001f){
     if(target >= 1) return 1;
     if(target <= 0) return 0;
     float low = 0;
     float high = 1;
     float x=target;
+    //wow bounded monotonic function optimization! i love love love love  
     for(int i=0; i<MAXITER; i++){
       float y = ApplyEasing(easing, x, out var dx);
       float delta = y-target;

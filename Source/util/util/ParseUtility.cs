@@ -221,6 +221,7 @@ public static partial class Util{
   public static float[] toArray(Vector2 x)=>new float[]{x.X,x.Y};
   public static float[] toArray(Vector3 x)=>new float[]{x.X,x.Y,x.Z};
   public static float[] toArray(Vector4 x)=>new float[]{x.X,x.Y,x.Z,x.W};
+  public static string nullIfEmpty(string s)=>string.IsNullOrWhiteSpace(s)?null:s;
 
   public static string sideBySide(List<string> strs, string seperator = " "){
     List<string[]> sp = strs.Select(s=>s.Split('\n')).ToList();

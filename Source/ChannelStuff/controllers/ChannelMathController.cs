@@ -46,7 +46,9 @@ public class ChannelMathController:Entity{
   HashSet<string> notifyingChannels=null;
   HashSet<int> notifyingRegs=null; 
   bool runWhenAwake;
+  bool onlyForNonzero=false;
   Vector2[] nodes;
+  const int maxVersion=2;
   public ChannelMathController(EntityData d, Vector2 offset):base(new Vector2(0,0)){
     runImmediately = d.Bool("run_immediately",false);
     runWhenAwake = d.Bool("run_when_awake",true);
@@ -56,6 +58,7 @@ public class ChannelMathController:Entity{
     activ = d.Enum<ActivationCond>("activation_cond",ActivationCond.Auto);
     if(activ == ActivationCond.Auto) activ = period>0?ActivationCond.Interval:ActivationCond.Change;
     if(activ == ActivationCond.OnlyAwake) runWhenAwake = true;
+    onlyForNonzero = d.Bool("only_run_for_nonzero",false);
     string notifying = d.Attr("notifying_override","");
     if(!string.IsNullOrWhiteSpace(notifying)){
       notifyingChannels=new(Util.listparseflat(notifying,true,true));
@@ -71,8 +74,8 @@ public class ChannelMathController:Entity{
       return;
     }
     int version = BitConverter.ToUInt16(bin);
-    if(version!=1){
-      DebugConsole.WriteFailure("Invalid version for mathcontroller");
+    if(version<=0 || version>maxVersion){
+      DebugConsole.WriteFailure("Invalid version for mathcontroller, please update auspicioushelper",true);
       return;
     }
     
@@ -132,6 +135,7 @@ public class ChannelMathController:Entity{
     locked=false;
   }
   private void changeReg(int ridx, int nval){
+    if(onlyForNonzero && nval==0) return;
     if(ridx!=-1){
       if(debug) DebugConsole.Write($"Mathcontroller: register {ridx} listening to {usedChannels[ridx]} changed to {nval}");
       basereg[ridx]=nval;

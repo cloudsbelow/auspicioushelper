@@ -4,8 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using IL.Monocle;
+using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.auspicioushelper;
 public partial class Util{
@@ -101,5 +100,13 @@ public partial class Util{
       } while(cur.Test(s[idx++],ref cur));
       return cur?.isSuperEnding??false;
     }
+  }
+  public static CollisionDirection getCollisionDir(Vector2 move){
+    CollisionDirection dir = CollisionDirection.yes;
+    if(move.X<0) dir |= CollisionDirection.right;
+    else if(move.X>0) dir |= CollisionDirection.left;
+    if(move.Y<0) dir |= CollisionDirection.down;
+    else if(move.Y>0) dir |= CollisionDirection.up;
+    return dir;
   }
 }

@@ -26,6 +26,9 @@ entity.placements = {
       BounceStrengthFromWall = 0.4,
       ownSpringRecoil = 0,
       ImpactSfx="event:/game/general/fallblock_impact",
+      hitJumpthrus=true,
+      
+      _loenn_display_template = true,
     }
   }
 }
