@@ -13,6 +13,12 @@ namespace Celeste.Mod.auspicioushelper;
 public class FastDebris:Actor{
   Int2 intpos=>Int2.Round(Position);
   Int2 radius;
+  public Int2 Radius {
+    set {
+      radius = value;
+      Collider = new Hitbox(value.x*2,value.y*2,-value.x,-value.y);
+    }
+  }
   public Vector2 speed;
   public Collision onCollideV;
   public Collision onCollideH;
@@ -21,6 +27,7 @@ public class FastDebris:Actor{
     Tag = Tags.Persistent;
     Depth = 2000;
     radius = new(2,2);
+    Collider = new Hitbox(4,4,-2,-2);
     onCollideH=defaultOch;
     onCollideV=defaultOcv;
     SquishCallback=defaultSquish;
@@ -31,7 +38,7 @@ public class FastDebris:Actor{
   }
   void defaultOch(CollisionData d){
     //speed.X = Math.Abs(speed.X)>60? speed.X*-0.8f:0; 
-    speed.X*=0.8f;
+    speed.X*=-0.8f;
   }
   void defaultOcv(CollisionData d){
     speed.Y = Math.Abs(speed.Y)>60? speed.Y*-0.4f:0; 
@@ -56,10 +63,10 @@ public class FastDebris:Actor{
     Int2 pos = intpos;
     CollisionDirection d = Util.getCollisionDir(Vector2.UnitX*dir);
     for(int i=0; i!=num; i+=dir){
-      Platform e = (Platform)SolidMiptree.Test(new(pos.x+i+dir,pos.y),radius,d);
+      Entity e = SolidMiptree.Test(new(pos.x+i+dir,pos.y),radius,d);
       if(e!=null){
         onCollideH(new(){
-          Hit=e, 
+          Hit=e as Platform, 
           TargetPosition=new(pos.x+num,pos.y),
           Direction=Vector2.UnitX*dir,
           Moved=Vector2.UnitX*dir*i
@@ -77,10 +84,10 @@ public class FastDebris:Actor{
     Int2 pos = intpos;
     CollisionDirection d = Util.getCollisionDir(Vector2.UnitY*dir);
     for(int i=0; i!=num; i+=dir){
-      Platform e = SolidMiptree.Test(new(pos.x,pos.y+i+dir),radius,d) as Platform;
+      Entity e = SolidMiptree.Test(new(pos.x,pos.y+i+dir),radius,d);
       if(e!=null){
-        onCollideH(new(){
-          Hit=e, 
+        onCollideV(new(){
+          Hit=e as Platform, 
           TargetPosition=new(pos.x,pos.y+num),
           Direction=Vector2.UnitY*dir,
           Moved=Vector2.UnitY*dir*i

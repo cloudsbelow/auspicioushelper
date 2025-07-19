@@ -47,4 +47,5 @@ public struct Int2{
   public int MaxComp=>Math.Max(x,y);
   public int MinComp=>Math.Min(x,y);
   public static implicit operator Vector2(Int2 a)=>new Vector2(a.x,a.y);
+  public static implicit operator Int2(Tuple<int,int> a)=>new Int2(a.Item1,a.Item2);
 }

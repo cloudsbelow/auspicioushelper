@@ -98,12 +98,13 @@ public static class SolidMiptree{
       levels.Clear();
       int w=Math.Max(1,(int)Math.Ceiling(bounds.w/bsize));
       int h=Math.Max(1,(int)Math.Ceiling(bounds.h/bsize));
-      for(int maxlevel=0;; maxlevel++){
+      for(maxlevel=0;; maxlevel++){
         levels.Add(new (w,h,maxlevel));
         w=(w+1)>>mipStep;
         h=(h+1)>>mipStep;
         if(w*h<=1 || maxlevel>=levelLimit) break;
       }
+      DebugConsole.Write($"Maxlevel:, {maxlevel}");
     } else for(int i=0; i<levels.Count; i++)levels[i].Clear();
     lbounds = bounds;
     foreach(Solid s in scene.Tracker.GetEntities<Solid>())Add(s,CollisionDirection.solid);

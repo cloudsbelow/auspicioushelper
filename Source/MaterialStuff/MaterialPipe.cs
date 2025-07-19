@@ -33,11 +33,14 @@ public static class MaterialPipe {
   public static bool orderFlipped{get;private set;}
   public static Camera camera;
   static bool needsImmUpdate;
+  static public IntRect clipBounds;
 
   public static void GameplayRender(On.Celeste.GameplayRenderer.orig_Render orig, GameplayRenderer self, Scene scene){
     orderFlipped = false;
     var camdim = ExtendedCameraIop.cameraSize();
     RenderTargetPool.Resize(camdim.Item1,camdim.Item2);
+    Int2 cloc = Int2.Round((scene as Level)?.Camera.Position??Vector2.Zero);
+    clipBounds = new IntRect(cloc.x,cloc.y,camdim.Item1,camdim.Item2).expandAll_(8);
     if(transroutine!=null) transroutine.Update();
     if(layers.Count==0){
       orig(self, scene);

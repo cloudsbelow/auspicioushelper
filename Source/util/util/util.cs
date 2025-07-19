@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 public partial class Util{
@@ -110,5 +111,20 @@ public partial class Util{
     if(move.Y<0) dir |= CollisionDirection.down;
     else if(move.Y>0) dir |= CollisionDirection.up;
     return dir;
+  }
+  public static Vector2 randomizeQuadrent(Vector2 inp){
+    inp.X*=Calc.Random.Chance(0.5f)?1:-1;
+    inp.Y*=Calc.Random.Chance(0.5f)?1:-1;
+    return inp;
+  }
+  public static float randomizeAngleQuad(float angle){
+    if(Calc.Random.Chance(0.5f)) angle=-angle;
+    if(Calc.Random.Chance(0.5f)) angle=MathF.PI-angle;
+    return angle;
+  }
+  public static float Clamp(float v, float min, float max){
+    if(v<min) return min;
+    if(v>max) return max;
+    return v;
   }
 }
