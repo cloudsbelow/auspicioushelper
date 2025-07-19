@@ -9,7 +9,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 [Flags]
 public enum CollisionDirection{
-  none=0, up=1, right=2, down=4, left=8, yes = 16, solid=31,
+  none=0, up=1, right=2, down=4, left=8, yes = 16, solid=31, ground=yes|up
 }
 public static class SolidMiptree{
   const float bsize = 16;
@@ -52,7 +52,9 @@ public static class SolidMiptree{
     }
     //Note that this function is only correct if radius<=margin. Ensure this!
     public Entity GetFirstRadius(Int2 center, Int2 radius, CollisionDirection dir){
-      var l = buckets[stride*center.y+center.x];
+      int bucketY = (int)((center.y-offset.Y)/cellsize);
+      int bucketX = (int)((center.x-offset.X)/cellsize);
+      var l = buckets[stride*bucketY+bucketX];
       if(l == null) return null;
       foreach(var r in l) if((r.dir&dir)!=0){
         if(r.f.x<center.x+radius.x && r.f.x+r.f.w>center.x-radius.x){
@@ -85,7 +87,7 @@ public static class SolidMiptree{
       return null;
     }
   }
-  static List<CollisionLevel> levels;
+  static List<CollisionLevel> levels = new();
   static IntRect lbounds;
   static int maxlevel;
   const int levelLimit = 10;
@@ -104,15 +106,25 @@ public static class SolidMiptree{
       }
     } else for(int i=0; i<levels.Count; i++)levels[i].Clear();
     lbounds = bounds;
-    foreach(Solid s in scene)Add(s,CollisionDirection.solid);
-    foreach(JumpThru j in scene)Add(j,CollisionDirection.up);
+    foreach(Solid s in scene.Tracker.GetEntities<Solid>())Add(s,CollisionDirection.solid);
+    foreach(JumpThru j in scene.Tracker.GetEntities<JumpThru>())Add(j,CollisionDirection.up);
+    if(MaddiesIop.jt!=null && Engine.Scene.Tracker.Entities.TryGetValue(MaddiesIop.jt, out var li)) foreach(var j in li){
+      if(j.Collidable) Add(j,MaddiesIop.side.get(j)?CollisionDirection.right:CollisionDirection.left);
+    }
+    if(MaddiesIop.dt!=null && Engine.Scene.Tracker.Entities.TryGetValue(MaddiesIop.dt, out li)) foreach(var j in li){
+      if(j.Collidable) Add(j,CollisionDirection.down);
+    }
+    if(MaddiesIop.samah!=null && Engine.Scene.Tracker.Entities.TryGetValue(MaddiesIop.samah, out li)) foreach(var j in li){
+      if(j.Collidable) Add(j,CollisionDirection.down);
+    }
   }
   static public void Clear(){
     for(int i=0; i<levels.Count; i++)levels[i].Clear();
   }
 
   static public Entity Test(Int2 center, Int2 rad, CollisionDirection dir){
-    if(lbounds.CollideCenter(center,rad)) for(int i=0; i<=maxlevel; i++){
+    //negative numbers for margin rounding safely <3
+    if(lbounds.CollideCenter(center,new Int2(-2,-2))) for(int i=0; i<=maxlevel; i++){
       var res = levels[i].GetFirstRadius(center,rad, dir);
       if(res!=null) return res;
     }

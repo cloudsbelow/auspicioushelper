@@ -100,6 +100,7 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
     MoveTo(loc+toffset, liftspeed);
   }
   public void destroy(bool particles){
+    Vector2 ls = parent.gatheredLiftspeed;
     if(particles){
       Rectangle bounds = (this as IBoundsHaver).GetTilebounds(Position,AnimatedTiles.GetClippedRenderTiles(5));
       Vector2 ppos = parent?.virtLoc??Center;
@@ -108,7 +109,7 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
           char tile = tileTypes[i,j];
           if(tile == '0' || tile == '\0') continue;
           Vector2 offset = new Vector2(i*8+4,j*8+4);
-          Scene.Add(Engine.Pooler.Create<Debris>().Init(Position+offset,tile).BlastFrom(ppos));
+          Scene.Add(Engine.Pooler.Create<TileDebris>().Init(Position+offset,tile).BlastFrom(ppos,ls));
         }
       }
     }

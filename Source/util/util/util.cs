@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -101,6 +102,7 @@ public partial class Util{
       return cur?.isSuperEnding??false;
     }
   }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static CollisionDirection getCollisionDir(Vector2 move){
     CollisionDirection dir = CollisionDirection.yes;
     if(move.X<0) dir |= CollisionDirection.right;
