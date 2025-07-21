@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Microsoft.VisualBasic.FileIO;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -141,5 +142,123 @@ public static partial class Util{
     }
     public Tfield get(object o)=>getter(o);
     public void set(object o, Tfield v)=>setter(o,v);
+  }
+  public static Func<object,Tfield> instancePropGetter<Tfield>(Type T, string propname){
+    var obj = Expression.Parameter(typeof(object), "obj");
+    var casted = Expression.Convert(obj, T);
+    var field = Expression.Property(casted, propname);
+    return Expression.Lambda<Func<object,Tfield>>(field,obj).Compile();
+  }
+  public static Action<object,Tfield> instancePropSetter<Tfield>(Type T, string propname){
+    var obj = Expression.Parameter(typeof(object), "obj");
+    var casted = Expression.Convert(obj, T);
+    var value = Expression.Parameter(typeof(Tfield), "value");
+    var field = Expression.Property(casted, propname);
+    var assign = Expression.Assign(field,value);
+    return Expression.Lambda<Action<object,Tfield>>(assign,obj,value).Compile();
+  }
+  public class PropHelper<Tfield>{
+    public Func<object,Tfield> getter = null;
+    public Action<object,Tfield> setter = null;
+    public PropHelper(Type T, string fieldname, bool onlyread = true){
+      getter = instancePropGetter<Tfield>(T,fieldname);
+      setter = !onlyread?instancePropSetter<Tfield>(T,fieldname):null;
+    }
+    public Tfield get(object o)=>getter(o);
+    public void set(object o, Tfield v)=>setter(o,v);
+  }
+
+  public static Type GetInstFieldtype(Type t, string fieldname){
+    FieldInfo f = t.GetField(fieldname,BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+    return f?.FieldType;
+  }
+  public static Type GetInstProptype(Type t, string propname){
+    PropertyInfo p = t.GetProperty(propname,BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+    return p?.PropertyType;
+  }
+
+  public static Func<object,object> instanceFieldGetter(Type T, string fieldname){
+    var obj = Expression.Parameter(typeof(object), "obj");
+    var casted = Expression.Convert(obj, T);
+    var field = Expression.Field(casted, fieldname);
+    return Expression.Lambda<Func<object,object>>(field,obj).Compile();
+  }
+  public static Action<object,object> instanceFieldSetter(Type T, string fieldname){
+    var obj = Expression.Parameter(typeof(object), "obj");
+    var casted = Expression.Convert(obj, T);
+    var value = Expression.Parameter(typeof(object), "value");
+    var field = Expression.Field(casted, fieldname);
+    var assign = Expression.Assign(field,value);
+    return Expression.Lambda<Action<object,object>>(assign,obj,value).Compile();
+  }
+  public static Func<object,object> instancePropGetter(Type T, string propname){
+    var obj = Expression.Parameter(typeof(object), "obj");
+    var casted = Expression.Convert(obj, T);
+    var field = Expression.Property(casted, propname);
+    return Expression.Lambda<Func<object,object>>(field,obj).Compile();
+  }
+  public static Action<object,object> instancePropSetter(Type T, string propname){
+    var obj = Expression.Parameter(typeof(object), "obj");
+    var casted = Expression.Convert(obj, T);
+    var value = Expression.Parameter(typeof(object), "value");
+    var field = Expression.Property(casted, propname);
+    var assign = Expression.Assign(field,value);
+    return Expression.Lambda<Action<object,object>>(assign,obj,value).Compile();
+  }
+  public class PropHelper{
+    public Func<object,object> getter = null;
+    public Action<object,object> setter = null;
+    public PropHelper(Type T, string fieldname, bool onlyread = true){
+      getter = instancePropGetter(T,fieldname);
+      setter = !onlyread?instancePropSetter(T,fieldname):null;
+    }
+    public object get(object o)=>getter(o);
+    public void set(object o, object v)=>setter(o,v);
+  }
+  public class FieldHelper{
+    public Func<object,object> getter = null;
+    public Action<object,object> setter = null;
+    public FieldHelper(Type T, string fieldname, bool onlyread = false){
+      getter = instanceFieldGetter(T,fieldname);
+      setter = !onlyread?instanceFieldSetter(T,fieldname):null;
+    }
+    public object get(object o)=>getter(o);
+    public void set(object o, object v)=>setter(o,v);
+  }
+  public class ValueHelper{
+    public Func<object,object> getter = null;
+    public Action<object,object> setter = null;
+    Type vtype;
+    public ValueHelper(Type T, string fieldname, bool onlyread = false){
+      vtype = GetInstFieldtype(T,fieldname);
+      if(vtype!=null){
+        getter = instanceFieldGetter(T,fieldname);
+        setter = !onlyread?instanceFieldSetter(T,fieldname):null;
+      } else {
+        vtype = GetInstProptype(T,fieldname);
+        getter = instancePropGetter(T,fieldname);
+        setter = !onlyread?instancePropSetter(T,fieldname):null;
+      }
+    }
+    public object get(object o)=>getter(o);
+    public void set(object o, object v)=>setter(o,v);
+  }
+  public class ValueHelper<TValue>{
+    public Func<object,TValue> getter = null;
+    public Action<object,TValue> setter = null;
+    Type vtype;
+    public ValueHelper(Type T, string fieldname, bool onlyread = false){
+      vtype = GetInstFieldtype(T,fieldname);
+      if(vtype!=null){
+        getter = instanceFieldGetter<TValue>(T,fieldname);
+        setter = !onlyread?instanceFieldSetter<TValue>(T,fieldname):null;
+      } else {
+        vtype = GetInstProptype(T,fieldname);
+        getter = instancePropGetter<TValue>(T,fieldname);
+        setter = !onlyread?instancePropSetter<TValue>(T,fieldname):null;
+      }
+    }
+    public TValue get(object o)=>getter(o);
+    public void set(object o, TValue v)=>setter(o,v);
   }
 }

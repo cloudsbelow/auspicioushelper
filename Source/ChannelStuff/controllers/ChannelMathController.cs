@@ -39,7 +39,7 @@ public class ChannelMathController:Entity{
     AttachedMultiple, ReplacePrevious, BlockIfActive, DetatchedMultiple
   }
   enum ActivationCond {
-    Interval, Change, IntervalOrChange, IntervalAndChange, Auto, OnlyAwake,
+    Interval, Change, IntervalOrChange, IntervalAndChange, Auto, OnlyAwake, Manual
   }
   MultiType multi;
   ActivationCond activ;
@@ -56,6 +56,7 @@ public class ChannelMathController:Entity{
     if(d.Bool("every_frame")) period=1;
     multi = d.Enum<MultiType>("multi_type",MultiType.BlockIfActive);
     activ = d.Enum<ActivationCond>("activation_cond",ActivationCond.Auto);
+    if(d.Name == "auspicioushelper/ChannelMathTrigger") activ=ActivationCond.Manual;
     if(activ == ActivationCond.Auto) activ = period>0?ActivationCond.Interval:ActivationCond.Change;
     if(activ == ActivationCond.OnlyAwake) runWhenAwake = true;
     onlyForNonzero = d.Bool("only_run_for_nonzero",false);
@@ -113,10 +114,10 @@ public class ChannelMathController:Entity{
   }
   bool locked;
   Coroutine activeCoroutine;
-  void tryActivate(){
+  public void tryActivate(bool manual=false){
     if((multi==MultiType.BlockIfActive && numActive>0)||locked) return;
     locked=true;
-    if(activ switch{
+    if(manual || activ switch{
       ActivationCond.Interval=>periodTimer<=0,
       ActivationCond.Change=>channelChanged,
       ActivationCond.IntervalOrChange=>periodTimer<=0||channelChanged,
@@ -434,5 +435,33 @@ public class ChannelMathController:Entity{
   }
   static ChannelMathController(){
     setupDefaultInterop();
+  }
+}
+
+[CustomEntity("auspicioushelper/ChannelMathTrigger")]
+public class ChannelMathTrigger:Trigger{
+  ChannelMathController controller;
+  enum ActivationCond{
+    onEnter, onLeave, onInside
+  }
+  ActivationCond cond;
+  public ChannelMathTrigger(EntityData d, Vector2 offset):base(d,offset){
+    controller = new(d,offset);
+    cond = d.Enum<ActivationCond>("activation_cond",ActivationCond.onEnter);
+  }
+  public override void Added(Scene s){
+    s.Add(controller);
+  }
+  public override void OnEnter(Player player){
+    base.OnEnter(player);
+    if(cond == ActivationCond.onEnter) controller.tryActivate(true);
+  }
+  public override void OnLeave(Player player) {
+    base.OnLeave(player);
+    if(cond == ActivationCond.onLeave) controller.tryActivate(true);
+  }
+  public override void OnStay(Player player) {
+    base.OnStay(player);
+    if(cond == ActivationCond.onInside) controller.tryActivate(true);
   }
 }

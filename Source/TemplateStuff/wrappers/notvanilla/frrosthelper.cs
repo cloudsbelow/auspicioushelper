@@ -49,6 +49,7 @@ public static class FrostHelperStuff{
     static Util.FieldHelper<bool> Expanded;
     static Util.FieldHelper<bool> RegisteredToRenderers;
     static Util.FieldHelper<List<Image>> Images;
+    static Util.FieldHelper<int> ID;
     static Func<object, bool> InView;
     static Action<object> RegisterToRenders;
     static Action<object,Scene> UnregisterFromRenderers;
@@ -65,6 +66,7 @@ public static class FrostHelperStuff{
         Expanded = new(spinnerType,"expanded");
         RegisteredToRenderers = new(spinnerType,"RegisteredToRenderers",true);
         Images = new(spinnerType,"_images",true);
+        ID = new(spinnerType, "ID");
         InView = Util.instanceFunc<bool>(spinnerType, "InView");
         RegisterToRenders = Util.instanceAction(spinnerType,"RegisterToRenderers");
         UnregisterFromRenderers = Util.instanceAction<Scene>(spinnerType,"UnregisterFromRenderers");
@@ -81,6 +83,7 @@ public static class FrostHelperStuff{
       rainbow = dat.Bool("rainbow", false);
       hascollider = dat.Bool("collidable", true);
       wrapped.Visible = false;
+      ID.set(wrapped,-ID.get(wrapped));
       wrapped.Add(this);
       StaticMover sm = null;
       while((sm = wrapped.Get<StaticMover>())!=null)wrapped.Remove(sm);
@@ -180,6 +183,5 @@ public static class FrostHelperStuff{
         EntityParser.currentParent.addEnt(new SpinnerWrapper(orig(l,d,o,e),e));
       return null;
     });
-    DebugConsole.Write("frosthelper setup");
   }
 }

@@ -3,24 +3,21 @@ local utils = require("utils")
 
 local entity = {}
 
-entity.name = "auspicioushelper/ChannelMathController"
+entity.name = "auspicioushelper/ChannelMathTrigger"
 entity.depth = 2000
 
 local multiOptions = {"ReplacePrevious", "BlockIfActive", "AttachedMultiple", "DetatchedMultiple"}
-local activOptions = {"Interval", "Change", "IntervalOrChange", "IntervalAndChange", "Auto","OnlyAwake"}
+local activOptions = {"onEnter","onLeave","onInside"}
 entity.placements = {
   {
     name = "Channel Math Controller",
     data = {
       compiled_operations = "",
       run_immediately = false,
-      custom_polling_rate = "",
       multi_type = "Block",
-      activation_cond = "Auto",
+      activation_cond = "onEnter",
       debug = false,
-      notifying_override="",
       run_when_awake=false,
-      only_run_for_nonzero=false,
     }
   }
 }
