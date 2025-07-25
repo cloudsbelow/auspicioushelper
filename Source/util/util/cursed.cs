@@ -218,7 +218,9 @@ public static partial class Util{
   public class FieldHelper{
     public Func<object,object> getter = null;
     public Action<object,object> setter = null;
+    public Type vtype;
     public FieldHelper(Type T, string fieldname, bool onlyread = false){
+      vtype = GetInstFieldtype(T,fieldname);
       getter = instanceFieldGetter(T,fieldname);
       setter = !onlyread?instanceFieldSetter(T,fieldname):null;
     }
@@ -228,7 +230,7 @@ public static partial class Util{
   public class ValueHelper{
     public Func<object,object> getter = null;
     public Action<object,object> setter = null;
-    Type vtype;
+    public Type vtype;
     public ValueHelper(Type T, string fieldname, bool onlyread = false){
       vtype = GetInstFieldtype(T,fieldname);
       if(vtype!=null){

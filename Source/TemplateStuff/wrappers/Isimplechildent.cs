@@ -72,6 +72,6 @@ public interface ISimpleWrapper:ITemplateChild{
     toffset = wrapped.Position-ppos;
   }
   void ITemplateChild.relposTo(Vector2 loc, Vector2 liftspeed) {
-    wrapped.Position = loc+toffset;
+    wrapped.Position = (loc+toffset).Round();
   }
 }

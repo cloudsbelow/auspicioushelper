@@ -36,6 +36,7 @@ entity.placements = {
       advancedTouchOptions = "",
       triggerOnTouch = false,
       channel = "",
+      setChannel = "",
       propagateRiding = true,
       propagateInside = true,
       propagateShake = true,

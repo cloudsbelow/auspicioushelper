@@ -45,6 +45,7 @@ public abstract class TriggerInfo{
     if(!use) t.parent?.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(info);
     return use;
   }
+  public static bool Test(TriggerInfo info)=>info == null || info.shouldTrigger;
   public void Pass(ITemplateChild t){
     t.parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(this);
   }
@@ -69,6 +70,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   float delay;
   bool log;
   Util.Trie blockManager;
+  string setCh;
 
   public TemplateTriggerModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateTriggerModifier(EntityData d, Vector2 offset, int depthoffset)
@@ -93,6 +95,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       blockManager.Add(s);
     }
     log = d.Bool("log",false);
+    setCh = d.Attr("setChannel","");
   }
   ITemplateTriggerable triggerParent;
   TemplateTriggerModifier modifierParent;
@@ -112,17 +115,20 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   Queue<Tuple<float, TriggerInfo>> delayed;
   float activeTime = 0;
   public void HandleTrigger(TriggerInfo sm){
-    if(triggerParent == null) return;
+    if(sm is TouchInfo tinfo && triggerOnTouch != advtouch.Contains(tinfo.ty)) tinfo.asUsable();
+    if(triggerParent == null) goto end;
     if(hideTrigger){
       modifierParent?.OnTrigger(sm);
-      return;
+      goto end;
     }
-    if(sm is TouchInfo tinfo){
-      if(triggerOnTouch != advtouch.Contains(tinfo.ty)) triggerParent.OnTrigger(tinfo.asUsable());
-      else modifierParent?.OnTrigger(tinfo);
+    if(sm is TouchInfo tinf_){
+      if(tinf_.use)triggerParent.OnTrigger(tinf_);
+      else modifierParent?.OnTrigger(tinf_);
     } else {
       if(passTrigger)triggerParent.OnTrigger(sm);
     }
+    end:
+      if(!string.IsNullOrWhiteSpace(setCh) && TriggerInfo.Test(sm)) ChannelState.SetChannel(setCh,1);
   }
   public void OnTrigger(TriggerInfo sm){
     if(log) DebugConsole.Write($"From trigger modifier: ",sm?.category);

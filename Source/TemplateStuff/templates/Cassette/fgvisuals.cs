@@ -30,7 +30,10 @@ public class FgCassetteVisuals:BasicMaterialLayer{
     MaterialPipe.gd.SetRenderTarget(outtex);
     MaterialPipe.gd.Clear(Color.Transparent);
     StartSb(sb, shader, c);
-    foreach(Entity e in todraw) if(e.Scene!=null)e.Render();
+    foreach(Entity e in todraw) if(e.Scene!=null){
+      if(CassetteMaterialLayer.stupididiotdumbpompusthings.TryGetValue(e.GetType(),out var fn))fn(e);
+      else e.Render();
+    }
     sb.End();
     info.diddraw=true;
   }

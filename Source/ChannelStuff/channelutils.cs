@@ -118,13 +118,15 @@ public static class ChannelState{
       }
     }
   }
-  public static void SetChannel(string ch, int state){
+  public static void SetChannel(string ch, int state, bool fromInterop=false){
     int idx=0;
     for(;idx<ch.Length;idx++) if(ch[idx]=='[')break;
     if(idx!=ch.Length) return;
     SetChannelRaw(ch,state);
-    if(ch.Length>0&&ch[0]=='$')(Engine.Instance.scene as Level)?.Session.SetFlag(ch.Substring(1),state!=0);
-    if(ch.Length>0&&ch[0]=='#')(Engine.Instance.scene as Level)?.Session.SetCounter(ch.Substring(1),state);
+    if(!fromInterop){
+      if(ch.Length>0&&ch[0]=='$')(Engine.Instance.scene as Level)?.Session.SetFlag(ch.Substring(1),state!=0);
+      if(ch.Length>0&&ch[0]=='#')(Engine.Instance.scene as Level)?.Session.SetCounter(ch.Substring(1),state);
+    }
     if(modifiers.TryGetValue(ch, out var ms)){
       foreach(var m in ms){
         SetChannelRaw(m.outname,m.apply(state));
@@ -238,7 +240,7 @@ public static class ChannelState{
   }
   static void Hook(On.Celeste.Session.orig_SetFlag orig, Session s, string f, bool v){
     orig(s,f,v);
-    if(channelStates.ContainsKey('$'+f)) SetChannel('$'+f,v?1:0);
+    if(channelStates.ContainsKey('$'+f)) SetChannel('$'+f,v?1:0,true);
   }
   static bool Hook(On.Celeste.Session.orig_GetFlag orig, Session s, string f){
     if(f.Length==0 || f[0]!='@' || s.Flags.Contains(f)) return orig(s,f);
@@ -246,7 +248,7 @@ public static class ChannelState{
   }
   static void Hook(On.Celeste.Session.orig_SetCounter orig, Session s, string f, int n){
     orig(s,f,n);
-    if(channelStates.ContainsKey('#'+f)) SetChannel('#'+f,n);
+    if(channelStates.ContainsKey('#'+f)) SetChannel('#'+f,n,true);
   }
   static int Hook(On.Celeste.Session.orig_GetCounter orig, Session s, string f){
     if(f.Length==0 || f[0]!='@') return orig(s,f);

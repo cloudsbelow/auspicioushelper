@@ -10,6 +10,7 @@ using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
+using Microsoft.Build.Utilities;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -136,7 +137,10 @@ public class TemplateCassetteBlock:TemplateDisappearer, IMaterialObject, IChanne
   }
   public void renderMaterial(IMaterialLayer l, Camera c){
     if(there == State.there) return;
-    foreach(Entity e in todraw) if(e.Scene != null && e.Depth<=l.depth)e.Render();
+    foreach(Entity e in todraw) if(e.Scene != null && e.Depth<=l.depth){
+      if(CassetteMaterialLayer.stupididiotdumbpompusthings.TryGetValue(e.GetType(),out var fn))fn(e);
+      else e.Render();
+    }
   }
   public override void Update(){
     base.Update();

@@ -1,6 +1,7 @@
 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Celeste.Editor;
 using Iced.Intel;
@@ -56,6 +57,10 @@ public static class FrostHelperStuff{
     static Action<object,bool> SetVisible;
     static Action<object> CreateSpritesOrig;
     static Action<object> UpdateHue;
+    static Util.FieldHelper filler;
+    static Util.ValueHelper fills;
+    static Util.ValueHelper<MTexture> FillerTexture;
+    static Util.ValueHelper<Vector2> FillerPosition;
     public SpinnerWrapper(Entity spinner, EntityData dat):base(){
       afterAction = CustomUpdate;
       wrapped = spinner;
@@ -76,6 +81,11 @@ public static class FrostHelperStuff{
         CassetteMaterialLayer.stupididiotdumbpompusthings.Add(spinnerType,(Entity e)=>{
           e.Get<SpinnerWrapper>()?.RenderTheUgh();
         });
+        filler = new(spinnerType, "filler", true);
+        fills = new(filler.vtype, "Fills", true);
+        Type fillType = fills.vtype.GetGenericArguments()[0];
+        FillerTexture = new(fillType, "Texture");
+        FillerPosition = new(fillType, "Position");
       }
       int og = AttachGroup.get(wrapped);
       if(og==-1) AttachGroup.set(wrapped,HashCode.Combine(EntityParser.currentParent,og));
@@ -165,9 +175,16 @@ public static class FrostHelperStuff{
       wrapped.Active = false;
     }
     public void RenderTheUgh(){
+      if(!MaterialPipe.clipBounds.CollidePointExpand(Int2.Round(wrapped.Position),10)) return;
       if(wrapped.Visible) return;
       foreach(Image i in Images.get(wrapped)){
         i.Render();
+      }
+      object fill = filler.get(wrapped);
+      Vector2 pos = wrapped.Position;
+      if(fill!=null && fills.get(fill) is IEnumerable e)foreach(object m in e){
+        //DebugConsole.Write($"{pos} {FillerPosition.get(m)}");
+        FillerTexture.get(m).DrawCentered(pos+FillerPosition.get(m));
       }
     }
   }

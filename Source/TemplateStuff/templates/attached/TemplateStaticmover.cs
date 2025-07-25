@@ -200,7 +200,10 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
   }
   public void renderMaterial(IMaterialLayer l, Camera c){
     foreach(Entity e in todraw){
-      if(e.Scene != null && e.Depth<=l.depth)e.Render();
+      if(e.Scene != null && e.Depth<=l.depth){
+        if(CassetteMaterialLayer.stupididiotdumbpompusthings.TryGetValue(e.GetType(),out var fn))fn(e);
+        else e.Render();
+      }
     } 
   }
   bool cachedCol = true;
