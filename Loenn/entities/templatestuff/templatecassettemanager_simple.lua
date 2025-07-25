@@ -18,6 +18,7 @@ entity.placements = {
       visual_only = false,
       tintActive = false,
       translucent = false,
+      no_visuals = false,
     }
   }
 }

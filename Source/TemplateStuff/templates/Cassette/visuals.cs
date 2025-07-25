@@ -52,6 +52,8 @@ public class CassetteMaterialLayer:BasicMaterialLayer{
             break;
           case "x": c.patternvec.X=float.Parse(pair.Value); break;
           case "y": c.patternvec.Y=float.Parse(pair.Value); break;
+          case "w": c.patternvec.X=MathF.PI/float.Parse(pair.Value);break;
+          case "h": c.patternvec.Y=MathF.PI/float.Parse(pair.Value);break;
           case "time": c.patternvec.Z=float.Parse(pair.Value); break;
           case "phase": c.patternvec.W=float.Parse(pair.Value); break;
           case "depth":c.depth = float.Parse(pair.Value); break;

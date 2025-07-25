@@ -96,7 +96,7 @@ public class TemplateCassetteManager:Entity, IChannelUser, IDeclareLayers{
       for(int i=0; i<4; i++){
         string ch = d.Attr("channel_"+(i+1).ToString());
         if(string.IsNullOrWhiteSpace(ch)) continue;
-        material[ch] = i switch {
+        if(!d.Bool("no_visuals",false))material[ch] = i switch {
           0=>$"{{color:#1D539B, x:1.57079632, y:1.57079632, stripecutoff:-0.01, phase:{(usevanilla?"1, style:vanilla":"1, style:simple")}{(opaque?", innercolor:0E3463":"")}{(tint?",fg:1, fgsat:0.5, fghigh: 49aaf0, fglow:248":"")}}}",
           1=>$"{{color:#60247B, x:1.57079632, y:-1.57079632, stripecutoff:-0.01, phase:{(usevanilla?"1, style:vanilla":"1, style:simple")}{(opaque?", innercolor:2F164E":"")}{(tint?",fg:1, fgsat:0.5, fghigh: f049be, fglow:825":"")}}}",
           2=>$"{{color:#656C26, x:1.57079632, y:0, stripecutoff:-0.01, phase:{(usevanilla?"3.141592653, style:vanilla":"0, style:simple")}{(opaque?", innercolor:314318":"")}{(tint?",fg:1, fgsat:0.5, fghigh: fcdc3a, fglow:871":"")}}}",
