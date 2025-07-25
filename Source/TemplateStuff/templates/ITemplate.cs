@@ -109,7 +109,37 @@ public class Template:Entity, ITemplateChild{
 
 
   public void childRelposSafe(){
-    using(new MovementLock())childRelposTo(virtLoc,gatheredLiftspeed);
+    using(new MovementLock()){
+      Entity movewith = null;
+      Vector2 mwp = Vector2.Zero;
+      if(UpdateHook.cachedPlayer.StateMachine.state == Player.StDreamDash){
+        if(UpdateHook.cachedPlayer.dreamBlock is TemplateDreamblockModifier.SentinalDb sdb){
+          movewith = sdb.lastEntity;
+        }
+      }
+      if(movewith!=null) mwp = movewith.Position;
+      childRelposTo(virtLoc,gatheredLiftspeed);
+      if(movewith!=null && mwp!=movewith.Position){
+        UpdateHook.cachedPlayer.MoveH(movewith.Position.X-mwp.X);
+        UpdateHook.cachedPlayer.MoveV(movewith.Position.Y-mwp.Y);
+        //UpdateHook.cachedPlayer.LiftSpeed = 
+      }
+    }
+  }
+  public bool PropagateEither(Template other,Propagation req){
+    Template c=other;
+    while(c!=null){
+      if(c==this) return true;
+      if((c.prop & req) != req) break;
+      c=c.parent;
+    }
+    c=this;
+    while(c!=null){
+      if(c==other) return true;
+      if((c.prop & req)!= req) break;
+      c=c.parent;
+    }
+    return false;
   }
   internal Wrappers.FgTiles fgt = null;
   public void addEnt(ITemplateChild c){
@@ -213,6 +243,18 @@ public class Template:Entity, ITemplateChild{
         if((c.prop&p) == p) t.AddAllChildrenProp(l,p);
       } else {
         if((c.prop & p) == p) c.AddAllChildren(l);
+      }
+    }
+  }
+  public void MarkChildrenImmediate(){
+    List<Entity> list = new();
+    foreach(ITemplateChild c in children){
+      if(c is Template temp) temp.MarkChildrenImmediate();
+      else AddAllChildren(list);
+    }
+    foreach(Entity e in list){
+      if(e.Get<ChildMarker>()==null){
+        e.Add(new ChildMarker(this));
       }
     }
   }

@@ -149,6 +149,7 @@ public static class portalHooks{
 
     On.Celeste.Actor.MoveHExact+=PortalGateH.ActorMoveHHook;
     On.Celeste.Actor.MoveVExact+=PortalGateH.ActorMoveVHook;
+    On.Celeste.Actor.NaiveMove+=PortalGateH.ActorNaiveMove;
     On.Celeste.Actor.Update+=PortalGateH.ActorUpdateHook;
   }
   
@@ -164,6 +165,7 @@ public static class portalHooks{
 
     On.Celeste.Actor.MoveHExact-=PortalGateH.ActorMoveHHook;
     On.Celeste.Actor.MoveVExact-=PortalGateH.ActorMoveVHook;
+    On.Celeste.Actor.NaiveMove-=PortalGateH.ActorNaiveMove;
     On.Celeste.Actor.Update-=PortalGateH.ActorUpdateHook;
     //absoluteLeftHook.Dispose();
     //absoluteRightHook.Dispose();

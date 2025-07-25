@@ -183,7 +183,7 @@ public class PortalGateH:Entity{
   
   public PortalGateH(EntityData d, Vector2 offset):base(d.Position+offset){
     portalHooks.hooks.enable();
-    Depth=-9998;
+    Depth=d.Int("depth",-9998);
     height = d.Height+0.999f;
     npos=d.Nodes[0]+offset;
     n1dir = d.Bool("right_facing_f0",false);
@@ -248,6 +248,25 @@ public class PortalGateH:Entity{
       intersections.Remove(a);
     } 
     return val;
+  }
+  public static void ActorNaiveMove(On.Celeste.Actor.orig_NaiveMove orig, Actor a, Vector2 amount){
+    SurroundingInfoH s = evalEnt(a);
+    PortalIntersectInfoH info = null;
+    float moveH = amount.X;
+    float moveV = amount.Y;
+    if(intersections.TryGetValue(a,out info)){
+
+    } else if(a.Left+moveH<=s.leftl) {
+      intersections[a]=(info = new PortalIntersectInfoH(s.leftn, s.left,a));
+      PortalOthersider mn = info.addOthersider();
+    } else if(a.Right+moveH>=s.rightl){
+      intersections[a]=(info = new PortalIntersectInfoH(s.rightn, s.right, a));
+      PortalOthersider mn = info.addOthersider();
+    }
+    orig(a,amount);
+    if(info!=null && info.finish()){
+      intersections.Remove(a);
+    }
   }
   public static bool ActorMoveVHook(On.Celeste.Actor.orig_MoveVExact orig, Actor a, int moveV, Collision onCollide, Solid pusher){
     var s  = evalEnt(a);

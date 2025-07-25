@@ -50,13 +50,17 @@ public class TemplateDreamblockModifier:Template{
           flag = p.CollideCheck(c.Entity);
           c.Entity.Collider=orig;
         }
-        if(flag) return c.dbm.fake;
+        if(flag){
+          c.dbm.fake.lastEntity=c.Entity;
+          return c.dbm.fake;
+        } 
       }
       return null;
     }
   }
   public class SentinalDb:DreamBlock{
     public TemplateDreamblockModifier parent;
+    public Entity lastEntity;
     public SentinalDb():base(null,Vector2.Zero){}
   }
   SentinalDb fake;

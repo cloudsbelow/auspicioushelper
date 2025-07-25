@@ -55,7 +55,17 @@ public class PortalIntersectInfoH{
 
     if(a is Player pl){
       pl.Speed = calcspeed(pl.Speed,ce);
+      if(pl.StateMachine.state == Player.StDash) pl.DashDir.X*=-1;
       if(p.flipped)pl.LiftSpeed=new Vector2(-pl.LiftSpeed.X,pl.LiftSpeed.Y);
+      Level l = pl.Scene as Level;
+      if(!((IntRect)l.Bounds).CollidePoint(pl.Position)){
+        if(l.Session.MapData.GetAt(pl.Position) is LevelData ld){
+          l.NextTransitionDuration=0;
+          l.NextLevel(pl.Position,Vector2.One);
+        } else {
+          l.EnforceBounds(pl);
+        }
+      }
     } else if(a is Glider g){
       g.Speed = calcspeed(g.Speed,ce);
     } else {
