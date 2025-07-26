@@ -157,8 +157,10 @@ public class Template:Entity, ITemplateChild{
   public void setOffset(Vector2 ppos){
     this.toffset = Position-ppos;
   }
+  bool expanded = false;
   void makeChildren(Scene scene, bool recursive = false){
-    if(t==null) return;
+    if(t==null || expanded) return;
+    expanded = true;
     //if(t.bgt!=null) addEnt(new Wrappers.BgTiles(t,virtLoc,depthoffset));
     //if(t.fgt!=null) addEnt(fgt=new Wrappers.FgTiles(t, virtLoc, depthoffset));
     t.AddTilesTo(this, scene);
@@ -308,6 +310,7 @@ public class Template:Entity, ITemplateChild{
     children.Clear();
     fgt = null;
     basicents = null;
+    expanded=false;
   }
   public virtual void remake(){
     makeChildren(Scene);
