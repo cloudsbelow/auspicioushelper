@@ -22,6 +22,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
   float maxspeed;
   float gravity;
   bool setTch=false;
+  bool triggeredByRiding = true;
   UpdateHook upd;
   public TemplateFallingblock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
@@ -40,6 +41,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     maxspeed = d.Float("max_speed",130f);
     gravity = d.Float("gravity", 500);
     setTch = d.Bool("set_trigger_channel",false) && !string.IsNullOrWhiteSpace(tch);
+    triggeredByRiding = d.Bool("triggeredByRiding",true);
 
     Add(new Coroutine(Sequence()));
     if(setTch)Add(upd = new UpdateHook());
@@ -47,7 +49,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
   IEnumerator Sequence(){
     float speed;
     bool first = true;
-    while(!hasRiders<Player>() && !triggered){
+    while((!triggeredByRiding || !hasRiders<Player>()) && !triggered){
       yield return null;
     }
     OnTrigger(null);

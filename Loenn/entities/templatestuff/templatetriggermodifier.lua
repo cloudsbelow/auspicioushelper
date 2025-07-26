@@ -21,7 +21,9 @@ entity.fieldInformation = {
                 "wallbounce", 
                 "super", 
                 "grounded", 
-                "climbing"
+                "climbing",
+                "dashH",
+                "dashV",
             }
         }
     }

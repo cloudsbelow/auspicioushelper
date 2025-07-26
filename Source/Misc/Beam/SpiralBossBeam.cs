@@ -92,7 +92,7 @@ public class SpiralBossBeam:Entity {
     }
   }
   public void handlePlayer(){
-    if(far<nradkill) return;
+    if(!Collidable || far<nradkill) return;
     var dir = new Vector2((float)Math.Cos(angle),(float)Math.Sin(angle));
     var orth = new Vector2(-(float)Math.Sin(angle),(float)Math.Cos(angle));
     Player p = base.Scene.CollideFirst<Player>(Position+dir*nradkill,Position+dir*far)??

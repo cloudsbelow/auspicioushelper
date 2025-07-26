@@ -31,8 +31,8 @@ public interface ITemplateChild{
     ITemplateChild c=this;
     while(c!= null && p!=Template.Propagation.None){
       if(c==target) return p;
+      p&=c.prop;
       c=c.parent;
-      p&=c.parent.prop;
     }
     return Template.Propagation.None;
   }

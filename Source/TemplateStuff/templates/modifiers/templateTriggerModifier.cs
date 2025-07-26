@@ -102,6 +102,15 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     }
     log = d.Bool("log",false);
     setCh = d.Attr("setChannel","");
+    OnDashCollide = handleDash;
+  }
+  DashCollisionResults handleDash(Player player, Vector2 direction){
+    if((prop&Propagation.DashHit) != Propagation.None && (parent!=null)){
+      OnTrigger(new TouchInfo(player, direction.X!=0?TouchInfo.Type.dashH:TouchInfo.Type.dashV));
+      if(parent.OnDashCollide != null) return parent.OnDashCollide(player, direction);
+      return ((ITemplateChild)parent).propagateDashhit(player, direction);
+    }
+    return DashCollisionResults.NormalCollision;
   }
   ITemplateTriggerable triggerParent;
   TemplateTriggerModifier modifierParent;
@@ -161,7 +170,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   }
   class TouchInfo:TriggerInfo{
     public enum Type {
-      collideV, collideH, jump, climbjump, walljump, wallbounce, super, grounded, climbing 
+      collideV, collideH, jump, climbjump, walljump, wallbounce, super, grounded, climbing , dashH, dashV
     }
     public Type ty;
     public bool use = false;
