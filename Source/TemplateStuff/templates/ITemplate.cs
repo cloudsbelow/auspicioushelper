@@ -110,19 +110,23 @@ public class Template:Entity, ITemplateChild{
 
   public void childRelposSafe(){
     using(new MovementLock()){
-      Entity movewith = null;
-      Vector2 mwp = Vector2.Zero;
-      // if(UpdateHook.cachedPlayer.StateMachine.state == Player.StDreamDash){
-      //   if(UpdateHook.cachedPlayer.dreamBlock is TemplateDreamblockModifier.SentinalDb sdb){
-      //     movewith = sdb.lastEntity;
-      //   }
-      // }
-      if(movewith!=null) mwp = movewith.Position;
+      Entity movewith = UpdateHook.getFollowEnt();
+      Vector2 mwp = movewith?.Position??Vector2.Zero;
       childRelposTo(virtLoc,gatheredLiftspeed);
-      if(movewith!=null && mwp!=movewith.Position){
-        UpdateHook.cachedPlayer.MoveH(movewith.Position.X-mwp.X);
-        UpdateHook.cachedPlayer.MoveV(movewith.Position.Y-mwp.Y);
-        //UpdateHook.cachedPlayer.LiftSpeed = 
+      if(movewith!=null && mwp!=movewith.Position && UpdateHook.cachedPlayer is Player p){
+        Vector2 del = movewith.Position-mwp;
+        if(p.TreatNaive){
+          if(!MovementLock.movedX(p))p.NaiveMove(Vector2.UnitX*del.X);
+          if(!MovementLock.movedY(p))p.NaiveMove(Vector2.UnitY*del.Y);
+        } else {
+          if(!MovementLock.movedX(p))p.MoveH(del.X);
+          if(!MovementLock.movedY(p))p.MoveV(del.Y);
+        }
+        Template parent = null;
+        if(movewith is ITemplateChild itc)parent=itc.parent;
+        if(movewith.Get<ChildMarker>() is ChildMarker cm)parent=cm.parent;
+        if(parent!=null) p.LiftSpeed = parent.gatheredLiftspeed;
+        else p.LiftSpeed = del/MathF.Max(0.001f,Engine.DeltaTime);
       }
     }
   }
@@ -186,11 +190,15 @@ public class Template:Entity, ITemplateChild{
     foreach(var c in children) c.templateAwake();
   }
   Scene addingScene;
-  public virtual void addTo(Scene scene){
-    addingScene = scene;
+  public void setTemplate(string s=null, Scene scene=null){
+    templateStr=s??templateStr;
     if(t==null && !MarkedRoomParser.getTemplate(templateStr, parent, scene, out t)){
       DebugConsole.Write($"No template found with identifier \"{templateStr}\" in {this} at {Position}");
     }
+  }
+  public virtual void addTo(Scene scene){
+    addingScene = scene;
+    setTemplate(templateStr);
     if(basicents != null)basicents.sceneadd(scene);
     scene.Add(this);
     makeChildren(scene, parent!=null);
@@ -198,8 +206,7 @@ public class Template:Entity, ITemplateChild{
   }
   public override void Added(Scene scene){
     bool flag = string.IsNullOrWhiteSpace(templateStr) && t==null;
-    if(parent == null && !flag){
-      //DebugConsole.Write($"Got top-level template {this} of {t?.name}");
+    if(parent == null && !flag && !expanded){
       addTo(scene);
     }
     base.Added(scene);
@@ -213,7 +220,7 @@ public class Template:Entity, ITemplateChild{
     if(basicents == null){
       basicents = new Wrappers.BasicMultient(this);
       addEnt(basicents);
-      if(Scene!=null)basicents.sceneadd(Scene);
+      if((Scene??addingScene)!=null)basicents.sceneadd(Scene??addingScene);
     }
     basicents.add(e,offset);
   }
@@ -370,6 +377,7 @@ public class Template:Entity, ITemplateChild{
     if(parent != null) return parent.GetFromTree<T>();
     return default(T);
   }
+  public override string ToString()=>base.ToString()+GetHashCode();
 }
 
 
@@ -415,11 +423,24 @@ public class MovementLock:IDisposable{
     }
     return orig(self, move, cb, pusher);
   }
+  static void naiveMoveHook(On.Celeste.Actor.orig_NaiveMove orig, Actor self, Vector2 move){
+    if(canSkip){
+      if(alreadyX.Contains(self))move.X=0;
+      if(alreadyY.Contains(self))move.Y=0;
+      if(move.X!=0)alreadyX.Add(self);
+      if(move.Y!=0)alreadyY.Add(self);
+    }
+    orig(self,move);
+  }
+  public static bool movedX(Actor a)=>alreadyX.Contains(a);
+  public static bool movedY(Actor a)=>alreadyY.Contains(a);
   public static HookManager skiphooks = new HookManager(()=>{
     On.Celeste.Actor.MoveHExact+=moveHHook;
     On.Celeste.Actor.MoveVExact+=moveVHook;
+    On.Celeste.Actor.NaiveMove+=naiveMoveHook;
   },void ()=>{
     On.Celeste.Actor.MoveHExact-=moveHHook;
     On.Celeste.Actor.MoveVExact-=moveVHook;
+    On.Celeste.Actor.NaiveMove-=naiveMoveHook;
   }, auspicioushelperModule.OnEnterMap);
 }

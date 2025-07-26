@@ -46,14 +46,13 @@ public class TemplateGluable:Template{
     remake();
   }
   public override void addTo(Scene scene){
-    gluedto = FoundEntity.find(lookingFor)?.Entity;
-    DebugConsole.Write($"in addTo with scene {scene} and {lookingFor}",gluedto?.Scene);
-    if(gluedto != null && gluedto.Scene!=null) make(gluedto);
+    setTemplate(scene:scene);
   }
   public override void Awake(Scene scene){
     base.Awake(scene);
     if(!added){
       gluedto = FoundEntity.find(lookingFor)?.Entity;
+      DebugConsole.Write("found",gluedto);
       if(gluedto != null && gluedto.Scene!=null) make(gluedto);
     }
     
