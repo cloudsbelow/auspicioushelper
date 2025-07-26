@@ -9,6 +9,7 @@ using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
@@ -17,10 +18,14 @@ using MonoMod.Utils;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateDreamblockModifier")]
-public class TemplateDreamblockModifier:Template{
+public class TemplateDreamblockModifier:Template,IOverrideVisuals{
+  public List<OverrideVisualComponent> comps  {get;set;}= new();
+  public HashSet<OverrideVisualComponent> toRemove {get;} = new();
+  public bool dirty {get;set;}
   static Dictionary<Type, Collider> colTypes = new();
   bool triggerOnEnter;
   bool triggerOnLeave;
+  bool useVisuals = true;
   public class DreamInfo:TriggerInfo{
     bool exiting;
     Vector2 dir;
@@ -77,9 +82,13 @@ public class TemplateDreamblockModifier:Template{
     fake.parent = this;
     fake.Position = Vector2.Zero;
     fake.Collider = new Hitbox(2000000000,2000000000,-1000000000,-1000000000);
+    if(renderer == null){
+      MaterialPipe.addLayer(renderer = new DreamRenderer());
+    }
 
     base.addTo(scene);
-    foreach(var e in GetChildren<Entity>()){
+    List<Entity> l = GetChildren<Entity>();
+    foreach(var e in l){
       foreach(var c in e.Components){
         if(c is PlayerCollider pc){
           var orig = pc.OnCollide;
@@ -98,8 +107,37 @@ public class TemplateDreamblockModifier:Template{
         }
       }, colTypes.GetValueOrDefault(e.GetType())));
       e.Add(new DreamMarkerComponent(this,colTypes.GetValueOrDefault(e.GetType())));
+      if(!(e is Template)){
+        var c = new DreamRenderer.DreamOverride(this);
+        e.Add(c);
+        renderer.addEnt(c);
+      }
+    }
+    (this as IOverrideVisuals).PrepareList(false);
+  }
+  public class DreamRenderer:BasicMaterialLayer{
+    static VirtualShaderList effect = new VirtualShaderList{
+      null,auspicioushelperGFX.LoadShader("misc/dream")
+    };
+    public class DreamOverride:OverrideVisualComponent{
+      public bool dreaming=>((TemplateDreamblockModifier)parent).dreaming;
+      public DreamOverride(TemplateDreamblockModifier parent):base(parent){}
+    }
+    public DreamRenderer():base(new VirtualShaderList{
+      null,auspicioushelperGFX.LoadShader("misc/dream")
+    },-11001){}
+    public override void rasterMats(SpriteBatch sb, Camera c) {
+      foreach(OverrideVisualComponent d in willdraw){
+        if(d.shouldRemove)removeEnt(d);
+        else if(d is DreamOverride m && m.dreaming) d.renderMaterial(this,c);
+      }
+    }
+    public override void onRemove() {
+      base.onRemove();
+      renderer = null;
     }
   }
+  public static DreamRenderer renderer;
   bool DreamCheckStart(Player p, Vector2 dir){
     bool flag = dreaming && p.Inventory.DreamDash && p.DashAttacking && (
       (dir == Vector2.Zero&&p.DashDir!=Vector2.Zero) || Vector2.Dot(dir, p.DashDir)>0

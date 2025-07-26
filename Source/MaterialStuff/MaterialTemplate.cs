@@ -10,12 +10,12 @@ using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
-[Tracked]
+[Tracked(true)]
 public class OverrideVisualComponent:Component, IMaterialObject{
   public bool ovis;
   public bool nvis;
   public bool overriden;
-  IOverrideVisuals parent;
+  public IOverrideVisuals parent;
   public OverrideVisualComponent(IOverrideVisuals parent):base(false,false){
     this.parent=parent;
   }
@@ -92,7 +92,7 @@ public class MaterialTemplate:TemplateDisappearer, IOverrideVisuals{
     invis = d.Bool("dontNormalRender",true);
     lident = d.Attr("identifier","");
     if(string.IsNullOrWhiteSpace(lident)) DebugConsole.Write("No layer specified for material template");
-    Collidable = d.Bool("collidable",true);
+    collidable = d.Bool("collidable",true);
   }
   string lident;
   IMaterialLayer layer;

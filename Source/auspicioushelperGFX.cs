@@ -10,8 +10,6 @@ using System.Xml;
 
 namespace Celeste.Mod.auspicioushelper;
 public static class auspicioushelperGFX {
-  public static Dictionary<string, Effect> effects = new Dictionary<string, Effect>();
-
   public static IGraphicsDeviceService graphicsDeviceService;
   public static GraphicsDevice gd{get{
     if (graphicsDeviceService == null)  

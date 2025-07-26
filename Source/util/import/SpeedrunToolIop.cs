@@ -66,6 +66,8 @@ internal static class SpeedrunToolIop{
       typeof(CassetteMaterialLayer), new string[] {"layers"}
     }, new object[]{
       typeof(ChannelBaseEntity), new string[] {"layerA"}
+    }, new object[]{
+      typeof(TemplateDreamblockModifier), new string[] {"renderer"}
     }
   };
 
