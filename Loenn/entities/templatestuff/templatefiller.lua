@@ -31,6 +31,7 @@ entity.fieldInformation = {
         editable = false,
     }
 }
+entity.ignoredFields = {"oldTemplateName"}
 
 function entity.sprite(room, entity)
     if entity._loenn_display_template ~= nil then entity._loenn_display_template = nil end
