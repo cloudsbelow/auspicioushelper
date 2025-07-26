@@ -83,5 +83,16 @@ function entity.nodeSprite(room, entity, node)
         }, {0.5,1,0.5,1}, 1)
     }
 end
+function entity.move(room, entity, nodeIndex, offsetX, offsetY)
+    if nodeIndex == 0 then 
+        entity.x = entity.x + offsetX
+        entity.y = entity.y + offsetY
+        entity.nodes[1].x = entity.nodes[1].x - offsetX
+        entity.nodes[1].y = entity.nodes[1].y - offsetY
+    else
+        entity.nodes[1].x = entity.nodes[1].x + offsetX
+        entity.nodes[1].y = entity.nodes[1].y + offsetY
+    end
+end
 
 return entity
