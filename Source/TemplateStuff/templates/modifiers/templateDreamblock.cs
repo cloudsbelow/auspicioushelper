@@ -123,9 +123,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
       public bool dreaming=>((TemplateDreamblockModifier)parent).dreaming;
       public DreamOverride(TemplateDreamblockModifier parent):base(parent){}
     }
-    public DreamRenderer():base(new VirtualShaderList{
-      null,auspicioushelperGFX.LoadShader("misc/dream")
-    },-11001){}
+    public DreamRenderer():base(effect,-11001){}
     public override void rasterMats(SpriteBatch sb, Camera c) {
       foreach(OverrideVisualComponent d in willdraw){
         if(d.shouldRemove)removeEnt(d);
