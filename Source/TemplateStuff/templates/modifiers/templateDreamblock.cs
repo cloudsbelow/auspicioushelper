@@ -91,13 +91,18 @@ public class TemplateDreamblockModifier:Template{
         }
       }
       if(e.Collider == null) continue;
-      e.Add(new PlayerCollider(TryDream, colTypes.GetValueOrDefault(e.GetType())));
+      e.Add(new PlayerCollider((Player p)=>{
+        if(DreamCheckStart(p,Vector2.Zero)){
+          DebugConsole.Write($"{e} {e.Collidable} {e.Scene}", e.Scene);
+          fake.lastEntity = e;
+        }
+      }, colTypes.GetValueOrDefault(e.GetType())));
       e.Add(new DreamMarkerComponent(this,colTypes.GetValueOrDefault(e.GetType())));
     }
   }
   bool DreamCheckStart(Player p, Vector2 dir){
     bool flag = dreaming && p.Inventory.DreamDash && p.DashAttacking && (
-      dir == Vector2.Zero || Vector2.Dot(dir, p.DashDir)>0
+      (dir == Vector2.Zero&&p.DashDir!=Vector2.Zero) || Vector2.Dot(dir, p.DashDir)>0
     );
     if(flag){
       p.StateMachine.State = Player.StDreamDash;
@@ -110,7 +115,6 @@ public class TemplateDreamblockModifier:Template{
     return flag;
   }
   bool dreaming=true;
-  void TryDream(Player p)=>DreamCheckStart(p,Vector2.Zero);
   static bool Eligible(Player p)=>p.StateMachine.state == Player.StDash || p.StateMachine.state == Player.StDreamDash;
   static bool DDsh(Player p)=>p.StateMachine.state == Player.StDreamDash;
   static void Hook(On.Celeste.Player.orig_OnCollideH orig, Player p, CollisionData d){

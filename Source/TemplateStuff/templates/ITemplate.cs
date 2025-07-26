@@ -112,11 +112,11 @@ public class Template:Entity, ITemplateChild{
     using(new MovementLock()){
       Entity movewith = null;
       Vector2 mwp = Vector2.Zero;
-      if(UpdateHook.cachedPlayer.StateMachine.state == Player.StDreamDash){
-        if(UpdateHook.cachedPlayer.dreamBlock is TemplateDreamblockModifier.SentinalDb sdb){
-          movewith = sdb.lastEntity;
-        }
-      }
+      // if(UpdateHook.cachedPlayer.StateMachine.state == Player.StDreamDash){
+      //   if(UpdateHook.cachedPlayer.dreamBlock is TemplateDreamblockModifier.SentinalDb sdb){
+      //     movewith = sdb.lastEntity;
+      //   }
+      // }
       if(movewith!=null) mwp = movewith.Position;
       childRelposTo(virtLoc,gatheredLiftspeed);
       if(movewith!=null && mwp!=movewith.Position){
@@ -151,7 +151,7 @@ public class Template:Entity, ITemplateChild{
         ct.t=t.chain.NextFiller();
       }
     }
-    c.addTo(Scene);
+    c.addTo(Scene??addingScene);
     c.setOffset(virtLoc);
   }
   public void setOffset(Vector2 ppos){
@@ -161,8 +161,8 @@ public class Template:Entity, ITemplateChild{
     if(t==null) return;
     //if(t.bgt!=null) addEnt(new Wrappers.BgTiles(t,virtLoc,depthoffset));
     //if(t.fgt!=null) addEnt(fgt=new Wrappers.FgTiles(t, virtLoc, depthoffset));
-    t.AddTilesTo(this);
-    Level l = SceneAs<Level>();
+    t.AddTilesTo(this, scene);
+    Level l = scene as Level;
     Vector2 simoffset = this.virtLoc-t.origin;
     string fp = fullpath;
     foreach(EntityData w in t.ChildEntities){
@@ -183,21 +183,20 @@ public class Template:Entity, ITemplateChild{
   public virtual void templateAwake(){
     foreach(var c in children) c.templateAwake();
   }
+  Scene addingScene;
   public virtual void addTo(Scene scene){
-    if(Scene != null){
-      DebugConsole.Write("Something has gone terribly wrong in recursive adding process");
-    }
-    Scene = scene;
+    addingScene = scene;
     if(t==null && !MarkedRoomParser.getTemplate(templateStr, parent, scene, out t)){
       DebugConsole.Write($"No template found with identifier \"{templateStr}\" in {this} at {Position}");
     }
     if(basicents != null)basicents.sceneadd(scene);
     scene.Add(this);
     makeChildren(scene, parent!=null);
+    addingScene = null;
   }
   public override void Added(Scene scene){
     bool flag = string.IsNullOrWhiteSpace(templateStr) && t==null;
-    if(Scene == null && !flag){
+    if(parent == null && !flag){
       //DebugConsole.Write($"Got top-level template {this} of {t?.name}");
       addTo(scene);
     }

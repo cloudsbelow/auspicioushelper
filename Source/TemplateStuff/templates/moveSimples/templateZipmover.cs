@@ -98,7 +98,6 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
       };
     }
     base.addTo(scene);
-
   }
   IEnumerator dashAudioSeq(){
     var audio = Audio.Play("event:/new_content/game/10_farewell/fusebox_hit_1");

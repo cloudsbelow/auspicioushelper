@@ -35,6 +35,7 @@ public class TemplateSwapblock:Template{
     maxspeed = d.Float("max_speed",360);
     maxreturnspeed = d.Float("max_return_speed",120);
     returnable = d.Bool("returning",false);
+    Add(new DashListener((Vector2 dir)=>activate()));
     //DebugConsole.Write($"{t.childEntities.Count}");
   }
   bool returning;
@@ -92,7 +93,6 @@ public class TemplateSwapblock:Template{
       l.fromNodesAllRed(SplineEntity.entityInfoToNodes(dat.Position,dat.Nodes,offset,false));
     }
     spos = new SplineAccessor(spline, Vector2.Zero);
-    Add(new DashListener((Vector2 dir)=>activate()));
     base.addTo(scene);
   }
   public override void Removed(Scene scene) {

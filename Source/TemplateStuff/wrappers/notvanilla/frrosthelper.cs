@@ -167,11 +167,13 @@ public static class FrostHelperStuff{
     }
     public void addTo(Scene s){
       s.Add(wrapped);
+      Scene o = wrapped.Scene;
       wrapped.Scene = s;
       if(InView(wrapped)){
         wrapped.Position.Y+=stratosphereHeight;
         stratosphere=true;
       }
+      wrapped.Scene = o;
       wrapped.Active = false;
     }
     public void RenderTheUgh(){

@@ -43,8 +43,7 @@ public class TemplateGluable:Template{
     Depth = e.Depth-1;
     Position = e.Position;
     added=true;
-    Scene = null;
-    base.addTo(e.Scene);
+    remake();
   }
   public override void addTo(Scene scene){
     gluedto = FoundEntity.find(lookingFor)?.Entity;

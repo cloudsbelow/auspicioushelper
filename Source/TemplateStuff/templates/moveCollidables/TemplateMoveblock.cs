@@ -145,10 +145,8 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
       triggered=false;
       fgt = null;
       yield return maxrespawntimer;
-      Scene old = Scene;
-      Scene = null;
       reconnect(origpos);
-      addTo(old);
+      remake();
       gone=false;
       yield return null;
       Audio.Play("event:/game/04_cliffside/arrowblock_reappear", Position);

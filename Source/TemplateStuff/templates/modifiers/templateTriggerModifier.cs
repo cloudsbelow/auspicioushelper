@@ -101,7 +101,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   TemplateTriggerModifier modifierParent;
   UpdateHook upd;
   public override void addTo(Scene scene) {
-    base.addTo(scene);
     triggerParent = parent?.GetFromTree<ITemplateTriggerable>();
     modifierParent = parent?.GetFromTree<TemplateTriggerModifier>();
     if(!string.IsNullOrWhiteSpace(channel)){
@@ -110,6 +109,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       },true));
     }
     if(delay>=0) Add(upd = new UpdateHook());
+    base.addTo(scene);
   }
 
   Queue<Tuple<float, TriggerInfo>> delayed;

@@ -68,6 +68,7 @@ internal class BgTiles:BackgroundTiles, ISimpleEnt, IBoundsHaver{
   }
 }
 
+[Tracked]
 internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
   public Template.Propagation prop=> Template.Propagation.All;
   public Template parent {get;set;}

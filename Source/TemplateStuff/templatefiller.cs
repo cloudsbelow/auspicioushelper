@@ -173,8 +173,8 @@ public class templateFiller:Entity{
       Bgt.Fill(back.Tiles, back.AnimatedTiles,(int)sto.X,(int)sto.Y,tr.Width,tr.Height);
     }
   }
-  public void AddTilesTo(Template tem){
-    initDynamic(tem.SceneAs<Level>());
+  public void AddTilesTo(Template tem, Scene s){
+    initDynamic(s as Level);
     if(Fgt != null){
       Fgt.InterceptNext();
       tem.addEnt(tem.fgt = new FgTiles(this, tem.virtLoc, tem.depthoffset));

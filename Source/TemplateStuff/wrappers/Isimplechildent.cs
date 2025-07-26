@@ -18,7 +18,6 @@ public interface ISimpleEnt:ITemplateChild{
   void ITemplateChild.addTo(Scene s){
     if(this is Entity e){
       s.Add(e);
-      e.Scene = s;
     } else {
       DebugConsole.WriteFailure($"{this} implements simpleent wihtout being entity");
     }
