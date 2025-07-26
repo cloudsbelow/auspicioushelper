@@ -29,7 +29,7 @@ public interface ITemplateChild{
   }
   Template.Propagation propagatesTo(Template target, Template.Propagation p = Template.Propagation.All){
     ITemplateChild c=this;
-    while(c != target && c!= null && p!=Template.Propagation.None){
+    while(c!= null && p!=Template.Propagation.None){
       if(c==target) return p;
       c=c.parent;
       p&=c.parent.prop;

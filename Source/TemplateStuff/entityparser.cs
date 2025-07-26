@@ -19,6 +19,7 @@ public static class EntityParser{
     template,
     basic,
     removeSMbasic,
+    managedBasic,
     iopClarified,
     initiallyerrors,
   }
@@ -130,13 +131,14 @@ public static class EntityParser{
           t.AddBasicEnt(e,simoffset+d.Position-t.virtLoc);
         }
         goto done;
-      case Types.removeSMbasic:
+      case Types.removeSMbasic: case Types.managedBasic:
         List<StaticMover> SMRemove = new List<StaticMover>();
         foreach(Component c in e.Components) if(c is StaticMover sm){
           new DynamicData(sm).Set("__auspiciousSM", new TriggerInfo.SmInfo(t,e));
           SMRemove.Add(sm);
           smhooks.enable();
         }
+        if(etype == Types.managedBasic) e.Add(new ChildMarker(t));
         foreach(StaticMover sm in SMRemove) e.Remove(sm);
         t.AddBasicEnt(e,simoffset+d.Position-t.virtLoc);
         goto done;
@@ -178,9 +180,9 @@ public static class EntityParser{
     clarify("triggerSpikesLeft",   Types.removeSMbasic, static (l,ld,offset,e) => new TriggerSpikes(e, offset, TriggerSpikes.Directions.Left));
     clarify("triggerSpikesRight",  Types.removeSMbasic, static (l,ld,offset,e) => new TriggerSpikes(e, offset, TriggerSpikes.Directions.Right));
     
-    clarify("spring", Types.removeSMbasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.Floor));
-    clarify("wallSpringLeft", Types.removeSMbasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.WallLeft));
-    clarify("wallSpringRight", Types.removeSMbasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.WallRight));
+    clarify("spring", Types.managedBasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.Floor));
+    clarify("wallSpringLeft", Types.managedBasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.WallLeft));
+    clarify("wallSpringRight", Types.managedBasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.WallRight));
     clarify("spinner", Types.unwrapped, static (l,ld,offset,e)=>new Wrappers.Spinner(e,offset));
     
     clarify("lamp",Types.basic,static (l,ld,offset,e)=>new Lamp(offset + e.Position, e.Bool("broken")));

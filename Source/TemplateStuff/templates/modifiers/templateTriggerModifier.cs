@@ -5,8 +5,10 @@ using System;
 using System.Collections.Generic;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
+using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Cil;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -71,6 +73,8 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   bool log;
   Util.Trie blockManager;
   string setCh;
+  bool seekersTrigger = false;
+  bool throwablesTrigger = false;
 
   public TemplateTriggerModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateTriggerModifier(EntityData d, Vector2 offset, int depthoffset)
@@ -79,7 +83,9 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       if(Enum.TryParse<TouchInfo.Type>(s,out var res))advtouch.Add(res);
     }
     triggerOnTouch = d.Bool("triggerOnTouch",false);
-    if(triggerOnTouch || advtouch.Count>0) hooks.enable();
+    seekersTrigger = d.Bool("seekersTrigger",false);
+    throwablesTrigger = d.Bool("holdablesTrigger",false);
+    if(triggerOnTouch || advtouch.Count>0 || seekersTrigger || throwablesTrigger) hooks.enable();
     channel = d.Attr("channel",null);
     if(!d.Bool("propagateRiding",true)) prop &= ~Propagation.Riding;
     if(!d.Bool("propagateInside",true)) prop &= ~Propagation.Inside;
@@ -116,6 +122,12 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   float activeTime = 0;
   public void HandleTrigger(TriggerInfo sm){
     if(sm is TouchInfo tinfo && triggerOnTouch != advtouch.Contains(tinfo.ty)) tinfo.asUsable();
+    if(sm is HitInfo hinfo){
+      if(seekersTrigger && hinfo.entity is Seeker seeker && Math.Abs(seeker.Speed.X)>100) {
+        if(seeker.State.State==Seeker.StAttack||seeker.State.State==Seeker.StSkidding)hinfo.asUsable();
+      }
+      if(throwablesTrigger && hinfo.entity.Get<Holdable>()!=null) hinfo.asUsable();
+    }
     if(triggerParent == null) goto end;
     if(hideTrigger){
       modifierParent?.OnTrigger(sm);
@@ -164,6 +176,19 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     }
     public override string category => "touch/"+ty.ToString();
   }
+  class HitInfo:TriggerInfo{
+    public bool use = false;
+    public override bool shouldTrigger => use;
+    bool horizontal;
+    public HitInfo(Template parent, Actor a, bool horizontal):base(){
+      entity=a;this.parent=parent;this.horizontal=horizontal;
+    }
+    public HitInfo asUsable(){
+      use=true;
+      return this;
+    }
+    public override string category=>"hit/"+(horizontal?"h/":"v/")+entity;
+  }
   class ChannelInfo:TriggerInfo{
     public string channel;
     public ChannelInfo(string ch){
@@ -211,6 +236,30 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       triggerFromArr(p.CollideAll<Platform>(p.Position + Vector2.UnitX*(float)p.Facing), new TouchInfo(p, TouchInfo.Type.climbing));
     }
   }
+
+  static void MoveHDelegate(Platform h, Actor a){
+    if(h.Get<ChildMarker>() is ChildMarker c) c.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new HitInfo(c.parent,a,true));
+  }
+  static void HookMoveH(ILContext ctx){
+    ILCursor c = new(ctx);
+    if(c.TryGotoNextBestFit(MoveType.After, i=>i.MatchLdloc3(), i=>i.MatchStfld<CollisionData>("Hit"))){
+      c.EmitLdloc3();
+      c.EmitLdarg0();
+      c.EmitDelegate(MoveHDelegate);
+    } else DebugConsole.WriteFailure("Failed to make actor moveH IL hook for triggerModifier");
+  }
+  static void MoveVDelegate(Platform h, Actor a){
+    if(h.Get<ChildMarker>() is ChildMarker c) c.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new HitInfo(c.parent,a,false));
+  }
+  static void HookMoveV(ILContext ctx){
+    ILCursor c = new(ctx);
+    while(c.TryGotoNextBestFit(MoveType.After, i=>i.MatchLdloc3(), i=>i.MatchStfld<CollisionData>("Hit"))){
+      c.EmitLdloc3();
+      c.EmitLdarg0();
+      c.EmitDelegate(MoveVDelegate);
+    }
+  }
+
   static HookManager hooks = new(()=>{
     On.Celeste.Player.Jump+=Hook;
     On.Celeste.Player.SuperJump+=Hook;
@@ -220,6 +269,9 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     On.Celeste.Player.OnCollideH+=Hook;
     On.Celeste.Player.OnCollideV+=Hook;
     On.Celeste.Player.Update+=Hook;
+
+    IL.Celeste.Actor.MoveHExact+=HookMoveH;
+    IL.Celeste.Actor.MoveVExact+=HookMoveV;
   },void ()=>{
     On.Celeste.Player.Jump-=Hook;
     On.Celeste.Player.SuperJump-=Hook;
@@ -229,5 +281,8 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     On.Celeste.Player.OnCollideH-=Hook;
     On.Celeste.Player.OnCollideV-=Hook;
     On.Celeste.Player.Update-=Hook;
+    
+    IL.Celeste.Actor.MoveHExact-=HookMoveH;
+    IL.Celeste.Actor.MoveVExact-=HookMoveV;
   }, auspicioushelperModule.OnEnterMap);
 }

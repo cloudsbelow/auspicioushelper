@@ -69,23 +69,36 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     public SentinalDb():base(null,Vector2.Zero){}
   }
   SentinalDb fake;
+  string channel;
   public TemplateDreamblockModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateDreamblockModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
     hooks.enable();
     triggerOnEnter = d.Bool("triggerOnEnter",true);
     triggerOnLeave = d.Bool("triggerOnLeave",true);
-    dreaming = !d.Bool("useChannel",false);
+    channel = d.Attr("normalChannel","");
+    useVisuals = d.Bool("useVisuals",true);
   }
   public override void addTo(Scene scene) {
     fake = (SentinalDb)RuntimeHelpers.GetUninitializedObject(typeof(SentinalDb));
     fake.parent = this;
     fake.Position = Vector2.Zero;
     fake.Collider = new Hitbox(2000000000,2000000000,-1000000000,-1000000000);
-    if(renderer == null){
+    if(renderer == null && useVisuals){
       MaterialPipe.addLayer(renderer = new DreamRenderer());
     }
-
+    if(!string.IsNullOrWhiteSpace(channel)){
+      ChannelTracker ct = new ChannelTracker(channel,(int val)=>{
+        bool orig = dreaming;
+        dreaming = val==0;
+        if(orig!=dreaming && useVisuals)(this as IOverrideVisuals).PrepareList(!dreaming);
+        if(orig && !dreaming && UpdateHook.cachedPlayer is Player p && p.StateMachine.State==Player.StDreamDash){
+          if(hasInside(p) && DreamMarkerComponent.CheckContinue(p.CollideFirst<DreamBlock>(),p)==null)p.Die(Vector2.Zero,true);
+        }
+      });
+      if(ct.value!=0)dreaming=false;
+      Add(ct);
+    }
     base.addTo(scene);
     List<Entity> l = GetChildren<Entity>();
     foreach(var e in l){
@@ -93,7 +106,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
         if(c is PlayerCollider pc){
           var orig = pc.OnCollide;
           pc.OnCollide = (Player p)=>{
-            if(!Eligible(p)){
+            if(!dreaming || !Eligible(p)){
               orig(p);
             }
           };
@@ -102,18 +115,18 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
       if(e.Collider == null) continue;
       e.Add(new PlayerCollider((Player p)=>{
         if(DreamCheckStart(p,Vector2.Zero)){
-          DebugConsole.Write($"{e} {e.Collidable} {e.Scene}", e.Scene);
+          //DebugConsole.Write($"{e} {e.Collidable} {e.Scene}", e.Scene);
           fake.lastEntity = e;
         }
       }, colTypes.GetValueOrDefault(e.GetType())));
       e.Add(new DreamMarkerComponent(this,colTypes.GetValueOrDefault(e.GetType())));
-      if(!(e is Template)){
+      if(useVisuals && !(e is Template)){
         var c = new DreamRenderer.DreamOverride(this);
         e.Add(c);
         renderer.addEnt(c);
       }
     }
-    (this as IOverrideVisuals).PrepareList(false);
+    if(useVisuals)(this as IOverrideVisuals).PrepareList(!dreaming);
   }
   public class DreamRenderer:BasicMaterialLayer{
     static VirtualShaderList effect = new VirtualShaderList{
@@ -144,7 +157,6 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
       p.StateMachine.State = Player.StDreamDash;
       p.dashAttackTimer = 0f;
       p.gliderBoostTimer = 0f;
-      DebugConsole.Write("entering");
       GetFromTree<ITemplateTriggerable>()?.OnTrigger(new DreamInfo(false, triggerOnEnter, p.DashDir));
       p.dreamBlock = fake;
     }
@@ -181,7 +193,6 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
   }
   static void Hook(On.Celeste.DreamBlock.orig_OnPlayerExit orig, DreamBlock self, Player p){
     if(self is SentinalDb b){
-      DebugConsole.Write("exiting");
       b.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new DreamInfo(true, b.parent.triggerOnLeave, p.DashDir));
       return;
     }

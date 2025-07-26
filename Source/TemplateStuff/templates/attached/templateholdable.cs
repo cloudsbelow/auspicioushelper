@@ -143,6 +143,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   }
   bool HitSpring(Spring s){
     if(Hold.IsHeld) return false;
+    if(s.Get<ChildMarker>() is ChildMarker c && c.propagatesTo(te)) return false;
     if (s.Orientation == Spring.Orientations.Floor && Speed.Y >= 0f){
       Speed.X *= 0.5f;
       Speed.Y = -160f;

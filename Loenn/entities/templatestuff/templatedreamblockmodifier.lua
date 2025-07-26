@@ -15,7 +15,8 @@ entity.placements = {
       depthoffset=5,
       triggerOnEnter=true,
       triggerOnLeave=true,
-      useChannel=false,
+      normalChannel="",
+      useVisuals=true,
     }
   }
 }

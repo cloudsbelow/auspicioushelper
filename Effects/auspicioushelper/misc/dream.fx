@@ -12,21 +12,6 @@ float4 orig(float2 pos, float offsetx, float offsety){
 float2 worldpos(float2 pos){
     return floor(pos/pscale+cpos);
 }
-float mod(float x, float y){
-	return x - y * floor(x / y);
-}
-
-float2 mod(float2 x, float2 y){
-	return x - y * floor(x / y);
-}
-
-float3 mod(float3 x, float3 y){
-	return x - y * floor(x / y);
-}
-
-float4 mod(float4 x, float4 y){
-	return x - y * floor(x / y);
-}
 float hash(float3 p) {
   return frac(sin(dot(p, float3(12.9898, 78.233, 45.164))) * 43758.5453);
 }
@@ -83,7 +68,7 @@ float4 main(float4 color : COLOR0, float2 pos : TEXCOORD0) : SV_Target {
       return saturate(1-fchash)*color0+saturate(1-abs(fchash-1))*color1+saturate(fchash-1)*color4;
     }
   }
-  return float4(0,0,0,1);
+  return float4(mask.rgb*0.15,1);
 }
 
 technique BasicTech {

@@ -90,4 +90,7 @@ public class ChildMarker:Component{
   public ChildMarker(Template parent):base(false,false){
     this.parent=parent;
   }
+  public bool propagatesTo(Template other){
+    return ((ITemplateChild) parent).propagatesTo(other)!=Template.Propagation.None;
+  }
 }
