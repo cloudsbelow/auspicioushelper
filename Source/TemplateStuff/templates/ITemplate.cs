@@ -112,11 +112,11 @@ public class Template:Entity, ITemplateChild{
     using(new MovementLock()){
       Entity movewith = null;
       Vector2 mwp = Vector2.Zero;
-      if(UpdateHook.cachedPlayer.StateMachine.state == Player.StDreamDash){
-        if(UpdateHook.cachedPlayer.dreamBlock is TemplateDreamblockModifier.SentinalDb sdb){
-          movewith = sdb.lastEntity;
-        }
-      }
+      // if(UpdateHook.cachedPlayer.StateMachine.state == Player.StDreamDash){
+      //   if(UpdateHook.cachedPlayer.dreamBlock is TemplateDreamblockModifier.SentinalDb sdb){
+      //     movewith = sdb.lastEntity;
+      //   }
+      // }
       if(movewith!=null) mwp = movewith.Position;
       childRelposTo(virtLoc,gatheredLiftspeed);
       if(movewith!=null && mwp!=movewith.Position){
@@ -157,8 +157,10 @@ public class Template:Entity, ITemplateChild{
   public void setOffset(Vector2 ppos){
     this.toffset = Position-ppos;
   }
+  bool expanded = false;
   void makeChildren(Scene scene, bool recursive = false){
-    if(t==null) return;
+    if(t==null || expanded) return;
+    expanded = true;
     //if(t.bgt!=null) addEnt(new Wrappers.BgTiles(t,virtLoc,depthoffset));
     //if(t.fgt!=null) addEnt(fgt=new Wrappers.FgTiles(t, virtLoc, depthoffset));
     t.AddTilesTo(this);
@@ -309,6 +311,7 @@ public class Template:Entity, ITemplateChild{
     children.Clear();
     fgt = null;
     basicents = null;
+    expanded=false;
   }
   public virtual void remake(){
     makeChildren(Scene);
