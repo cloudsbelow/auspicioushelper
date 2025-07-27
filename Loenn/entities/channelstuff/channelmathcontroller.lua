@@ -5,6 +5,8 @@ local entity = {}
 
 entity.name = "auspicioushelper/ChannelMathController"
 entity.depth = 2000
+entity.nodeLimits = {0,-1}
+entity.nodeLineRenderType = "line"
 
 local multiOptions = {"ReplacePrevious", "BlockIfActive", "AttachedMultiple", "DetatchedMultiple"}
 local activOptions = {"Interval", "Change", "IntervalOrChange", "IntervalAndChange", "Auto","OnlyAwake"}

@@ -3,12 +3,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -209,12 +211,17 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     foreach(Entity p in l) p.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(t);
   }
   static void Hook(On.Celeste.Player.orig_Jump orig, Player p, bool a, bool b){
+    bool useCoyote = p.jumpGraceTimer>0 && p.jumpGraceTimer<0.1;
     orig(p,a,b);
     if(a && b)triggerFromArr(p.temp,new TouchInfo(p,TouchInfo.Type.jump));
+    if(useCoyote){
+      p.Get<CoyotePlatformMarker>()?.p?.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new TouchInfo(p,TouchInfo.Type.jump));
+    }
   }
   static void Hook(On.Celeste.Player.orig_SuperJump orig, Player p){
     orig(p);
     triggerFromArr(p.temp, new TouchInfo(p,TouchInfo.Type.super));
+    p.Get<CoyotePlatformMarker>()?.p?.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new TouchInfo(p,TouchInfo.Type.super));
   }
   static void Hook(On.Celeste.Player.orig_SuperWallJump orig, Player p, int direction){
     orig(p,direction);
@@ -268,7 +275,26 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       c.EmitDelegate(MoveVDelegate);
     }
   }
-
+  public class CoyotePlatformMarker:Component{
+    public Platform p = null;
+    public CoyotePlatformMarker():base(false,false){}
+    public void setPlatform(Platform p)=>this.p=p;
+  }
+  static void setCoyotePlatform(Player player, Platform platform){
+    CoyotePlatformMarker m = player.Get<CoyotePlatformMarker>();
+    if(m==null) player.Add(m = new CoyotePlatformMarker());
+    m.setPlatform(platform);
+  }
+  static void HookCoyote(ILContext ctx){
+    ILCursor c = new(ctx);
+    if(c.TryGotoNextBestFit(MoveType.After,i=>i.MatchLdcI4(1),i=>i.MatchStfld<Player>("onGround"))){
+      //DebugConsole.DumpIl(c);
+      c.EmitLdarg0();
+      c.EmitLdloc1();
+      c.EmitDelegate(setCoyotePlatform);
+    } else DebugConsole.WriteFailure("\n\n Failed to add coyote hooks \n\n");
+  }
+  static ILHook coyoteHook;
   static HookManager hooks = new(()=>{
     On.Celeste.Player.Jump+=Hook;
     On.Celeste.Player.SuperJump+=Hook;
@@ -281,6 +307,10 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
 
     IL.Celeste.Actor.MoveHExact+=HookMoveH;
     IL.Celeste.Actor.MoveVExact+=HookMoveV;
+    MethodInfo update = typeof(Player).GetMethod(
+      "orig_Update", BindingFlags.Public |BindingFlags.Instance
+    );
+    coyoteHook = new ILHook(update, HookCoyote);
   },void ()=>{
     On.Celeste.Player.Jump-=Hook;
     On.Celeste.Player.SuperJump-=Hook;
@@ -293,5 +323,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     
     IL.Celeste.Actor.MoveHExact-=HookMoveH;
     IL.Celeste.Actor.MoveVExact-=HookMoveV;
+    coyoteHook.Dispose();
   }, auspicioushelperModule.OnEnterMap);
 }

@@ -49,7 +49,7 @@ public class ChannelMathController:Entity{
   bool onlyForNonzero=false;
   Vector2[] nodes;
   const int maxVersion=2;
-  public ChannelMathController(EntityData d, Vector2 offset):base(new Vector2(0,0)){
+  public ChannelMathController(EntityData d, Vector2 offset):base(d.Position+offset){
     runImmediately = d.Bool("run_immediately",false);
     runWhenAwake = d.Bool("run_when_awake",true);
     period = d.Int("custom_polling_rate",0);
