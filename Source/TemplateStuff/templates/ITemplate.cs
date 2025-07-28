@@ -198,7 +198,7 @@ public class Template:Entity, ITemplateChild{
   }
   public virtual void addTo(Scene scene){
     addingScene = scene;
-    setTemplate(templateStr);
+    setTemplate(templateStr, scene);
     if(basicents != null)basicents.sceneadd(scene);
     scene.Add(this);
     makeChildren(scene, parent!=null);

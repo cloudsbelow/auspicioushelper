@@ -164,7 +164,7 @@ internal static class MarkedRoomParser{
         if(parent!=null){
           if(parent.t.room.templates.TryGetValue(e, out filler)) return true;
         } else {
-          string ldn = (scene as Level).Session.LevelData.Name;
+          string ldn = (scene as Level)?.Session.LevelData.Name??"NULL";
           if(dynamicRooms.TryGetValue(ldn, out dr)){
             if(dr.templates.TryGetValue(e, out filler)) return true;
           }
