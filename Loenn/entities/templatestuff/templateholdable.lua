@@ -56,12 +56,14 @@ function entity.rectangle(room, entity)
   return utils.rectangle(entity.x, entity.y, entity.width, entity.height)
 end
 function entity.draw(room, entity, viewport)
-    local offset = entity.nodes and entity.nodes[1] or {x=entity.width/2, y=entity.height/2}
-    aelperLib.draw_template_sprites(entity.template, entity.x+offset.x, entity.y+offset.y, room)
+    if entity._loenn_display_template then
+        local offset = entity.nodes and entity.nodes[1] or {x=entity.width/2, y=entity.height/2}
+        aelperLib.draw_template_sprites(entity.template, entity.x+offset.x, entity.y+offset.y, room)
 --     drawableSprite.fromTexture(aelperLib.getIcon("loenn/auspicioushelper/template/tmoon"), {
 --         x=entity.x,
 --         y=entity.y,
 --     }):draw()
+    end
     drawableRectangle.fromRectangle("bordered", entity.x+0.5, entity.y+0.5, entity.width-1, entity.height-1,
         {0.4,0.9,0.4,0.3}, {0.5,1,0.5,1}):draw()
 end
