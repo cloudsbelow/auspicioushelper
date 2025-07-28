@@ -87,11 +87,15 @@ function entity.move(room, entity, nodeIndex, offsetX, offsetY)
     if nodeIndex == 0 then 
         entity.x = entity.x + offsetX
         entity.y = entity.y + offsetY
-        entity.nodes[1].x = entity.nodes[1].x - offsetX
-        entity.nodes[1].y = entity.nodes[1].y - offsetY
+        if #entity.nodes > 0 then
+            entity.nodes[1].x = entity.nodes[1].x - offsetX
+            entity.nodes[1].y = entity.nodes[1].y - offsetY
+        end
     else
-        entity.nodes[1].x = entity.nodes[1].x + offsetX
-        entity.nodes[1].y = entity.nodes[1].y + offsetY
+        if #entity.nodes > 0 then
+            entity.nodes[1].x = entity.nodes[1].x + offsetX
+            entity.nodes[1].y = entity.nodes[1].y + offsetY
+        end
     end
 end
 
