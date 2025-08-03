@@ -350,6 +350,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
           if (LiftSpeed.Y < 0f && Speed.Y < 0f &&!dontFlingOff) Speed.Y=0;
         }
       } else if(Hold.ShouldHaveGravity) {
+        prevLiftspeed = (LiftSpeed = Vector2.Zero);
         float num = gravity;
         if(!hasBeenTouched && startFloating) num=0;
         if (Math.Abs(Speed.Y) <= 30f) num*=0.5f;
@@ -414,20 +415,23 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     return orig(self, player);
   }
   public static bool MoveHHook(On.Celeste.Actor.orig_MoveHExact orig, Actor self, int amount, Collision cb, Solid pusher){
-    if((pusher != null || jumpthruMoving>0) && self is TemplateHoldable s && s.te!=null){
-      s.te.setCollidability(false);
+    //DebugConsole.Write($"HereH", self, amount, pusher, self.Scene.TimeActive, self.Position.X, jumpthruMoving);
+    if(/*(pusher != null || jumpthruMoving>0) &&*/ self is TemplateHoldable s && s.te!=null){
+      bool flag = s.te.getSelfCol();
+      if(flag)s.te.setCollidability(false);
       bool res = orig(self,amount,cb,pusher);
-      s.te.setCollidability(true);
+      if(flag)s.te.setCollidability(true);
       return res;
     } else{
       return orig(self, amount, cb, pusher);
     }
   }
   public static bool MoveVHook(On.Celeste.Actor.orig_MoveVExact orig, Actor self, int amount, Collision cb, Solid pusher){
-    if((pusher != null || jumpthruMoving>0) && self is TemplateHoldable s && s.te!=null){
-      s.te.setCollidability(false);
+    if(/*(pusher != null || jumpthruMoving>0) &&*/ self is TemplateHoldable s && s.te!=null){
+      bool flag = s.te.getSelfCol();
+      if(flag)s.te.setCollidability(false);
       bool res = orig(self,amount,cb,pusher);
-      s.te.setCollidability(true);
+      if(flag)s.te.setCollidability(true);
       return res;
     } else{
       return orig(self, amount, cb, pusher);
@@ -452,6 +456,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     return orig(p,j);
   }
   static void JumpthruMoveHHook(On.Celeste.JumpThru.orig_MoveHExact orig, JumpThru j, int amount){
+    //DebugConsole.Write("HERHERHE");
     jumpthruMoving++;
     orig(j,amount);
     jumpthruMoving--;

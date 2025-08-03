@@ -141,6 +141,16 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   },auspicioushelperModule.OnEnterMap);
 }
 
+public class DustSpinner:DustStaticSpinner, ISimpleEnt{
+  public Template parent {get;set;}
+  public Vector2 toffset {get;set;}
+  public DustSpinner(EntityData e, Vector2 o):base(e,o){}
+  public override void Awake(Scene s){
+    Depth = Math.Min(Depth,-50);
+    base.Awake(s);
+  }
+}
+
 [Pooled]
 public class SpinnerDebris:FastDebris{
   Image image;

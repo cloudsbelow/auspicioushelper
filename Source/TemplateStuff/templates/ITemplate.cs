@@ -403,7 +403,7 @@ public class MovementLock:IDisposable{
   }
   static bool moveHHook(On.Celeste.Actor.orig_MoveHExact orig, Actor self, int move, Collision cb, Solid pusher){
     if(pusher == null && cb == null && canSkip){
-      if(alreadyX.Contains(self)) return false;
+      if(alreadyX.Contains(self))return false;
       bool flag = orig(self, move, cb, pusher);
       if(!flag) alreadyX.Add(self);
       return flag;

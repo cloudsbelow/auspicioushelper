@@ -227,6 +227,7 @@ public static class ChannelState{
     Dictionary<string,int> s=new();
     foreach(var pair in channelStates){
       int idx=0;
+      if(pair.Key.Length>1 && (pair.Key[0]=='$'||pair.Key[0]=='$'))continue;
       for(;idx<pair.Key.Length;idx++) if(pair.Key[idx]=='[')break;
       string clean = pair.Key.Substring(0,idx);
       if(pair.Key == clean) s.Add(pair.Key,pair.Value);

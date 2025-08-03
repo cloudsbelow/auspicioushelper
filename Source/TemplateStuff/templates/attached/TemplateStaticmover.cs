@@ -114,14 +114,15 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
   HashSet<Platform> doNot = new();
   CassetteMaterialLayer layer = null;
   public override void addTo(Scene scene){
-    base.addTo(scene);
+    //base.addTo(scene);
+    setTemplate(scene:scene);
     setVisCol(false,false);
     if(channel != "")CassetteMaterialLayer.layers.TryGetValue(channel,out layer);
-    List<Entity> allChildren = new();
+    /*List<Entity> allChildren = new();
     AddAllChildren(allChildren);
     foreach(Entity e in allChildren){
       if(e is Platform p) doNot.Add(p);
-    }
+    }*/
     Add(sm = new StaticMover(){
       OnEnable=()=>{
         childRelposTo(virtLoc,Vector2.Zero);

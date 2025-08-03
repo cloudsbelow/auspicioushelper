@@ -464,14 +464,9 @@ public class Anti0fZone:Entity{
   }
   public static HookManager hooks = new HookManager(()=>{
     MethodInfo update = typeof(Player).GetMethod(
-      "orig_Update",
-      BindingFlags.Public |BindingFlags.Instance
+      "orig_Update", BindingFlags.Public |BindingFlags.Instance
     );
-    if(update == null){
-      DebugConsole.Write("Could not find method");
-    } else {
-      updateHook = new ILHook(update, ILUpdateHook);
-    }
+    updateHook = new ILHook(update, ILUpdateHook);
     On.Celeste.Actor.NaiveMove+=NaiveMoveHook;
   },void ()=>{
     updateHook.Dispose();

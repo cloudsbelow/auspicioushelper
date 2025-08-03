@@ -183,7 +183,7 @@ public static class EntityParser{
     clarify("spring", Types.managedBasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.Floor));
     clarify("wallSpringLeft", Types.managedBasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.WallLeft));
     clarify("wallSpringRight", Types.managedBasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.WallRight));
-    clarify("spinner", Types.unwrapped, static (l,ld,offset,e)=>new Wrappers.Spinner(e,offset));
+    clarify("spinner", Types.unwrapped, static (l,ld,offset,e)=>e.Bool("dust")?new Wrappers.DustSpinner(e,offset):new Wrappers.Spinner(e,offset));
     
     clarify("lamp",Types.basic,static (l,ld,offset,e)=>new Lamp(offset + e.Position, e.Bool("broken")));
     clarify("hangingLamp",Types.basic,static (l,ld,offset,e)=>new HangingLamp(e,offset+e.Position));
@@ -221,6 +221,15 @@ public static class EntityParser{
     clarify("blackGem",Types.basic,HookVanilla.HeartGem);
     clarify("wire",Types.unwrapped,static (l,d,o,e)=>new CWire(e,o));
     clarify("lightningBlock",Types.unwrapped,static (l,d,o,e)=>new LightningBreakerW(e,o));
+    foreach(string c in new string[]{"Red","Yellow","Green"}){
+      clarify(c.ToLower()+"Blocks", Types.platformbasic, (l,d,o,e)=>{
+        ClutterBlockGenerator.Init(l);
+        var col = Enum.Parse<ClutterBlock.Colors>(c);
+        ClutterBlockGenerator.Add((int)(e.Position.X/8f), (int)(e.Position.Y/8), e.Width/8, e.Height/8,col);
+        //return new ClutterBlockBase(e.Position+o,e.Width,e.Height,ClutterBlockGenerator.enabled[(int)col],col);
+        return null;
+      });
+    }
     defaultModdedSetup();
   }
   public static Level.EntityLoader getLoader(string name){
