@@ -11,6 +11,7 @@ using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
+[Tracked]
 [CustomEntity("auspicioushelper/TemplateBlock")]
 class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
   public TemplateBlock(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
@@ -23,6 +24,7 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
   bool isExitBlock;
   bool triggerable;
   bool triggerOnBreak;
+  public bool breakableByBlocks = false;
   public TemplateBlock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
     uvis = d.Bool("visible",true);
