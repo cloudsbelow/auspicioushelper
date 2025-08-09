@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using Celeste;
 using Celeste.Mod.Entities;
@@ -60,7 +61,7 @@ public class EvilPackedTemplateRoom:Entity{
     }
     string str = Convert.ToBase64String(ms.ToArray());
     Logger.Info("auspicioushelper","\n\n========SERIALIZED ZZTEMPLATES ROOMS========\n"+str+"\n=========END ZZTEMPLATES ROOMS==========\n\n");
-    DebugConsole.Write("\n\n========SERIALIZED ZZTEMPLATES ROOMS========\n"+str+"\n=========END ZZTEMPLATES ROOMS==========\n\n");
+    DebugConsole.Write($"\n\n========SERIALIZED ZZTEMPLATES ROOMS ({str.Length})========\n"+str+"\n=========END ZZTEMPLATES ROOMS==========\n\n");
   }
   public override void Added(Scene scene) {
     RemoveSelf();

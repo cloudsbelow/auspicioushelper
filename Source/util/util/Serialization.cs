@@ -45,6 +45,7 @@ public partial class Util{
     }
   }
   public static void Write(BinaryWriter w, EntityData d){
+    d.Values?.Remove("_loenn_display_template");
     w.Write(d.ID);
     w.Write(d.Name);
     Write(w,d.Position);
@@ -73,7 +74,7 @@ public partial class Util{
     if(nlen != 0){
       e.Nodes = new Vector2[nlen];
       for(int i=0; i<nlen; i++) e.Nodes[i]=ReadVec2(r);
-    } 
+    } else e.Nodes = [];
     int vlen = r.Read7BitEncodedInt();
     e.Values = new();
     for(int i=0; i<vlen; i++){
