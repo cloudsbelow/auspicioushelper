@@ -31,6 +31,7 @@ public class auspicioushelperModule : EverestModule {
 #endif
     }
     public static ActionList OnEnterMap = new ActionList();
+    public static ActionList OnExitMap = new ActionList();
     public static ActionList OnNewScreen = new ActionList();
     public static ActionList OnReset = new ActionList();
 
@@ -135,6 +136,7 @@ public class auspicioushelperModule : EverestModule {
         Everest.Events.Level.OnTransitionTo += OnTransition;
         Everest.Events.Player.OnDie += OnDie;
         Everest.Events.Level.OnEnter += OnEnter;
+        Everest.Events.Level.OnExit += static (a,b,c,d,e)=>OnExitMap.run();
         Everest.Events.AssetReload.OnAfterReload += OnReload;
         On.Celeste.Level.GiveUp += GiveUp;
         On.Celeste.Level.LoadLevel += LoadLevlHook;

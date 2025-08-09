@@ -25,7 +25,6 @@ public class EvilPackedTemplateRoom:Entity{
   }
   public EvilPackedTemplateRoom(EntityData d,Vector2 offset):base(Vector2.Zero){
     string dat = d.Attr("EncodedRooms", "").Trim();
-    DebugConsole.Write("Thing constructed");
     if(string.IsNullOrEmpty(dat)) return;
     if(parsed.TryGetValue(d.ID, out var l)){
       MarkedRoomParser.AddDynamicRooms(l);

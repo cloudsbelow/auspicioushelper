@@ -215,14 +215,21 @@ public static class MaterialPipe {
     UpdateHook.TimeSinceTransMs = 1000000;
     remLeaving();
   }
+  static PersistantAction cleanup;
   static HookManager hooks = new HookManager(()=>{
     On.Celeste.GameplayRenderer.Render += GameplayRender;
     On.Celeste.Level.TransitionTo += ontrans;
     On.Celeste.Player.ctor += playerCtorHook;
+    auspicioushelperModule.OnExitMap.enroll(cleanup = new PersistantAction(()=>{
+      foreach(var l in layers) removeLayer(l);
+      toRemove.Clear();
+      layers.Clear();
+    }));
   }, void ()=>{
     On.Celeste.GameplayRenderer.Render-= GameplayRender;
     On.Celeste.Level.TransitionTo -= ontrans;
     On.Celeste.Player.ctor -= playerCtorHook;
+    cleanup.remove();
   });
 
   public static bool backdropReorderDetour(){
