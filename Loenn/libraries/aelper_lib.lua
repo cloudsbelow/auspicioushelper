@@ -121,8 +121,8 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
     
     local toDraw = {}
     local offset = {
-        data[1].x - (data[1].nodes or {{x=data[1].x}})[1].x,
-        data[1].y - (data[1].nodes or {{y=data[1].y}})[1].y,
+        data[1].x - ((data[1].nodes or {{x=data[1].x}})[1] or {x=data[1].x}).x,
+        data[1].y - ((data[1].nodes or {{y=data[1].y}})[1] or {y=data[1].y}).y,
     }
     for _,entity in ipairs(data[2].entities) do
         pcall(function() 
@@ -193,7 +193,7 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
             local toInsert = ({decals.getDrawable(entity.texture, nil, room, movedEntity, nil)})[1]
             table.insert(toDraw, {func=toInsert, depth=entity.depth or depths.fgDecals})
         end
-    end 
+    end
     for tx = -1, data[1].width/8+2 do
         for ty = -1, data[1].height/8+2 do
             if (tx<=0 or ty<=0 or tx>data[1].width/8 or ty>data[1].height/8) == false then
@@ -297,11 +297,12 @@ aelperLib.get_entity_draw = function(icon_name)
             false, viewport and viewport.__auspicioushelper_alreadyDrawn).recursiveError --todo: replace false with whether or not this entity is slected
         end
             
-        drawableSprite.fromTexture(shouldError and "loenn/auspicioushelper/template/error" or aelperLib.getIcon("loenn/auspicioushelper/template/"..icon_name), {
-            x=entity.x,
-            y=entity.y,
-        }):draw()
-        
+        if icon_name ~= nil or shouldError then
+            drawableSprite.fromTexture(shouldError and "loenn/auspicioushelper/template/error" or aelperLib.getIcon("loenn/auspicioushelper/template/"..icon_name), {
+                x=entity.x,
+                y=entity.y,
+            }):draw()
+        end
     end
 end
 local hasLegacy = {

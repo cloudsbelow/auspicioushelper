@@ -56,11 +56,9 @@ end
 function entity.rectangle(room, entity)
   return utils.rectangle(entity.x, entity.y, entity.width, entity.height)
 end
+local holdableDraw = aelperLib.get_entity_draw(nil)
 function entity.draw(room, entity, viewport)
-    if entity._loenn_display_template and settings.auspicioushelper_showtemplates_global then
-        local offset = entity.nodes and entity.nodes[1] or {x=entity.width/2, y=entity.height/2}
-        aelperLib.draw_template_sprites(entity.template, entity.x+offset.x, entity.y+offset.y, room)
-    end
+    holdableDraw(room, entity, viewport)
     drawableRectangle.fromRectangle("bordered", entity.x+0.5, entity.y+0.5, entity.width-1, entity.height-1,
         {0.4,0.9,0.4,0.3}, {0.5,1,0.5,1}):draw()
 end
