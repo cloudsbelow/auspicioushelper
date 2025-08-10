@@ -6,6 +6,8 @@ local utils = require("utils")
 local logging = require("logging")
 local depths = require("consts.object_depths")
 local celesteRender = require("celeste_render")
+local autotiler = require("autotiler")
+local atlases = require("atlases")
 
 --#####--
 
@@ -106,6 +108,7 @@ aelperLib.register_template_name = function(name)
     aelperLib.template_entity_names[name]=true
     return name
 end
+local first={true}
 aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDrawn)
     alreadyDrawn = alreadyDrawn or {}
     
@@ -194,17 +197,65 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
     for tx = -1, data[1].width/8+2 do
         for ty = -1, data[1].height/8+2 do
             if (tx<=0 or ty<=0 or tx>data[1].width/8 or ty>data[1].height/8) == false then
-                if data[2].tilesFg.matrix:getInbounds(tx+data[1].x/8, ty+data[1].y/8) ~= "0" then
-                    table.insert(toDraw, {
-                        func=drawableRectangle.fromRectangle("bordered", (tx-1)*8+x+offset[1]+0.5,(ty-1)*8+y+offset[2]+0.5, 7,7,
-                            {0.8,0.8,0.8},{1,1,1}),
-                        depth=depths.fgTerrain})
+                local tile = data[2].tilesFg.matrix:getInbounds(tx+data[1].x/8, ty+data[1].y/8)
+                if tile ~= "0" then
+                    local quads, sprites = autotiler.getQuads(tx+data[1].x/8, ty+data[1].y/8, data[2].tilesFg.matrix,
+                        celesteRender.tilesMetaFg, "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
+                    -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
+                    local quadCount = #quads
+
+                    if quadCount > 0 then
+                        local randQuad = quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesFg"):getInbounds(tx+data[1].x/8, ty+data[1].y/8), quadCount)]
+                        local texture = celesteRender.tilesMetaFg[tile].path or " "
+                        if first[1] then 
+                            first[1] = false
+                            for k,v in ipairs(randQuad) do
+                                aelperLib.log(k,v)
+                            end
+                        end
+                        
+                        table.insert(toDraw, {
+                            func={
+                                draw=function()
+                                    love.graphics.draw(atlases.gameplay[texture].image, 
+                                        celesteRender.getOrCacheTileSpriteQuad(celesteRender.tilesSpriteMetaCache, 
+                                            tile, texture, randQuad, true),  --true is if this tileset is fg tiles
+                                        (tx-1)*8+x+offset[1]+0.5,(ty-1)*8+y+offset[2]+0.5)
+                                end
+                            },
+                            depth=depths.fgTerrain
+                        })
+                    end
                 end
-                if data[2].tilesBg.matrix:getInbounds(tx+data[1].x/8, ty+data[1].y/8) ~= "0" then
-                    table.insert(toDraw, {
-                        func=drawableRectangle.fromRectangle("bordered", (tx-1)*8+x+offset[1]+0.5,(ty-1)*8+y+offset[2]+0.5, 7,7,
-                            {0.5,0.5,0.5},{0.6,0.6,0.6}),
-                        depth=depths.bgTerrain})
+                local tile = data[2].tilesBg.matrix:getInbounds(tx+data[1].x/8, ty+data[1].y/8)
+                if tile ~= "0" then
+                    local quads, sprites = autotiler.getQuads(tx+data[1].x/8, ty+data[1].y/8, data[2].tilesBg.matrix,
+                        celesteRender.tilesMetaBg, "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
+                    -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
+                    local quadCount = #quads
+
+                    if quadCount > 0 then
+                        local randQuad = quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesBg"):getInbounds(tx+data[1].x/8, ty+data[1].y/8), quadCount)]
+                        local texture = celesteRender.tilesMetaBg[tile].path or " "
+                        if first[1] then 
+                            first[1] = false
+                            for k,v in ipairs(randQuad) do
+                                aelperLib.log(k,v)
+                            end
+                        end
+                        
+                        table.insert(toDraw, {
+                            func={
+                                draw=function()
+                                    love.graphics.draw(atlases.gameplay[texture].image, 
+                                        celesteRender.getOrCacheTileSpriteQuad(celesteRender.tilesSpriteMetaCache, 
+                                            tile, texture, randQuad, false),  --true is if this tileset is fg tiles
+                                        (tx-1)*8+x+offset[1]+0.5,(ty-1)*8+y+offset[2]+0.5)
+                                end
+                            },
+                            depth=depths.bgTerrain
+                        })
+                    end
                 end
             end
         end
