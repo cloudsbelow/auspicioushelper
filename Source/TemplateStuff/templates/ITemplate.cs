@@ -162,7 +162,7 @@ public class Template:Entity, ITemplateChild{
     this.toffset = Position-ppos;
   }
   bool expanded = false;
-  void makeChildren(Scene scene, bool recursive = false){
+  public void makeChildren(Scene scene, bool recursive = false){
     if(t==null || expanded) return;
     expanded = true;
     //if(t.bgt!=null) addEnt(new Wrappers.BgTiles(t,virtLoc,depthoffset));

@@ -109,20 +109,28 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
     }
     pastLiftspeed[0]=Vector2.Zero;
   }
-  List<Entity> todraw;
+  List<Entity> todraw = new();
   internal StaticMover sm;
   HashSet<Platform> doNot = new();
   CassetteMaterialLayer layer = null;
+  bool made=false;
+  public void make(Scene s){
+    if(made) return;
+    made = true;
+    makeChildren(s,false);
+    if(!getSelfCol()) parentChangeStatBypass(-1,-1,0);
+    List<Entity> allChildren = new();
+    AddAllChildren(allChildren);
+    if(layer!=null)todraw = allChildren;
+    foreach(Entity e in allChildren){
+      if(e is Platform p) doNot.Add(p);
+    }
+  }
   public override void addTo(Scene scene){
     //base.addTo(scene);
     setTemplate(scene:scene);
-    setVisCol(false,false);
     if(channel != "")CassetteMaterialLayer.layers.TryGetValue(channel,out layer);
-    /*List<Entity> allChildren = new();
-    AddAllChildren(allChildren);
-    foreach(Entity e in allChildren){
-      if(e is Platform p) doNot.Add(p);
-    }*/
+    if(enableUnrooted) make(scene);
     Add(sm = new StaticMover(){
       OnEnable=()=>{
         childRelposTo(virtLoc,Vector2.Zero);
@@ -138,7 +146,7 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
         else if(layer !=null) layer.addTrying(this);
       },
       OnAttach=(Platform p)=>{
-        setVisCol(true,true);
+        if(!enableUnrooted)UpdateHook.AddAfterUpdate(()=>make(Scene));
       },
       SolidChecker=(Solid s)=>{
         //DebugConsole.Write(s.ToString());
@@ -173,10 +181,6 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
         this.ownShakeVec += shakevec;
       }
     });
-    if(layer!=null){
-      todraw = new List<Entity>();
-      AddAllChildren(todraw);
-    }
   }
   public override void Awake(Scene scene) {
     base.Awake(scene);

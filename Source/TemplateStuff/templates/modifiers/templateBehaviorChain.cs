@@ -29,7 +29,7 @@ public class TemplateBehaviorChain:Entity{
   }
   public static IEnumerator GetChainEnumerator(Vector2[] nodes, Template source){
     var contents = source?.t.room.emptyTemplates??mainRoom;
-    foreach(var n in nodes){
+    if(nodes!=null)foreach(var n in nodes){
       if(contents.TryGetValue(n, out var e)){
         if(e.Name == "auspicioushelper/TemplateBehaviorChain") yield return GetChainEnumerator(e.Nodes,source);
         else yield return e;
@@ -70,7 +70,6 @@ public class TemplateBehaviorChain:Entity{
     var chain = new Chain(final,dat.Nodes,scope);
     var first = chain.NextEnt();
     if(first == null){
-      DebugConsole.Write("Empty behavior chain (please don't)");
       return new Template(dat, pos, 0);
     } else {
       if(!Level.EntityLoaders.TryGetValue(first.Name, out var loader)){

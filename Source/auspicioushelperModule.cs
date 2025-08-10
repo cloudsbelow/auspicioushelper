@@ -74,6 +74,7 @@ public class auspicioushelperModule : EverestModule {
     static void OnEnter(Session session, bool fromSave){
         UpdateHook.TimeSinceTransMs=0;
         try{
+            OnExitMap.run();
             ChannelState.unwatchAll();
 
             OnReset.run();
@@ -94,6 +95,7 @@ public class auspicioushelperModule : EverestModule {
             DebugConsole.Write(ex.ToString());
         }
     }
+    static void OnExit(Level l, LevelExit e, LevelExit.Mode m, Session s, HiresSnow h)=>OnExitMap.run();
     static void OnReload(bool silent){
         //DebugConsole.Write($"reloaded {Everest.Content.Map.Count} {Settings.HideHelperMaps}");
         //foreach (ModAsset item in Everest.Content.Map.Values.Where((ModAsset asset) => asset.Type == typeof(AssetTypeMap)))
@@ -136,7 +138,7 @@ public class auspicioushelperModule : EverestModule {
         Everest.Events.Level.OnTransitionTo += OnTransition;
         Everest.Events.Player.OnDie += OnDie;
         Everest.Events.Level.OnEnter += OnEnter;
-        Everest.Events.Level.OnExit += static (a,b,c,d,e)=>OnExitMap.run();
+        Everest.Events.Level.OnExit += OnExit;
         Everest.Events.AssetReload.OnAfterReload += OnReload;
         On.Celeste.Level.GiveUp += GiveUp;
         On.Celeste.Level.LoadLevel += LoadLevlHook;
@@ -162,6 +164,7 @@ public class auspicioushelperModule : EverestModule {
         Everest.Events.Level.OnTransitionTo -= OnTransition;
         Everest.Events.Player.OnDie -= OnDie;
         Everest.Events.Level.OnEnter -= OnEnter;
+        Everest.Events.Level.OnExit -= OnExit;
         Everest.Events.AssetReload.OnAfterReload -= OnReload;
         On.Celeste.Level.GiveUp -= GiveUp;
         On.Celeste.Level.LoadLevel -= LoadLevlHook;
