@@ -29,13 +29,15 @@ public class FgCassetteVisuals:BasicMaterialLayer{
     shader.setparamvalex("fgsat",f.fgsat);
     MaterialPipe.gd.SetRenderTarget(outtex);
     MaterialPipe.gd.Clear(Color.Transparent);
-    StartSb(sb, shader, c);
-    foreach(Entity e in todraw) if(e.Scene!=null){
+    base.render(sb,c);
+  }
+  public override void rasterMats(SpriteBatch sb, Camera c) {
+    base.rasterMats(sb, c);
+    
+    foreach(Entity e in willdraw) if(e.Scene!=null){
       if(CassetteMaterialLayer.stupididiotdumbpompusthings.TryGetValue(e.GetType(),out var fn))fn(e);
       else e.Render();
     }
-    sb.End();
-    info.diddraw=true;
   }
   public void Add(Template t){
     dirty = true;

@@ -19,8 +19,9 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateDreamblockModifier")]
 public class TemplateDreamblockModifier:Template,IOverrideVisuals{
-  public List<OverrideVisualComponent> comps  {get;set;}= new();
-  public HashSet<OverrideVisualComponent> toRemove {get;} = new();
+  public HashSet<OverrideVisualComponent> comps  {get;set;}= new();
+  public void AddC(OverrideVisualComponent c)=>comps.Add(c);
+  public void RemoveC(OverrideVisualComponent c)=>comps.Remove(c);
   public bool dirty {get;set;}
   static Dictionary<Type, Collider> colTypes = new();
   bool triggerOnEnter;
@@ -91,7 +92,10 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
       ChannelTracker ct = new ChannelTracker(channel,(int val)=>{
         bool orig = dreaming;
         dreaming = val==0;
-        if(orig!=dreaming && useVisuals)(this as IOverrideVisuals).PrepareList(!dreaming);
+        if(dreaming==orig) return;
+        if(useVisuals) foreach(var c in comps) { 
+          c.SetStealUse(renderer,dreaming,dreaming);
+        }
         if(orig && !dreaming && UpdateHook.cachedPlayer is Player p && p.StateMachine.State==Player.StDreamDash){
           if(hasInside(p) && DreamMarkerComponent.CheckContinue(p.CollideFirst<DreamBlock>(),p)==null)p.Die(Vector2.Zero,true);
         }
@@ -101,6 +105,9 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     }
     base.addTo(scene);
     List<Entity> l = GetChildren<Entity>();
+    setupEnts(l);
+  }
+  void setupEnts(List<Entity> l){
     foreach(var e in l){
       foreach(var c in e.Components){
         if(c is PlayerCollider pc){
@@ -121,28 +128,21 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
       }, colTypes.GetValueOrDefault(e.GetType())));
       e.Add(new DreamMarkerComponent(this,colTypes.GetValueOrDefault(e.GetType())));
       if(useVisuals && !(e is Template)){
-        var c = new DreamRenderer.DreamOverride(this);
-        e.Add(c);
-        renderer.addEnt(c);
+        var comp = OverrideVisualComponent.Get(e);
+        comp.AddToOverride(new(this,-30000,false,true));
+        comp.AddToOverride(new(renderer,-999,dreaming,dreaming));
       }
     }
-    if(useVisuals)(this as IOverrideVisuals).PrepareList(!dreaming);
+  }
+  public override void OnNewEnts(List<Entity> l) {
+    setupEnts(l);
+    base.OnNewEnts(l);
   }
   public class DreamRenderer:BasicMaterialLayer{
     static VirtualShaderList effect = new VirtualShaderList{
       null,auspicioushelperGFX.LoadShader("misc/dream")
     };
-    public class DreamOverride:OverrideVisualComponent{
-      public bool dreaming=>((TemplateDreamblockModifier)parent).dreaming;
-      public DreamOverride(TemplateDreamblockModifier parent):base(parent){}
-    }
     public DreamRenderer():base(effect,-11001){}
-    public override void rasterMats(SpriteBatch sb, Camera c) {
-      foreach(OverrideVisualComponent d in willdraw){
-        if(d.shouldRemove)removeEnt(d);
-        else if(d is DreamOverride m && m.dreaming) d.renderMaterial(this,c);
-      }
-    }
     public override void onRemove() {
       base.onRemove();
       renderer = null;

@@ -41,31 +41,9 @@ public class TemplateCassetteBlock:TemplateDisappearer, IMaterialObject, IChanne
   public override void Added(Scene scene){
     base.Added(scene);
     int num = ChannelState.watch(this);
-    if(CassetteMaterialLayer.layers.TryGetValue(channel,out var layer) || freeze){
-      AddAllChildren(todraw);
-      if(layer != null)layer.dump(todraw);
-      if(layer?.fg!=null){
-        parentChangeStatBypass(-1,0,0);
-        if(num!=0) layer.fg.Add(this);
-      }
-    }
     if(num==0)setChVal(0);
+    if(CassetteMaterialLayer.layers.ContainsKey(channel))setupEnts(GetChildren<Entity>());
   }
-  public override int VisChangeHandler(int n, bool parentVis, bool selfVis) {
-    if(!CassetteMaterialLayer.layers.TryGetValue(channel,out var layer) || layer.fg==null){
-      return base.VisChangeHandler(n, parentVis,selfVis);
-    }
-    if(n==1){
-      layer.fg.Add(this);
-    } else {
-      layer.fg.Remove(this);
-    }
-    return 0;
-  }
-  public override bool enforceAsVis {get{
-    bool inlayer = CassetteMaterialLayer.layers.TryGetValue(channel,out var layer);
-    return base.enforceAsVis && (!inlayer || layer.fg==null);
-  }}
   public void tryManifest(){
     Player p = Scene?.Tracker.GetEntity<Player>();
     if(there!=State.trying) return;
@@ -98,7 +76,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IMaterialObject, IChanne
     }
     there = State.there;
     prop|=Propagation.Inside;
-    setVisCol(true,true);
+    setVisColAct(true,true,true);
   }
   float bumpTarget = 1;
   IEnumerator bumpUp(){
@@ -124,7 +102,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IMaterialObject, IChanne
   public void setChVal(int val){
     if(val==0){
       if(there == State.there){
-        setVisCol(false,false);
+        setVisColAct(false,false,!freeze);
       }
       there = State.gone;
       prop&=~Propagation.Inside;
@@ -145,5 +123,18 @@ public class TemplateCassetteBlock:TemplateDisappearer, IMaterialObject, IChanne
   public override void Update(){
     base.Update();
     if(there == State.trying) tryManifest();
+  }
+  void setupEnts(List<Entity> l){
+    if(CassetteMaterialLayer.layers.TryGetValue(channel,out var layer)){
+      layer.dump(l);
+      int tdepth = -TemplateDepth();
+      if(layer?.fg is {} fg)foreach(Entity e in l){
+        OverrideVisualComponent.Get(e).AddToOverride(new(fg,tdepth));
+      }
+    }
+  }
+  public override void OnNewEnts(List<Entity> l) {
+    setupEnts(l);
+    base.OnNewEnts(l);
   }
 }

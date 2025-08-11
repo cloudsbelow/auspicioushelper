@@ -274,6 +274,7 @@ public class Template:Entity, ITemplateChild{
     List<Entity> list = new();
     if(p == Propagation.None) AddAllChildren(list);
     else AddAllChildrenProp(list,p);
+    //if(typeof(T) == typeof(Entity)) return (List<T>)list;
     List<T> nlist = new();
     foreach(var li in list) if(li is T le) nlist.Add(le);
     return nlist;
@@ -376,6 +377,20 @@ public class Template:Entity, ITemplateChild{
     if(this is T a) return a;
     if(parent != null) return parent.GetFromTree<T>();
     return default(T);
+  }
+  public virtual void OnNewEnts(List<Entity> l){
+    parent?.OnNewEnts(l);
+  }
+  public void AddNewEnts(List<Entity> l){
+    OnNewEnts(l);
+    if(GetFromTree<TemplateDisappearer>() is {} disap)disap.enforce();
+  }
+  public int TemplateDepth(){
+    Template c = this;
+    for(int i=0;;i++){
+      if(c==null) return i;
+      c=c.parent;
+    }
   }
   public override string ToString()=>base.ToString()+GetHashCode();
 }
