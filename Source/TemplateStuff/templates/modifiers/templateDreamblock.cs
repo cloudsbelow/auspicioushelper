@@ -86,7 +86,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     fake.Collider = new Hitbox(2000000000,2000000000,-1000000000,-1000000000);
     if(renderer == null && useVisuals){
       MaterialPipe.addLayer(renderer = new DreamRenderer());
-    }
+    } else if(useVisuals) MaterialPipe.addLayer(renderer);
     if(!string.IsNullOrWhiteSpace(channel)){
       ChannelTracker ct = new ChannelTracker(channel,(int val)=>{
         bool orig = dreaming;
