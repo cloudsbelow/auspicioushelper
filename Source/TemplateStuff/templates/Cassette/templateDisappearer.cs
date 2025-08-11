@@ -19,6 +19,7 @@ public class TemplateDisappearer:Template{
   bool parentAct = true;
   public TemplateDisappearer(EntityData data, Vector2 pos, int depthoffset):base(data,pos,depthoffset){
   }
+  public TemplateDisappearer(Vector2 pos, int depthoffset=0):base(pos,depthoffset){}
   public override void Added(Scene scene){
     base.Added(scene);
     unenforced.Add(this);

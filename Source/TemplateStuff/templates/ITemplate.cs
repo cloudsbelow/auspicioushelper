@@ -86,6 +86,13 @@ public class Template:Entity, ITemplateChild{
   public Wrappers.BasicMultient basicents = null;
   public DashCollision OnDashCollide = null;
   string templateStr;
+  /// <summary>
+  /// WARNING: by the time templates are constructed, the entitydata
+  /// position has already been added to pos. 
+  /// </summary>
+  /// <param name="data"></param>
+  /// <param name="pos">THE POSITION OF THE ENTITIY</param>
+  /// <param name="depthoffset"></param>
   public Template(EntityData data, Vector2 pos, int depthoffset):base(pos){
     templateStr = data.Attr("template","");
     this.depthoffset = depthoffset;
@@ -96,6 +103,12 @@ public class Template:Entity, ITemplateChild{
     if(string.IsNullOrEmpty(templateStr)){
       TemplateBehaviorChain.AddEmptyTemplate(data);
     }
+  }
+  public Template(Vector2 pos, int depthoffset=0):base(pos){
+    this.Visible = false;
+    Depth = 10000+depthoffset;
+    MovementLock.skiphooks.enable();
+    this.ownidpath="";
   }
   public virtual void relposTo(Vector2 loc, Vector2 liftspeed){
     Position = loc+toffset;
@@ -189,7 +202,7 @@ public class Template:Entity, ITemplateChild{
   public virtual void templateAwake(){
     foreach(var c in children) c.templateAwake();
   }
-  Scene addingScene;
+  internal Scene addingScene;
   public void setTemplate(string s=null, Scene scene=null){
     templateStr=s??templateStr;
     if(t==null && !MarkedRoomParser.getTemplate(templateStr, parent, scene, out t)){
