@@ -1,5 +1,4 @@
 local drawableSprite = require("structs.drawable_sprite")
-local drawableRectangle = require("structs.drawable_rectangle")
 local entities = require("entities")
 local decals = require("decals")
 local utils = require("utils")
@@ -8,7 +7,7 @@ local depths = require("consts.object_depths")
 local celesteRender = require("celeste_render")
 local autotiler = require("autotiler")
 local atlases = require("atlases")
-local roomStruct = require("structs.room")
+local loadedState = require("loaded_state")
 
 --#####--
 
@@ -47,12 +46,6 @@ if false and not $(editMenu):find(item -> item[1] == "auspicioushelper_cleartemp
 end
 if settings.auspicioushelper_showtemplates_global == nil then 
     settings.auspicioushelper_showtemplates_global = true
-end
-
-local oldDecode = roomStruct.decode
-roomStruct.decode = function(data)
-    for k, _ in pairs(templates) do templates[k] = nil end
-    return oldDecode(data)
 end
 
 --#####--
@@ -349,6 +342,13 @@ function celesteRender.drawMap(state)
         orig_celesteRender_drawMap(state)
     end
     return orig_celesteRender_drawMap(state)
+end
+
+local origLoadFile = loadedState.loadFile
+function loadedState.loadFile(fileName, roomName)
+    initialTemplatesLoad = false
+    for k,_ in pairs(templates) do templates[k]=nil end
+    return origLoadFile(fileName, roomName)
 end
 
 return aelperLib
