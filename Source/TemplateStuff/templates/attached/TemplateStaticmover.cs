@@ -135,7 +135,10 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
       OnEnable=()=>{
         childRelposTo(virtLoc,Vector2.Zero);
         setVisCol(true,true);
-        if(string.IsNullOrWhiteSpace(channel)) remake();
+        if(string.IsNullOrWhiteSpace(channel)){
+          remake();
+          AddNewEnts(GetChildren<Entity>());
+        }
         else if(layer != null) layer.removeTrying(this);
         this.ownShakeVec = Vector2.Zero;
       },
@@ -210,6 +213,11 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
         else e.Render();
       }
     } 
+  }
+  public override void OnNewEnts(List<Entity> l) {
+    foreach(var e in l)if(e is Platform p)doNot.Add(p);
+    if(layer!=null)foreach(var e in l)todraw.Add(e);
+    base.OnNewEnts(l);
   }
   bool cachedCol = true;
 

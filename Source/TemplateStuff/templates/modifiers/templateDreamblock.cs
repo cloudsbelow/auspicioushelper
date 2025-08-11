@@ -104,8 +104,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
       Add(ct);
     }
     base.addTo(scene);
-    List<Entity> l = GetChildren<Entity>();
-    setupEnts(l);
+    setupEnts(GetChildren<Entity>());
   }
   void setupEnts(List<Entity> l){
     foreach(var e in l){
