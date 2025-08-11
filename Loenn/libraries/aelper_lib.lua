@@ -8,6 +8,7 @@ local depths = require("consts.object_depths")
 local celesteRender = require("celeste_render")
 local autotiler = require("autotiler")
 local atlases = require("atlases")
+local roomStruct = require("structs.room")
 
 --#####--
 
@@ -48,6 +49,12 @@ if settings.auspicioushelper_showtemplates_global == nil then
     settings.auspicioushelper_showtemplates_global = true
 end
 
+local oldDecode = roomStruct.decode
+roomStruct.decode = function(data)
+    for k, _ in pairs(templates) do templates[k] = nil end
+    return oldDecode(data)
+end
+
 --#####--
 
 local aelperLib = {}
@@ -70,7 +77,6 @@ function delete_template(entity, oldName)
         templates[oldName or entity.template_name] = nil
     end
 end
-
 
 aelperLib.channel_color = {230/255, 167/255, 50/255}
 aelperLib.channel_color_halfopacity = {aelperLib.channel_color[1], aelperLib.channel_color[2], aelperLib.channel_color[3], 0.5}
