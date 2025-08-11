@@ -36,23 +36,28 @@ entity.placements = {
     }
   }
 }
-entity.fieldInformation = {
-  direction = {
-    options = directions,
-    editable=false
-  },
-  movesfx = { options = {"event:/game/04_cliffside/arrowblock_move"} },
-  respawn_timer = {minimumValue=0},
-  max_leniency = {fieldType="integer"},
-  
-  arrow_texture = {
-      options = {
-          "small",
-          "big",
-          "huge",
-      }
-  }
-}
+entity.fieldInformation = function(entity)
+    return {
+        direction = {
+            options = directions,
+            editable=false
+          },
+          movesfx = { options = {"event:/game/04_cliffside/arrowblock_move"} },
+          respawn_timer = {minimumValue=0},
+          max_leniency = {fieldType="integer"},
+          
+          arrow_texture = {
+              options = {
+                  "small",
+                  "big",
+                  "huge",
+              }
+          }
+        template = {
+            options = aelperLib.get_template_options(entity)
+        }
+    }
+end
 
 function entity.rectangle(room, entity)
     return utils.rectangle(entity.x-8, entity.y-8, 16, 16)

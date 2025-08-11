@@ -6,7 +6,9 @@ local entity = {}
 
 entity.name = aelperLib.register_template_name("auspicioushelper/TemplateTriggerModifier")
 entity.depth = -13000
-entity.fieldInformation = {
+
+entity.fieldInformation = function(entity)
+    return {
     advancedTouchOptions={
         fieldType="list",
         elementDefault="jump",
@@ -27,7 +29,11 @@ entity.fieldInformation = {
             }
         }
     }
-}
+        template = {
+            options = aelperLib.get_template_options(entity)
+        }
+    }
+end
 
 entity.placements = {
   {

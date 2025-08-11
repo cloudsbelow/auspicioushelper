@@ -28,7 +28,9 @@ entity.placements = {
     }
   }
 }
-entity.fieldInformation = {
+entity.fieldInformation = function(entity)
+    return {
+        template = {
   return_type ={
     options = rtypes,
     editable=false,
@@ -37,7 +39,10 @@ entity.fieldInformation = {
     options = atypes,
     editable=false,
   },
-}
+            options = aelperLib.get_template_options(entity)
+        }
+    }
+end
 
 function entity.selection(room, entity)
     local nodes = {}
