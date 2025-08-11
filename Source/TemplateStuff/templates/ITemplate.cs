@@ -274,7 +274,7 @@ public class Template:Entity, ITemplateChild{
     List<Entity> list = new();
     if(p == Propagation.None) AddAllChildren(list);
     else AddAllChildrenProp(list,p);
-    //if(typeof(T) == typeof(Entity)) return (List<T>)list;
+    if(typeof(T) == typeof(Entity)) return (List<T>)(object)list;
     List<T> nlist = new();
     foreach(var li in list) if(li is T le) nlist.Add(le);
     return nlist;
