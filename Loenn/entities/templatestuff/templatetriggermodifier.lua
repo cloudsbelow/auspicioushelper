@@ -28,7 +28,7 @@ entity.fieldInformation = function(entity)
                 "dashV",
             }
         }
-    }
+    },
         template = {
             options = aelperLib.get_template_options(entity)
         }

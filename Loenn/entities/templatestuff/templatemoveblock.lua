@@ -52,7 +52,7 @@ entity.fieldInformation = function(entity)
                   "big",
                   "huge",
               }
-          }
+          },
         template = {
             options = aelperLib.get_template_options(entity)
         }
