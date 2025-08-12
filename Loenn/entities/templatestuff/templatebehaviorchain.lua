@@ -58,7 +58,7 @@ function entity.nodeSprite(room, entity, node)
     if existsValidTemplate then return drawableSprite.fromTexture("loenn/auspicioushelper/template/tgroupnode", 
         {x=node.x, y=node.y-3, depth=-13001}) end
     return {
-        drawableText.fromText(reason, node.x-20, node.y-30, 40, 18, nil, nil, "ff4444"),
+        drawableText.fromText(reason, node.x-20, node.y-33, 40, 18, nil, nil, "ff4444"),
         drawableSprite.fromTexture("loenn/auspicioushelper/template/group_error", {x=node.x, y=node.y, depth=-13001}),
         drawableSprite.fromTexture("loenn/auspicioushelper/template/tgroupnode", {x=node.x, y=node.y-3, color="ff4444", depth=-13001})
     }
