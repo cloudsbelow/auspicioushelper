@@ -65,7 +65,13 @@ function entity.rectangle(room, entity)
 end
 local holdableDraw = aelperLib.get_entity_draw(nil)
 function entity.draw(room, entity, viewport)
+    local oldPos = {entity.x,entity.y}
+    local newPos = (entity.nodes or {})[1] or {x=entity.width/2, y=entity.height/2}
+    entity.x=newPos.x+entity.x
+    entity.y=newPos.y+entity.y
     holdableDraw(room, entity, viewport)
+    entity.x = oldPos[1]
+    entity.y = oldPos[2]
     drawableRectangle.fromRectangle("bordered", entity.x+0.5, entity.y+0.5, entity.width-1, entity.height-1,
         {0.4,0.9,0.4,0.3}, {0.5,1,0.5,1}):draw()
 end
