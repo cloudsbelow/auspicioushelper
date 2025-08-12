@@ -150,11 +150,14 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
   public static void StartSb(SpriteBatch sb, Effect e=null, Camera c=null){
     sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, e, c?.Matrix??Matrix.Identity);
   }
-  public virtual void rasterMats(SpriteBatch sb,Camera c){
+  public void TrySortWilldraw(){
     if(dirtyWilldraw){
       willdraw.Sort((a,b)=>b._depth.CompareTo(a._depth));
       dirtyWilldraw = false;
     }
+  }
+  public virtual void rasterMats(SpriteBatch sb,Camera c){
+    TrySortWilldraw();
     foreach(var o in willdraw){
       if(o.shouldRemove) removeEnt(o);
       else {
