@@ -178,9 +178,6 @@ public interface IOverrideVisuals{
 
 [CustomEntity("auspicioushelper/MaterialTemplate")]
 public class MaterialTemplate:TemplateDisappearer{
-  public List<OverrideVisualComponent> comps  {get;set;}= new();
-  public HashSet<OverrideVisualComponent> toRemove {get;} = new();
-  public bool dirty {get;set;}
   bool invis;
   bool collidable = true;
   public MaterialTemplate(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
@@ -207,5 +204,10 @@ public class MaterialTemplate:TemplateDisappearer{
       DebugConsole.Write($"Layer {lident} not found");
     }
     if(!collidable)setCollidability(false);
+  }
+  public override void OnNewEnts(List<Entity> l) {
+    int tdepth = -TemplateDepth(); 
+    if(layer!=null)foreach(var e in l)OverrideVisualComponent.Get(e).AddToOverride(new(layer,tdepth,invis));
+    base.OnNewEnts(l);
   }
 }

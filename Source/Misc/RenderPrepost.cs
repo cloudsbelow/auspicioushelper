@@ -15,10 +15,10 @@ public class BeforeAfterRender:Component{
     b=before; a=after;
     hooks.enable();
   }
-  public static HashSet<Action> prebefore = new();
-  public static HashSet<Action> postbefore = new();
-  public static HashSet<Action> preafter = new();
-  public static HashSet<Action> postafter = new();
+  public static Util.HybridSet<Action> prebefore = new();
+  public static Util.HybridSet<Action> postbefore = new();
+  public static Util.HybridSet<Action> preafter = new();
+  public static Util.HybridSet<Action> postafter = new();
   static void Before(On.Celeste.Level.orig_BeforeRender orig, Level self){
     foreach(var f in prebefore) f();
     orig(self);

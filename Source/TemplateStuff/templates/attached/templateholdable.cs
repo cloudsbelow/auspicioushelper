@@ -101,7 +101,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     voidDieOffset = d.Float("voidDieOffset",100);
     SquishCallback = OnSquish2;
   }
-  HashSet<Platform> Mysolids;
+  Util.HybridSet<Platform> Mysolids;
   void make(Scene s){
     te = new TemplateDisappearer(d,Position+hoffset,d.Int("depthoffset",0));
     te.addTo(s);
@@ -298,7 +298,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     }
   }
   bool resetting;
-  IEnumerator resetRoutine(){
+  IEnumerator resetRoutine(bool particles = true){
     if(resetting){
       DebugConsole.Write("Called multiple times to reset routine (bad)");
       yield break;
@@ -307,7 +307,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     Collidable = false;
     Position = lpos =origpos;
     Speed = Vector2.Zero;
-    te.destroy(true);
+    te.destroy(particles);
     Mysolids.Clear();
     te = null;
     if(!respawning){
@@ -383,7 +383,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       }
     }
     if(Position.Y>SceneAs<Level>().Bounds.Bottom+voidDieOffset){
-      Add(new Coroutine(resetRoutine()));
+      Add(new Coroutine(resetRoutine(false)));
     }
 
     jumpthruMoving = 0;

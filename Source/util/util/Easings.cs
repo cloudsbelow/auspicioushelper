@@ -1,10 +1,7 @@
-
-
 using System;
 using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.auspicioushelper;
-
 public static partial class Util{
   public enum Easings {
     Linear, SineIn,SineOut,SineInOut,QuadIn,QuadOut,CubeIn,CubeOut,Smoothstep,QuartIn,QuartOut,QuintIn,QuintOut
@@ -20,6 +17,11 @@ public static partial class Util{
       return MathF.Max(target, val-amount);
     }
     sign = MathF.Sign(amount);
+    return MathF.Min(target, val+amount);
+  }
+  public static float Approach(float val, float target, float amount){
+    if(val == target) return val;
+    if(val>target) return MathF.Max(target, val-amount);
     return MathF.Min(target, val+amount);
   }
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -114,6 +116,7 @@ public static partial class Util{
   }
 
 
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float ApplyEasing(Easings easing, float val){
     return easing switch {
       Easings.Linear    => Linear(val),
@@ -132,6 +135,7 @@ public static partial class Util{
       _ => throw new ArgumentOutOfRangeException(nameof(easing), easing, "Unsupported easing type")
     };
   }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float ApplyEasing(Easings easing, float val, out float derivative){
     return easing switch {
       Easings.Linear    => Linear(val,out derivative),
@@ -150,18 +154,21 @@ public static partial class Util{
       _ => throw new ArgumentOutOfRangeException(nameof(easing), easing, "Unsupported easing type")
     };
   }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float ApplyEasingClamped(Easings easing, float val){
     if(val<0) return 0;
     if(val>1) return 1;
     return ApplyEasing(easing,val);
   }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float ApplyEasingClamped(Easings easing, float val, out float derivative){
     derivative = 0;
     if(val<0) return 0;
     if(val>1) return 1;
     return ApplyEasing(easing,val,out derivative);
   }
-  const int MAXITER = 100;
+  const int MAXITER = 16;
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float getEasingPreimage(Easings easing, float target, float tolerence = 0.0001f){
     if(target >= 1) return 1;
     if(target <= 0) return 0;
@@ -184,7 +191,33 @@ public static partial class Util{
         x=(high+low)/2;
       }
     }
-    DebugConsole.Write("Failed to find good match");
     return x;
+  }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static float EaseApproach(Easings easing, float val, float target, float amount, float tolerence = 0.001f){
+    if(Math.Abs(val-target)<=tolerence) return target;
+    float pre = getEasingPreimage(easing, val, tolerence);
+    ApplyEasing(easing, pre, out float derivative);
+    return Approach(val,target,amount*derivative);
+  }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static float EaseOutApproach(Easings easing, float val, float target, float amount, float tolerence = 0.001f){
+    if(val == target) return target;
+    float delta = Math.Abs(target-val);
+    if(delta<=tolerence) return target;
+    if(delta>=1){
+      ApplyEasing(easing, 0, out var derivative);
+      return Approach(val,target,derivative*amount);
+    }
+    float ndelta = 1-EaseApproach(easing,1-delta,1,amount,tolerence);
+    return Approach(val, target, delta-ndelta);
+  }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static int SafeMod(int n, int v){
+    return ((n%v)+v)%v;
+  }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static float Lerp(float a, float b, float fac){
+    return a*(1-fac)+b*fac;
   }
 }
