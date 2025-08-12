@@ -23,6 +23,13 @@ entity.placements = {
     }
   }
 }
+entity.fieldInformation = function(entity)
+    return {
+        template = {
+            options = aelperLib.get_template_options(entity)
+        }
+    }
+end
 
 function entity.selection(room, entity)
     local nodes = {}

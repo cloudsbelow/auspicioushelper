@@ -37,11 +37,16 @@ entity.placements = {
     }
   }
 }
-entity.fieldInformation = {
-  breaksfx ={
-    options = sfxs,
-  },
-}
+entity.fieldInformation = function(entity)
+    return {
+        breaksfx ={
+            options = sfxs,
+        },
+        template = {
+            options = aelperLib.get_template_options(entity)
+        }
+    }
+end
 function entity.rectangle(room, entity)
     return utils.rectangle(entity.x-8, entity.y-8, 16, 16)
 end

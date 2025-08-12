@@ -22,6 +22,14 @@ entity.placements = {
     }
   }
 }
+entity.fieldInformation = function(entity)
+    return {
+        template = {
+            options = aelperLib.get_template_options(entity)
+        }
+    }
+end
+    
 
 function entity.selection(room, entity)
     local nodeRects = {}    
@@ -31,6 +39,10 @@ function entity.selection(room, entity)
     return utils.rectangle(entity.x-8,entity.y-8,16,16), nodeRects
 end
 function entity.nodeSprite(room, entity, node)
+    if entity._loenn_preset_initializerType ~= nil then
+        initPreset(entity)
+    end
+    
     local existsValidTemplate = false
     local reason = "Template not found"
     for _,entity in ipairs(room.entities) do
@@ -52,5 +64,15 @@ function entity.nodeSprite(room, entity, node)
     }
 end
 entity.draw = aelperLib.get_entity_draw("tgroup")
+
+function initPreset(entity)
+    entity._loenn_preset_initializerType = false
+    
+    entity.nodes = {
+        {x=16,y=16},
+        {x=32,y=32},
+        {x=48,y=48},
+    }
+end
 
 return entity
