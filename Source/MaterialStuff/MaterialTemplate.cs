@@ -33,9 +33,10 @@ public class OverrideVisualComponent:Component, IMaterialObject{
   //tracker woes (kill me)
   public Entity ent;
   public List<VisualOverrideDescr> parents = new();
+  public static Dictionary<Type,Action<Entity>> custom = new();
   public static OverrideVisualComponent Get(Entity e){
     if(e.Get<OverrideVisualComponent>() is {} o) return o;
-    var comp = new OverrideVisualComponent();
+    var comp = custom.TryGetValue(e.GetType(),out var fn)?new PatchedRenderComp(){render=fn}:new OverrideVisualComponent();
     e.Add(comp);
     comp.ent = e;
     return comp;
@@ -132,10 +133,17 @@ public class OverrideVisualComponent:Component, IMaterialObject{
   }
   public float _depth=>(float)Entity.actualDepth;
   public bool shouldRemove=>Entity.Scene==null;
-  public void renderMaterial(IMaterialLayer l, Camera c){
+  public virtual void renderMaterial(IMaterialLayer l, Camera c){
     if(ovis && Entity.Scene!=null)Entity.Render();
   }
+  public class PatchedRenderComp:OverrideVisualComponent{
+    public Action<Entity> render;
+    public override void renderMaterial(IMaterialLayer l, Camera c) {
+      if(ovis && Entity.Scene!=null) render(Entity);
+    }
+  }
 }
+
 /*public interface IOverrideVisuals{
   List<OverrideVisualComponent> comps {get;set;}
   HashSet<OverrideVisualComponent> toRemove {get;} 

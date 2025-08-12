@@ -153,7 +153,6 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
   public virtual void rasterMats(SpriteBatch sb,Camera c){
     if(dirtyWilldraw){
       willdraw.Sort((a,b)=>b._depth.CompareTo(a._depth));
-      DebugConsole.Write("Sorting");
       dirtyWilldraw = false;
     }
     foreach(var o in willdraw){

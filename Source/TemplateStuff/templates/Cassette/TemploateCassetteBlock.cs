@@ -116,7 +116,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IMaterialObject, IChanne
   public void renderMaterial(IMaterialLayer l, Camera c){
     if(there == State.there) return;
     foreach(Entity e in todraw) if(e.Scene != null && e.Depth<=l.depth){
-      if(CassetteMaterialLayer.stupididiotdumbpompusthings.TryGetValue(e.GetType(),out var fn))fn(e);
+      if(OverrideVisualComponent.custom.TryGetValue(e.GetType(),out var fn))fn(e);
       else e.Render();
     }
   }
