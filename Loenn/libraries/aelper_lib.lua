@@ -107,7 +107,44 @@ aelperLib.register_template_name = function(name)
     aelperLib.template_entity_names[name]=true
     return name
 end
-local first={true}
+aelperLib.get_template_options = function(entity)
+    local paths = {}
+    for k,_ in pairs(templates) do
+        local first = true
+        local roomName
+        for name in string.gmatch(k, "([^/]+)") do
+            if first then
+                paths[name] = paths[name] or {}
+                roomName=name
+                first=false
+            else
+                paths[roomName][name] = true
+                break
+            end
+        end
+    end
+
+     local toReturn = {}
+--     if entity.template == "" then
+--         for k,_ in pairs(paths) do
+--             table.insert(toReturn, k)
+--         end
+--     else
+--         for room in string.gmatch(entity.template, "([^/]+)") do
+--             for k,_ in pairs(paths[room]) do
+--                 table.insert(toReturn, room.."/"..k)
+--             end
+--             break
+--         end
+--     end
+        for k,_ in pairs(paths) do
+            for k2,_ in pairs(paths[k]) do
+                table.insert(toReturn, k.."/"..k2)
+            end
+        end
+
+    return toReturn
+end
 aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDrawn)
     alreadyDrawn = alreadyDrawn or {}
     
@@ -206,12 +243,6 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                     if quadCount > 0 then
                         local randQuad = quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesFg"):getInbounds(tx+data[1].x/8, ty+data[1].y/8), quadCount)]
                         local texture = celesteRender.tilesMetaFg[tile].path or " "
-                        if first[1] then 
-                            first[1] = false
-                            for k,v in ipairs(randQuad) do
-                                aelperLib.log(k,v)
-                            end
-                        end
                         
                         table.insert(toDraw, {
                             func={
@@ -236,12 +267,6 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                     if quadCount > 0 then
                         local randQuad = quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesBg"):getInbounds(tx+data[1].x/8, ty+data[1].y/8), quadCount)]
                         local texture = celesteRender.tilesMetaBg[tile].path or " "
-                        if first[1] then 
-                            first[1] = false
-                            for k,v in ipairs(randQuad) do
-                                aelperLib.log(k,v)
-                            end
-                        end
                         
                         table.insert(toDraw, {
                             func={
