@@ -21,10 +21,10 @@ public class OverrideVisualComponent:Component, IMaterialObject{
     public bool steal=true;
     public bool use=true;
     public VisualOverrideDescr(IOverrideVisuals overrider, short prio, bool steal=true, bool use=true){
-      o=overrider; order=prio; this.steal=steal;
+      o=overrider; order=prio; this.steal=steal; this.use=use;
     }
     public VisualOverrideDescr(IOverrideVisuals overrider, int prio, bool steal=true, bool use=true){
-      o=overrider; order=(short)Math.Clamp(prio,short.MinValue,short.MaxValue); this.steal=steal;
+      o=overrider; order=(short)Math.Clamp(prio,short.MinValue,short.MaxValue); this.steal=steal; this.use=use;
     }
   }
   public bool ovis;
