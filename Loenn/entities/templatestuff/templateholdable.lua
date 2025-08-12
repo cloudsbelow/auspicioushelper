@@ -55,7 +55,7 @@ end
 
 function entity.selection(room, entity)
     local node = {}
-    if entity.nodes[1] then
+    if (entity.nodes or {})[1] then
         node = {utils.rectangle(entity.x+entity.nodes[1].x-3, entity.y+entity.nodes[1].y-3, 6,6)}
     end
     return utils.rectangle(entity.x, entity.y, entity.width, entity.height), node

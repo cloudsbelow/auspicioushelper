@@ -34,9 +34,9 @@ end
 function entity.selection(room, entity)
     local nodeRects = {}    
     for _, node in ipairs(entity.nodes) do
-        table.insert(nodeRects, utils.rectangle(node.x-4,node.y-4,8,8))
+        table.insert(nodeRects, utils.rectangle(node.x-4,node.y-16,8,8))
     end
-    return utils.rectangle(entity.x-8,entity.y-8,16,16), nodeRects
+    return utils.rectangle(entity.x-6,entity.y-6,12,12), nodeRects
 end
 function entity.nodeSprite(room, entity, node)
     if entity._loenn_preset_initializerType ~= nil then
@@ -56,11 +56,11 @@ function entity.nodeSprite(room, entity, node)
         end
     end
     if existsValidTemplate then return drawableSprite.fromTexture("loenn/auspicioushelper/template/tgroupnode", 
-        {x=node.x, y=node.y, depth=-13001}) end
+        {x=node.x, y=node.y-3, depth=-13001}) end
     return {
         drawableText.fromText(reason, node.x-20, node.y-30, 40, 18, nil, nil, "ff4444"),
         drawableSprite.fromTexture("loenn/auspicioushelper/template/group_error", {x=node.x, y=node.y, depth=-13001}),
-        drawableSprite.fromTexture("loenn/auspicioushelper/template/tgroupnode", {x=node.x, y=node.y, color="ff4444", depth=-13001})
+        drawableSprite.fromTexture("loenn/auspicioushelper/template/tgroupnode", {x=node.x, y=node.y-3, color="ff4444", depth=-13001})
     }
 end
 entity.draw = aelperLib.get_entity_draw("tgroup")

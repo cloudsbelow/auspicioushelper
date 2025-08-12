@@ -145,6 +145,14 @@ aelperLib.get_template_options = function(entity)
 
     return toReturn
 end
+aelperLib.template_selection = function(room, entity)
+    local nodes = {}
+    for _,node in ipairs(entity.nodes or {}) do
+        table.insert(nodes, utils.rectangle(node.x-6, node.y-6, 12, 12))
+    end
+    
+    return utils.rectangle(entity.x-6, entity.y-6, 12, 12), nodes
+end
 aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDrawn)
     alreadyDrawn = alreadyDrawn or {}
     
