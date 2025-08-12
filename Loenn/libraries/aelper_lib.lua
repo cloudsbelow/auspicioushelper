@@ -238,9 +238,9 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
             table.insert(toDraw, {func=toInsert, depth=entity.depth or depths.fgDecals})
         end
     end
-    for tx = -1, data[1].width/8+2 do
-        for ty = -1, data[1].height/8+2 do
-            if (tx<=0 or ty<=0 or tx>data[1].width/8 or ty>data[1].height/8) == false then
+    for tx = 1, data[1].width/8 do
+        for ty = 1, data[1].height/8 do
+            if (tx+data[1].x/8<1 or ty+data[1].y/8<1 or tx+data[1].x/8>data[2].width/8 or ty+data[1].y/8>data[2].height/8) == false then
                 local tile = data[2].tilesFg.matrix:getInbounds(tx+data[1].x/8, ty+data[1].y/8)
                 if tile ~= "0" then
                     local quads, sprites = autotiler.getQuads(tx+data[1].x/8, ty+data[1].y/8, data[2].tilesFg.matrix,
