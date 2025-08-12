@@ -86,6 +86,13 @@ public class Template:Entity, ITemplateChild{
   public Wrappers.BasicMultient basicents = null;
   public DashCollision OnDashCollide = null;
   string templateStr;
+  /// <summary>
+  /// WARNING: by the time templates are constructed, the entitydata
+  /// position has already been added to pos. 
+  /// </summary>
+  /// <param name="data"></param>
+  /// <param name="pos">THE POSITION OF THE ENTITIY</param>
+  /// <param name="depthoffset"></param>
   public Template(EntityData data, Vector2 pos, int depthoffset):base(pos){
     templateStr = data.Attr("template","");
     this.depthoffset = depthoffset;
@@ -96,6 +103,12 @@ public class Template:Entity, ITemplateChild{
     if(string.IsNullOrEmpty(templateStr)){
       TemplateBehaviorChain.AddEmptyTemplate(data);
     }
+  }
+  public Template(Vector2 pos, int depthoffset=0):base(pos){
+    this.Visible = false;
+    Depth = 10000+depthoffset;
+    MovementLock.skiphooks.enable();
+    this.ownidpath="";
   }
   public virtual void relposTo(Vector2 loc, Vector2 liftspeed){
     Position = loc+toffset;
@@ -189,7 +202,7 @@ public class Template:Entity, ITemplateChild{
   public virtual void templateAwake(){
     foreach(var c in children) c.templateAwake();
   }
-  Scene addingScene;
+  internal Scene addingScene;
   public void setTemplate(string s=null, Scene scene=null){
     templateStr=s??templateStr;
     if(t==null && !MarkedRoomParser.getTemplate(templateStr, parent, scene, out t)){
@@ -238,6 +251,7 @@ public class Template:Entity, ITemplateChild{
   }
   public override void Removed(Scene scene){
     destroy(false);
+    base.Removed(scene);
   }
   public void AddAllChildren(List<Entity> l){
     foreach(ITemplateChild c in children){
@@ -274,6 +288,7 @@ public class Template:Entity, ITemplateChild{
     List<Entity> list = new();
     if(p == Propagation.None) AddAllChildren(list);
     else AddAllChildrenProp(list,p);
+    if(typeof(T) == typeof(Entity)) return (List<T>)(object)list;
     List<T> nlist = new();
     foreach(var li in list) if(li is T le) nlist.Add(le);
     return nlist;
@@ -376,6 +391,20 @@ public class Template:Entity, ITemplateChild{
     if(this is T a) return a;
     if(parent != null) return parent.GetFromTree<T>();
     return default(T);
+  }
+  public virtual void OnNewEnts(List<Entity> l){
+    parent?.OnNewEnts(l);
+  }
+  public void AddNewEnts(List<Entity> l){
+    OnNewEnts(l);
+    if(GetFromTree<TemplateDisappearer>() is {} disap)disap.enforce();
+  }
+  public int TemplateDepth(){
+    Template c = this;
+    for(int i=0;;i++){
+      if(c==null) return i;
+      c=c.parent;
+    }
   }
   public override string ToString()=>base.ToString()+GetHashCode();
 }

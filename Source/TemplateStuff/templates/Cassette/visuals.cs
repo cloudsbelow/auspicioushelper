@@ -130,12 +130,11 @@ public class CassetteMaterialLayer:BasicMaterialLayer{
   }
   bool lastdn = false;
   public override bool drawMaterials => true;
-  public static Dictionary<Type,Action<Entity>> stupididiotdumbpompusthings = new();
   public override void rasterMats(SpriteBatch sb, Camera c) {
     //DebugConsole.Write($"rendering {items.Count} {Engine.Instance.scene.Tracker.GetEntities<LayerMarkingEntity>().Count}",info.markingEnt.Scene);
     if(ChannelState.readChannel(channel) == 0)foreach(Entity e in items){
       if(e.Scene != null && e.Depth<=info.depth){
-        if(stupididiotdumbpompusthings.TryGetValue(e.GetType(),out var fn))fn(e);
+        if(OverrideVisualComponent.custom.TryGetValue(e.GetType(),out var fn))fn(e);
         else e.Render();
       }
     }
@@ -181,7 +180,6 @@ public class CassetteMaterialLayer:BasicMaterialLayer{
       }
       pair.Value.items = keep;
       pair.Value.trying.Clear();
-      pair.Value.fg?.Clean();
     }
     return false;
   },auspicioushelperModule.OnReset);

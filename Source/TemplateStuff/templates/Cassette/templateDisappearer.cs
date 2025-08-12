@@ -19,6 +19,7 @@ public class TemplateDisappearer:Template{
   bool parentAct = true;
   public TemplateDisappearer(EntityData data, Vector2 pos, int depthoffset):base(data,pos,depthoffset){
   }
+  public TemplateDisappearer(Vector2 pos, int depthoffset=0):base(pos,depthoffset){}
   public override void Added(Scene scene){
     base.Added(scene);
     unenforced.Add(this);
@@ -33,16 +34,13 @@ public class TemplateDisappearer:Template{
     if(other == false) return 0;
     return action?1:-1;
   }
-  public virtual int VisChangeHandler(int n, bool parentvis, bool selfvis){
-    return n;
-  }
   public override void parentChangeStat(int vis, int col, int act){
     int nvis = 0; int ncol=0; int nact = 0;
     if(vis!=0) nvis = permute(vis>0, ref parentVis, selfVis);
     if(col!=0) ncol = permute(col>0, ref parentCol, selfCol);
     if(act!=0) nact = permute(col>0, ref parentAct, selfAct);
     if(nvis!=0 || ncol!=0 || nact!=0){
-      base.parentChangeStat(nvis!=0?VisChangeHandler(nvis, parentVis,selfVis):nvis,ncol,nact);
+      base.parentChangeStat(nvis,ncol,nact);
     }
   }
   public void parentChangeStatBypass(int vis, int col, int act){
@@ -56,7 +54,7 @@ public class TemplateDisappearer:Template{
   public virtual void setVisibility(bool n){
     if(n == selfVis) return;
     int nvis = permute(n, ref selfVis, parentVis);
-    if(nvis != 0) base.parentChangeStat(nvis!=0?VisChangeHandler(nvis, parentVis,selfVis):nvis,0,0);
+    if(nvis != 0) base.parentChangeStat(nvis,0,0);
   }
   public virtual void setAct(bool n){
     if(n == selfAct) return;
@@ -68,7 +66,7 @@ public class TemplateDisappearer:Template{
     if(vis != selfVis) nvis = permute(vis, ref selfVis, parentVis);
     int ncol = 0;
     if(col != selfCol) ncol = permute(col, ref selfCol, parentCol);
-    if(nvis!=0 || ncol!=0) base.parentChangeStat(nvis!=0?VisChangeHandler(nvis, parentVis,selfVis):nvis,ncol,0);
+    if(nvis!=0 || ncol!=0) base.parentChangeStat(nvis,ncol,0);
   }
   public virtual void setVisColAct(bool vis, bool col, bool act){
     int nvis = 0;
@@ -78,7 +76,7 @@ public class TemplateDisappearer:Template{
     int nact = 0;
     if(act != selfAct) nact = permute(act, ref selfAct, parentAct);
     //DebugConsole.Write($" set {vis} {col} {selfVis}");
-    if(nvis!=0 || ncol!=0 || nact!=0) base.parentChangeStat(nvis!=0?VisChangeHandler(nvis, parentVis,selfVis):nvis,ncol,nact);
+    if(nvis!=0 || ncol!=0 || nact!=0) base.parentChangeStat(nvis,ncol,nact);
   }
   public bool getParentCol(){
     return parentCol;
@@ -87,20 +85,12 @@ public class TemplateDisappearer:Template{
     return selfCol;
   }
   static List<TemplateDisappearer> unenforced = new();
-  public virtual bool enforceAsVis=>selfVis;
-  public virtual bool enforceAsCol=>selfCol;
-  public virtual bool enforceAsAct=>selfAct;
-  void enforce(){
-    bool Vis = enforceAsVis; bool Col = enforceAsCol; bool Act=enforceAsAct;
+  public void enforce(){
+    bool Vis = selfVis&&parentVis; 
+    bool Col = selfCol&&parentCol; 
+    bool Act = selfAct&&parentAct;
     if(Vis && Col && Act) return;
-    List<Entity> cents=new();
-    AddAllChildren(cents);
-    foreach(var c in cents){
-      if(c is TemplateDisappearer) continue;
-      if(!Vis) c.Visible=false;
-      if(!Col) c.Collidable=false;
-      if(!Act) c.Active=false;
-    }
+    parentChangeStatBypass(Vis?0:-1,Col?0:-1,Act?0:-1);
   }
   static void enforceHook(On.Celeste.Level.orig_Update orig, Level self){
     foreach(var a in unenforced) a.enforce();

@@ -112,7 +112,7 @@ public interface IMaterialLayerSimple:IMaterialLayer{
   }}
 }
 
-public class BasicMaterialLayer:IMaterialLayerSimple{
+public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
   public MaterialLayerInfo info {get;}
   public VirtualShaderList passes;
   public List<RenderTargetPool.RenderTargetHandle> handles=new();
@@ -153,7 +153,6 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
   public virtual void rasterMats(SpriteBatch sb,Camera c){
     if(dirtyWilldraw){
       willdraw.Sort((a,b)=>b._depth.CompareTo(a._depth));
-      DebugConsole.Write("Sorting");
       dirtyWilldraw = false;
     }
     foreach(var o in willdraw){
@@ -203,4 +202,6 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
   public void removeEnt(IMaterialObject o){
     toRemove.Add(o);
   }
+  public void AddC(OverrideVisualComponent c)=>addEnt(c);
+  public void RemoveC(OverrideVisualComponent c)=>removeEnt(c);
 }
