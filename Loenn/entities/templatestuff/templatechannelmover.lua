@@ -11,6 +11,7 @@ entity.nodeLineRenderType = "line"
 
 
 local easings = {"Linear","SineIn","SineOut","SineInOut","QuadIn","QuadOut","CubeIn","CubeOut","Smoothstep","QuartIn","QuartOut","QuintIn","QuintOut"}
+local splineTypes = {"simpleLinear","compoundLinear","centripetalNormalized","centripetalDenormalized","uniformNormalized","uniformDenormalized"}
 entity.placements = {
   {
     name = "main",
@@ -21,6 +22,9 @@ entity.placements = {
       move_time=1.8,
       asymmetry=1.0,
       easing = "Linear",
+      spline = "centripetalNormalized",
+      lastNodeIsKnot = true,
+      
       complete=false,
       alternateEasing=true,
       shake=false,
@@ -31,12 +35,13 @@ entity.placements = {
 }
 entity.fieldInformation = function(entity)
     return {
-    move_time = {minimumValue=0},
-    asymmetry = {minimumValue=0},
-    easing = {options=easings, editable=false},
+        move_time = {minimumValue=0},
+        asymmetry = {minimumValue=0},
+        easing = {options=easings, editable=false},
         template = {
             options = aelperLib.get_template_options(entity)
-        }
+        },
+        spline = {options = splineTypes, editable=true}
     }
 end
 

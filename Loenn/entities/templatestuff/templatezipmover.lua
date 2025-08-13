@@ -11,6 +11,7 @@ entity.nodeLineRenderType = "line"
 
 local rtypes = {"loop","none", "normal"}
 local atypes = {"ride","rideAutomatic","dash","dashAutomatic","manual"}
+local splineTypes = {"simpleLinear","compoundLinear","centripetalNormalized","centripetalDenormalized","uniformNormalized","uniformDenormalized"}
 
 entity.placements = {
   {
@@ -22,6 +23,7 @@ entity.placements = {
       activation_type = "ride",
       channel = "",
       propegateRiding = false,
+      spline = "compoundLinear",
       lastNodeIsKnot = true,
       
       _loenn_display_template = true,
@@ -40,7 +42,7 @@ entity.fieldInformation = function(entity)
     editable=false,
   },
             options = aelperLib.get_template_options(entity)
-        }
+        },spline = {options = splineTypes, editable=true}
     }
 end
 

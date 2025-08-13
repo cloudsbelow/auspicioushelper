@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -17,6 +18,7 @@ public class CatRomSegDenorm{
     public Vector2 a,b,c,d;
   }
   Segment[] sp;
+  float trange;
   public CatRomSegDenorm(Vector2[] points, Vector2? first=null, Vector2? last=null, float alpha=0.5f,float tension=0){
     List<Vector2> n=new();
     n.Add(first??(2*points[0]-points[1]));
@@ -40,11 +42,12 @@ public class CatRomSegDenorm{
       sp[i].c = m1;
       sp[i].d = p1;
     }
+    trange = ts[^2]-ts[1];
   }
   public Vector2 point(float t){
     if(t<0) return sp[0].d;
     if(t>=1){
-      Segment s = sp[^-1];
+      Segment s = sp[^1];
       return s.a + s.b + s.c + s.d;
     }
     t=t*(ts[^2]-ts[1])+ts[1];
@@ -58,16 +61,16 @@ public class CatRomSegDenorm{
     return seg.a*u3 + seg.b*u2 + seg.c*u + seg.d;
   }
   public Vector2 point(float t, out Vector2 deriv){
-    if(t<0){
-      deriv = sp[0].c;
+    if(t<=0){
+      deriv = sp[0].c*trange/(ts[2]-ts[1]);
       return sp[0].d;
     }
     if(t>=1){
-      Segment s = sp[^-1];
-      deriv = s.a*3+s.b*2+s.c;
+      Segment s = sp[^1];
+      deriv = (s.a*3+s.b*2+s.c)*trange/(ts[^1]-ts[^2]);
       return s.a + s.b + s.c + s.d;
     }
-    t=t*(ts[^2]-ts[1])+ts[1];
+    t=t*trange+ts[1];
     var jdx = Math.Clamp(Util.bsearchLast(ts,t)-1,0,sp.Length-1);
     var seg = sp[jdx];
     float low = ts[jdx+1];
@@ -76,7 +79,7 @@ public class CatRomSegDenorm{
     float u = Math.Clamp(high==low?0:(t-low)/(high-low),0,1);
     float u2 = u * u;
     float u3 = u2 * u;
-    deriv = u2*3*seg.a + u*2*seg.b + seg.c;
+    deriv = (u2*3*seg.a + u*2*seg.b + seg.c)*trange/(high-low);
     return seg.a*u3 + seg.b*u2 + seg.c*u + seg.d;
   }
 }
@@ -129,19 +132,22 @@ public class CatRomSegNorm{
 
 public class CatmullDenorm:Spline{
   CatRomSegDenorm[] segs;
+  float alpha=0.5f;
   public CatmullDenorm(){}
   public override Vector2 getPos(float t) {
     float loc = Util.SafeMod(t,segments);
     int idx = (int)MathF.Floor(loc);
-    return segs[idx].point(loc-idx);
+    Vector2 res = segs[idx].point(loc-idx);
+    return res;
   }
   public override Vector2 getPos(float t, out Vector2 derivative) {
     float loc = Util.SafeMod(t,segments);
     int idx = (int)MathF.Floor(loc);
-    return segs[idx].point(loc-idx, out derivative);
+    Vector2 res = segs[idx].point(loc-idx, out derivative);
+    return res;
   }
-  public override void fromNodes(Vector2[] nodes) {
-    base.fromNodes(nodes);
+  public override void fromNodes(Vector2[] innodes) {
+    base.fromNodes(innodes);
     segs = new CatRomSegDenorm[segments];
     for(int i=0; i<segments; i++){
       List<Vector2> n=new();
@@ -152,7 +158,7 @@ public class CatmullDenorm:Spline{
         j=(j+1)%nodes.Length;
       }
       n.Add(nodes[end]);
-      segs[i] = new CatRomSegDenorm(n.ToArray());
+      segs[i] = new CatRomSegDenorm(n.ToArray(), alpha:alpha);
     }
   }
 }
@@ -160,6 +166,7 @@ public class CatmullDenorm:Spline{
 
 public class CatmullNorm:Spline{
   CatRomSegNorm[] segs;
+  float alpha=0.5f;
   public CatmullNorm(){}
   public override Vector2 getPos(float t) {
     float loc = Util.SafeMod(t,segments);
@@ -169,10 +176,12 @@ public class CatmullNorm:Spline{
   public override Vector2 getPos(float t, out Vector2 derivative) {
     float loc = Util.SafeMod(t,segments);
     int idx = (int)MathF.Floor(loc);
-    return segs[idx].point(loc-idx, out derivative);
+    Vector2 res =  segs[idx].point(loc-idx, out derivative);
+
+    return res;
   }
-  public override void fromNodes(Vector2[] nodes) {
-    base.fromNodes(nodes);
+  public override void fromNodes(Vector2[] innodes) {
+    base.fromNodes(innodes);
     segs = new CatRomSegNorm[segments];
     for(int i=0; i<segments; i++){
       List<Vector2> n=new();
@@ -183,7 +192,7 @@ public class CatmullNorm:Spline{
         j=(j+1)%nodes.Length;
       }
       n.Add(nodes[end]);
-      segs[i] = new CatRomSegNorm(n.ToArray());
+      segs[i] = new CatRomSegNorm(n.ToArray(), alpha:alpha);
     }
   }
 }

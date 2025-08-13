@@ -117,12 +117,13 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     if(made) return;
     made = true;
     makeChildren(s,false);
-    if(!getSelfCol()) parentChangeStatBypass(-1,-1,0);
+    if(!getSelfCol()) parentChangeStatBypass(layer==null?-1:0,-1,0);
     List<Entity> allChildren = new();
     AddAllChildren(allChildren);
     foreach(Entity e in allChildren){
       if(e is Platform p) doNot.Add(p);
     }
+    SetupEnts(allChildren);
   }
   public override void addTo(Scene scene){
     //base.addTo(scene);
@@ -141,7 +142,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
         this.ownShakeVec = Vector2.Zero;
       },
       OnDisable=()=>{
-        setVisCol(false,false);
+        setVisCol(layer!=null,false);
         cachedCol =false;
         if(string.IsNullOrWhiteSpace(channel)) destroyChildren(true);
         else if(layer!=null)foreach(var c in comps)c.SetStealUse(layer,true,true);
@@ -154,7 +155,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
         bool check = !doNot.Contains(s) && s.CollidePoint(Position);
         if(!check) return false;
         if(!s.Collidable){
-          setVisCol(false,false);
+          setVisCol(layer!=null,false);
           cachedCol =false;
           if(layer!=null)foreach(var c in comps)c.SetStealUse(layer,true,true);
         }
@@ -209,12 +210,15 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   public void SetupEnts(List<Entity> l){
     foreach(var e in l)if(e is Platform p)doNot.Add(p);
     bool ghost = !getSelfCol();
-    if(layer!=null)foreach(var e in l){
-      int tdepth = TemplateDepth();
-      var c = OverrideVisualComponent.Get(e);
-      c.AddToOverride(new(this, -30000, false,true));
-      c.AddToOverride(new(layer, -10000+tdepth, ghost, ghost));
-      if(layer.fg!=null)c.AddToOverride(new(layer.fg, 1000-tdepth,true,true));
+    int tdepth = TemplateDepth();
+    if(layer!=null){
+      DebugConsole.Write($"Adding stuff to layer {ghost} {layer}");
+      foreach(var e in l){
+        var c = OverrideVisualComponent.Get(e);
+        c.AddToOverride(new(this, -30000, false,true));
+        c.AddToOverride(new(layer, -10000+tdepth, ghost, ghost));
+        if(layer.fg!=null)c.AddToOverride(new(layer.fg, 1000-tdepth,true,true));
+      }
     }
   }
   public override void OnNewEnts(List<Entity> l) {

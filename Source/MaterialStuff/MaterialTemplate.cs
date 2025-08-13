@@ -28,7 +28,7 @@ public class OverrideVisualComponent:Component, IMaterialObject{
     }
   }
   public bool ovis;
-  public bool nvis;
+  public bool nvis=true;
   public bool overriden;
   //tracker woes (kill me)
   public Entity ent;

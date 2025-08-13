@@ -108,6 +108,17 @@ public class SplineAccessor{
     else this.t=newt;
     pos = spline.getPos(t)+offset;
   }
+  public void setSidedFromDir(float newt, int arrivalDir){
+    if(Math.Floor(newt) != newt){
+      set(newt);
+    }
+    else {
+      setPos(newt);
+      // If we are reaching this point with a positive direction, we sample behind us.
+      // Likewise, otherwise we sample ahead
+      if(getderiv) spline.getPos(Util.SafeMod(t-0.0005f*arrivalDir,numsegs), out tangent);
+    }
+  }
   public bool towardsNext(float amount){
     if(t==0 && amount<0) t=numsegs;
     float target = amount>0?(float)Math.Floor(t+1):(float)Math.Ceiling(t-1);
