@@ -279,7 +279,7 @@ entities.auspicioushelper/TemplateChannelmover.placements.name.main=Template Cha
 entities.auspicioushelper/TemplateChannelmover.placements.description.main=A template that moves between two nodes based on a channel
 entities.auspicioushelper/TemplateChannelmover.attributes.description.template=The name of the template to use. (<room>/<name>)
 entities.auspicioushelper/TemplateChannelmover.attributes.description.depthoffset=How much to offset the depth of contained entities
-entities.auspicioushelper/TemplateChannelmover.attributes.description.channel=The channel to listen to. When this channel is active/odd, this template moves to the end node
+entities.auspicioushelper/TemplateChannelmover.attributes.description.channel=The channel to listen to. When this channel is active/odd, this template moves to the end node. (To use a flag, prefix the flag with a $)
 entities.auspicioushelper/TemplateChannelmover.attributes.description.move_time=How long in seconds it takes to move from one node to the other
 entities.auspicioushelper/TemplateChannelmover.attributes.description.asymmetry=What to divide the return speed by (ex. move_time=2 and asymmetry=4, return move speed is 0.5sec)
 entities.auspicioushelper/TemplateChannelmover.attributes.name._loenn_display_template=[LÖNN] Display Template
