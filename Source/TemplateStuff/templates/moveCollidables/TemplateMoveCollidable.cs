@@ -35,7 +35,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
   public bool detatched=>dislocated;
   
   public override void relposTo(Vector2 loc, Vector2 liftspeed) {
-    if(!dislocated) base.relposTo(loc,liftspeed);
+    if(!dislocated) base.relposTo(loc,liftspeed+ownLiftspeed);
   }
   public virtual void disconnect(){
     Position = Position.Round();

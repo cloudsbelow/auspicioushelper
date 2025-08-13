@@ -212,7 +212,6 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     bool ghost = !getSelfCol();
     int tdepth = TemplateDepth();
     if(layer!=null){
-      DebugConsole.Write($"Adding stuff to layer {ghost} {layer}");
       foreach(var e in l){
         var c = OverrideVisualComponent.Get(e);
         c.AddToOverride(new(this, -30000, false,true));

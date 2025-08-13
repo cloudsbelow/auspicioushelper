@@ -132,7 +132,7 @@ public class CatRomSegNorm{
 
 public class CatmullDenorm:Spline{
   CatRomSegDenorm[] segs;
-  float alpha=0.5f;
+  public float alpha=0.5f;
   public CatmullDenorm(){}
   public override Vector2 getPos(float t) {
     float loc = Util.SafeMod(t,segments);
@@ -166,7 +166,7 @@ public class CatmullDenorm:Spline{
 
 public class CatmullNorm:Spline{
   CatRomSegNorm[] segs;
-  float alpha=0.5f;
+  public float alpha=0.5f;
   public CatmullNorm(){}
   public override Vector2 getPos(float t) {
     float loc = Util.SafeMod(t,segments);

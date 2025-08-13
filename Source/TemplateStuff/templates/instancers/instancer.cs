@@ -16,14 +16,14 @@ public class TemplateInstanceable:Template{
     template = template??t;
     Template res;
     if(template.chain is {}){
-      if(EntityParser.create(template.ChildEntities.First(),(Scene??addingScene) as Level,template.roomdat,Position+offset-t.origin,this,fullpath) is Template temp){
+      if(EntityParser.create(template.ChildEntities.First(),(Scene??addingScene) as Level,template.roomdat,virtLoc+offset-t.origin,this,fullpath) is Template temp){
         temp.ownidpath = numInstances++.ToString();
         addEnt(res=temp);
       } else throw new System.Exception("oops");
     } else {
-      addEnt(res=useDisappearer?new TemplateDisappearer(offset+Position){
+      addEnt(res=useDisappearer?new TemplateDisappearer(offset+virtLoc){
         t=template, ownidpath=numInstances++.ToString()
-      }:new Template(offset+Position){
+      }:new Template(offset+virtLoc){
         t=template, ownidpath=numInstances++.ToString()
       });
     }
@@ -36,6 +36,7 @@ public class TemplateInstanceable:Template{
   public override void addTo(Scene scene) {
     addingScene = scene;
     setTemplate(scene:scene);
+    makeInitialInstances();
     scene.Add(this);
     addingScene = null;
   }

@@ -399,7 +399,8 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
         Hold.Holder.TreatNaive = true;
         Hold.Holder.AllowPushing = false;
       }
-      te.relposTo(Position+hoffset,te.ownLiftspeed);
+      te.Position = Position+hoffset;
+      te.childRelposSafe();
       if(origpushing && Hold.Holder!=null) Hold.Holder.AllowPushing = true;
       if(orignaiiveinv && Hold.Holder!=null) Hold.Holder.TreatNaive = false;
       inRelpos = false; AllowPushing = true; inmovestep = false;

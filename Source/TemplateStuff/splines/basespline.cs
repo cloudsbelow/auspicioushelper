@@ -192,7 +192,7 @@ public class SplineEntity:Entity{
       case Types.centripetalNormalized: case Types.uniformNormalized:
       case Types.centripetalDenormalized: case Types.uniformDenormalized:{
         float alpha = alphaDict.GetValueOrDefault(ctrType);
-        Spline s = normalized.Contains(ctrType)?new CatmullNorm():new CatmullDenorm();
+        Spline s = normalized.Contains(ctrType)?new CatmullNorm(){alpha=alpha}:new CatmullDenorm(){alpha=alpha};
         s.fromNodes(entityInfoToNodes(dat.Position,dat.Nodes,offset,dat.Bool("lastNodeIsKnot",true)));
         return s;}
       default: throw new Exception("invalid spline type");

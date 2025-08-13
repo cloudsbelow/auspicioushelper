@@ -12,18 +12,18 @@ using Monocle;
 
 namespace Celeste.mod.auspicioushelper;
 
-[CustomEntity("auspicioushelper/ConveyerTempalte")]
+[CustomEntity("auspicioushelper/TemplateBelt")]
 public class ConveyerTemplate:TemplateInstanceable{
   class BeltItem{
     public Template te;
     public SplineAccessor sp;
+    public float extent;
   }
   Queue<BeltItem> belt = new();  
   bool loop;
-  int ntemplates;
   Spline spline;
   EntityData dat;
-  float timePerSegment;
+  float speed;
   float initialOffset;
   float timer;
   float maxtimer;
@@ -31,10 +31,22 @@ public class ConveyerTemplate:TemplateInstanceable{
   public ConveyerTemplate(EntityData d, Vector2 o, int depthoffset)
   :base(d,o+d.Position,depthoffset){
     dat=d;
+    speed = d.Float("speed",0.3f);
+    maxtimer = 1/d.Float("numPerSegment",3)/speed;
+    initialOffset = d.Float("offset",0)%maxtimer;
+    loop = d.Bool("loop",false);
   }
   public override void makeInitialInstances() {
     base.makeInitialInstances();
-
+    List<BeltItem> l= new();
+    for(float i=initialOffset; i<spline.segments-1; i+=speed*maxtimer){
+      SplineAccessor spos = new(spline, Vector2.Zero, true, loop);
+      spos.set(i);
+      Template nte = addInstance(spos.pos);
+      l.Add(new(){te=nte, extent = i, sp=spos});
+    }
+    timer = maxtimer-initialOffset;
+    for(int i=l.Count-1; i>=0; i--) belt.Enqueue(l[i]);
   }
   public override void addTo(Scene scene) {
     spline = SplineEntity.GetSpline(dat,SplineEntity.Types.centripetalNormalized);
@@ -43,22 +55,26 @@ public class ConveyerTemplate:TemplateInstanceable{
   public override void Update() {
     base.Update();
     if(!loop){
-      while(belt.Peek().sp.t>=spline.segments-1){
+      while(belt.Count>0 && belt.Peek().extent>=spline.segments-1){
         Template child = belt.Dequeue().te;
         children.Remove(child);
         child.destroy(false);
       }
     }
     foreach(var desc in belt){
-      desc.sp.move(Engine.DeltaTime/timePerSegment);
-      
+      desc.extent+=Engine.DeltaTime*speed;
+      desc.sp.set(desc.extent);
+      desc.te.ownLiftspeed = desc.sp.tangent*speed;
+      desc.te.toffset = desc.sp.pos;
     }
-    if(timer<=0){
-      SplineAccessor spos = new(spline, Vector2.Zero, false, false);
-      spos.setPos(-timer/timePerSegment);
+    childRelposSafe();
+    if(!loop && timer<=0){
+      SplineAccessor spos = new(spline, Vector2.Zero, true, loop);
+      float extent = -timer*speed;
+      spos.setPos(extent);
       timer+=maxtimer;
       Template nte = addInstance(spos.pos);
-      belt.Enqueue(new(){te=nte,sp=spos});
+      belt.Enqueue(new(){te=nte,sp=spos,extent = extent});
     } else timer-=Engine.DeltaTime;
   }
 }
