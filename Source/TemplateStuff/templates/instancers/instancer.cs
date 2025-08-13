@@ -8,22 +8,23 @@ using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 
-public class InstanceTemplate:Template{
-  public InstanceTemplate(EntityData data, Vector2 pos, int depthoffset):base(data,pos,depthoffset){}
+public class TemplateInstanceable:Template{
+  public TemplateInstanceable(EntityData data, Vector2 pos, int depthoffset):base(data,pos,depthoffset){}
   int numInstances = 0;
   public bool useDisappearer = false;
-  public Template addInstance(Vector2 offset){
+  public Template addInstance(Vector2 offset, templateFiller template=null){
+    template = template??t;
     Template res;
-    if(t.chain is {}){
-      if(EntityParser.create(t.ChildEntities.First(),(Scene??addingScene) as Level,t.roomdat,Position+offset-t.origin,this,fullpath) is Template temp){
+    if(template.chain is {}){
+      if(EntityParser.create(template.ChildEntities.First(),(Scene??addingScene) as Level,template.roomdat,Position+offset-t.origin,this,fullpath) is Template temp){
         temp.ownidpath = numInstances++.ToString();
         addEnt(res=temp);
       } else throw new System.Exception("oops");
     } else {
       addEnt(res=useDisappearer?new TemplateDisappearer(offset+Position){
-        t=t, ownidpath=numInstances++.ToString()
+        t=template, ownidpath=numInstances++.ToString()
       }:new Template(offset+Position){
-        t=t, ownidpath=numInstances++.ToString()
+        t=template, ownidpath=numInstances++.ToString()
       });
     }
     if(addingScene==null){
@@ -40,11 +41,11 @@ public class InstanceTemplate:Template{
   }
 }
 
-[CustomEntity("auspicioushelper/InstancedTemplate")]
-public class InstancedTemplate:InstanceTemplate{
+[CustomEntity("auspicioushelper/TemplateInstancer")]
+public class TemplateInstancer:TemplateInstanceable{
   Vector2[] nodes;
-  public InstancedTemplate(EntityData d, Vector2 o):this(d,o,d.Int("depthoffset",0)){}
-  public InstancedTemplate(EntityData d, Vector2 o, int depthoffset)
+  public TemplateInstancer(EntityData d, Vector2 o):this(d,o,d.Int("depthoffset",0)){}
+  public TemplateInstancer(EntityData d, Vector2 o, int depthoffset)
   :base(d,o+d.Position,depthoffset){
     nodes = (d.Nodes??[]).Select(x=>x-d.Position).ToArray();
   }
