@@ -1,6 +1,9 @@
 
+using System;
+using System.Collections.Generic;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -21,4 +24,8 @@ public static class HookVanilla{
     heartHooks.enable();
     return hg;
   }
+
+  public static HookManager hooks = new(()=>{
+  },()=>{
+  });
 }

@@ -231,6 +231,7 @@ public static class EntityParser{
       });
     }
     defaultModdedSetup();
+    HookVanilla.hooks.enable();
   }
   public static Level.EntityLoader getLoader(string name){
     if(!loaders.TryGetValue(name, out var loader)){

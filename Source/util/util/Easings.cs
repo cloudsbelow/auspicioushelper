@@ -25,6 +25,11 @@ public static partial class Util{
     return MathF.Min(target, val+amount);
   }
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static public float SafeMod(float f, float o){
+    float r = f%o;
+    return (r<0)? r+o:r;
+  }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float Linear(float val)=>val;
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float Linear(float val, out float derivative){

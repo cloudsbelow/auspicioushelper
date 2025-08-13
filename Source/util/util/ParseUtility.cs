@@ -34,11 +34,8 @@ public static partial class Util{
     int right = arr.Length;
     while(right-left>1){
       int middle = (left+right)/2;
-      if(arr[middle]>val){
-        right = middle;
-      } else {
-        left = middle;
-      }
+      if(arr[middle]>val) right = middle;
+      else left = middle;
     }
     return left;
   }

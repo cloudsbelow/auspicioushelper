@@ -197,6 +197,7 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
 
   HashSet<IMaterialObject> toRemove = new();
   public void addEnt(IMaterialObject o){
+    if(toRemove.Remove(o))return;
     if(info.enabled){
       willdraw.Add(o); 
       dirtyWilldraw = true;

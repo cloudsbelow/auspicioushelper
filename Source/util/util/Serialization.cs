@@ -122,10 +122,18 @@ public partial class Util{
     DebugConsole.Write($"Got smuggled room: {d.Name}");
     d.Entities = new();
     int n = r.Read7BitEncodedInt();
-    for(int i=0; i<n; i++) d.Entities.Add(ReadEntitydata(r));
+    for(int i=0; i<n; i++){
+      EntityData e = ReadEntitydata(r);
+      e.Level = d;
+      d.Entities.Add(e);
+    } 
     d.Triggers = new();
     n = r.Read7BitEncodedInt();
-    for(int i=0; i<n; i++) d.Triggers.Add(ReadEntitydata(r));
+    for(int i=0; i<n; i++){
+      EntityData e = ReadEntitydata(r);
+      e.Level = d;
+      d.Triggers.Add(e);
+    }
     d.FgDecals = new();
     n = r.Read7BitEncodedInt();
     for(int i=0; i<n; i++) d.FgDecals.Add(ReadDecaldata(r));
