@@ -77,8 +77,8 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       if(!qs.s.bounds.CollideFr(Util.levelBounds(Scene)) && !Util.levelBounds(Scene).CollidePoint(Position)) goto removing;
       ownLiftspeed = speed*falldir;
       bool res = falldir.X==0?
-        MoveVCollide(qs,speed*Engine.DeltaTime*falldir.Y,0,speed*falldir):
-        MoveHCollide(qs,speed*Engine.DeltaTime*falldir.X,0,speed*falldir);
+        MoveVCollide(qs,speed*Engine.DeltaTime*falldir.Y,0):
+        MoveHCollide(qs,speed*Engine.DeltaTime*falldir.X,0);
       if(res){
         ownLiftspeed = Vector2.Zero;
         Audio.Play(ImpactSfx,Position);

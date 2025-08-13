@@ -72,8 +72,8 @@ public class TemplateKevin:TemplateMoveCollidable{
       var q = getq(godir.Abs()*speed*Engine.DeltaTime+leniency*Vector2.One);
       ownLiftspeed = godir*speed;
       bool hit = false;
-      if(godir.Y!=0) hit = MoveVCollide(q,speed*godir.Y*Engine.DeltaTime,leniency,godir*speed);
-      else hit = MoveHCollide(q,speed*godir.X*Engine.DeltaTime,leniency,godir*speed);
+      if(godir.Y!=0) hit = MoveVCollide(q,speed*godir.Y*Engine.DeltaTime,leniency);
+      else hit = MoveHCollide(q,speed*godir.X*Engine.DeltaTime,leniency);
       if(hit){
         Audio.Play(ImpactSfx,Position);
         shake(0.3f);

@@ -87,10 +87,10 @@ public class TemplatePushblock:TemplateMoveCollidable{
       if(nophysicstime>0) nophysicstime-=Engine.DeltaTime;
       ownLiftspeed = speed;
       if(speed!=Vector2.Zero){
-        if(MoveHCollide(q, speed.X*Engine.DeltaTime, leniency, speed)){
+        if(MoveHCollide(q, speed.X*Engine.DeltaTime, leniency)){
           speed.X = -speed.X*reflectX;
         }
-        if(MoveVCollide(q, speed.Y*Engine.DeltaTime, leniency, speed)){
+        if(MoveVCollide(q, speed.Y*Engine.DeltaTime, leniency)){
           speed.Y=0;
           Audio.Play(ImpactSfx,Position);
         }

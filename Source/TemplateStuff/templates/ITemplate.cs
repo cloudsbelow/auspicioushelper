@@ -294,6 +294,14 @@ public class Template:Entity, ITemplateChild{
     foreach(var li in list) if(li is T le) nlist.Add(le);
     return nlist;
   }
+  public List<Entity> GetChildren(Type t, Propagation p = Propagation.None){
+    List<Entity> list = new();
+    if(p == Propagation.None) AddAllChildren(list);
+    else AddAllChildrenProp(list,p);
+    List<Entity> nlist = new();
+    foreach(var li in list) if(t.IsInstanceOfType(li)) nlist.Add(li);
+    return nlist;
+  }
   public void AddChildren(ICollection<Entity> li, Type t, Propagation p = Propagation.None){
     List<Entity> l = new();
     if(prop!=Propagation.None)AddAllChildrenProp(l,p);

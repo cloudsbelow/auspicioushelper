@@ -23,12 +23,14 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
   public override Vector2 virtLoc => dislocated?Position.Round():Position;
   public bool useOwnUncollidable = false;
   bool hitJumpthrus;
+  bool moveThroughDashblocks;
   public TemplateMoveCollidable(EntityData data, Vector2 pos, int depthoffset):base(data,pos,depthoffset){
     Position = Position.Round();
     movementCounter = Vector2.Zero;
     prop &= ~Propagation.Riding; 
     triggerHooks.enable();
     hitJumpthrus = data.Bool("hitJumpthrus",false);
+    moveThroughDashblocks = data.Bool("throughDashblocks",false);
     if(hitJumpthrus) MaddiesIop.hooks.enable();
   }
   bool dislocated = false;
@@ -201,51 +203,74 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     bool res = TestMoveLeniency(q,s,amount,dirvec,maxLeniency,leniencyVec, out var v);
     return v;
   }
-  public bool MoveHCollideExact(QueryBounds q, QueryIn s, int amount, int leniency, Vector2 liftspeed){
+  public bool MoveHCollideExact(QueryBounds q, QueryIn s, int amount, int leniency){
     Vector2 v = leniency==0? TestMove(q,s,amount,new Vector2(1,0)) : TestMoveLeniency(q,s,amount,new Vector2(1,0),leniency,new Vector2(0,1));
     if(v!=Vector2.Zero){
       Position+=v;
-      childRelposTo(virtLoc,liftspeed);
+      childRelposTo(virtLoc,gatheredLiftspeed);
       return false;
     }
     return true;
   }
-  public bool MoveHCollideExact(Query qs, int amount, int leniency, Vector2 liftspeed)=>MoveHCollideExact(qs.q,qs.s,amount,leniency,liftspeed);
-  public bool MoveVCollideExact(QueryBounds q, QueryIn s, int amount, int leniency, Vector2 liftspeed){
+  public bool MoveHCollideExact(Query qs, int amount, int leniency)=>MoveHCollideExact(qs.q,qs.s,amount,leniency);
+  public bool MoveVCollideExact(QueryBounds q, QueryIn s, int amount, int leniency){
     Vector2 v = leniency==0? TestMove(q,s,amount,new Vector2(0,1)) : TestMoveLeniency(q,s,amount,new Vector2(0,1),leniency,new Vector2(1,0));
     if(v!=Vector2.Zero){
       Position+=v;
-      childRelposTo(virtLoc,liftspeed);
+      childRelposTo(virtLoc,gatheredLiftspeed);
       return false;
     }
     return true;
   }
-  public bool MoveVCollideExact(Query qs, int amount, int leniency, Vector2 liftspeed)=>MoveVCollideExact(qs.q,qs.s,amount,leniency,liftspeed);
-  public bool MoveHCollide(QueryBounds q, QueryIn s, float amount, int leniency, Vector2 liftspeed){
+  public bool MoveVCollideExact(Query qs, int amount, int leniency)=>MoveVCollideExact(qs.q,qs.s,amount,leniency);
+  public bool MoveHCollide(QueryBounds q, QueryIn s, float amount, int leniency){
     if(Math.Sign(movementCounter.X)!=Math.Sign(amount)) movementCounter.X = (float)Math.Clamp(movementCounter.X,-0.49,0.49);
     movementCounter.X+=amount;
     int dif = (int)Math.Round(movementCounter.X);
-    bool fail = dif!=0 && MoveHCollideExact(q,s,dif,leniency,liftspeed);
+    bool fail = dif!=0 && MoveHCollideExact(q,s,dif,leniency);
     if(!fail) movementCounter.X-=dif;
     else movementCounter.X = (float)Math.Clamp(movementCounter.X, -0.501,0.501);
     return fail;
   }
-  public bool MoveHCollide(Query qs, float amount, int leniency, Vector2 liftspeed)=>MoveHCollide(qs.q,qs.s,amount,leniency,liftspeed);
-  public bool MoveVCollide(QueryBounds q, QueryIn s, float amount, int leniency, Vector2 liftspeed){
+  public bool MoveHCollide(Query qs, float amount, int leniency)=>MoveHCollide(qs.q,qs.s,amount,leniency);
+  public bool MoveVCollide(QueryBounds q, QueryIn s, float amount, int leniency){
     if(Math.Sign(movementCounter.Y)!=Math.Sign(amount)) movementCounter.Y = (float)Math.Clamp(movementCounter.Y,-0.49,0.49);
     movementCounter.Y+=amount;
     int dif = (int)Math.Round(movementCounter.Y);
-    bool fail = dif!=0 && MoveVCollideExact(q,s,dif,leniency,liftspeed);
+    bool fail = dif!=0 && MoveVCollideExact(q,s,dif,leniency);
     if(!fail) movementCounter.Y-=dif;
     else movementCounter.Y = (float)Math.Clamp(movementCounter.Y, -0.501,0.501);
     return fail;
   }
-  public bool MoveVCollide(Query qs, float amount, int leniency, Vector2 liftspeed)=>MoveVCollide(qs.q,qs.s,amount,leniency,liftspeed);
+  public bool MoveVCollide(Query qs, float amount, int leniency)=>MoveVCollide(qs.q,qs.s,amount,leniency);
   public class Query{
     public QueryBounds q;
     public QueryIn s;
+    public HashSet<QueryBounds.DRect> breakable;
     public Query(QueryBounds q, QueryIn s){
       this.q=q; this.s=s;
+    }
+  }
+  public struct BreakableRect{
+    Entity toBreak;
+    FloatRect box;
+    CollisionDirection dir;
+    public BreakableRect(Entity toBreak, FloatRect box, CollisionDirection dir){
+      this.dir=dir;
+      this.toBreak=toBreak;
+      this.box=box;
+    }
+    public BreakableRect(Entity toBreak, Entity source){
+      this.toBreak=toBreak;
+      if(source is Solid) dir=CollisionDirection.solid;
+      else if(source is JumpThru)dir = (
+        (MaddiesIop.samah!=null && MaddiesIop.samah.IsInstanceOfType(source))||
+        (MaddiesIop.dt!=null && MaddiesIop.dt.IsInstanceOfType(source))
+      )?CollisionDirection.down:CollisionDirection.up;
+      else if(MaddiesIop.jt!=null && MaddiesIop.jt.IsInstanceOfType(source)){
+        dir = MaddiesIop.side.get(j)?CollisionDirection.right:CollisionDirection.left;
+      }
+      this.box = new FloatRect(source);
     }
   }
   public Query getq(Vector2 maxpotentialmovemagn){
@@ -263,10 +288,34 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       }
     }
     HashSet<Entity> toExclude = new(l);
+    HashSet<QueryBounds.DRect> fbs = null;
+    if(moveThroughDashblocks){
+      fbs = new();
+      foreach(FallingBlock f in Scene.Tracker.GetEntities<DashBlock>()){
+        if(f.Get<ChildMarker>().propagatesTo(this)) continue;
+        fbs.Add(new(new(f)));
+      }
+      foreach(TemplateBlock b in Scene.Tracker.GetEntities<TemplateBlock>()){
+        if(!b.breakableByBlocks || PropagateEither(b,Propagation.Shake)) continue;
+        foreach(Platform p in b.GetChildren<Platform>()){
+          if(p is Solid) fbs.Add(new(new(p)));
+          else if(p is JumpThru){
+            fbs.Add(new(new(p),(
+              (MaddiesIop.samah!=null && MaddiesIop.samah.IsInstanceOfType(p))||
+              (MaddiesIop.dt!=null && MaddiesIop.dt.IsInstanceOfType(p))
+            )?CollisionDirection.down:CollisionDirection.up));
+          }
+        }
+        if(MaddiesIop.jt!=null) foreach(var jt in b.GetChildren(MaddiesIop.jt, Propagation.Shake)){
+          fbs.Add(new(new()))
+        }
+      }
+      foreach(QueryBounds.DRect d in fbs) toExclude.Add(d);
+    }
     var qbounds = s.bounds._expand(v.X,v.Y);
     QueryBounds q = getQinfo(qbounds,toExclude);
     if(hitJumpthrus) AddJumpthrus(qbounds,q,s,toExclude,Scene);
-    return new(q,s);
+    return new(q,s){breakable=fbs};
   }
 
   public virtual void OnTrigger(TriggerInfo info){
