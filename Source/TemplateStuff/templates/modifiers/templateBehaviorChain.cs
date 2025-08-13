@@ -40,19 +40,28 @@ public class TemplateBehaviorChain:Entity{
     }
   }
   public class Chain{
-    Util.EnumeratorStack<EntityData> stack;
+    readonly List<EntityData> sequence;
+    int idx;
     templateFiller final;
     public Chain(templateFiller finalFiller, Vector2[] nodes, Template source = null){
-      stack = new(GetChainEnumerator(nodes,source));
+      sequence = new Util.EnumeratorStack<EntityData>(GetChainEnumerator(nodes,source)).toList();
+      idx = 0;
       final = finalFiller;
     }
+    private Chain(templateFiller final, List<EntityData> sequence, int idx){
+      this.sequence=sequence; this.final=final; this.idx=idx;
+    }
+    public Chain Clone()=>new(final, sequence, idx);
     public templateFiller NextFiller(){
-      EntityData e = stack.Next();
+      Chain c = Clone();
+      EntityData e = c.NextEnt();
       if(e==null) return final;
-      return templateFiller.MkNestingFiller(e,this).setRoomdat(final.roomdat);
+      return templateFiller.MkNestingFiller(e,c).setRoomdat(final.roomdat);
     }
     public EntityData NextEnt(){
-      return stack.Next();
+      if(idx<sequence.Count){
+        return sequence[idx++];
+      } else return null;
     }
   }
   Vector2[] nodes;

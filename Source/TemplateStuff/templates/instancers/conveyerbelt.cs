@@ -39,17 +39,19 @@ public class ConveyerTemplate:TemplateInstanceable{
   public override void makeInitialInstances() {
     base.makeInitialInstances();
     List<BeltItem> l= new();
-    for(float i=initialOffset; i<spline.segments-1; i+=speed*maxtimer){
+    for(float i=initialOffset; i<spline.segments-(loop?0:1); i+=speed*maxtimer){
       SplineAccessor spos = new(spline, Vector2.Zero, true, loop);
       spos.set(i);
       Template nte = addInstance(spos.pos);
       l.Add(new(){te=nte, extent = i, sp=spos});
+      DebugConsole.Write($"Added {nte} {numInstances} a");
     }
     timer = maxtimer-initialOffset;
     for(int i=l.Count-1; i>=0; i--) belt.Enqueue(l[i]);
   }
   public override void addTo(Scene scene) {
     spline = SplineEntity.GetSpline(dat,SplineEntity.Types.centripetalNormalized);
+    if(spline.segments==1 && !dat.Bool("lastNodeIsKnot")) loop = true;
     base.addTo(scene);
   }
   public override void Update() {
@@ -75,6 +77,7 @@ public class ConveyerTemplate:TemplateInstanceable{
       timer+=maxtimer;
       Template nte = addInstance(spos.pos);
       belt.Enqueue(new(){te=nte,sp=spos,extent = extent});
+      DebugConsole.Write($"Added in loop {nte} {numInstances} a");
     } else timer-=Engine.DeltaTime;
   }
 }

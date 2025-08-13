@@ -32,6 +32,11 @@ public partial class Util{
         return Next();
       }
     }
+    public List<T> toList(){
+      List<T> l=new(); 
+      while(Next() is {} e) l.Add(e);
+      return l;
+    }
   }
 
   public class FunctionList<T1>{

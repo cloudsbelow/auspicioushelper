@@ -21,6 +21,7 @@ public class CatRomSegDenorm{
   float trange;
   public CatRomSegDenorm(Vector2[] points, Vector2? first=null, Vector2? last=null, float alpha=0.5f,float tension=0){
     List<Vector2> n=new();
+    DebugConsole.Write(Util.ToArr(points));
     n.Add(first??(2*points[0]-points[1]));
     foreach(var p in points)n.Add(p);
     n.Add(last??(2*points[points.Length-1]-points[points.Length-2]));
@@ -88,8 +89,8 @@ public class CatRomSegNorm{
   CatRomSegDenorm b;
   float[] invmap;
   int segs=>b.segs;
-  const int sampledensity = 64;
-  const int invdensity = 32;
+  const int sampledensity = 128;
+  const int invdensity = 64;
   float totalLength;
   public CatRomSegNorm(Vector2[] points, Vector2? first=null, Vector2? last=null, float alpha=0.5f,float tension=0){
     b = new CatRomSegDenorm(points, first, last, alpha, tension);
@@ -99,7 +100,7 @@ public class CatRomSegNorm{
     Vector2 point = b.point(0);
     float total = 0;
     for(int j=0; j<ns; j++){
-      Vector2 p = b.point((j+1)/ns);
+      Vector2 p = b.point((j+1f)/ns);
       total = (samples[j] = total+(point-p).Length());
       point = p;
     }
@@ -109,16 +110,18 @@ public class CatRomSegNorm{
       while(t>samples[i] && i<samples.Length-1) i++;
       float low = i==0?0:samples[i-1];
       float high = samples[i];
+      
       float a = Math.Clamp(high==low?0:(t-low)/(high-low),0,1);
-      invmap[j] = (low*(1-a)+a*high)/total;
+      invmap[j] = (i+a)/samples.Length;
     }
     totalLength = total;
   }
   public Vector2 point(float t){
     int idx = Math.Clamp((int)MathF.Floor(t*invmap.Length),0,invmap.Length-1);
     float a = Math.Clamp(t*invmap.Length-idx,0,1);
-    float low = idx==0?0:invmap[idx-1];
-    return b.point((1-a)*low+invmap[idx]*a);
+    float low = invmap[idx];
+    float high = idx<invmap.Length-1?invmap[idx+1]:1;
+    return b.point((1-a)*low+high*a);
   }
   public Vector2 point(float t, out Vector2 derivative){
     int idx = Math.Clamp((int)MathF.Floor(t*invmap.Length),0,invmap.Length-1);
@@ -126,6 +129,7 @@ public class CatRomSegNorm{
     float low = idx==0?0:invmap[idx-1];
     Vector2 res =  b.point((1-a)*low+invmap[idx]*a, out var d);
     derivative = d.SafeNormalize(totalLength);
+    //DebugConsole.Write($"Sampled {t} found idx {low} it has value {low}:{invmap[idx]}");
     return res;
   }
 }
@@ -149,7 +153,10 @@ public class CatmullDenorm:Spline{
   public override void fromNodes(Vector2[] innodes) {
     base.fromNodes(innodes);
     segs = new CatRomSegDenorm[segments];
-    for(int i=0; i<segments; i++){
+    if(segments == 1){
+      List<Vector2> n = [.. nodes, nodes[0]];
+      segs[0] = new CatRomSegDenorm(n.ToArray(),nodes[^1],nodes[1],alpha);
+    }else for(int i=0; i<segments; i++){
       List<Vector2> n=new();
       int end = knotindices[(i+1)%knotindices.Length];
       int j=knotindices[i];
@@ -183,7 +190,10 @@ public class CatmullNorm:Spline{
   public override void fromNodes(Vector2[] innodes) {
     base.fromNodes(innodes);
     segs = new CatRomSegNorm[segments];
-    for(int i=0; i<segments; i++){
+    if(segments == 1){
+      List<Vector2> n = [.. nodes, nodes[0]];
+      segs[0] = new CatRomSegNorm(n.ToArray(),nodes[^1],nodes[1],alpha);
+    }else for(int i=0; i<segments; i++){
       List<Vector2> n=new();
       int end = knotindices[(i+1)%knotindices.Length];
       int j=knotindices[i];

@@ -10,7 +10,7 @@ using Monocle;
 
 public class TemplateInstanceable:Template{
   public TemplateInstanceable(EntityData data, Vector2 pos, int depthoffset):base(data,pos,depthoffset){}
-  int numInstances = 0;
+  public int numInstances {get; private set;} = 0;
   public bool useDisappearer = false;
   public Template addInstance(Vector2 offset, templateFiller template=null){
     template = template??t;
