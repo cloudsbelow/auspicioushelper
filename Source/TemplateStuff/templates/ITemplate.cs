@@ -175,6 +175,7 @@ public class Template:Entity, ITemplateChild{
     this.toffset = Position-ppos;
   }
   bool expanded = false;
+  public void MarkExpanded()=>expanded=true;
   public void makeChildren(Scene scene, bool recursive = false){
     if(t==null || expanded) return;
     expanded = true;

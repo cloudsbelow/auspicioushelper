@@ -32,7 +32,9 @@ public class TemplateInstanceable:Template{
     }
     return res;
   }
-  public virtual void makeInitialInstances(){}
+  public virtual void makeInitialInstances(){
+    MarkExpanded();
+  }
   public override void addTo(Scene scene) {
     addingScene = scene;
     setTemplate(scene:scene);

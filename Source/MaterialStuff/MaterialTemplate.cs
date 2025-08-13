@@ -118,6 +118,7 @@ public class OverrideVisualComponent:Component, IMaterialObject{
     base.Removed(entity);
     foreach(var p in parents)p.o.RemoveC(this);
   }
+  public bool shouldRemove=>false;
   public static void Override(Scene s){
     foreach(OverrideVisualComponent v in s.Tracker.GetComponents<OverrideVisualComponent>()){
       if(!v.overriden) v.ovis = v.Entity.Visible;
@@ -132,7 +133,6 @@ public class OverrideVisualComponent:Component, IMaterialObject{
     }
   }
   public float _depth=>(float)Entity.actualDepth;
-  public bool shouldRemove=>Entity.Scene==null;
   public virtual void renderMaterial(IMaterialLayer l, Camera c){
     if(ovis && Entity.Scene!=null)Entity.Render();
   }
