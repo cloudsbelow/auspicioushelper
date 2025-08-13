@@ -3,6 +3,7 @@ local drawableRectangle = require("structs.drawable_rectangle")
 local drawableLine = require("structs.drawable_line")
 local utils = require("utils")
 local aelperLib = require("mods").requireFromPlugin("libraries.aelper_lib")
+local settings = require("mods").getModSettings("auspicioushelper")
 
 local entity = {}
 
@@ -44,10 +45,17 @@ entity.placements = {
     }
   }
 }
+entity.fieldInformation = function(entity)
+    return {
+        template = {
+            options = aelperLib.get_template_options(entity)
+        }
+    }
+end
 
 function entity.selection(room, entity)
     local node = {}
-    if entity.nodes[1] then
+    if (entity.nodes or {})[1] then
         node = {utils.rectangle(entity.x+entity.nodes[1].x-3, entity.y+entity.nodes[1].y-3, 6,6)}
     end
     return utils.rectangle(entity.x, entity.y, entity.width, entity.height), node
@@ -55,15 +63,15 @@ end
 function entity.rectangle(room, entity)
   return utils.rectangle(entity.x, entity.y, entity.width, entity.height)
 end
+local holdableDraw = aelperLib.get_entity_draw(nil)
 function entity.draw(room, entity, viewport)
-    if entity._loenn_display_template then
-        local offset = entity.nodes and entity.nodes[1] or {x=entity.width/2, y=entity.height/2}
-        aelperLib.draw_template_sprites(entity.template, entity.x+offset.x, entity.y+offset.y, room)
---     drawableSprite.fromTexture(aelperLib.getIcon("loenn/auspicioushelper/template/tmoon"), {
---         x=entity.x,
---         y=entity.y,
---     }):draw()
-    end
+    local oldPos = {entity.x,entity.y}
+    local newPos = (entity.nodes or {})[1] or {x=entity.width/2, y=entity.height/2}
+    entity.x=newPos.x+entity.x
+    entity.y=newPos.y+entity.y
+    holdableDraw(room, entity, viewport)
+    entity.x = oldPos[1]
+    entity.y = oldPos[2]
     drawableRectangle.fromRectangle("bordered", entity.x+0.5, entity.y+0.5, entity.width-1, entity.height-1,
         {0.4,0.9,0.4,0.3}, {0.5,1,0.5,1}):draw()
 end
@@ -89,12 +97,12 @@ function entity.move(room, entity, nodeIndex, offsetX, offsetY)
     if nodeIndex == 0 then 
         entity.x = entity.x + offsetX
         entity.y = entity.y + offsetY
-        if #entity.nodes > 0 then
+        if #(entity.nodes or {}) > 0 then
             entity.nodes[1].x = entity.nodes[1].x - offsetX
             entity.nodes[1].y = entity.nodes[1].y - offsetY
         end
     else
-        if #entity.nodes > 0 then
+        if #(entity.nodes or {}) > 0 then
             entity.nodes[1].x = entity.nodes[1].x + offsetX
             entity.nodes[1].y = entity.nodes[1].y + offsetY
         end

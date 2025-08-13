@@ -20,10 +20,15 @@ entity.placements = {
     }
   }
 }
-
-function entity.rectangle(room, entity)
-    return utils.rectangle(entity.x-8, entity.y-8, 16, 16)
+entity.fieldInformation = function(entity)
+    return {
+        template = {
+            options = aelperLib.get_template_options(entity)
+        }
+    }
 end
+
+entity.selection = aelperLib.template_selection
 entity.draw = aelperLib.get_entity_draw("tdream")
 
 return entity

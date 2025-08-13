@@ -82,15 +82,7 @@ public class TemplateSwapblock:Template{
     speed=Math.Max(Math.Abs(speed),maxspeed/3);
   }
   public override void addTo(Scene scene){
-    Spline spline=null;
-    if(!string.IsNullOrEmpty(dat.Attr("spline"))){
-      Spline.splines.TryGetValue(dat.Attr("spline"), out spline);
-    }
-    if(spline == null){
-      LinearSpline l =new LinearSpline();
-      spline = l;
-      l.fromNodesAllRed(SplineEntity.entityInfoToNodes(dat.Position,dat.Nodes,offset,false));
-    }
+    Spline spline = SplineEntity.GetSpline(dat, SplineEntity.Types.simpleLinear);
     spos = new SplineAccessor(spline, Vector2.Zero);
     Add(new DashListener((Vector2 dir)=>activate()));
     base.addTo(scene);

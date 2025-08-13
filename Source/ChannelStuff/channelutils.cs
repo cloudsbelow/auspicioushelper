@@ -184,7 +184,7 @@ public static class ChannelState{
       ModifierDesc mod = new ModifierDesc(ch);
       mods.Add(mod);
       return channelStates[ch] = mod.apply(readChannel(clean));
-    } else if(ch.Length>0 && (ch[0]=='@'||ch[0]=='#')){
+    } else if(ch.Length>0 && (ch[0]=='$'||ch[0]=='#')){
       if(ch[0]=='#') channelStates[ch]=(Engine.Instance.scene as Level)?.Session.GetCounter(ch.Substring(1))??0;
       if(ch[0]=='$') channelStates[ch]=((Engine.Instance.scene as Level)?.Session.GetFlag(ch.Substring(1))??false)?1:0;
     } else {
@@ -227,7 +227,7 @@ public static class ChannelState{
     Dictionary<string,int> s=new();
     foreach(var pair in channelStates){
       int idx=0;
-      if(pair.Key.Length>1 && (pair.Key[0]=='$'||pair.Key[0]=='$'))continue;
+      if(pair.Key.Length>=1 && (pair.Key[0]=='$'||pair.Key[0]=='$'))continue;
       for(;idx<pair.Key.Length;idx++) if(pair.Key[idx]=='[')break;
       string clean = pair.Key.Substring(0,idx);
       if(pair.Key == clean) s.Add(pair.Key,pair.Value);
@@ -237,7 +237,9 @@ public static class ChannelState{
   public static void load(Dictionary<string,int> s){
     clearChannels();
     unwatchAll();
-    foreach(var pair in s) channelStates[pair.Key] = pair.Value;
+    foreach(var pair in s){
+      channelStates[pair.Key] = pair.Value;
+    }
   }
   static void Hook(On.Celeste.Session.orig_SetFlag orig, Session s, string f, bool v){
     orig(s,f,v);

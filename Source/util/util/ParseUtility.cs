@@ -34,11 +34,8 @@ public static partial class Util{
     int right = arr.Length;
     while(right-left>1){
       int middle = (left+right)/2;
-      if(arr[middle]>val){
-        right = middle;
-      } else {
-        left = middle;
-      }
+      if(arr[middle]>val) right = middle;
+      else left = middle;
     }
     return left;
   }
@@ -254,4 +251,12 @@ public static partial class Util{
     foreach(T a in tr) set.Remove(a);
   }
   
+  public static string ToArr<T>(T[] arr){
+    string res = "[";
+    for(int i=0; i<arr.Length; i++){
+      if(i!=0) res+=", ";
+      res+=arr[i].ToString();
+    }
+    return res+"]";
+  }
 }

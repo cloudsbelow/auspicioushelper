@@ -11,6 +11,7 @@ entity.nodeLineRenderType = "line"
 
 local rtypes = {"loop","none", "normal"}
 local atypes = {"ride","rideAutomatic","dash","dashAutomatic","manual"}
+local splineTypes = {"simpleLinear","compoundLinear","centripetalNormalized","centripetalDenormalized","uniformNormalized","uniformDenormalized"}
 
 entity.placements = {
   {
@@ -22,13 +23,16 @@ entity.placements = {
       activation_type = "ride",
       channel = "",
       propegateRiding = false,
+      spline = "compoundLinear",
       lastNodeIsKnot = true,
       
       _loenn_display_template = true,
     }
   }
 }
-entity.fieldInformation = {
+entity.fieldInformation = function(entity)
+    return {
+        template = {
   return_type ={
     options = rtypes,
     editable=false,
@@ -37,16 +41,12 @@ entity.fieldInformation = {
     options = atypes,
     editable=false,
   },
-}
-
-function entity.selection(room, entity)
-    local nodes = {}
-    for _,node in ipairs(entity.nodes) do
-        table.insert(nodes, utils.rectangle(node.x-8, node.y-8, 16, 16))
-    end
-    
-    return utils.rectangle(entity.x-8, entity.y-8, 16, 16), nodes
+            options = aelperLib.get_template_options(entity)
+        },spline = {options = splineTypes, editable=true}
+    }
 end
+
+entity.selection = aelperLib.template_selection
 entity.draw = aelperLib.get_entity_draw("tzip")
 
 return entity

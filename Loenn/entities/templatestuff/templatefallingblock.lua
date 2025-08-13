@@ -30,18 +30,21 @@ entity.placements = {
     }
   }
 }
-entity.fieldInformation = {
+entity.fieldInformation = function(entity)
+    return {
   direction = {
     options = directions,
     editable=false
   },
   impact_sfx = {options = {"event:/game/general/fallblock_impact"}},
   shake_sfx = {options = {"event:/game/general/fallblock_shake"}},
-}
-
-function entity.rectangle(room, entity)
-    return utils.rectangle(entity.x-8, entity.y-8, 16, 16)
+        template = {
+            options = aelperLib.get_template_options(entity)
+        }
+    }
 end
+
+entity.selection = aelperLib.template_selection
 entity.draw = aelperLib.get_entity_draw("tfall")
 
 return entity

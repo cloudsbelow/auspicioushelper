@@ -73,19 +73,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
     if(val!=0) OnTrigger(null);
   }
   public override void addTo(Scene scene){
-    Spline spline=null;
-    if(!string.IsNullOrEmpty(dat.Attr("spline"))){
-      Spline.splines.TryGetValue(dat.Attr("spline"), out spline);
-      if(spline == null){
-        spline = SplineEntity.constructImpl(dat.Position,dat.Nodes,offset,dat.Attr("spline"),dat.Bool("lastNodeIsKnot",true));
-      }
-    }
-    if(spline == null){
-      //DebugConsole.Write("using fallback spline");
-      LinearSpline l =new LinearSpline();
-      spline = l;
-      l.fromNodes(SplineEntity.entityInfoToNodes(dat.Position,dat.Nodes,offset,dat.Bool("lastNodeIsKnot",true)));
-    }
+    Spline spline = SplineEntity.GetSpline(dat, SplineEntity.Types.compoundLinear);
     spos = new SplineAccessor(spline, Vector2.Zero);
     if(atype == ActivationType.dash || atype==ActivationType.dashAutomatic){
       OnDashCollide = (Player p, Vector2 dir)=>{
@@ -136,13 +124,13 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
       at=0;
       done = false;
       while(!done){
-        yield return null;
         at+=Engine.DeltaTime*2;
         Vector2 old = virtLoc;
         done = spos.towardsNext((float)(2*(Math.PI/2)*Math.Sin(at*Math.PI/2)*Engine.DeltaTime));
         //DebugConsole.Write($"{at}, {spos.t}");
         if(!done) ownLiftspeed = Math.Sign(Engine.DeltaTime)*(virtLoc-old)/Engine.DeltaTime;
         childRelposSafe();
+        yield return null;
       }
       ownLiftspeed = Vector2.Zero;
       

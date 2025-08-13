@@ -1,5 +1,6 @@
 
 using System;
+using System.Collections.Generic;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -11,6 +12,8 @@ public class UpdateHook:Component{
   public Action afterAction=null;
   public bool updatedThisFrame = false;
   public static float TimeSinceTransMs=0;
+  static List<Action> afterUpd = new();
+  static public void AddAfterUpdate(Action action)=>afterUpd.Add(action);
   public UpdateHook(Action before=null, Action after=null):base(true,false){
     beforeAction=before;afterAction =after;
     hooks.enable();
@@ -37,6 +40,11 @@ public class UpdateHook:Component{
     }
   }
   internal static void updateHook(On.Celeste.Level.orig_Update update, Level self){
+    if(afterUpd.Count>0){
+      foreach(var a in afterUpd) a();
+      afterUpd.Clear();
+      self.Entities.UpdateLists();
+    }
     if(self.Paused){
       update(self);
       return;
@@ -54,10 +62,18 @@ public class UpdateHook:Component{
     foreach(UpdateHook u in self.Tracker.GetComponents<UpdateHook>()){
       if(u.afterAction!=null)u.afterAction();
     }
+    if(afterUpd.Count>0){
+      foreach(var a in afterUpd) a();
+      afterUpd.Clear();
+      self.Entities.UpdateLists();
+    }
   }
+  static PersistantAction clear;
   internal static HookManager hooks = new HookManager(()=>{
     On.Celeste.Level.Update+=updateHook;
+    auspicioushelperModule.OnExitMap.enroll(clear=new PersistantAction(afterUpd.Clear));
   }, ()=>{
     On.Celeste.Level.Update-=updateHook;
+    clear.remove();
   });
 }

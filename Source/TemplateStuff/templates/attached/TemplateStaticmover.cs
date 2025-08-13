@@ -53,7 +53,7 @@ public class StaticmoverLock:MovementLock,IDisposable{
 }
 
 [CustomEntity("auspicioushelper/TemplateStaticmover")]
-public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplateTriggerable{
+public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOverrideVisuals{
   public override Vector2 gatheredLiftspeed=>ownLiftspeed;
   public override void relposTo(Vector2 loc, Vector2 liftspeed) {}
   int smearamount;
@@ -109,52 +109,61 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
     }
     pastLiftspeed[0]=Vector2.Zero;
   }
-  List<Entity> todraw;
   internal StaticMover sm;
   HashSet<Platform> doNot = new();
   CassetteMaterialLayer layer = null;
-  public override void addTo(Scene scene){
-    //base.addTo(scene);
-    setTemplate(scene:scene);
-    setVisCol(false,false);
-    if(channel != "")CassetteMaterialLayer.layers.TryGetValue(channel,out layer);
-    /*List<Entity> allChildren = new();
+  bool made=false;
+  public void make(Scene s){
+    if(made) return;
+    made = true;
+    makeChildren(s,false);
+    if(!getSelfCol()) parentChangeStatBypass(layer==null?-1:0,-1,0);
+    List<Entity> allChildren = new();
     AddAllChildren(allChildren);
     foreach(Entity e in allChildren){
       if(e is Platform p) doNot.Add(p);
-    }*/
+    }
+    SetupEnts(allChildren);
+  }
+  public override void addTo(Scene scene){
+    //base.addTo(scene);
+    setTemplate(scene:scene);
+    if(channel != "")CassetteMaterialLayer.layers.TryGetValue(channel,out layer);
+    if(enableUnrooted) make(scene);
     Add(sm = new StaticMover(){
       OnEnable=()=>{
         childRelposTo(virtLoc,Vector2.Zero);
         setVisCol(true,true);
-        if(string.IsNullOrWhiteSpace(channel)) remake();
-        else if(layer != null) layer.removeTrying(this);
+        if(layer!=null)foreach(var c in comps)c.SetStealUse(layer,false,false);
+        if(string.IsNullOrWhiteSpace(channel)){
+          remake();
+          AddNewEnts(GetChildren<Entity>());
+        }
         this.ownShakeVec = Vector2.Zero;
       },
       OnDisable=()=>{
-        setVisCol(false,false);
+        setVisCol(layer!=null,false);
         cachedCol =false;
         if(string.IsNullOrWhiteSpace(channel)) destroyChildren(true);
-        else if(layer !=null) layer.addTrying(this);
+        else if(layer!=null)foreach(var c in comps)c.SetStealUse(layer,true,true);
       },
       OnAttach=(Platform p)=>{
-        setVisCol(true,true);
+        if(!enableUnrooted)UpdateHook.AddAfterUpdate(()=>make(Scene));
       },
       SolidChecker=(Solid s)=>{
         //DebugConsole.Write(s.ToString());
         bool check = !doNot.Contains(s) && s.CollidePoint(Position);
         if(!check) return false;
         if(!s.Collidable){
-          setVisCol(false,false);
+          setVisCol(layer!=null,false);
           cachedCol =false;
-          if(layer !=null) layer.addTrying(this);
+          if(layer!=null)foreach(var c in comps)c.SetStealUse(layer,true,true);
         }
         return true;
       },
       OnDestroy=()=>{
         setCollidability(false);
         destroy(true);
-        if(layer!=null) layer.removeTrying(this);
       },
       OnMove=(Vector2 move)=>{
         if(StaticmoverLock.tryol(sm,move)) return;
@@ -173,10 +182,6 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
         this.ownShakeVec += shakevec;
       }
     });
-    if(layer!=null){
-      todraw = new List<Entity>();
-      AddAllChildren(todraw);
-    }
   }
   public override void Awake(Scene scene) {
     base.Awake(scene);
@@ -199,13 +204,25 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
       else if(TriggerInfo.TestPass(info,this)) sm?.TriggerPlatform();
     }
   }
-  public void renderMaterial(IMaterialLayer l, Camera c){
-    foreach(Entity e in todraw){
-      if(e.Scene != null && e.Depth<=l.depth){
-        if(CassetteMaterialLayer.stupididiotdumbpompusthings.TryGetValue(e.GetType(),out var fn))fn(e);
-        else e.Render();
+  public HashSet<OverrideVisualComponent> comps = new();
+  public void AddC(OverrideVisualComponent c)=>comps.Add(c);
+  public void RemoveC(OverrideVisualComponent c)=>comps.Remove(c);
+  public void SetupEnts(List<Entity> l){
+    foreach(var e in l)if(e is Platform p)doNot.Add(p);
+    bool ghost = !getSelfCol();
+    int tdepth = TemplateDepth();
+    if(layer!=null){
+      foreach(var e in l){
+        var c = OverrideVisualComponent.Get(e);
+        c.AddToOverride(new(this, -30000, false,true));
+        c.AddToOverride(new(layer, -10000+tdepth, ghost, ghost));
+        if(layer.fg!=null)c.AddToOverride(new(layer.fg, 1000-tdepth,true,true));
       }
-    } 
+    }
+  }
+  public override void OnNewEnts(List<Entity> l) {
+    SetupEnts(l);
+    base.OnNewEnts(l);
   }
   bool cachedCol = true;
 
@@ -254,7 +271,6 @@ public class TemplateStaticmover:TemplateDisappearer, IMaterialObject, ITemplate
   }
   public override void destroy(bool particles){
     base.destroy(particles);
-    if(layer!=null) layer.removeTrying(this);
   }
   static HookManager hooks = new HookManager(()=>{
     On.Celeste.Platform.MoveHExactCollideSolids += MoveHPlatHook;

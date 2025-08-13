@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Celeste.Editor;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
@@ -42,16 +43,13 @@ public abstract class Spline{
     st = s.ToArray();
     segments = this.knotindices.Length;
   }
-  public enum NType{
-    absolute,
-    derivative
-  }
   public abstract Vector2 getPos(float t);
-  public virtual Vector2 getPos(float t, Vector2 normalization, NType a=NType.absolute){
-    return getPos(t)+normalization;
-  }
-  public virtual Vector2 getNormalization(float t, Vector2 pos, NType a=NType.absolute){
-    return pos-getPos(t);
+  const float finitedif=0.01f;
+  public virtual Vector2 getPos(float t, out Vector2 derivative){
+    Vector2 p1 = getPos(t);
+    Vector2 p2 = getPos(t-finitedif);
+    derivative = (p1-p2)/finitedif;
+    return p1;
   }
   public virtual float getDist(float start, float end, float step=0.02f){
     float len=0;
@@ -86,61 +84,65 @@ public abstract class Spline{
 public class SplineAccessor{
   Spline spline;
   public float t;
-  Vector2 normalization;
+  Vector2 offset;
   public Vector2 pos;
-  Spline.NType n;
-  public SplineAccessor(Spline spline, Vector2 pos, float t=0, Spline.NType n=Spline.NType.absolute){
+  public Vector2 tangent;
+  bool getderiv;
+  bool keepMod;
+  public SplineAccessor(Spline spline, Vector2 origin, bool needsTangent = false, bool keepMod=true, float t=0){
     this.spline=spline;
-    this.normalization = spline.getNormalization(t,pos,n);
-    this.n=n;
+    this.t=t;
+    getderiv = needsTangent;
+    this.keepMod = keepMod;
+    offset = origin-spline.getPos(t);
+    set(t);
   }
-  public Vector2 getPos(float t){
-    return spline.getPos(t%spline.segments,normalization,n);
+  public void set(float newt){
+    if(keepMod) this.t=Util.SafeMod(newt,numsegs);
+    else this.t=newt;
+    if(!getderiv) pos = spline.getPos(t)+offset;
+    else pos = spline.getPos(t, out tangent)+offset;
+  }
+  public void setPos(float newt){
+    if(keepMod) this.t=Util.SafeMod(newt,numsegs);
+    else this.t=newt;
+    pos = spline.getPos(t)+offset;
+  }
+  public void setSidedFromDir(float newt, int arrivalDir){
+    if(Math.Floor(newt) != newt){
+      set(newt);
+    }
+    else {
+      setPos(newt);
+      // If we are reaching this point with a positive direction, we sample behind us.
+      // Likewise, otherwise we sample ahead
+      if(getderiv) spline.getPos(Util.SafeMod(t-0.0005f*arrivalDir,numsegs), out tangent);
+    }
   }
   public bool towardsNext(float amount){
-    if(t==0 && amount<0) t=spline.segments;
+    if(t==0 && amount<0) t=numsegs;
     float target = amount>0?(float)Math.Floor(t+1):(float)Math.Ceiling(t-1);
     t=Calc.Approach(t,target,Math.Abs(amount));
     if(t==target){
-      t=t%spline.segments;
-      pos=spline.getPos(t,normalization,n);
+      if(getderiv) spline.getPos(Util.SafeMod(t-0.0001f*MathF.Sign(amount),numsegs), out tangent);
+      setPos(t);
       return true;
     }
-    pos=spline.getPos(t,normalization,n);
+    set(t);
     return false;
-  }
-  public bool towardsNext(float amount, out Vector2 pos){
-    var val = towardsNext(amount);
-    pos=this.pos;
-    return val;
-  }
-  public Vector2 towardsNext(float amount, out bool done){
-    done = towardsNext(amount);
-    return pos;
   }
   public bool towardsNextDist(float dist, float step=0.02f){
     float amount = spline.getDt(t,dist,step);
     return towardsNext(amount);
   }
-  public bool towardsNextDist(float dist, out Vector2 pos, float step=0.02f){
-    float amount = spline.getDt(t,dist,step);
-    var val = towardsNext(amount);
-    pos=this.pos;
-    return val;
-  }
-  public Vector2 towardsNextDist(float dist, out bool done, float step=0.02f){
-    float amount = spline.getDt(t,dist,step);
-    done=towardsNext(amount);
-    return pos;
-  }
   public Vector2 move(float amount){
     t+=amount;
-    pos = spline.getPos(t,normalization,n);
+    set(t);
     return pos;
   }
   public Vector2 moveDist(float dist, float step=0.02f){
-    t += spline.getDt(t,dist,step);
-    pos = spline.getPos(t,normalization,n);
+    t+=spline.getDt(t,dist,step);
+    set(t);
     return pos;
   }
   public int numsegs=>spline.segments;
@@ -149,11 +151,14 @@ public class SplineAccessor{
 [CustomEntity("auspicioushelper/Spline")]
 public class SplineEntity:Entity{
   Spline spline;
-  enum Types {
+  public enum Types {
+    invalid,
     simpleLinear,
-    linear,
-    catmull,
-    catmullDenormalized,
+    compoundLinear,
+    centripetalNormalized,
+    centripetalDenormalized,
+    uniformNormalized,
+    uniformDenormalized,
   }
   Types type;
   public static Vector2[] entityInfoToNodes(Vector2 pos, Vector2[] enodes, Vector2 offset, bool lnn){
@@ -165,47 +170,37 @@ public class SplineEntity:Entity{
     if(lnn)nodes[nodes.Length-1]=enodes[enodes.Length-1]+offset;
     return nodes;
   }
-  public static Spline constructImpl(Vector2 firstpos, Vector2[] nodes, Vector2 offset, string type, bool lnn=false){
-    switch(type){
-      case "linear":
-        LinearSpline sl =new LinearSpline();
-        sl.fromNodes(entityInfoToNodes(firstpos,nodes,offset,true));
-        return sl;
-      case "simpleLinear":
+  static Dictionary<Types,float> alphaDict = new(){
+    {Types.centripetalDenormalized,0.5f},{Types.centripetalNormalized,0.5f}
+  };
+  static HashSet<Types> normalized = new(){Types.centripetalNormalized,Types.uniformNormalized};
+  public static Spline GetSpline(EntityData dat, Types ctrType, Vector2 offset){
+    if(dat.Enum<Types>("spline",Types.invalid)!=Types.invalid){
+      ctrType = dat.Enum<Types>("spline",Types.invalid);
+    }else if(!string.IsNullOrEmpty(dat.Attr("spline"))){
+      if(Spline.splines.TryGetValue(dat.Attr("spline"), out var spline)) return spline;
+    }
+    switch(ctrType){
+      case Types.simpleLinear:{
         LinearSpline l = new LinearSpline();
-        l.fromNodesAllRed(entityInfoToNodes(firstpos,nodes,offset,lnn));
-        return l;
-      default:
-        return null;
+        l.fromNodesAllRed(entityInfoToNodes(dat.Position,dat.Nodes,offset,false));
+        return l;}
+      case Types.compoundLinear:{
+        LinearSpline l = new LinearSpline();
+        l.fromNodes(entityInfoToNodes(dat.Position,dat.Nodes,offset,dat.Bool("lastNodeIsKnot",true)));
+        return l;}
+      case Types.centripetalNormalized: case Types.uniformNormalized:
+      case Types.centripetalDenormalized: case Types.uniformDenormalized:{
+        float alpha = alphaDict.GetValueOrDefault(ctrType);
+        Spline s = normalized.Contains(ctrType)?new CatmullNorm(){alpha=alpha}:new CatmullDenorm(){alpha=alpha};
+        s.fromNodes(entityInfoToNodes(dat.Position,dat.Nodes,offset,dat.Bool("lastNodeIsKnot",true)));
+        return s;}
+      default: throw new Exception("invalid spline type");
     }
   }
+  public static Spline GetSpline(EntityData dat,Types ctrType)=>GetSpline(dat, ctrType, Vector2.Zero);
   public SplineEntity(EntityData d, Vector2 offset):base(d.Position+offset){
-    type = d.Attr("spline_type","normal") switch {
-      "linear"=>Types.linear,
-      "basic"=>Types.simpleLinear,
-      "catmull"=>Types.catmull,
-      "catmull_denormalized"=>Types.catmullDenormalized,
-      _=>Types.simpleLinear,
-    };
-    Vector2[] nodes = new Vector2[d.Nodes.Length+1+(d.Bool("last_node_knot",false)?1:0)];
-    nodes[0]=d.Position+offset;
-    for(int i=0; i<d.Nodes.Length; i++){
-      nodes[i+1] = d.Nodes[i]+offset;
-    }
-    if(d.Bool("last_node_knot",false)){
-      nodes[nodes.Length-1]=d.Nodes[d.Nodes.Length-1];
-    }
-    switch(type){
-      case Types.linear:
-        spline = new LinearSpline();
-        spline.fromNodes(nodes);
-        break;
-      default:
-        var lsp = new LinearSpline();
-        spline = lsp;
-        lsp.fromNodesAllRed(nodes);
-        break;
-    }
+    spline = GetSpline(d,Types.invalid,offset);
     Spline.splines[d.Attr("identifier","")] = spline;
   }
   public override void Added(Scene scene){

@@ -78,7 +78,7 @@ public static class FrostHelperStuff{
         SetVisible = Util.instanceAction<bool>(spinnerType, "SetVisible");
         CreateSpritesOrig = Util.instanceAction(spinnerType,"CreateSprites");
         UpdateHue = Util.instanceAction(spinnerType,"UpdateHue");
-        CassetteMaterialLayer.stupididiotdumbpompusthings.Add(spinnerType,(Entity e)=>{
+        OverrideVisualComponent.custom.Add(spinnerType,(Entity e)=>{
           e.Get<SpinnerWrapper>()?.RenderTheUgh();
         });
         filler = new(spinnerType, "filler", true);

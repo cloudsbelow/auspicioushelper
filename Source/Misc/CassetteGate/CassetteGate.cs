@@ -6,6 +6,7 @@ using Celeste.Mod.Entities;
 using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using Monocle;
+using System.Collections;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -23,6 +24,7 @@ public class CassetteGate:Entity{
   Vector2 size;
   Vector2 major;
   Vector2 minor;
+  Vector2 insideVec;
   float majorAxis=100;
   float minorAxis = 32;
   //average dotproduct unroller
@@ -35,7 +37,6 @@ public class CassetteGate:Entity{
     horizontal = d.Bool("horizontal",false);
     major = horizontal?Vector2.UnitX:Vector2.UnitY;
     minor = Vector2.One-major;
-    Position+=major*size/2;
 
     id = d.ID;
     if(visuals == null){
@@ -49,4 +50,11 @@ public class CassetteGate:Entity{
     s.Add(s1 = new CassetteGateSolid(Position-major*majorAxis,blockWidth,blockHeight));
     //s.Add(s2 = new CassetteGateSolid(Position, blockWidth, blockHeight));
   }
+  // bool PlayerClose(){
+  //   if()
+  // }
+  // IEnumerator Sequence(){
+  //   p = 
+  //   while()
+  // }
 }

@@ -45,6 +45,7 @@ public partial class Util{
     }
   }
   public static void Write(BinaryWriter w, EntityData d){
+    d.Values?.Remove("_loenn_display_template");
     w.Write(d.ID);
     w.Write(d.Name);
     Write(w,d.Position);
@@ -73,7 +74,7 @@ public partial class Util{
     if(nlen != 0){
       e.Nodes = new Vector2[nlen];
       for(int i=0; i<nlen; i++) e.Nodes[i]=ReadVec2(r);
-    } 
+    } else e.Nodes = [];
     int vlen = r.Read7BitEncodedInt();
     e.Values = new();
     for(int i=0; i<vlen; i++){
@@ -121,10 +122,18 @@ public partial class Util{
     DebugConsole.Write($"Got smuggled room: {d.Name}");
     d.Entities = new();
     int n = r.Read7BitEncodedInt();
-    for(int i=0; i<n; i++) d.Entities.Add(ReadEntitydata(r));
+    for(int i=0; i<n; i++){
+      EntityData e = ReadEntitydata(r);
+      e.Level = d;
+      d.Entities.Add(e);
+    } 
     d.Triggers = new();
     n = r.Read7BitEncodedInt();
-    for(int i=0; i<n; i++) d.Triggers.Add(ReadEntitydata(r));
+    for(int i=0; i<n; i++){
+      EntityData e = ReadEntitydata(r);
+      e.Level = d;
+      d.Triggers.Add(e);
+    }
     d.FgDecals = new();
     n = r.Read7BitEncodedInt();
     for(int i=0; i<n; i++) d.FgDecals.Add(ReadDecaldata(r));

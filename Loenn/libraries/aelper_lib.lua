@@ -1,11 +1,13 @@
 local drawableSprite = require("structs.drawable_sprite")
-local drawableRectangle = require("structs.drawable_rectangle")
 local entities = require("entities")
 local decals = require("decals")
 local utils = require("utils")
 local logging = require("logging")
 local depths = require("consts.object_depths")
 local celesteRender = require("celeste_render")
+local autotiler = require("autotiler")
+local atlases = require("atlases")
+local loadedState = require("loaded_state")
 
 --#####--
 
@@ -69,7 +71,6 @@ function delete_template(entity, oldName)
     end
 end
 
-
 aelperLib.channel_color = {230/255, 167/255, 50/255}
 aelperLib.channel_color_halfopacity = {aelperLib.channel_color[1], aelperLib.channel_color[2], aelperLib.channel_color[3], 0.5}
 aelperLib.channel_color_dark = {aelperLib.channel_color[1]*dark_multiplier, aelperLib.channel_color[2]*dark_multiplier, aelperLib.channel_color[3]*dark_multiplier}
@@ -106,6 +107,52 @@ aelperLib.register_template_name = function(name)
     aelperLib.template_entity_names[name]=true
     return name
 end
+aelperLib.get_template_options = function(entity)
+    local paths = {}
+    for k,_ in pairs(templates) do
+        local first = true
+        local roomName
+        for name in string.gmatch(k, "([^/]+)") do
+            if first then
+                paths[name] = paths[name] or {}
+                roomName=name
+                first=false
+            else
+                paths[roomName][name] = true
+                break
+            end
+        end
+    end
+
+     local toReturn = {}
+--     if entity.template == "" then
+--         for k,_ in pairs(paths) do
+--             table.insert(toReturn, k)
+--         end
+--     else
+--         for room in string.gmatch(entity.template, "([^/]+)") do
+--             for k,_ in pairs(paths[room]) do
+--                 table.insert(toReturn, room.."/"..k)
+--             end
+--             break
+--         end
+--     end
+        for k,_ in pairs(paths) do
+            for k2,_ in pairs(paths[k]) do
+                table.insert(toReturn, k.."/"..k2)
+            end
+        end
+
+    return toReturn
+end
+aelperLib.template_selection = function(room, entity)
+    local nodes = {}
+    for _,node in ipairs(entity.nodes or {}) do
+        table.insert(nodes, utils.rectangle(node.x-6, node.y-6, 12, 12))
+    end
+    
+    return utils.rectangle(entity.x-6, entity.y-6, 12, 12), nodes
+end
 aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDrawn)
     alreadyDrawn = alreadyDrawn or {}
     
@@ -118,8 +165,8 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
     
     local toDraw = {}
     local offset = {
-        data[1].x - (data[1].nodes or {{x=data[1].x}})[1].x,
-        data[1].y - (data[1].nodes or {{y=data[1].y}})[1].y,
+        data[1].x - ((data[1].nodes or {{x=data[1].x}})[1] or {x=data[1].x}).x,
+        data[1].y - ((data[1].nodes or {{y=data[1].y}})[1] or {y=data[1].y}).y,
     }
     for _,entity in ipairs(data[2].entities) do
         pcall(function() 
@@ -190,21 +237,57 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
             local toInsert = ({decals.getDrawable(entity.texture, nil, room, movedEntity, nil)})[1]
             table.insert(toDraw, {func=toInsert, depth=entity.depth or depths.fgDecals})
         end
-    end 
-    for tx = -1, data[1].width/8+2 do
-        for ty = -1, data[1].height/8+2 do
-            if (tx<=0 or ty<=0 or tx>data[1].width/8 or ty>data[1].height/8) == false then
-                if data[2].tilesFg.matrix:getInbounds(tx+data[1].x/8, ty+data[1].y/8) ~= "0" then
-                    table.insert(toDraw, {
-                        func=drawableRectangle.fromRectangle("bordered", (tx-1)*8+x+offset[1]+0.5,(ty-1)*8+y+offset[2]+0.5, 7,7,
-                            {0.8,0.8,0.8},{1,1,1}),
-                        depth=depths.fgTerrain})
+    end
+    for tx = 1, data[1].width/8 do
+        for ty = 1, data[1].height/8 do
+            if (tx+data[1].x/8<1 or ty+data[1].y/8<1 or tx+data[1].x/8>data[2].width/8 or ty+data[1].y/8>data[2].height/8) == false then
+                local tile = data[2].tilesFg.matrix:getInbounds(tx+data[1].x/8, ty+data[1].y/8)
+                if tile ~= "0" then
+                    local quads, sprites = autotiler.getQuads(tx+data[1].x/8, ty+data[1].y/8, data[2].tilesFg.matrix,
+                        celesteRender.tilesMetaFg, "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
+                    -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
+                    local quadCount = #quads
+
+                    if quadCount > 0 then
+                        local randQuad = quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesFg"):getInbounds(tx+data[1].x/8, ty+data[1].y/8), quadCount)]
+                        local texture = celesteRender.tilesMetaFg[tile].path or " "
+                        
+                        table.insert(toDraw, {
+                            func={
+                                draw=function()
+                                    love.graphics.draw(atlases.gameplay[texture].image, 
+                                        celesteRender.getOrCacheTileSpriteQuad(celesteRender.tilesSpriteMetaCache, 
+                                            tile, texture, randQuad, true),  --true is if this tileset is fg tiles
+                                        (tx-1)*8+x+offset[1]+0.5,(ty-1)*8+y+offset[2]+0.5)
+                                end
+                            },
+                            depth=depths.fgTerrain
+                        })
+                    end
                 end
-                if data[2].tilesBg.matrix:getInbounds(tx+data[1].x/8, ty+data[1].y/8) ~= "0" then
-                    table.insert(toDraw, {
-                        func=drawableRectangle.fromRectangle("bordered", (tx-1)*8+x+offset[1]+0.5,(ty-1)*8+y+offset[2]+0.5, 7,7,
-                            {0.5,0.5,0.5},{0.6,0.6,0.6}),
-                        depth=depths.bgTerrain})
+                local tile = data[2].tilesBg.matrix:getInbounds(tx+data[1].x/8, ty+data[1].y/8)
+                if tile ~= "0" then
+                    local quads, sprites = autotiler.getQuads(tx+data[1].x/8, ty+data[1].y/8, data[2].tilesBg.matrix,
+                        celesteRender.tilesMetaBg, "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
+                    -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
+                    local quadCount = #quads
+
+                    if quadCount > 0 then
+                        local randQuad = quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesBg"):getInbounds(tx+data[1].x/8, ty+data[1].y/8), quadCount)]
+                        local texture = celesteRender.tilesMetaBg[tile].path or " "
+                        
+                        table.insert(toDraw, {
+                            func={
+                                draw=function()
+                                    love.graphics.draw(atlases.gameplay[texture].image, 
+                                        celesteRender.getOrCacheTileSpriteQuad(celesteRender.tilesSpriteMetaCache, 
+                                            tile, texture, randQuad, false),  --true is if this tileset is fg tiles
+                                        (tx-1)*8+x+offset[1]+0.5,(ty-1)*8+y+offset[2]+0.5)
+                                end
+                            },
+                            depth=depths.bgTerrain
+                        })
+                    end
                 end
             end
         end
@@ -246,11 +329,12 @@ aelperLib.get_entity_draw = function(icon_name)
             false, viewport and viewport.__auspicioushelper_alreadyDrawn).recursiveError --todo: replace false with whether or not this entity is slected
         end
             
-        drawableSprite.fromTexture(shouldError and "loenn/auspicioushelper/template/error" or aelperLib.getIcon("loenn/auspicioushelper/template/"..icon_name), {
-            x=entity.x,
-            y=entity.y,
-        }):draw()
-        
+        if icon_name ~= nil or shouldError then
+            drawableSprite.fromTexture(shouldError and "loenn/auspicioushelper/template/error" or aelperLib.getIcon("loenn/auspicioushelper/template/"..icon_name), {
+                x=entity.x,
+                y=entity.y,
+            }):draw()
+        end
     end
 end
 local hasLegacy = {
@@ -291,6 +375,13 @@ function celesteRender.drawMap(state)
         orig_celesteRender_drawMap(state)
     end
     return orig_celesteRender_drawMap(state)
+end
+
+local origLoadFile = loadedState.loadFile
+function loadedState.loadFile(fileName, roomName)
+    initialTemplatesLoad = false
+    for k,_ in pairs(templates) do templates[k]=nil end
+    return origLoadFile(fileName, roomName)
 end
 
 return aelperLib

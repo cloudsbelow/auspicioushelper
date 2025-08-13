@@ -10,22 +10,20 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateChannelmover")]
 public class TemplateChannelmover:Template, IChannelUser{
-  Vector2 movevec;
   float relspd;
   float asym;
-  float dir;
-  float prog;
   public string channel {get;set;}
-  public override Vector2 virtLoc => Position+sprog*movevec;
-  float sprog;
+  SplineAccessor spos;
+  public override Vector2 virtLoc => Position+spos.pos;
   bool toggle = false;
   bool altern = false;
   bool doshake = false;
   Util.Easings easing;
+  EntityData dat;
   public TemplateChannelmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateChannelmover(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
-    movevec = d.Nodes[0]-d.Position;
+    dat = d;
     channel = d.Attr("channel","");
     relspd = 1/d.Float("move_time",1);
     asym = d.Float("asymmetry",1f);
@@ -37,36 +35,65 @@ public class TemplateChannelmover:Template, IChannelUser{
     }
     doshake = d.Bool("shake",false);
   }
-  float ndir;
+  int target;
+  int low;
+  float cur=>low+cfrac;
+  float cfrac=0;
+  float afrac=0;
+  float dir=0;
   public void setChVal(int val){
-    ndir = (val&1)==1?1:-1*asym;
-    if(altern && !toggle){
-      if(ndir>0) prog = Util.getEasingPreimage(easing, sprog);
-      else prog=1-Util.getEasingPreimage(easing,1-sprog);
+    target = val;
+    if(toggle || (cfrac!=0 && Math.Sign(dir)==Math.Sign(target-cur))) return;
+    dir = target>cur?1:-1*asym;
+    if(cfrac == 0){
+      if(dir<0){
+        low--;
+        afrac = cfrac=1;
+      }
+    } else if(cfrac == 1){
+      if(dir>0){
+        low++;
+        afrac = cfrac = 0;
+      }
+    } else if(altern){
+      if(dir>0) cfrac = Util.getEasingPreimage(easing, afrac);
+      else cfrac = 1-Util.getEasingPreimage(easing,1-afrac);
     }
   }
   public override void addTo(Scene scene){
-    ChannelState.watch(this);
-    dir = (ChannelState.readChannel(channel) &1)==1?1:-1*asym;
-    sprog = prog = dir == 1?1:0;
-    //DebugConsole.Write($"{prog} {dir} {Position} {virtLoc}");
+    target = low = ChannelState.watch(this);
+    spos = new(SplineEntity.GetSpline(dat, SplineEntity.Types.simpleLinear), Vector2.Zero, true);
+    spos.set(target);
     base.addTo(scene);
+
+    spos.setSidedFromDir(1,1);
   }
-  float lprog;
   public override void Update(){
     base.Update();
-    if(!toggle || prog==0 || prog==1) dir=ndir;
-    lprog = prog;
-    prog = System.Math.Clamp(prog+dir*relspd*Engine.DeltaTime,0,1);
-    if(lprog != prog){
-      float x = altern && dir<0?1-prog:prog;
-      float y = Util.ApplyEasing(easing, x, out var deriv);
-      sprog = altern && dir<0?1-y:y;
-      ownLiftspeed = dir*relspd*movevec*deriv;
-      childRelposSafe();
-      if((prog==1||prog==0)&&doshake)shake(0.2f);
-    } else {
+    if(cfrac == 0 && low == target){
       ownLiftspeed = Vector2.Zero;
+    } else if(Engine.DeltaTime!=0){
+      cfrac = Math.Clamp(cfrac+Engine.DeltaTime*dir*relspd,0,1);
+      float x = altern && dir<0?1-cfrac:cfrac;
+      float y = Util.ApplyEasing(easing, x, out var deriv);
+      afrac = altern && dir<0?1-y:y;
+      spos.setSidedFromDir(low%spos.numsegs+afrac, Math.Sign(dir));
+      ownLiftspeed = spos.tangent*relspd*dir*deriv;
+      childRelposSafe();
+      if(cfrac == 1){
+        afrac = cfrac = 0;
+        low++;
+      }
+      if(cfrac == 0){
+        if(doshake){
+          if(low == target) shake(0.2f);
+          else shake(0.1f);
+        }
+        if(target<low){
+          afrac = cfrac = 1;
+          low--;
+        }
+      }
     }
   }
 }

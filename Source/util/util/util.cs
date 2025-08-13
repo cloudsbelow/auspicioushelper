@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -30,6 +31,11 @@ public partial class Util{
         stack.Pop();
         return Next();
       }
+    }
+    public List<T> toList(){
+      List<T> l=new(); 
+      while(Next() is {} e) l.Add(e);
+      return l;
     }
   }
 
@@ -126,5 +132,116 @@ public partial class Util{
     if(v<min) return min;
     if(v>max) return max;
     return v;
+  }
+
+  public class HybridSet<T>:ISet<T>{
+    const int threshold = 8;
+    HashSet<T> set = null;
+    List<T> list = null;
+    public HybridSet(){
+      list = new(threshold);
+    }
+    public HybridSet(IEnumerable<T> o){
+      if (o is ICollection<T> coll && coll.Count > threshold){
+        set = new(o);
+        return;
+      }
+      list = new(threshold);
+      foreach(T e in o) Add(e);
+    }
+    bool usingSet=>set!=null;
+    public bool IsReadOnly=>false;
+    public bool Add(T elem){
+      if(usingSet) return set.Add(elem);
+      else {
+        if(!list.Contains(elem)){
+          if(list.Count>=threshold){
+            set = new(list);
+            list = null;
+            return set.Add(elem);
+          } else {
+            list.Add(elem);
+            return true;
+          }
+        } else return false;
+      }
+    }
+    void ICollection<T>.Add(T elem)=>Add(elem);
+    public bool Remove(T elem){
+      if(usingSet){
+        bool res = set.Remove(elem);
+        if(set.Count<threshold/2-1){
+          list = new(set);
+          set = null;
+        }
+        return res;
+      } else return list.Remove(elem);
+    }
+    public int Count=>usingSet?set.Count:list.Count;
+    public void Clear(){
+      if(usingSet){
+        set = null;
+        list = new(threshold);
+      } else list.Clear();
+    }
+    public bool Contains(T elem)=>usingSet?set.Contains(elem):list.Contains(elem);
+    public void CopyTo(T[] arr, int index){
+      if(usingSet) set.CopyTo(arr, index);
+      else list.CopyTo(arr,index);
+    }
+    public void ExceptWith(IEnumerable<T> o){
+      if(usingSet) set!.ExceptWith(o);
+      else{
+        var os = o as ISet<T> ?? new HashSet<T>(o);
+        list.RemoveAll(os.Contains);
+      }
+    }
+    public bool IsProperSubsetOf(IEnumerable<T> other)=>usingSet?set.IsProperSubsetOf(other) : new HashSet<T>(list).IsProperSubsetOf(other);
+    public bool IsProperSupersetOf(IEnumerable<T> other)=>usingSet?set.IsProperSupersetOf(other) : new HashSet<T>(list).IsProperSupersetOf(other);
+    public bool IsSubsetOf(IEnumerable<T> other)=>usingSet?set.IsSubsetOf(other) : new HashSet<T>(list).IsSubsetOf(other);
+    public bool IsSupersetOf(IEnumerable<T> other)=>usingSet?set.IsSupersetOf(other) : new HashSet<T>(list).IsSupersetOf(other);
+    public bool Overlaps(IEnumerable<T> o){
+      if(usingSet) return set.Overlaps(o);
+      else {
+        var os = o as ISet<T> ?? new HashSet<T>(o);
+        return list.Any(os.Contains);
+      }
+    }
+    public bool SetEquals(IEnumerable<T> other)=>usingSet?set.SetEquals(other) : new HashSet<T>(list).SetEquals(other);
+    public void IntersectWith(IEnumerable<T> o){
+      if(usingSet) set.IntersectWith(o);
+      else {
+        List<T> nlist = new();
+        foreach(T x in o){
+          if(list.Contains(x) && !nlist.Contains(x)) nlist.Add(x);
+        }
+        list = nlist;
+      }
+    }
+    void promoteSet(){
+      if(!usingSet){
+        set = new(list);
+        list = null;
+      }
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void tryDemote(){
+      if(usingSet && set.Count<threshold/2-1){
+        list = new(set);
+        set=null;
+      }
+    }
+    public void SymmetricExceptWith(IEnumerable<T> o){
+      promoteSet();
+      set.SymmetricExceptWith(o);
+      tryDemote();
+    }
+    public void UnionWith(IEnumerable<T> o){
+      promoteSet();
+      set.UnionWith(o);
+      tryDemote();
+    }
+    public IEnumerator<T> GetEnumerator()=>usingSet?set.GetEnumerator():list.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
   }
 }

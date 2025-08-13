@@ -13,7 +13,6 @@ entity.placements = {
     name = "Channel Math Controller",
     data = {
       compiled_operations = "",
-      run_immediately = false,
       multi_type = "Block",
       activation_cond = "onEnter",
       debug = false,

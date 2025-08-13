@@ -5,21 +5,22 @@ local aelperLib = require("mods").requireFromPlugin("libraries.aelper_lib")
 local entity = {}
 local splineTypes = {"simpleLinear","compoundLinear","centripetalNormalized","centripetalDenormalized","uniformNormalized","uniformDenormalized"}
 
-entity.name = aelperLib.register_template_name("auspicioushelper/TemplateSwapblock")
+entity.name = aelperLib.register_template_name("auspicioushelper/TemplateBelt")
 entity.depth = -13000
 entity.nodeLimits = {1,-1}
 entity.nodeLineRenderType = "line"
 
 entity.placements = {
   {
-    name = "main",
+    name = "Template belt",
     data = {
       template = "",
       depthoffset=5,
-      max_speed = 360,
-      max_return_speed = 144,
-      returning = false,
-      spline = "simpleLinear",
+      speed=0.3,
+      numPerSegment=3,
+      initialOffset=0,
+      loop=false,
+      spline = "uniformNormalized",
       lastNodeIsKnot = true,
       
       _loenn_display_template = true,
@@ -36,6 +37,6 @@ entity.fieldInformation = function(entity)
 end
 
 entity.selection = aelperLib.template_selection
-entity.draw = aelperLib.get_entity_draw("tswap")
+entity.draw = aelperLib.get_entity_draw("tconv")
 
 return entity

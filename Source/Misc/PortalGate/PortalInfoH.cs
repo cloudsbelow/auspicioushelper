@@ -55,7 +55,7 @@ public class PortalIntersectInfoH{
 
     if(a is Player pl){
       pl.Speed = calcspeed(pl.Speed,ce);
-      if(pl.StateMachine.state == Player.StDash) pl.DashDir.X*=-1;
+      if(pl.StateMachine.state == Player.StDash && p.flipped) pl.DashDir.X*=-1;
       if(p.flipped)pl.LiftSpeed=new Vector2(-pl.LiftSpeed.X,pl.LiftSpeed.Y);
       Level l = pl.Scene as Level;
       if(!((IntRect)l.Bounds).CollidePoint(pl.Position)){

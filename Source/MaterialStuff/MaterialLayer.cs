@@ -112,7 +112,7 @@ public interface IMaterialLayerSimple:IMaterialLayer{
   }}
 }
 
-public class BasicMaterialLayer:IMaterialLayerSimple{
+public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
   public MaterialLayerInfo info {get;}
   public VirtualShaderList passes;
   public List<RenderTargetPool.RenderTargetHandle> handles=new();
@@ -150,12 +150,14 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
   public static void StartSb(SpriteBatch sb, Effect e=null, Camera c=null){
     sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, e, c?.Matrix??Matrix.Identity);
   }
-  public virtual void rasterMats(SpriteBatch sb,Camera c){
+  public void TrySortWilldraw(){
     if(dirtyWilldraw){
       willdraw.Sort((a,b)=>b._depth.CompareTo(a._depth));
-      DebugConsole.Write("Sorting");
       dirtyWilldraw = false;
     }
+  }
+  public virtual void rasterMats(SpriteBatch sb,Camera c){
+    TrySortWilldraw();
     foreach(var o in willdraw){
       if(o.shouldRemove) removeEnt(o);
       else {
@@ -195,6 +197,7 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
 
   HashSet<IMaterialObject> toRemove = new();
   public void addEnt(IMaterialObject o){
+    if(toRemove.Remove(o))return;
     if(info.enabled){
       willdraw.Add(o); 
       dirtyWilldraw = true;
@@ -203,4 +206,6 @@ public class BasicMaterialLayer:IMaterialLayerSimple{
   public void removeEnt(IMaterialObject o){
     toRemove.Add(o);
   }
+  public void AddC(OverrideVisualComponent c)=>addEnt(c);
+  public void RemoveC(OverrideVisualComponent c)=>removeEnt(c);
 }
