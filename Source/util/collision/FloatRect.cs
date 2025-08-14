@@ -65,6 +65,9 @@ public struct FloatRect{
   public static FloatRect fromCorners(Vector2 tlc, Vector2 brc){
     return new FloatRect(tlc.X,tlc.Y,brc.X-tlc.X,brc.Y-tlc.Y);
   }
+  public void shift(Vector2 shift){
+    x+=shift.X; y+=shift.Y;
+  }
   public void expandXto(float loc){
     if(loc<x){
       w+=x-loc;

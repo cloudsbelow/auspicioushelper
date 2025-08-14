@@ -32,6 +32,7 @@ entity.placements = {
       exitBlockBehavior = false,
       triggerable = false,
       triggerOnBreak = false,
+      breakableByBlocks = true,
       
       _loenn_display_template = true,
     }

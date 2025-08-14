@@ -25,6 +25,7 @@ entity.placements = {
       ImpactSfx="event:/game/general/fallblock_impact",
       StartSfx="event:/new_content/game/10_farewell/fusebox_hit_1",
       hitJumpthrus=true,
+      throughDashblocks=true,
       
       _loenn_display_template = true,
     }

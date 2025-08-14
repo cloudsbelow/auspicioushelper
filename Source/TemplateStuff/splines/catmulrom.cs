@@ -21,7 +21,6 @@ public class CatRomSegDenorm{
   float trange;
   public CatRomSegDenorm(Vector2[] points, Vector2? first=null, Vector2? last=null, float alpha=0.5f,float tension=0){
     List<Vector2> n=new();
-    DebugConsole.Write(Util.ToArr(points));
     n.Add(first??(2*points[0]-points[1]));
     foreach(var p in points)n.Add(p);
     n.Add(last??(2*points[points.Length-1]-points[points.Length-2]));
@@ -129,7 +128,6 @@ public class CatRomSegNorm{
     float low = idx==0?0:invmap[idx-1];
     Vector2 res =  b.point((1-a)*low+invmap[idx]*a, out var d);
     derivative = d.SafeNormalize(totalLength);
-    //DebugConsole.Write($"Sampled {t} found idx {low} it has value {low}:{invmap[idx]}");
     return res;
   }
 }

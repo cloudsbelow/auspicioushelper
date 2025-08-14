@@ -48,6 +48,7 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
     triggerable=d.Bool("triggerable",false);
     triggerOnBreak=d.Bool("triggerOnBreak",false);
     isExitBlock = d.Bool("exitBlockBehavior",false);
+    breakableByBlocks = d.Bool("breakableByBlocks",false);
   }
   bool broken=false;
   public void breakBlock(){

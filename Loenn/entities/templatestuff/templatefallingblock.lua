@@ -25,6 +25,7 @@ entity.placements = {
       set_trigger_channel=false,
       hitJumpthrus=true,
       triggeredByRiding=true,
+      throughDashblocks=true,
       
       _loenn_display_template = true,
     }

@@ -31,6 +31,7 @@ entity.placements = {
       decal_depth = -10001,
       max_leniency=4,
       hitJumpthrus=true,
+      throughDashblocks=false,
       
       _loenn_display_template = true,
     }

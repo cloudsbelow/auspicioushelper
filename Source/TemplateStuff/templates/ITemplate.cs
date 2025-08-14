@@ -72,10 +72,9 @@ public class Template:Entity, ITemplateChild{
       None     = 0,      
       Riding   = 1 << 0, 
       DashHit  = 1 << 1,
-      Weight   = 1 << 2,
       Shake = 1<<3,
       Inside = 1<<4,
-      All = Riding|DashHit|Weight|Shake|Inside
+      All = Riding|DashHit|Shake|Inside
   }
   public virtual Vector2 virtLoc=>Position;
   public Vector2 ownLiftspeed;

@@ -39,7 +39,6 @@ public class ConveyerTemplate:TemplateInstanceable{
   public override void makeInitialInstances() {
     base.makeInitialInstances();
     List<BeltItem> l= new();
-    DebugConsole.Write($"{spline.segments} {speed*maxtimer}");
     for(float i=initialOffset; i<spline.segments-(loop?0:1); i+=speed*maxtimer){
       SplineAccessor spos = new(spline, Vector2.Zero, true, loop);
       spos.set(i);
@@ -77,7 +76,6 @@ public class ConveyerTemplate:TemplateInstanceable{
       timer+=maxtimer;
       Template nte = addInstance(spos.pos);
       belt.Enqueue(new(){te=nte,sp=spos,extent = extent});
-      DebugConsole.Write($"Added in loop {nte} {numInstances} a");
     } else timer-=Engine.DeltaTime;
   }
 }

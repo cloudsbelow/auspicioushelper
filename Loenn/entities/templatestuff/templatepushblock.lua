@@ -27,6 +27,7 @@ entity.placements = {
       ownSpringRecoil = 0,
       ImpactSfx="event:/game/general/fallblock_impact",
       hitJumpthrus=true,
+      throughDashblocks=false,
       
       _loenn_display_template = true,
     }

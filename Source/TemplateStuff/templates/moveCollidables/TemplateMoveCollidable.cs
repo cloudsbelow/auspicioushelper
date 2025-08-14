@@ -63,6 +63,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     }
     public List<DRect> rects=new();
     public List<MipGrid> grids=new();
+    public HashSet<BreakableRect> breakable=null;
     public bool Collide(FloatRect o, Vector2 offset, CollisionDirection movedir=CollisionDirection.yes){
       float nx = MathF.Round(o.x)+offset.X;
       float ny = MathF.Round(o.y)+offset.Y;
@@ -87,7 +88,8 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     public bool Collide(QueryIn q, Vector2 offset, CollisionDirection movedir){
       movedir = movedir|CollisionDirection.yes;
       foreach(var g in q.grids) if(Collide(g,offset,movedir)) return true;
-      foreach(var r in q.rects) if(Collide(r,offset,movedir)) return true;
+      //again we only need to shift the floatrects
+      foreach(var r in q.rects) if(Collide(r,offset+q.shift,movedir)) return true;
       return false;
     }
     public bool Collide(QueryIn q, Vector2 offset)=>Collide(q,offset,Util.getCollisionDir(offset));
@@ -97,11 +99,33 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     public List<MipGrid> grids=new();
     public FloatRect bounds = FloatRect.empty;
     public HashSet<Solid> gotten;
+    //MipGrids move with their underlying grids. However FloatRects do not.
+    //We need to apply a shift with FloatRects after the entity has actually moved.
+    public Vector2 shift = Vector2.Zero;
     public bool Collide(FloatRect f){
       if(!bounds.CollideFr(f)) return false;
       foreach(var g in grids) if(g.collideFr(f)) return true;
+      f.shift(-shift);
       foreach(var r in rects) if(r.CollideFr(f)) return true;
       return false;
+    }
+    public bool Collide(MipGrid g){
+      if(!g.collideFrOffset(bounds,shift)) return false;
+      foreach(var r in rects) if(g.collideFrOffset(r,shift)) return true;
+      foreach(var o in grids) if(g.collideMipGrid(o)) return true;
+      return false;
+    }
+    public bool Collide(Entity e){
+      if(e.Collider is Grid g) return Collide(MipGrid.fromGrid(g));
+      else return Collide(new FloatRect(e));
+    }
+    public void ApplyShift(Vector2 v){
+      shift+=v;
+    }
+    public void BreakStuff(HashSet<BreakableRect> stuff, CollisionDirection dir){
+      foreach(var desc in stuff){
+        if(desc.toBreak.Collidable && (desc.dir&dir)!=0) if(Collide(desc.toBreak))desc.Break();
+      }
     }
   }
   public static QueryBounds getQinfo(FloatRect f, HashSet<Entity> exclude, Scene Scene){
@@ -208,6 +232,8 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     if(v!=Vector2.Zero){
       Position+=v;
       childRelposTo(virtLoc,gatheredLiftspeed);
+      s.ApplyShift(v);
+      if(q.breakable!=null) s.BreakStuff(q.breakable,Util.getCollisionDir(v));
       return false;
     }
     return true;
@@ -218,8 +244,11 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     if(v!=Vector2.Zero){
       Position+=v;
       childRelposTo(virtLoc,gatheredLiftspeed);
+      s.ApplyShift(v);
+      if(q.breakable!=null) s.BreakStuff(q.breakable,Util.getCollisionDir(v));
       return false;
     }
+    
     return true;
   }
   public bool MoveVCollideExact(Query qs, int amount, int leniency)=>MoveVCollideExact(qs.q,qs.s,amount,leniency);
@@ -246,31 +275,34 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
   public class Query{
     public QueryBounds q;
     public QueryIn s;
-    public HashSet<QueryBounds.DRect> breakable;
     public Query(QueryBounds q, QueryIn s){
       this.q=q; this.s=s;
     }
   }
   public struct BreakableRect{
-    Entity toBreak;
-    FloatRect box;
-    CollisionDirection dir;
-    public BreakableRect(Entity toBreak, FloatRect box, CollisionDirection dir){
-      this.dir=dir;
+    public Entity toBreak;
+    public FloatRect box;
+    public CollisionDirection dir;
+    public BreakableRect(Entity toBreak){
       this.toBreak=toBreak;
-      this.box=box;
-    }
-    public BreakableRect(Entity toBreak, Entity source){
-      this.toBreak=toBreak;
-      if(source is Solid) dir=CollisionDirection.solid;
-      else if(source is JumpThru)dir = (
-        (MaddiesIop.samah!=null && MaddiesIop.samah.IsInstanceOfType(source))||
-        (MaddiesIop.dt!=null && MaddiesIop.dt.IsInstanceOfType(source))
+      if(toBreak is Solid) dir=CollisionDirection.solid;
+      else if(toBreak is JumpThru)dir = (
+        (MaddiesIop.samah!=null && MaddiesIop.samah.IsInstanceOfType(toBreak))||
+        (MaddiesIop.dt!=null && MaddiesIop.dt.IsInstanceOfType(toBreak))
       )?CollisionDirection.down:CollisionDirection.up;
-      else if(MaddiesIop.jt!=null && MaddiesIop.jt.IsInstanceOfType(source)){
-        dir = MaddiesIop.side.get(j)?CollisionDirection.right:CollisionDirection.left;
+      else if(MaddiesIop.jt!=null && MaddiesIop.jt.IsInstanceOfType(toBreak)){
+        dir = MaddiesIop.side.get(toBreak)?CollisionDirection.right:CollisionDirection.left;
       }
-      this.box = new FloatRect(source);
+      this.box = new FloatRect(toBreak);
+    }
+    public void Break(){
+      if(toBreak is DashBlock db) db.Break(Vector2.Zero,Vector2.Zero,true,true);
+      else if(toBreak.Get<ChildMarker>().parent is Template t){
+        while(t!=null) if(t is TemplateBlock b && b.breakableByBlocks){
+          b.destroy(true);
+          return;
+        } else t=t.parent;
+      }
     }
   }
   public Query getq(Vector2 maxpotentialmovemagn){
@@ -278,6 +310,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     Vector2 v = maxpotentialmovemagn.Abs().Ceiling();
     //HashSet<Entity> toExclude = new(s.gotten);
     List<Entity> l = new();
+    var qbounds = s.bounds._expand(v.X,v.Y);
     AddAllChildrenProp(l,Propagation.Shake);
     foreach(Solid p in s.gotten){
       foreach(StaticMover sm in p.staticMovers){
@@ -288,34 +321,29 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       }
     }
     HashSet<Entity> toExclude = new(l);
-    HashSet<QueryBounds.DRect> fbs = null;
+    HashSet<BreakableRect> fbs = null;
     if(moveThroughDashblocks){
       fbs = new();
-      foreach(FallingBlock f in Scene.Tracker.GetEntities<DashBlock>()){
-        if(f.Get<ChildMarker>().propagatesTo(this)) continue;
-        fbs.Add(new(new(f)));
+      foreach(DashBlock f in Scene.Tracker.GetEntities<DashBlock>()){
+        if(f.Get<ChildMarker>()?.propagatesTo(this)??false) continue;
+        fbs.Add(new(f));
       }
       foreach(TemplateBlock b in Scene.Tracker.GetEntities<TemplateBlock>()){
         if(!b.breakableByBlocks || PropagateEither(b,Propagation.Shake)) continue;
         foreach(Platform p in b.GetChildren<Platform>()){
-          if(p is Solid) fbs.Add(new(new(p)));
-          else if(p is JumpThru){
-            fbs.Add(new(new(p),(
-              (MaddiesIop.samah!=null && MaddiesIop.samah.IsInstanceOfType(p))||
-              (MaddiesIop.dt!=null && MaddiesIop.dt.IsInstanceOfType(p))
-            )?CollisionDirection.down:CollisionDirection.up));
-          }
+          if(p is Solid && qbounds.CollideFr(new(p))) fbs.Add(new(p));
+          else if(hitJumpthrus && p is JumpThru jt && qbounds.CollideFr(new(jt))) fbs.Add(new(jt));
         }
-        if(MaddiesIop.jt!=null) foreach(var jt in b.GetChildren(MaddiesIop.jt, Propagation.Shake)){
-          fbs.Add(new(new()))
+        if(hitJumpthrus&&MaddiesIop.jt!=null) foreach(var jt in b.GetChildren(MaddiesIop.jt, Propagation.Shake)){
+          if(qbounds.CollideFr(new(jt)))fbs.Add(new(jt));
         }
       }
-      foreach(QueryBounds.DRect d in fbs) toExclude.Add(d);
+      foreach(var d in fbs) toExclude.Add(d.toBreak);
     }
-    var qbounds = s.bounds._expand(v.X,v.Y);
     QueryBounds q = getQinfo(qbounds,toExclude);
+    q.breakable = fbs;
     if(hitJumpthrus) AddJumpthrus(qbounds,q,s,toExclude,Scene);
-    return new(q,s){breakable=fbs};
+    return new(q,s);
   }
 
   public virtual void OnTrigger(TriggerInfo info){
