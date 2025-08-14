@@ -326,11 +326,7 @@ public class Template:Entity, ITemplateChild{
     }
   }
   public virtual void destroy(bool particles){
-    foreach(ITemplateChild c in children){
-      c.destroy(particles);
-    }
-    children.Clear();
-    fgt=null;
+    destroyChildren(particles);
     RemoveSelf();
   }
   public void destroyChildren(bool particles = true){

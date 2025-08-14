@@ -53,7 +53,6 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
   bool broken=false;
   public void breakBlock(){
     if(broken) return;
-    setCollidability(false);
     Audio.Play(breaksfx,Position);
     destroy(true);
     if(persistent) auspicioushelperModule.Session.brokenTempaltes.Add(fullpath);

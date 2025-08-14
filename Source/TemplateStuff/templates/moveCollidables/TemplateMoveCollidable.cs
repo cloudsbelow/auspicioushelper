@@ -297,9 +297,9 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     }
     public void Break(){
       if(toBreak is DashBlock db) db.Break(Vector2.Zero,Vector2.Zero,true,true);
-      else if(toBreak.Get<ChildMarker>().parent is Template t){
+      else if(toBreak.Get<ChildMarker>()?.parent is Template t){
         while(t!=null) if(t is TemplateBlock b && b.breakableByBlocks){
-          b.destroy(true);
+          b.breakBlock();
           return;
         } else t=t.parent;
       }

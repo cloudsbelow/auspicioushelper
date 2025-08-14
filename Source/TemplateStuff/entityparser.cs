@@ -395,5 +395,6 @@ public static class EntityParser{
   }
   public static void defaultModdedSetup(){
     FrostHelperStuff.setup();
+    MaddiesStuff.setup();
   }
 }
