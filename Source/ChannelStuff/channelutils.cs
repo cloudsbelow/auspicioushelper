@@ -277,4 +277,23 @@ public static class ChannelState{
     }
     DebugConsole.Write("===================");
   } 
+  [Command("ausp_setChannel","Set a channel")]
+  public static void SetChCommand(string channel, int value){
+    int oldval = readChannel(channel);
+    SetChannel(channel, value);
+    Engine.Commands.Log($"Set channel {channel} from {oldval} to {value}");
+  }
+  [Command("ausp_readChannel","Read a channel")]
+  public static void ReadChCommand(string channel){
+    Engine.Commands.Log($"Channel {channel} has value {readChannel(channel)}");
+  }
+  [Command("ausp_dumpChannels","Print all channels")]
+  public static void DumpChannels(){
+    Engine.Commands.Log("");
+    Engine.Commands.Log("===CHANNEL STATE===");
+    foreach(var pair in channelStates){
+      Engine.Commands.Log($"{pair.Key} {pair.Value}");
+    }
+    Engine.Commands.Log("===================");
+  }
 }

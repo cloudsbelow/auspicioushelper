@@ -175,17 +175,26 @@ public interface IOverrideVisuals{
   void AddC(OverrideVisualComponent c);
   void RemoveC(OverrideVisualComponent c);
 }
+public interface IOverrideVisualsEasy:IOverrideVisuals{
+  HashSet<OverrideVisualComponent> comps {get;}
+  void IOverrideVisuals.AddC(OverrideVisualComponent c)=>comps.Add(c);
+  void IOverrideVisuals.RemoveC(OverrideVisualComponent c)=>comps.Remove(c);
+}
 
 [CustomEntity("auspicioushelper/MaterialTemplate")]
-public class MaterialTemplate:TemplateDisappearer{
+public class MaterialTemplate:TemplateDisappearer, IOverrideVisualsEasy{
+  public HashSet<OverrideVisualComponent> comps {get;} = new();
   bool invis;
   bool collidable = true;
+  string channel;
+  bool active=true;
   public MaterialTemplate(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public MaterialTemplate(EntityData d, Vector2 offset, int depthoffset):base(d,offset+d.Position,depthoffset){
     invis = d.Bool("dontNormalRender",true);
     lident = d.Attr("identifier","");
     if(string.IsNullOrWhiteSpace(lident)) DebugConsole.Write("No layer specified for material template");
     collidable = d.Bool("collidable",true);
+    channel = d.Attr("channel","");
   }
   string lident;
   IOverrideVisuals layer;
