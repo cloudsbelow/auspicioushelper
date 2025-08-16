@@ -22,8 +22,7 @@ public class TemplateDisappearer:Template{
   public TemplateDisappearer(Vector2 pos, int depthoffset=0):base(pos,depthoffset){}
   public override void Added(Scene scene){
     base.Added(scene);
-    unenforced.Add(this);
-    hooks.enable();
+    UpdateHook.AddAfterUpdate(enforce,true,false);
   }
   int permute(bool action, ref bool activator, bool other){
     if(action == activator){
@@ -36,9 +35,9 @@ public class TemplateDisappearer:Template{
   }
   public override void parentChangeStat(int vis, int col, int act){
     int nvis = 0; int ncol=0; int nact = 0;
-    if(vis!=0) nvis = permute(vis>0, ref parentVis, selfVis);
-    if(col!=0) ncol = permute(col>0, ref parentCol, selfCol);
-    if(act!=0) nact = permute(col>0, ref parentAct, selfAct);
+    if(vis!=0 && parentVis!=vis>0) nvis = permute(vis>0, ref parentVis, selfVis);
+    if(col!=0 && parentCol!=col>0) ncol = permute(col>0, ref parentCol, selfCol);
+    if(act!=0 && parentAct!=act>0) nact = permute(col>0, ref parentAct, selfAct);
     if(nvis!=0 || ncol!=0 || nact!=0){
       base.parentChangeStat(nvis,ncol,nact);
     }
@@ -84,7 +83,6 @@ public class TemplateDisappearer:Template{
   public bool getSelfCol(){
     return selfCol;
   }
-  static List<TemplateDisappearer> unenforced = new();
   public void enforce(){
     bool Vis = selfVis&&parentVis; 
     bool Col = selfCol&&parentCol; 
@@ -92,14 +90,4 @@ public class TemplateDisappearer:Template{
     if(Vis && Col && Act) return;
     parentChangeStatBypass(Vis?0:-1,Col?0:-1,Act?0:-1);
   }
-  static void enforceHook(On.Celeste.Level.orig_Update orig, Level self){
-    foreach(var a in unenforced) a.enforce();
-    unenforced.Clear();
-    orig(self);
-  }
-  static HookManager hooks = new HookManager(()=>{
-    On.Celeste.Level.Update += enforceHook;
-  },()=>{
-    On.Celeste.Level.Update -= enforceHook;
-  }, auspicioushelperModule.OnEnterMap);
 }

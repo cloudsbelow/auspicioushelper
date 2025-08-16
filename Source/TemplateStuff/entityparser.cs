@@ -199,7 +199,7 @@ public static class EntityParser{
     clarify("bigSpinner", Types.unwrapped, static (l,ld,o,e)=>new Wrappers.Bumperw(e,o));
     clarify("eyebomb", Types.basic, static (l,d,o,e)=>new Puffer(e,o));
 
-    clarify("refill",Types.unwrapped,static (l,ld,offset,e)=>(Entity) new Wrappers.RefillW(e,offset));
+    clarify("refill",Types.unwrapped,static (l,ld,offset,e)=>(Entity) new RefillW2(e,offset));
     clarify("strawberry",Types.unwrapped,static (l,ld,offset,e)=>{
       EntityID id = new EntityID(ld.Name,e.ID);
       DebugConsole.Write("Trying to template berry: "+ id.ToString());

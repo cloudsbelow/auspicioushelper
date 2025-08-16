@@ -6,49 +6,66 @@ using System;
 using System.Collections.Generic;
 using Celeste;
 using Celeste.Mod.auspicioushelper;
+using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper.Wrappers;
 [Tracked]
+[CustomEntity("auspicioushelper/spinner")]
 public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   public Template parent {get;set;} 
   static int uidctr = 0;
   int id;
   public static CrystalColor GetColor(EntityData d){
+    if(!string.IsNullOrWhiteSpace(d.Attr("customColor"))) return CrystalColor.Rainbow;
     if(Enum.TryParse<CrystalColor>(d.Attr("color"), ignoreCase: true, out var res)) return res;
     return CrystalColor.Blue;
+  }
+  public static CrystalColor GetAndPrint(EntityData d){
+    var res = GetColor(d);
+    DebugConsole.Write(res.ToString());
+    return res;
   }
   public Spinner(EntityData d, Vector2 offset):base(d.Position+offset, false, GetColor(d)){
     id = uidctr++;
     hooks.enable();
+    makeFiller = d.Bool("makeFiller",true);
+    if(!string.IsNullOrWhiteSpace(d.Attr("customColor"))){
+      hasCustomCOlor = true;
+      customColor = Util.hexToColor(d.Attr("customColor"));
+    }
   }
   bool hvisible = true;
   bool hcollidable = true;
   bool scollidable = false;
   bool inView = false;
+  bool makeFiller = true;
+  Color customColor;
+  bool hasCustomCOlor;
   public override void Update(){
     if(!inView){
       Collidable = false;
       if(InView()){
         inView=true;
         if(!expanded) CreateSprites();
-        if(color == CrystalColor.Rainbow) UpdateHue();
+        if(color == CrystalColor.Rainbow && !hasCustomCOlor) UpdateHue();
       }
       Visible = hvisible && inView;
     } else {
-      base.Update();
-      if(color == CrystalColor.Rainbow && base.Scene.OnInterval(0.08f, offset)) UpdateHue();
+      //base.Update();
+      if(color == CrystalColor.Rainbow && !hasCustomCOlor && base.Scene.OnInterval(0.08f, offset)) UpdateHue();
       if (base.Scene.OnInterval(0.25f, offset) && !InView()){
         inView = false; Visible = false; Collidable = false;
       }
       if (base.Scene.OnInterval(0.05f, offset)){
-        Player entity = base.Scene.Tracker.GetEntity<Player>();
+        Player entity = UpdateHook.cachedPlayer;
         if(entity != null) scollidable = Math.Abs(entity.X - base.X) < 128f && Math.Abs(entity.Y - base.Y) < 128f;
       }
       Collidable = hcollidable && scollidable;
       Visible = hvisible && inView;
     }
+    if(filler!=null) filler.Position=Position;
   }
   public void parentChangeStat(int vis, int col, int act){
     if(vis!=0){
@@ -77,6 +94,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   }
   //On.Celeste.CrystalStaticSpinner.orig_CreateSprites orig, CrystalStaticSpinner self
   bool SolidCheck_(Vector2 pos){
+    if(parent == null) return (Scene as Level)?.SolidTiles?.CollidePoint(pos)??false;
     return parent.fgt?.CollidePoint(pos)??false;
   }
   void CreateSpritesOther(){
@@ -85,9 +103,8 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     List<MTexture> atlasSubtextures = GFX.Game.GetAtlasSubtextures(fgTextureLookup[this.color]);
     MTexture mTexture = Calc.Random.Choose(atlasSubtextures);
     Color color = Color.White;
-    if (this.color == CrystalColor.Rainbow){
-      color = GetHue(Position);
-    }
+    if(hasCustomCOlor) color = customColor;
+    else if (this.color == CrystalColor.Rainbow) color = GetHue(Position);
 
     if(!SolidCheck_(new Vector2(base.X - 4f, base.Y - 4f))){
       Add(new Image(mTexture.GetSubtexture(0, 0, 14, 14)).SetOrigin(12f, 12f).SetColor(color));
@@ -103,8 +120,8 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
       Add(new Image(mTexture.GetSubtexture(0, 10, 14, 14)).SetOrigin(12f, 2f).SetColor(color));
     }
 
-    foreach (CrystalStaticSpinner entity in base.Scene.Tracker.GetEntities<Spinner>()){
-      if(entity is Spinner o){
+    if(makeFiller) foreach (CrystalStaticSpinner entity in base.Scene.Tracker.GetEntities<Spinner>()){
+      if(entity is Spinner o && o.makeFiller){
         if(parent != o.parent) continue;
         if (o.id > id && (entity.Position - Position).LengthSquared() < 576f){
           AddSprite((Position + entity.Position) / 2f - Position);
@@ -115,6 +132,9 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     base.Scene.Add(border = new Border(this, filler));
     expanded = true;
     Calc.PopRandom();
+    if(hasCustomCOlor && filler!=null) foreach(var f in filler.Components) if(f is Image i){
+      i.Color = customColor;
+    }
   }
   Color getColor(){
     Color color = Color.White;
