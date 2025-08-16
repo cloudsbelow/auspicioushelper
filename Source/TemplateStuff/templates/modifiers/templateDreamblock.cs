@@ -97,7 +97,9 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
           c.SetStealUse(renderer,dreaming,dreaming);
         }
         if(orig && !dreaming && UpdateHook.cachedPlayer is Player p && p.StateMachine.State==Player.StDreamDash){
-          if(hasInside(p) && DreamMarkerComponent.CheckContinue(p.CollideFirst<DreamBlock>(),p)==null)p.Die(Vector2.Zero,true);
+          UpdateHook.AddAfterUpdate(()=>{
+            if(hasInside(p) && DreamMarkerComponent.CheckContinue(p.CollideFirst<DreamBlock>(),p)==null)p.Die(Vector2.Zero,true);
+          },false);
         }
       });
       if(ct.value!=0)dreaming=false;
@@ -162,8 +164,11 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     return flag;
   }
   bool dreaming=true;
-  static bool Eligible(Player p)=>p.StateMachine.state == Player.StDash || p.StateMachine.state == Player.StDreamDash;
+  static bool Eligible(Player p)=>p.StateMachine.state == Player.StDash || p.StateMachine.state == Player.StDreamDash || p.dashAttackTimer>0;
   static bool DDsh(Player p)=>p.StateMachine.state == Player.StDreamDash;
+  public override void destroy(bool particles) {
+    base.destroy(particles);
+  }
   static void Hook(On.Celeste.Player.orig_OnCollideH orig, Player p, CollisionData d){
     if(!DDsh(p)){
       TemplateDreamblockModifier t = d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateDreamblockModifier>();

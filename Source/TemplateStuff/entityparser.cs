@@ -220,6 +220,8 @@ public static class EntityParser{
     });
     clarify("blackGem",Types.basic,HookVanilla.HeartGem);
     clarify("wire",Types.unwrapped,static (l,d,o,e)=>new CWire(e,o));
+    clarify("cliffflag",Types.unwrapped,static (l,d,o,e)=>new CFlagline(e,o));
+    clarify("clothesline",Types.unwrapped,static (l,d,o,e)=>new CClothsline(e,o));
     clarify("lightningBlock",Types.unwrapped,static (l,d,o,e)=>new LightningBreakerW(e,o));
     foreach(string c in new string[]{"Red","Yellow","Green"}){
       clarify(c.ToLower()+"Blocks", Types.platformbasic, (l,d,o,e)=>{

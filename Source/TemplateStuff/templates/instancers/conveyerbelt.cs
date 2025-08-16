@@ -27,19 +27,23 @@ public class ConveyerTemplate:TemplateInstanceable{
   float initialOffset;
   float timer;
   float maxtimer;
+  string channel;
   public ConveyerTemplate(EntityData d, Vector2 o):this(d,o,d.Int("depthoffset",0)){}
   public ConveyerTemplate(EntityData d, Vector2 o, int depthoffset)
   :base(d,o+d.Position,depthoffset){
     dat=d;
     speed = d.Float("speed",0.3f);
     maxtimer = 1/d.Float("numPerSegment",3)/speed;
-    initialOffset = d.Float("offset",0)%maxtimer;
+    initialOffset = (maxtimer*d.Float("initialOffset",0))%maxtimer;
     loop = d.Bool("loop",false);
+    channel = d.Attr("channel","");
+    if(!string.IsNullOrWhiteSpace(channel)) timer = 1000000000;
   }
   public override void makeInitialInstances() {
     base.makeInitialInstances();
+    if(!string.IsNullOrWhiteSpace(channel)) return;
     List<BeltItem> l= new();
-    for(float i=initialOffset; i<spline.segments-(loop?0:1); i+=speed*maxtimer){
+    for(float i=initialOffset*speed; i<spline.segments-(loop?0:1); i+=speed*maxtimer){
       SplineAccessor spos = new(spline, Vector2.Zero, true, loop);
       spos.set(i);
       Template nte = addInstance(spos.pos);
@@ -52,6 +56,12 @@ public class ConveyerTemplate:TemplateInstanceable{
     spline = SplineEntity.GetSpline(dat,SplineEntity.Types.centripetalNormalized);
     if(spline.segments==1 && !dat.Bool("lastNodeIsKnot")) loop = true;
     base.addTo(scene);
+    if(!string.IsNullOrWhiteSpace(channel))Add(new ChannelTracker(channel,(int val)=>{
+      if(val == 0) return;
+      SplineAccessor spos = new(spline, Vector2.Zero, true, loop);
+      Template nte = addInstance(spos.pos);
+      belt.Enqueue(new(){te=nte, extent = 0, sp=spos});
+    }));
   }
   public override void Update() {
     base.Update();

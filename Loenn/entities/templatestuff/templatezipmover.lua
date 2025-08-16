@@ -33,16 +33,20 @@ entity.placements = {
 entity.fieldInformation = function(entity)
     return {
         template = {
-  return_type ={
-    options = rtypes,
-    editable=false,
-  },
-  activation_type={
-    options = atypes,
-    editable=false,
-  },
             options = aelperLib.get_template_options(entity)
-        },spline = {options = splineTypes, editable=true}
+        },
+      spline = {
+        options = splineTypes, 
+        editable=true
+      },
+      return_type ={
+        options = rtypes,
+        editable=false,
+      },
+      activation_type={
+        options = atypes,
+        editable=false,
+      },
     }
 end
 

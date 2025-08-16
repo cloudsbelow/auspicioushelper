@@ -12,7 +12,7 @@ entity.nodeLineRenderType = "line"
 
 entity.placements = {
   {
-    name = "Template belt",
+    name = "Template Belt",
     data = {
       template = "",
       depthoffset=5,
@@ -22,6 +22,7 @@ entity.placements = {
       loop=false,
       spline = "uniformNormalized",
       lastNodeIsKnot = true,
+      channel = "",
       
       _loenn_display_template = true,
     }

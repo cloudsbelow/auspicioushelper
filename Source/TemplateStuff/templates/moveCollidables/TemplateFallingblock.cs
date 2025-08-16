@@ -54,6 +54,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     }
     OnTrigger(null);
     disconnect();
+    emancipate();
     shake(0.2f);
     Audio.Play(ShakeSfx,Position);
     yield return 0.25f;

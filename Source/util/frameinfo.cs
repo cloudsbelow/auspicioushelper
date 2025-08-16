@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -13,7 +14,13 @@ public class UpdateHook:Component{
   public bool updatedThisFrame = false;
   public static float TimeSinceTransMs=0;
   static List<Action> afterUpd = new();
-  static public void AddAfterUpdate(Action action)=>afterUpd.Add(action);
+  static bool updateBefore;
+  static bool updateAfter;
+  static public void AddAfterUpdate(Action action,bool causesEntUpd=true,bool needsEntUpd=false){
+    afterUpd.Add(action);
+    updateBefore|=needsEntUpd;
+    updateAfter|=causesEntUpd;
+  }
   public UpdateHook(Action before=null, Action after=null):base(true,false){
     beforeAction=before;afterAction =after;
     hooks.enable();
@@ -63,9 +70,11 @@ public class UpdateHook:Component{
       if(u.afterAction!=null)u.afterAction();
     }
     if(afterUpd.Count>0){
+      if(updateBefore)self.Entities.UpdateLists();
       foreach(var a in afterUpd) a();
       afterUpd.Clear();
-      self.Entities.UpdateLists();
+      if(updateAfter)self.Entities.UpdateLists();
+      updateBefore = (updateAfter = false);
     }
   }
   static PersistantAction clear;

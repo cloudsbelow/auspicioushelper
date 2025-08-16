@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Registry;
@@ -324,12 +325,22 @@ public class Template:Entity, ITemplateChild{
     foreach(ITemplateChild c in children){
       c.parentChangeStat(vis,col,act);
     }
+    if(act==-1) ownLiftspeed = Vector2.Zero;
+  }
+  bool destroying;
+  public virtual void emancipate(){
+    if(parent is { } p && !p.destroying){
+      parent.children.Remove(this);
+      parent = null;
+    }
   }
   public virtual void destroy(bool particles){
     destroyChildren(particles);
+    emancipate();
     RemoveSelf();
   }
   public void destroyChildren(bool particles = true){
+    destroying=true;
     foreach(ITemplateChild c in children){
       c.destroy(particles);
     }
@@ -337,6 +348,7 @@ public class Template:Entity, ITemplateChild{
     fgt = null;
     basicents = null;
     expanded=false;
+    destroying = false;
   }
   public virtual void remake(){
     makeChildren(Scene);
@@ -396,7 +408,9 @@ public class Template:Entity, ITemplateChild{
     if(parent != null) return parent.GetFromTree<T>();
     return default(T);
   }
+  public virtual void RegisterEnts(List<Entity> l){}
   public virtual void OnNewEnts(List<Entity> l){
+    RegisterEnts(l);
     parent?.OnNewEnts(l);
   }
   public void AddNewEnts(List<Entity> l){
