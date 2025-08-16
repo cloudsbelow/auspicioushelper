@@ -10,7 +10,7 @@ using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 
-namespace Celeste.mod.auspicioushelper;
+namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateBelt")]
 public class ConveyerTemplate:TemplateInstanceable{

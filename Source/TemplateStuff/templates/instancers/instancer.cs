@@ -8,6 +8,7 @@ using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 
+namespace Celeste.Mod.auspicioushelper;
 public class TemplateInstanceable:Template{
   public TemplateInstanceable(EntityData data, Vector2 pos, int depthoffset):base(data,pos,depthoffset){}
   public int numInstances {get; private set;} = 0;

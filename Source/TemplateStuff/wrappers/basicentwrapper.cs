@@ -48,6 +48,7 @@ public class BasicMultient:ITemplateChild{
   int depthoffset;
   Scene Scene = null;
   Vector2 lloc;
+  static Util.FieldHelper<List<Solid>> decalSolids= new(typeof(Decal),"solids",false);
   public BasicMultient(Template t){
     parent = t;
     depthoffset = t.depthoffset;
@@ -57,6 +58,10 @@ public class BasicMultient:ITemplateChild{
     ents.Add(new EntEnt(e,offset));
     e.Depth+=depthoffset;
     if(e.Scene == null && this.Scene != null) Scene.Add(e);
+    if(e is Decal d){
+      hooks.enable();
+      d.Add(new ChildMarker(parent));
+    }
   }
   public void relposTo(Vector2 loc, Vector2 liftspeed){
     Vector2 nloc = loc.Round();
@@ -102,4 +107,17 @@ public class BasicMultient:ITemplateChild{
     }
     ents.Clear();
   }
+  static void Hook(On.Celeste.Decal.orig_Added orig, Decal d, Scene s){
+    orig(d,s);
+    if(d.Get<ChildMarker>()?.parent is Template t){
+      if(decalSolids.get(d) is {} l)foreach(Solid solid in l){
+        t.addEnt(new BasicPlatform(solid,t,solid.Position-t.virtLoc));
+      }
+    }
+  }
+  static HookManager hooks = new(()=>{
+    On.Celeste.Decal.Added+=Hook;
+  },()=>{
+    On.Celeste.Decal.Added-=Hook;
+  },auspicioushelperModule.OnEnterMap);
 }

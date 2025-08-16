@@ -231,7 +231,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     Vector2 v = leniency==0? TestMove(q,s,amount,new Vector2(1,0)) : TestMoveLeniency(q,s,amount,new Vector2(1,0),leniency,new Vector2(0,1));
     if(v!=Vector2.Zero){
       Position+=v;
-      childRelposTo(virtLoc,gatheredLiftspeed);
+      childRelposSafe();
       s.ApplyShift(v);
       if(q.breakable!=null) s.BreakStuff(q.breakable,Util.getCollisionDir(v));
       return false;
@@ -243,7 +243,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     Vector2 v = leniency==0? TestMove(q,s,amount,new Vector2(0,1)) : TestMoveLeniency(q,s,amount,new Vector2(0,1),leniency,new Vector2(1,0));
     if(v!=Vector2.Zero){
       Position+=v;
-      childRelposTo(virtLoc,gatheredLiftspeed);
+      childRelposSafe();
       s.ApplyShift(v);
       if(q.breakable!=null) s.BreakStuff(q.breakable,Util.getCollisionDir(v));
       return false;
