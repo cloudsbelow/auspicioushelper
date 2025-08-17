@@ -56,6 +56,7 @@ public class OverrideVisualComponent:Component, IMaterialObject{
     return -1;
   }
   public void AddToOverride(VisualOverrideDescr v){
+    if(Entity is Template) return;
     if(GetOverriderIdx(v.o)!=-1) throw new Exception("Adding to overrider when alr inside");
     int idx = 0;
     bool stolen = false;
