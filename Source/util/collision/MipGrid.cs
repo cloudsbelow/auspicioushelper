@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks.Dataflow;
+using IL.Celeste.Mod.UI;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using MonoMod.Utils;
 
@@ -15,7 +17,6 @@ public class MipGrid{
   //well if these are ever not a power of two it will be even worse. just leave them at 8.
   const int blockw = 8;
   const int blockh = 8;
-  const int bitstride = 8;
   public class Layer{
     ulong[] d;
     public int width;
@@ -26,20 +27,25 @@ public class MipGrid{
       height = data.Count/width;
       if(data.Count!=width*height) throw new Exception("mystery!");
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong getBlock(int x, int y){
       if(x<0 || y<0 || x>=width || y>=height) return 0;
       return d[x+y*width];
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong getBlockFast(int x, int y){
       return d[x+y*width];
     }
     public ulong getArea(int x, int y){
-      int xb = x/blockw;
-      if(x<0 && (x&(blockw-1))!=0) xb--;
-      int yb = y/blockh;
-      if(y<0 && (y&(blockh-1))!=0) yb--;
+      // int xf = (x%blockw+blockw)%blockw;
+      // int yf = (y%blockh+blockh)%blockh;
+      // int xb = (x-xf)/blockw;
+      // int yb = (y-yf)/blockh;
+      if(x<=-blockw||y<=-blockh) return 0;
+      int xb = (x+blockw)/blockw-1;
+      int yb = (y+blockh)/blockh-1;
       int xf = x-xb*blockw;
-      int yf = y-yb*blockw;
+      int yf = y-yb*blockh;
       //DebugConsole.Write($"{x},{y}, {xb},{yb}  {xf},{yf}");
       ulong tl, tr, bl, br;
       if(xb>=0 && yb>=0 && xb<width-1 && yb<height-1){
@@ -75,12 +81,15 @@ public class MipGrid{
       ulong b = smearH?getArea(x,y+1)|getArea(x+1,y+1):getArea(x,y+1);
       return a|b;
     }
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public ulong getAreaSmearedFast(int x, int y, bool smearH, bool smearV){
-      int xf = (x%blockw+blockw)%blockw;
-      int yf = (y%blockh+blockh)%blockh;
-      int xb = (x-xf)/blockw;
-      int yb = (y-yf)/blockh;
-      ulong tl,tr,bl,br;
+      if(x<=-blockw||y<=-blockh) return 0;
+      int xb = (x+blockw)/blockw-1;
+      int yb = (y+blockh)/blockh-1;
+      int xf = x-xb*blockw;
+      int yf = y-yb*blockh;
+      //DebugConsole.Write($"{x},{y}, {xb},{yb}  {xf},{yf}");
+      ulong tl, tr, bl, br;
       if(xb>=0 && yb>=0 && xb<width-1 && yb<height-1){
         tl = getBlockFast(xb,yb);
         tr = getBlockFast(xb+1,yb);
@@ -100,12 +109,15 @@ public class MipGrid{
       int yfi = blockh-yf;
       int xfi = blockw-xf;
       if(smearV){
-        em=(byte)((bl>>(yf*8+xf))|(br>>(yf*8)<<xfi));
+        //this is fine because yf,xf are less than 8
+        em=(byte)((((bl&leftmask)>>(yf*8+xf))|((br&rightmask)>>(yf*8)<<xfi)) & 0xff);
       }
       res|=(tl&leftmask)>>(yf*8+xf);
       res|=(tr&rightmask)>>(yf*8)<<xfi;
+      //the branch is needed because shifting loops
       if(yf!=0){
         res|=(bl&leftmask)<<(yfi*8)>>xf;
+        //the branch isn't needed because rightmask will be 0
         res|=(br&rightmask)<<(yfi*8+xfi);
       }
       if(smearH) {
@@ -159,6 +171,9 @@ public class MipGrid{
     width = map.Columns;
     height = map.Rows;
     buildMips();
+  }
+  public MipGrid(){
+    
   }
   public MipGrid(Grid g, int x1, int y1, int x2, int y2){
     if(x1>x2 || y1>y2) throw new Exception("lol um?");
