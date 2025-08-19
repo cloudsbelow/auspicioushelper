@@ -9,7 +9,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 public class PortalIntersectInfoH{
-  public Actor a;
+  public Entity a;
   public PortalOthersider m;
   public PortalGateH p;
   public bool ce; //true if real thing is on node side
@@ -18,7 +18,7 @@ public class PortalIntersectInfoH{
   public bool end;
   public bool rectify;
   public bool swapped = false;
-  public PortalIntersectInfoH(bool end, PortalGateH p, Actor a){
+  public PortalIntersectInfoH(bool end, PortalGateH p, Entity a){
     this.p=p;
     this.a=a;
     ce = end;
@@ -46,9 +46,14 @@ public class PortalIntersectInfoH{
     m.Center = getOthersiderPos();
     ce = !ce;
     DebugConsole.Write("swap "+a.Position.ToString()+" "+m.Position.ToString());
+    Vector2? camoffset=null;
+    if(a.Scene is Level lev && p.instantCamera && a is Player pla){
+      camoffset = lev.Camera.Position-pla.Position;
+    }
     Vector2 temp = a.Center;
     a.Center=m.Center;
     m.Center=temp;
+    Vector2 delta = a.Center-temp;
     PortalGateH.evalEnt(a);
     facesign = ce?p.n2dir:p.n1dir;
     //PortalGateH.collideLim[m]=p.getSidedCollidelim(!ce);
@@ -58,6 +63,7 @@ public class PortalIntersectInfoH{
       if(pl.StateMachine.state == Player.StDash && p.flipped) pl.DashDir.X*=-1;
       if(p.flipped)pl.LiftSpeed=new Vector2(-pl.LiftSpeed.X,pl.LiftSpeed.Y);
       Level l = pl.Scene as Level;
+      if(l==null) return;
       if(!((IntRect)l.Bounds).CollidePoint(pl.Position)){
         if(l.Session.MapData.GetAt(pl.Position) is LevelData ld){
           l.NextTransitionDuration=0;
@@ -66,6 +72,8 @@ public class PortalIntersectInfoH{
           l.EnforceBounds(pl);
         }
       }
+      if(camoffset is Vector2 ncam) l.Camera.Position = pl.Position+ncam; 
+      pl.Hair.MoveHairBy(delta);
     } else if(a is Glider g){
       g.Speed = calcspeed(g.Speed,ce);
     } else {
@@ -99,12 +107,6 @@ public class PortalIntersectInfoH{
     }
     //if(end)DebugConsole.Write("ended");
     return end;
-  }
-  public bool applyDummyPush(Vector2 amount){
-    if(!m.propegateMove) return false;
-    bool hblock = amount.X==0?false:a.MoveHExact((int)amount.X);
-    
-    return true;
   }
   public bool getAbsoluteRects(Hitbox h, out FloatRect r1, out FloatRect r2){
     Vector2 ipos = ce?p.npos:p.Position;

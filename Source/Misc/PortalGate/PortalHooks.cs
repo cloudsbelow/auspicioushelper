@@ -47,7 +47,7 @@ public static class portalHooks{
   }*/
 
   private static bool HitboxCollidePoint(On.Monocle.Hitbox.orig_Collide_Vector2 orig, Hitbox h, Vector2 p){
-    if(PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
+    if(h.Entity!=null && PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
       info.getAbsoluteRects(h, out var r1, out var r2);
       return r1.CollidePoint(p) || r2.CollidePoint(p);
     } else {
@@ -55,7 +55,7 @@ public static class portalHooks{
     }
   }
   private static bool HitboxCollideLine(On.Monocle.Hitbox.orig_Collide_Vector2_Vector2 orig, Hitbox h, Vector2 a, Vector2 b){
-    if(PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
+    if(h.Entity!=null && PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
       info.getAbsoluteRects(h, out var r1, out var r2);
       return r1.CollideLine(a,b) || r2.CollideLine(a,b);
     } else {
@@ -64,7 +64,7 @@ public static class portalHooks{
   }
 
   private static bool HitboxCollideCircle(On.Monocle.Hitbox.orig_Collide_Circle orig, Hitbox h, Circle c){
-    if(PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
+    if(h.Entity!=null && PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
       info.getAbsoluteRects(h, out var r1, out var r2);
       return r1.CollideCircle(c.Position,c.Radius) || r2.CollideCircle(c.Position,c.Radius);
     } else {
@@ -73,7 +73,7 @@ public static class portalHooks{
   }
   private static bool HitboxIsect(On.Monocle.Hitbox.orig_Intersects_float_float_float_float orig, Hitbox h, float x, float y, float w, float v){
     //DebugConsole.Write("Hi ICT");
-    if(PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
+    if(h.Entity!=null && PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
       info.getAbsoluteRects(h, out var r1, out var r2);
       return r1.CollideExRect(x,y,w,v) || r2.CollideExRect(x,y,w,v);
     } else {
@@ -82,7 +82,7 @@ public static class portalHooks{
   }
   private static bool HitboxCollideRect(On.Monocle.Hitbox.orig_Collide_Rectangle orig, Hitbox h, Rectangle r){
     //DebugConsole.Write("Hi RHB");
-    if(PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
+    if(h.Entity!=null && PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
       info.getAbsoluteRects(h, out var r1, out var r2);
       return r1.CollideExRect(r.X,r.Y,r.Width,r.Height) || r2.CollideExRect(r.X,r.Y,r.Width,r.Height);
     } else {
@@ -93,7 +93,7 @@ public static class portalHooks{
     //We still need to test o - note that unwrapping h is a must
     //DebugConsole.Write("Hi IHB");
     if(PortalGateH.intersections.Count == 0) return orig(h,o);
-    if(PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
+    if(h.Entity!=null && PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
       info.getAbsoluteRects(h, out var r1, out var r2);
       return o.Intersects(r1.x,r1.y,r1.w,r1.h) || o.Intersects(r2.x,r2.y,r2.w,r2.h);
     } else {
@@ -104,7 +104,7 @@ public static class portalHooks{
 
   }*/
   private static bool HitboxCollideGrid(On.Monocle.Hitbox.orig_Collide_Grid orig, Hitbox h, Grid g){
-    if(PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
+    if(h.Entity!=null && PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
       info.getAbsoluteRects(h, out var r1, out var r2);
       //DebugConsole.Write(r1.ToString()+" "+r2.ToString());
       return g.Collide(r1.munane()) || g.Collide(r2.munane());
@@ -113,7 +113,7 @@ public static class portalHooks{
     }
   }
   private static bool GridCollideHitbox(On.Monocle.Grid.orig_Collide_Hitbox orig, Grid g, Hitbox h){
-    if(PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
+    if(h.Entity!=null && PortalGateH.intersections.TryGetValue(h.Entity, out var info)){
       info.getAbsoluteRects(h, out var r1, out var r2);
       return g.Collide(r1.munane()) || g.Collide(r2.munane());
     } else {
@@ -151,6 +151,8 @@ public static class portalHooks{
     On.Celeste.Actor.MoveVExact+=PortalGateH.ActorMoveVHook;
     On.Celeste.Actor.NaiveMove+=PortalGateH.ActorNaiveMove;
     On.Celeste.Actor.Update+=PortalGateH.ActorUpdateHook;
+    On.Celeste.Platform.MoveHExactCollideSolids += PortalGateH.BlockMoveHHook;
+    On.Celeste.Platform.MoveVExactCollideSolids += PortalGateH.BlockMoveVHook;
   }
   
   public static void unsetupHooks(){
@@ -167,6 +169,8 @@ public static class portalHooks{
     On.Celeste.Actor.MoveVExact-=PortalGateH.ActorMoveVHook;
     On.Celeste.Actor.NaiveMove-=PortalGateH.ActorNaiveMove;
     On.Celeste.Actor.Update-=PortalGateH.ActorUpdateHook;
+    On.Celeste.Platform.MoveHExactCollideSolids -= PortalGateH.BlockMoveHHook;
+    On.Celeste.Platform.MoveVExactCollideSolids -= PortalGateH.BlockMoveVHook;
     //absoluteLeftHook.Dispose();
     //absoluteRightHook.Dispose();
     //boundsHook.Dispose();

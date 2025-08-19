@@ -56,7 +56,10 @@ public class OverrideVisualComponent:Component, IMaterialObject{
     return -1;
   }
   public void AddToOverride(VisualOverrideDescr v){
-    if(GetOverriderIdx(v.o)!=-1) throw new Exception("Adding to overrider when alr inside");
+    if(GetOverriderIdx(v.o)!=-1){
+      SetStealUse(v.o,v.steal,v.use);
+      return;
+    }
     int idx = 0;
     bool stolen = false;
     while(idx<parents.Count && parents[idx].order<v.order){

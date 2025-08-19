@@ -16,7 +16,7 @@ public class PortalOthersider:Entity{
   
 
   public PortalOthersider(Vector2 pos, PortalIntersectInfoH h):base(pos){
-    Actor copying = h.a;
+    Entity copying = h.a;
     Depth=copying.Depth;
     Collidable=false;
     Collider chit = copying.Collider;
@@ -30,38 +30,45 @@ public class PortalOthersider:Entity{
     Center = info.getOthersiderPos();
     if(info.end)return;
     var delta = -info.a.Position+Position;
-    Vector2 mulMove = new Vector2(mulMoveH,1);
-    if(info.a is Player p){
-      PlayerHair h = p.Get<PlayerHair>();
-      if(info.p.flipped) p.Facing = (Facings)(0 - p.Facing);
-      var oldpos = p.Position;
-      p.Position+=delta;
-      for(int i=0; i<h.Sprite.HairCount; i++){
-        h.Nodes[i]=(h.Nodes[i]-oldpos)*mulMove+p.Position;
+    if(info.a is Actor){
+      Vector2 mulMove = new Vector2(mulMoveH,1);
+      if(info.a is Player p){
+        PlayerHair h = p.Get<PlayerHair>();
+        if(info.p.flipped) p.Facing = (Facings)(0 - p.Facing);
+        var oldpos = p.Position;
+        p.Position+=delta;
+        for(int i=0; i<h.Sprite.HairCount; i++){
+          h.Nodes[i]=(h.Nodes[i]-oldpos)*mulMove+p.Position;
+        }
+        try{
+          p.Render();
+        }catch(Exception ex){
+          DebugConsole.Write("Error in rendering otherside player");
+          DebugConsole.Write(ex.ToString());
+        }
+        for(int i=0; i<h.Sprite.HairCount; i++){
+          h.Nodes[i]=(h.Nodes[i]-p.Position)*mulMove+oldpos;
+        }
+        if(info.p.flipped) p.Facing = (Facings)(0 - p.Facing);
+        p.Position=oldpos;
+        return;
       }
-      try{
-        p.Render();
-      }catch(Exception ex){
-        DebugConsole.Write("Error in rendering otherside player");
-        DebugConsole.Write(ex.ToString());
-      }
-      for(int i=0; i<h.Sprite.HairCount; i++){
-        h.Nodes[i]=(h.Nodes[i]-p.Position)*mulMove+oldpos;
-      }
-      if(info.p.flipped) p.Facing = (Facings)(0 - p.Facing);
-      p.Position=oldpos;
-      return;
-    }
 
-    foreach(Component c in info.a.Components){
-      if(c is Sprite s){
-        var oldpos = s.RenderPosition;
-        s.RenderPosition = oldpos+delta;
-        s.Scale.X*=mulMoveH;
-        s.Render();
-        s.Scale.X*=mulMoveH;
-        s.RenderPosition = oldpos;
+      foreach(Component c in info.a.Components){
+        if(c is Sprite s){
+          var oldpos = s.RenderPosition;
+          s.RenderPosition = oldpos+delta;
+          s.Scale.X*=mulMoveH;
+          s.Render();
+          s.Scale.X*=mulMoveH;
+          s.RenderPosition = oldpos;
+        }
       }
+    } else {
+      Vector2 pos = info.a.Position;
+      info.a.Position = this.Position;
+      info.a.Render();
+      info.a.Position = pos;
     }
     Position=unrendpos;
   }

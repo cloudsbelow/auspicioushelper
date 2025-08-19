@@ -27,9 +27,10 @@ def gaussianDs(image, fac, sigma = None):
   filtered_freq = freq * lp
   return np.fft.ifft2(np.fft.ifftshift(filtered_freq)).real[fac//2::fac,fac//2::fac]
 
-basepath = 'Tools/img/cloudsbelow-t1r2'
+basepath = 'Tools/img/ohno'
 
 test = iio.imread(basepath+".png").astype(np.float32)/255
-
-plt.imsave(basepath+"_out.png", np.ascontiguousarray(np.clip(gaussianDs(test,4),0,1)))
+out = np.clip(gaussianDs(test,4),0,1)[5:-9,7:-7]
+print(test.shape, out.shape)
+plt.imsave(basepath+"_out.png", np.ascontiguousarray(out))
 plt.show()

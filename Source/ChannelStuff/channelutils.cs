@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Celeste.Mod.auspicioushelper;
 using Monocle;
@@ -172,6 +173,7 @@ public static class ChannelState{
     watching.Clear();
     clearModifiers();
   }
+  [MethodImpl(MethodImplOptions.NoInlining)]
   static int addModifier(string ch){
     int idx=0;
     for(;idx<ch.Length;idx++) if(ch[idx]=='[')break;
@@ -246,7 +248,7 @@ public static class ChannelState{
     if(channelStates.ContainsKey('$'+f)) SetChannel('$'+f,v?1:0,true);
   }
   static bool Hook(On.Celeste.Session.orig_GetFlag orig, Session s, string f){
-    if(f.Length==0 || f[0]!='@' || s.Flags.Contains(f)) return orig(s,f);
+    if(string.IsNullOrEmpty(f) || f[0]!='@' || (s?.Flags?.Contains(f)??false)) return orig(s,f);
     return readChannel(f.Substring(1))!=0;
   }
   static void Hook(On.Celeste.Session.orig_SetCounter orig, Session s, string f, int n){
@@ -254,7 +256,7 @@ public static class ChannelState{
     if(channelStates.ContainsKey('#'+f)) SetChannel('#'+f,n,true);
   }
   static int Hook(On.Celeste.Session.orig_GetCounter orig, Session s, string f){
-    if(f.Length==0 || f[0]!='@') return orig(s,f);
+    if(string.IsNullOrEmpty(f) || f[0]!='@') return orig(s,f);
     foreach(var c in s.Counters) if(c.Key==f) return c.Value;
     return readChannel(f.Substring(1));
   }
