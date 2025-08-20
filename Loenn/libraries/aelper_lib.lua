@@ -268,25 +268,28 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
     for tx = 1, data[1].width/8 do
         for ty = 1, data[1].height/8 do
             if (tx+data[1].x/8<1 or ty+data[1].y/8<1 or tx+data[1].x/8>data[2].width/8 or ty+data[1].y/8>data[2].height/8) == false then
-                local tile = data[2].tilesFg.matrix:getInbounds(tx+data[1].x/8, ty+data[1].y/8)
+                local tile = data[2].tilesFg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
                 if tile ~= "0" then
                     local quads, sprites
                     pcall(function()
-                        quads, sprites = autotiler.getQuads(tx+data[1].x/8, ty+data[1].y/8, data[2].tilesFg.matrix,
+                        quads, sprites = autotiler.getQuads(tx+math.floor(data[1].x/8), math.floor(ty+data[1].y/8), data[2].tilesFg.matrix,
                             celesteRender.tilesMetaFg, "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
                         -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
                     end)
                     
                     if quads == nil then
                         table.insert(toDraw, {
-                            func=drawableRectangle.fromRectangle("bordered", (tx-1)*8+x+offset[1]+0.5,(ty-1)*8+y+offset[2]+0.5, 7,7,
+                            func=drawableRectangle.fromRectangle("bordered", 
+                                math.floor(tx-1+offset[1]/8)*8+x+0.5, math.floor(ty-1+offset[2]/8)*8+y+0.5, 
+                                7,7,
                                 {0.8,0.8,0.8},{1,1,1}),
                             depth=depths.fgTerrain})
                     else
                         local quadCount = #quads
     
                         if quadCount > 0 then
-                            local randQuad = quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesFg"):getInbounds(tx+data[1].x/8, ty+data[1].y/8), quadCount)]
+                            local randQuad = quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesFg")
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)), quadCount)]
                             local texture = celesteRender.tilesMetaFg[tile].path or " "
                             
                             table.insert(toDraw, {
@@ -295,7 +298,7 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                                         love.graphics.draw(atlases.gameplay[texture].image, 
                                             celesteRender.getOrCacheTileSpriteQuad(celesteRender.tilesSpriteMetaCache, 
                                                 tile, texture, randQuad, true),  --true is if this tileset is fg tiles
-                                            (tx-1)*8+x+offset[1]+0.5,(ty-1)*8+y+offset[2]+0.5)
+                                                math.floor(tx-1+offset[1]/8)*8+x+0.5, math.floor(ty-1+offset[2]/8)*8+y+0.5)
                                     end
                                 },
                                 depth=depths.fgTerrain
@@ -303,25 +306,28 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                         end
                     end
                 end
-                local tile = data[2].tilesBg.matrix:getInbounds(tx+data[1].x/8, ty+data[1].y/8)
+                local tile = data[2].tilesBg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
                 if tile ~= "0" then
                     local quads, sprites
                     pcall(function()
-                        local quads, sprites = autotiler.getQuads(tx+data[1].x/8, ty+data[1].y/8, data[2].tilesBg.matrix,
+                        local quads, sprites = autotiler.getQuads(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8), data[2].tilesBg.matrix,
                             celesteRender.tilesMetaBg, "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
                         -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
                     end)
                     
                     if quads == nil then
                         table.insert(toDraw, {
-                            func=drawableRectangle.fromRectangle("bordered", (tx-1)*8+x+offset[1]+0.5,(ty-1)*8+y+offset[2]+0.5, 7,7,
-                                {0.5,0.5,0.5},{0.6,0.6,0.6}),
-                            depth=depths.bgTerrain})
+                            func=drawableRectangle.fromRectangle("bordered", 
+                                math.floor(tx-1+offset[1]/8)*8+x+0.5, math.floor(ty-1+offset[2]/8)*8+y+0.5, 
+                                7,7,
+                                {0.8,0.8,0.8},{1,1,1}),
+                            depth=depths.fgTerrain})
                     else
                         local quadCount = #quads
     
                         if quadCount > 0 then
-                            local randQuad = quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesBg"):getInbounds(tx+data[1].x/8, ty+data[1].y/8), quadCount)]
+                            local randQuad = quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesBg")
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)), quadCount)]
                             local texture = celesteRender.tilesMetaBg[tile].path or " "
                             
                             table.insert(toDraw, {
@@ -330,7 +336,7 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                                         love.graphics.draw(atlases.gameplay[texture].image, 
                                             celesteRender.getOrCacheTileSpriteQuad(celesteRender.tilesSpriteMetaCache, 
                                                 tile, texture, randQuad, false),  --true is if this tileset is fg tiles
-                                            (tx-1)*8+x+offset[1]+0.5,(ty-1)*8+y+offset[2]+0.5)
+                                                math.floor(tx-1+offset[1]/8)*8+x+0.5, math.floor(ty-1+offset[2]/8)*8+y+0.5)
                                     end
                                 },
                                 depth=depths.bgTerrain
