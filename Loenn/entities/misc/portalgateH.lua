@@ -19,6 +19,7 @@ entity.placements = {
       color_hex="ffffffaa",
       attached=false,
       giveRCB = true,
+      instant_camera =false,
       depth = -9998,
     }
   }

@@ -188,7 +188,7 @@ public class PortalGateH:Entity{
   public bool giveRCB;
   public Vector2 drawoffset1 =Vector2.Zero;
   public Vector2 drawoffset2 =Vector2.Zero;
-  public bool instantCamera = true;
+  public bool instantCamera = false;
   
   public PortalGateH(EntityData d, Vector2 offset):base(d.Position+offset){
     portalHooks.hooks.enable();
@@ -197,6 +197,7 @@ public class PortalGateH:Entity{
     npos=d.Nodes[0]+offset;
     n1dir = d.Bool("right_facing_f0",false);
     n2dir = d.Bool("right_facing_f1",true);
+    instantCamera = d.Bool("instant_camera",false);
     color = Util.hexToColor(d.Attr("color_hex","#FFFA"));
     //DebugConsole.Write(color.ToString()+" "+x1.ToString()+" "+x2.ToString());
     flipped = n1dir==n2dir;

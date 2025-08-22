@@ -127,6 +127,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   }
   public override void addTo(Scene scene){
     //base.addTo(scene);
+    if(parent!=null)scene.Add(this);
     setTemplate(scene:scene);
     if(channel != "")CassetteMaterialLayer.layers.TryGetValue(channel,out layer);
     if(enableUnrooted) make(scene);
@@ -151,7 +152,6 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
         if(!enableUnrooted)UpdateHook.AddAfterUpdate(()=>make(Scene));
       },
       SolidChecker=(Solid s)=>{
-        //DebugConsole.Write(s.ToString());
         bool check = !doNot.Contains(s) && s.CollidePoint(Position);
         if(!check) return false;
         if(!s.Collidable){

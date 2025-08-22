@@ -16,11 +16,13 @@ public class UpdateHook:Component{
   static List<Action> afterUpd = new();
   static bool updateBefore;
   static bool updateAfter;
+  static bool updateAny;
   static public void AddAfterUpdate(Action action,bool causesEntUpd=true,bool needsEntUpd=false){
     afterUpd.Add(action);
     updateBefore|=needsEntUpd;
     updateAfter|=causesEntUpd;
   }
+  static public void EnsureUpdateAny()=>updateAny = true;
   public UpdateHook(Action before=null, Action after=null):base(true,false){
     beforeAction=before;afterAction =after;
     hooks.enable();
@@ -69,12 +71,12 @@ public class UpdateHook:Component{
     foreach(UpdateHook u in self.Tracker.GetComponents<UpdateHook>()){
       if(u.afterAction!=null)u.afterAction();
     }
-    if(afterUpd.Count>0){
+    if(afterUpd.Count>0 || updateBefore || updateAfter || updateAny){
       if(updateBefore)self.Entities.UpdateLists();
       foreach(var a in afterUpd) a();
       afterUpd.Clear();
-      if(updateAfter)self.Entities.UpdateLists();
-      updateBefore = (updateAfter = false);
+      if(updateAfter || (updateAny && !updateBefore))self.Entities.UpdateLists();
+      updateBefore = (updateAny = (updateAfter = false));
     }
   }
   static PersistantAction clear;
