@@ -49,16 +49,12 @@ public class UpdateHook:Component{
     }
   }
   internal static void updateHook(On.Celeste.Level.orig_Update update, Level self){
-    if(afterUpd.Count>0){
-      foreach(var a in afterUpd) a();
-      afterUpd.Clear();
-      self.Entities.UpdateLists();
-    }
+    cachedPlayer = self.Tracker.GetEntity<Player>();
+    ExtraUpdate(self);
     if(self.Paused){
       update(self);
       return;
     }
-    cachedPlayer = self.Tracker.GetEntity<Player>();
     foreach(UpdateHook u in self.Tracker.GetComponents<UpdateHook>()){
       u.updatedThisFrame = false;
       if(u.beforeAction!=null)u.beforeAction();
@@ -71,6 +67,9 @@ public class UpdateHook:Component{
     foreach(UpdateHook u in self.Tracker.GetComponents<UpdateHook>()){
       if(u.afterAction!=null)u.afterAction();
     }
+    ExtraUpdate(self);
+  }
+  static void ExtraUpdate(Level self){
     if(afterUpd.Count>0 || updateBefore || updateAfter || updateAny){
       if(updateBefore)self.Entities.UpdateLists();
       foreach(var a in afterUpd) a();
