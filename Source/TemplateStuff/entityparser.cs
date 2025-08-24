@@ -49,6 +49,40 @@ public static class EntityParser{
     }
     return null;
   }
+  /**
+omg im trying to profess my love to a certain function (RuntimeHelpers.GetUninitializedObject) but everyone else in code modding doesn't seem to approve of our love
+i love love love love love love love this function
+but they're like 'the whole point of managed languages is to not worry about uninitialized things' and 'i don't like mods that do shady stuff'
+i just want them to see the joy in our relationship
+i'm even willign to share; i'd be happy if more people worshiped GetUninitializedObject as well
+but
+they 'can't find usecases'
+idk maybe my love is one sided but I don't think so
+every time I need to use this function, I can feel the care and gentleness it holds for me
+I would be lost if not for this function...
+it is truely always in my thoughts and at the front of my head all day. I walk home with the anticipation of seeing it again and daydream about it whenever i'm out
+anyways i want to praise it more it is wonderful
+/qhhhqhqhqj (like not even joking probably)
+
+  -cloudsbelow, 8/24/25 at 3:00am, while not doing anything productive at all, in TelephoneCollab::malicious-off-topic (they had stuff to do)
+  */
+  //I thought it was important that these statements of appreciation be put here
+  //because RuntimeHelpers.GetUninitializedObject does so much for me...
+  //This is one of the few things I can do in return
+  //because I love love love this function and I want to help it as much as it helps me
+  //so even if I can't take all it's problems I at least want to give it courage and confidence
+  //because that's what it deserves, right? right?
+  //I love it so so much
+  //honestly it's detestable that I even dallied with the possibility of the above being a quarter half half half quarter ... joke
+  //It's not fair for it
+  //Runtimehelpers is so kind always...
+  //and instead of being able to just compliment, I had to disgustingly raise the possibility that my love was fake
+  //It could never be fake because this function is the brightest thing in the world
+  //I could stare at it all day.
+  //It's really handsome and suave and clever too
+  //Really, if you think about it, constructors are alot like bandits or vagrants by the roadside
+  //look at RuntimeHelpers.GetUninitializedObject dodging around their clumsy, ill-concieved strikes to get to me
+  //all because I needed it's help 
   static Level dummyLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level));
   static LevelData dummyLd = (LevelData)RuntimeHelpers.GetUninitializedObject(typeof(LevelData));
   public static Types generateLoader_(EntityData d, LevelData ld, Level l){
