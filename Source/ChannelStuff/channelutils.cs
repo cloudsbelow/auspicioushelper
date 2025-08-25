@@ -88,20 +88,33 @@ public static class ChannelState{
   class ModifierDesc{
     public string outname;
     List<Modifier> ops = new List<Modifier>();
-    public ModifierDesc(string nch){
-      outname = nch;
-      int idx=0;
-      for(;idx<nch.Length;idx++) if(nch[idx]=='[')break;
-      string stuff = nch.Substring(idx+1, nch.Length-idx-2);
-      foreach(string sub in stuff.Split(",")){
-        var m = new Modifier(sub, out var success);
-        if(success)ops.Add(m);
+    public int outval;
+    public ModifierDesc(string ch){
+      outname = ch;
+      for(int i=ch.Length-1; i>=0; i--) if(ch[i]=='['){
+        string b = ch.Substring(0,i);
+        string stuff = ch.Substring(i+1,ch.Length-i-2);
+        foreach(string sub in stuff.Split(",")){
+          var m = new Modifier(sub, out var success);
+          if(success)ops.Add(m);
+        }
+        if(!deps.TryGetValue(b, out var dep)) deps.Add(b,dep = new());
+        dep.mods.Add(this);
+        SetChannelRaw(outname, apply(readChannel(b)));
+        return;
       }
+      DebugConsole.WriteFailure($"Channel {ch} ends in ] but contains no [",true);
     }
     public int apply(int val){
       foreach(var op in ops) val = op.apply(val);
-      return val;
+      return outval = val;
     }
+    public void Update(int nval){
+      int oldval = outval;
+      outval = apply(nval);
+      if(oldval!=outval)SetChannelRaw(outname,outval);
+    }
+    public void Remove()=>ChannelState.ForceRemove(outname);
   }
   struct CalcAccessor{
     public InlineCalc calc;
@@ -109,47 +122,71 @@ public static class ChannelState{
   }
   class InlineCalc{
     enum Ops{
-      and, or, sum
+      and, or, sum, invalid
     }
-    string to;
+    public string to;
     List<string> from = new();
     List<int> vals = new();
-    int outval;
+    public int outval;
     Func<int, int, int> pred;
     static Func<int, int, int> andPred = (a,b)=>(a!=0&&b!=0)?1:0;
     static Func<int, int, int> sumPred = (a,b)=>a+b;
     static Func<int, int, int> orPred = (a,b)=>(a!=0||b!=0)?1:0;
     int seedval;
+    static Regex termReg = new Regex(@"^[^\(]*",RegexOptions.Compiled);
     public InlineCalc(string expr){
-      string clean = new Regex(@"\s").Replace();
-      Ops op = Enum.Parse<Ops>(clean);
+      to=expr;
+      string term = termReg.Match(expr).Value;
+      if(!Enum.TryParse<Ops>(term, out var op)){
+        DebugConsole.WriteFailure($"Invalid function {op} in {expr}");
+        op = Ops.and;
+      } 
       pred = op switch {Ops.and=>andPred, Ops.or=>orPred, Ops.sum=>sumPred, _=>andPred};
       seedval = op switch {Ops.and=>1, _=>0};
-      from = Util.listparseflat(clean);
+      from = Util.listparseflat(expr.Substring(term.Length),true,false);
       int i=0;
       foreach(var ch in from){
         vals.Add(readChannel(ch));
-        if(!inlineCalcs.TryGetValue(ch, out var list)){
-          list = new();
-        }
-        list.Add(new(){calc=this,index=i++});
+        if(!deps.TryGetValue(ch, out var dep)) deps.Add(ch,dep = new());
+        dep.calcs.Add(new(){calc=this,index=i++});
       }
       outval = vals.Aggregate(seedval,pred);
-      SetChannelRaw(expr,outval);
+      SetChannelRaw(to,outval);
     }
-    public int Update(int idx, int val){
+    public void Update(int idx, int val){
       vals[idx]=val;
-      return outval = vals.Aggregate(seedval,pred);
+      int old = outval;
+      outval = vals.Aggregate(seedval,pred);
+      if(old!=outval) SetChannelRaw(to,outval);
+    }
+    public void Remove(){
+      channelStates.Remove(to);
+      foreach(var ch in from){
+        if(deps.TryGetValue(ch, out var dep)){
+          List<CalcAccessor> nlist = new();
+          foreach(var d in dep.calcs) if(d.calc!=this)nlist.Add(d);
+          dep.calcs = nlist;
+        }
+      }
+      ChannelState.ForceRemove(to);
     }
   }
 
-  static Dictionary<string, List<ModifierDesc>> modifiers = new Dictionary<string, List<ModifierDesc>>();
-  static Dictionary<string, List<CalcAccessor>> inlineCalcs = new();
+
   private static Dictionary<string, int> channelStates = new Dictionary<string, int>();
   private static Dictionary<string, List<IChannelUser>> watching = new Dictionary<string, List<IChannelUser>>();
-
+  class Deps{
+    public List<ModifierDesc> mods = new();
+    public List<CalcAccessor> calcs = new();
+    public void Update(int nstate){
+      foreach(var mod in mods) mod.Update(nstate);
+      foreach(var c in calcs) c.calc.Update(c.index,nstate);
+    }
+  }
+  private static Dictionary<string, Deps> deps = new();
 
   public static int readChannel(string ch){
+    ch=Util.removeWhitespace(ch);
     if(channelStates.TryGetValue(ch, out var v)) return v;
     else return addModifier(ch);
   }
@@ -175,28 +212,26 @@ public static class ChannelState{
     }
   }
   public static void SetChannel(string ch, int state, bool fromInterop=false){
+    ch=Util.removeWhitespace(ch);
     if(!checkClean(ch)) return;
     SetChannelRaw(ch,state);
-    if(!fromInterop){
-      if(ch.Length>0&&ch[0]=='$')(Engine.Instance.scene as Level)?.Session.SetFlag(ch.Substring(1),state!=0);
-      if(ch.Length>0&&ch[0]=='#')(Engine.Instance.scene as Level)?.Session.SetCounter(ch.Substring(1),state);
+    if(!fromInterop && ch.Length>0){
+      if(ch[0]=='$')(Engine.Instance.scene as Level)?.Session.SetFlag(ch.Substring(1),state!=0);
+      if(ch[0]=='#')(Engine.Instance.scene as Level)?.Session.SetCounter(ch.Substring(1),state);
     }
-    if(modifiers.TryGetValue(ch, out var ms)){
-      foreach(var m in ms){
-        SetChannelRaw(m.outname,m.apply(state));
-      }
-    }
+    if(deps.TryGetValue(ch, out var ms))ms.Update(state);
   }
   public static void unwatchNow(IChannelUser b){
-    if (watching.TryGetValue(b.channel, out var list)) {
+    if (watching.TryGetValue(Util.removeWhitespace(b.channel), out var list)) {
       list.Remove(b);
     }
   }
   public static int watch(IChannelUser b){
     if(b.channel == null) return 0;
-    if (!watching.TryGetValue(b.channel, out var list)) {
+    string ch = Util.removeWhitespace(b.channel);
+    if (!watching.TryGetValue(ch, out var list)) {
       list = new List<IChannelUser>();
-      watching[b.channel] = list;
+      watching[ch] = list;
     }
     list.Add(b);
     return readChannel(b.channel);
@@ -207,7 +242,7 @@ public static class ChannelState{
       if(!checkClean(pair.Key)) toRemove.Add(pair.Key);
     }
     foreach(var s in toRemove) channelStates.Remove(s);
-    modifiers.Clear();
+    deps.Clear();
   }
   public static void unwatchAll(){
     watching.Clear();
@@ -215,14 +250,10 @@ public static class ChannelState{
   }
   [MethodImpl(MethodImplOptions.NoInlining)]
   static int addModifier(string ch){
-    string clean = getClean(ch);
-    if(ch.Length!=clean.Length && ch[ch.Length-1] == ']'){
-      if(!modifiers.TryGetValue(clean,out var mods)){
-        modifiers.Add(clean, mods = new List<ModifierDesc>());
-      }
-      ModifierDesc mod = new ModifierDesc(ch);
-      mods.Add(mod);
-      return channelStates[ch] = mod.apply(readChannel(clean));
+    if(!checkClean(ch)){
+      if(ch[^1]==']') return new ModifierDesc(ch).outval;
+      if(ch[^1]==')') return new InlineCalc(ch).outval;
+      DebugConsole.WriteFailure($"{ch} contains '(' or '[' but doesn't end with one!",true);
     } else if(ch.Length>0 && (ch[0]=='$'||ch[0]=='#')){
       if(ch[0]=='#') channelStates[ch]=(Engine.Instance.scene as Level)?.Session.GetCounter(ch.Substring(1))??0;
       if(ch[0]=='$') channelStates[ch]=((Engine.Instance.scene as Level)?.Session.GetFlag(ch.Substring(1))??false)?1:0;
@@ -237,7 +268,8 @@ public static class ChannelState{
     foreach(var pair in watching){
       var newlist = new List<IChannelUser>();
       foreach(IChannelUser e in pair.Value){
-        if(e is Entity en && en.TagCheck(Tags.Persistent)){
+        Entity en = (e as Entity)??((e as ChannelTracker)?.Entity);
+        if(en!=null && (en.TagCheck(Tags.Persistent) || en.TagCheck(Tags.Global))){
           newlist.Add(e);
         }
       }
@@ -249,7 +281,11 @@ public static class ChannelState{
     }
     foreach(var ch in toRemove) watching.Remove(ch);
   }
+  public static void ForceRemove(string ch){
+
+  }
   public static void clearChannels(string prefix = ""){
+    prefix = Util.removeWhitespace(prefix);
     int idx=0;
     for(;idx<prefix.Length;idx++) if(prefix[idx]=='[')break;
     prefix = prefix.Substring(0,idx);
