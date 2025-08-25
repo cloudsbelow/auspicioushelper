@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Celeste.Mod.auspicioushelper;
@@ -102,14 +103,48 @@ public static class ChannelState{
       return val;
     }
   }
+  struct CalcAccessor{
+    public InlineCalc calc;
+    public int index;
+  }
   class InlineCalc{
-    List<string> from;
-    List<int> vals;
-
+    enum Ops{
+      and, or, sum
+    }
+    string to;
+    List<string> from = new();
+    List<int> vals = new();
+    int outval;
+    Func<int, int, int> pred;
+    static Func<int, int, int> andPred = (a,b)=>(a!=0&&b!=0)?1:0;
+    static Func<int, int, int> sumPred = (a,b)=>a+b;
+    static Func<int, int, int> orPred = (a,b)=>(a!=0||b!=0)?1:0;
+    int seedval;
+    public InlineCalc(string expr){
+      string clean = new Regex(@"\s").Replace();
+      Ops op = Enum.Parse<Ops>(clean);
+      pred = op switch {Ops.and=>andPred, Ops.or=>orPred, Ops.sum=>sumPred, _=>andPred};
+      seedval = op switch {Ops.and=>1, _=>0};
+      from = Util.listparseflat(clean);
+      int i=0;
+      foreach(var ch in from){
+        vals.Add(readChannel(ch));
+        if(!inlineCalcs.TryGetValue(ch, out var list)){
+          list = new();
+        }
+        list.Add(new(){calc=this,index=i++});
+      }
+      outval = vals.Aggregate(seedval,pred);
+      SetChannelRaw(expr,outval);
+    }
+    public int Update(int idx, int val){
+      vals[idx]=val;
+      return outval = vals.Aggregate(seedval,pred);
+    }
   }
 
   static Dictionary<string, List<ModifierDesc>> modifiers = new Dictionary<string, List<ModifierDesc>>();
-  static Dictionary<string, List<InlineCalc>> inlineCalcs = new();
+  static Dictionary<string, List<CalcAccessor>> inlineCalcs = new();
   private static Dictionary<string, int> channelStates = new Dictionary<string, int>();
   private static Dictionary<string, List<IChannelUser>> watching = new Dictionary<string, List<IChannelUser>>();
 

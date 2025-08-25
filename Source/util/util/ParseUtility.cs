@@ -28,6 +28,15 @@ public static partial class Util{
       (float)((rgba>>shift)&mask)*mult, 
       (float)(rgba&mask)*mult);
   }
+  public static string removeWhitespace(string s){
+    if(s==null) return null;
+    Span<char> buf = stackalloc char[s.Length];
+    int j=0;
+    foreach(char c in s){
+      if(!char.IsWhiteSpace(c))buf[j++]=c;
+    }
+    return new string(buf[..j]);
+  }
 
   public static int bsearchLast(float[] arr, float val){
     int left = 0; 
