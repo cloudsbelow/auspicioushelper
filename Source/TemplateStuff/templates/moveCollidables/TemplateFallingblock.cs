@@ -75,7 +75,8 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       yield return null;
       speed = Calc.Approach(speed,maxspeed,gravity*Engine.DeltaTime);
       qs = getq(falldir*speed*Engine.DeltaTime);
-      if(!qs.s.bounds.CollideFr(Util.levelBounds(Scene)) && !Util.levelBounds(Scene).CollidePoint(Position)) goto removing;
+      FloatRect lb = Util.levelBounds(Scene);
+      if(!qs.s.bounds.CollideFr(lb) && lb.y+lb.h+200<Position.Y) goto removing;
       ownLiftspeed = speed*falldir;
       bool res = falldir.X==0?
         MoveVCollide(qs,speed*Engine.DeltaTime*falldir.Y,0):

@@ -11,11 +11,11 @@ using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 public static class ChannelState{
-  enum Ops{
-    none, not, lnot, xor, and, or, add, sub, mult, div, mrecip, mod, safemod, 
-    min, max, ge, le, gt, lt, eq, ne,rshift, lshift, shiftr, shiftl
-  }
   struct Modifier{
+      enum Ops{
+      none, not, lnot, xor, and, or, add, sub, mult, div, mrecip, mod, safemod, 
+      min, max, ge, le, gt, lt, eq, ne,rshift, lshift, shiftr, shiftl
+    }
     int y;
     Ops op;
     Regex prefixSuffix = new Regex("^\\s*(-|[^-\\d]+)([-\\d]*)\\s*");
@@ -102,13 +102,33 @@ public static class ChannelState{
       return val;
     }
   }
+  class InlineCalc{
+    List<string> from;
+    List<int> vals;
+
+  }
 
   static Dictionary<string, List<ModifierDesc>> modifiers = new Dictionary<string, List<ModifierDesc>>();
+  static Dictionary<string, List<InlineCalc>> inlineCalcs = new();
   private static Dictionary<string, int> channelStates = new Dictionary<string, int>();
   private static Dictionary<string, List<IChannelUser>> watching = new Dictionary<string, List<IChannelUser>>();
+
+
   public static int readChannel(string ch){
     if(channelStates.TryGetValue(ch, out var v)) return v;
     else return addModifier(ch);
+  }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static bool checkClean(string ch){
+    int idx=0;
+    for(;idx<ch.Length;idx++) if(ch[idx]=='[') return false;
+    return true;
+  }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static string getClean(string ch){
+    int idx=0;
+    for(;idx<ch.Length;idx++) if(ch[idx]=='[')break;
+    return ch.Substring(0,idx);
   }
   static void SetChannelRaw(string ch, int state){
     if(readChannel(ch) == state) return;
@@ -120,9 +140,7 @@ public static class ChannelState{
     }
   }
   public static void SetChannel(string ch, int state, bool fromInterop=false){
-    int idx=0;
-    for(;idx<ch.Length;idx++) if(ch[idx]=='[')break;
-    if(idx!=ch.Length) return;
+    if(!checkClean(ch)) return;
     SetChannelRaw(ch,state);
     if(!fromInterop){
       if(ch.Length>0&&ch[0]=='$')(Engine.Instance.scene as Level)?.Session.SetFlag(ch.Substring(1),state!=0);
@@ -148,26 +166,13 @@ public static class ChannelState{
     list.Add(b);
     return readChannel(b.channel);
   }
-  static void clearModifiers(HashSet<string> except = null){
-    Dictionary<string, List<ModifierDesc>> nlist = new Dictionary<string, List<ModifierDesc>>();
-    foreach(var pair in modifiers){
-      List<ModifierDesc> keep = new List<ModifierDesc>();
-      foreach(var mod in pair.Value){
-        if(except == null || !except.Contains(mod.outname))channelStates.Remove(mod.outname);
-        else keep.Add(mod);
-      }
-      if(keep.Count>0) nlist[pair.Key] = keep;
-    }
+  static void clearModifiers(){
     HashSet<string> toRemove = new();
     foreach(var pair in channelStates){
-      if(except!=null && except.Contains(pair.Key)) continue;
-      int idx=0;
-      for(;idx<pair.Key.Length;idx++) if(pair.Key[idx]=='[')break;
-      string clean = pair.Key.Substring(0,idx);
-      if(clean != pair.Key) toRemove.Add(pair.Key);
+      if(!checkClean(pair.Key)) toRemove.Add(pair.Key);
     }
     foreach(var s in toRemove) channelStates.Remove(s);
-    modifiers = nlist;
+    modifiers.Clear();
   }
   public static void unwatchAll(){
     watching.Clear();
@@ -175,11 +180,8 @@ public static class ChannelState{
   }
   [MethodImpl(MethodImplOptions.NoInlining)]
   static int addModifier(string ch){
-    int idx=0;
-    for(;idx<ch.Length;idx++) if(ch[idx]=='[')break;
-    string clean = ch.Substring(0,idx);
-
-    if(ch.Length>0 && clean!=ch && ch[ch.Length-1] == ']'){
+    string clean = getClean(ch);
+    if(ch.Length!=clean.Length && ch[ch.Length-1] == ']'){
       if(!modifiers.TryGetValue(clean,out var mods)){
         modifiers.Add(clean, mods = new List<ModifierDesc>());
       }
@@ -225,6 +227,8 @@ public static class ChannelState{
       modifiers.Remove(s);
     }
   }
+
+
   public static Dictionary<string,int> save(){
     Dictionary<string,int> s=new();
     foreach(var pair in channelStates){

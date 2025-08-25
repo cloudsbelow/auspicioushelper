@@ -407,7 +407,6 @@ public class ChannelMathController:Entity{
         2=>Session.CoreModes.Cold, 1=>Session.CoreModes.Hot, 0=>Session.CoreModes.None,
         _=>Util.SafeMod(ints[0],2)==1?Session.CoreModes.Hot:Session.CoreModes.Cold
       };
-      DebugConsole.Write((Engine.Instance.scene as Level)?.CoreMode.ToString());
       return 0;
     });
     registerInterop("getPlayer",(List<string> strs, List<int> ints)=>{

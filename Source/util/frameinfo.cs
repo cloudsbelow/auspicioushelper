@@ -9,20 +9,55 @@ namespace Celeste.Mod.auspicioushelper;
 
 [Tracked(true)]
 public class UpdateHook:Component{
+  public class AfterUpdateLock:IDisposable{
+    static int lockctr = 0;
+    public AfterUpdateLock(){lockctr++;}
+    void IDisposable.Dispose() {
+      lockctr--;
+    }
+    public static bool locked=>lockctr>0;
+    public static List<Action> afterUpd = new();
+    static bool updateBefore = false;
+    static bool updateAfter = false;
+    static bool updateAny = false;
+    static List<Tuple<Action, bool, bool>> enqd = new();
+    static public void AddAfterUpdate(Action action,bool causesEntUpd=true,bool needsEntUpd=false){
+      if(locked){
+        enqd.Add(new(action, causesEntUpd, needsEntUpd));
+        return;
+      }
+      afterUpd.Add(action);
+      updateBefore|=needsEntUpd;
+      updateAfter|=causesEntUpd;
+    }
+    static public void EnsureUpdateAny()=>updateAny = true;
+    public static void ExtraUpdate(Level self){
+      if(afterUpd.Count>0 || updateBefore || updateAfter || updateAny){
+        //DebugConsole.Write($"Doign extra update {updateBefore} {updateAfter} ({updateAny})");
+        while(afterUpd.Count>0){
+          if(updateBefore){
+            updateAny = (updateBefore = false);
+            self.Entities.UpdateLists();
+          }
+          using(new AfterUpdateLock())foreach(var a in afterUpd) a();
+          afterUpd.Clear();
+          foreach(var t in enqd) AddAfterUpdate(t.Item1,t.Item2,t.Item3);
+          enqd.Clear();
+        }
+        if(updateAfter||updateAny){
+          updateAny = (updateAfter = false);
+          self.Entities.UpdateLists();
+        }
+      }
+    }
+  }
+  static public void AddAfterUpdate(Action action,bool causesEntUpd=true,bool needsEntUpd=false)=>AfterUpdateLock.AddAfterUpdate(action,causesEntUpd,needsEntUpd);
+  public static void EnsureUpdateAny()=>AfterUpdateLock.EnsureUpdateAny();
   public Action beforeAction=null;
   public Action afterAction=null;
   public bool updatedThisFrame = false;
   public static float TimeSinceTransMs=0;
-  static List<Action> afterUpd = new();
-  static bool updateBefore;
-  static bool updateAfter;
-  static bool updateAny;
-  static public void AddAfterUpdate(Action action,bool causesEntUpd=true,bool needsEntUpd=false){
-    afterUpd.Add(action);
-    updateBefore|=needsEntUpd;
-    updateAfter|=causesEntUpd;
-  }
-  static public void EnsureUpdateAny()=>updateAny = true;
+
   public UpdateHook(Action before=null, Action after=null):base(true,false){
     beforeAction=before;afterAction =after;
     hooks.enable();
@@ -50,7 +85,7 @@ public class UpdateHook:Component{
   }
   internal static void updateHook(On.Celeste.Level.orig_Update update, Level self){
     cachedPlayer = self.Tracker.GetEntity<Player>();
-    ExtraUpdate(self);
+    AfterUpdateLock.ExtraUpdate(self);
     if(self.Paused){
       update(self);
       return;
@@ -67,22 +102,14 @@ public class UpdateHook:Component{
     foreach(UpdateHook u in self.Tracker.GetComponents<UpdateHook>()){
       if(u.afterAction!=null)u.afterAction();
     }
-    ExtraUpdate(self);
+    AfterUpdateLock.ExtraUpdate(self);
   }
-  static void ExtraUpdate(Level self){
-    if(afterUpd.Count>0 || updateBefore || updateAfter || updateAny){
-      if(updateBefore)self.Entities.UpdateLists();
-      foreach(var a in afterUpd) a();
-      afterUpd.Clear();
-      if(updateAfter || (updateAny && !updateBefore))self.Entities.UpdateLists();
-      updateBefore = (updateAny = (updateAfter = false));
-    }
-  }
+
   static PersistantAction clear;
   internal static HookManager hooks = new HookManager(()=>{
     On.Celeste.Level.Update+=updateHook;
-    auspicioushelperModule.OnExitMap.enroll(clear=new PersistantAction(afterUpd.Clear));
-  }, ()=>{
+    auspicioushelperModule.OnExitMap.enroll(clear=new PersistantAction(AfterUpdateLock.afterUpd.Clear));
+  }, void ()=>{
     On.Celeste.Level.Update-=updateHook;
     clear.remove();
   });

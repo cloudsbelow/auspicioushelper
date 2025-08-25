@@ -63,7 +63,9 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   bool ridingTrigger;
   bool enableUnrooted = false;
   bool conveyRiding = false;
+  bool convertTriggering;
   bool firstZeroAfter;
+  int hasTrigger=0;
   
   public TemplateStaticmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateStaticmover(EntityData d, Vector2 offset, int depthoffset):base(d,d.Position+offset,depthoffset){
@@ -74,6 +76,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     ridingTrigger = d.Bool("ridingTrigger",true);
     enableUnrooted = d.Bool("EnableUnrooted",false);
     conveyRiding = d.Bool("conveyRiding",false);
+    convertTriggering = d.Bool("triggerAsRiding",false);
     hooks.enable();
     StaticmoverLock.hooks.enable();
     Add(new BeforeAfterRender(()=>{
@@ -127,7 +130,8 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   }
   public override void addTo(Scene scene){
     //base.addTo(scene);
-    if(parent!=null)scene.Add(this);
+    if(parent!=null || t?.chain!=null)scene.Add(this);
+    if(sm!=null) return;
     setTemplate(scene:scene);
     if(channel != "")CassetteMaterialLayer.layers.TryGetValue(channel,out layer);
     if(enableUnrooted) make(scene);
@@ -149,7 +153,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
         else if(layer!=null)foreach(var c in comps)c.SetStealUse(layer,true,true);
       },
       OnAttach=(Platform p)=>{
-        if(!enableUnrooted)UpdateHook.AddAfterUpdate(()=>make(Scene));
+        if(!enableUnrooted) UpdateHook.AddAfterUpdate(()=>make(Scene));
       },
       SolidChecker=(Solid s)=>{
         bool check = !doNot.Contains(s) && s.CollidePoint(Position);
@@ -196,12 +200,16 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     if(ridingTrigger){
       if(hasRiders<Player>()) sm.TriggerPlatform();
     }
+    if(hasTrigger>0)hasTrigger--;
   }
   public void OnTrigger(TriggerInfo info){
     if(ridingTrigger){
       Template parent = sm?.Platform?.Get<ChildMarker>()?.parent;
       if(parent!=null) parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(info);
       else if(TriggerInfo.TestPass(info,this)) sm?.TriggerPlatform();
+    }
+    if(convertTriggering){
+      hasTrigger = 2;
     }
   }
   public HashSet<OverrideVisualComponent> comps = new();
@@ -266,6 +274,10 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     //DebugConsole.Write("Here");
     foreach(StaticMover sm in s.staticMovers) if(sm.Entity is TemplateStaticmover tsm){
       if(tsm.conveyRiding && tsm.hasRiders<Player>()) return UpdateHook.cachedPlayer;
+      if(tsm.hasTrigger>0){
+        tsm.hasTrigger = 0;
+        return UpdateHook.cachedPlayer;
+      }
     } 
     return null;
   }
