@@ -11,12 +11,13 @@ namespace Celeste.Mod.auspicioushelper;
 
 public class auspicioushelperModuleSettings : EverestModuleSettings {
   private bool _usingDebugConsole = false;
+  [SettingSubText("(Windows Only) Open a console window with auspicious debugging information")]
   public bool UseDebugConsole {
     get=>_usingDebugConsole;
     set{
-      _usingDebugConsole = value;
       if(value) DebugConsole.Open();
       else DebugConsole.Close();
+      _usingDebugConsole = value;
     }}
   private bool _tryQuietShader = false;
   [SettingSubText("Use compression-friendly shaders when available (not reccomended or intended)")]
