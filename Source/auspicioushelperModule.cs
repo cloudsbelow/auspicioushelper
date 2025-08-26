@@ -148,6 +148,7 @@ public class auspicioushelperModule : EverestModule {
         ConditionalStrawb.hooks.enable();
         SpringTracker.hooks.enable();
         ChannelState.hooks.enable();
+        PartialTiles.hooks.enable();
         TemplateBehaviorChain.setup();
         MapHider.uncache();
         

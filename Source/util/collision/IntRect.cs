@@ -51,6 +51,9 @@ public struct IntRect{
   public bool CollidePoint(Int2 p){
     return p.x>x && p.y>y && p.x<x+w && p.y<y+h;
   }
+  public bool CollidePointCompact(Int2 p){
+    return p.x>=x && p.y>=y && p.x<=x+w && p.y<=y+h;
+  }
   public bool CollidePointExpand(Int2 p, int e){
     return p.x>x-e && p.y>y-e && p.x<x+w+e && p.y<y+h+e;
   }
