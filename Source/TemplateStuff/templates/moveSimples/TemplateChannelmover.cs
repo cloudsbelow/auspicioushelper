@@ -65,12 +65,6 @@ public class TemplateChannelmover:Template, IChannelUser{
     spos = new(SplineEntity.GetSpline(dat, SplineEntity.Types.simpleLinear), Vector2.Zero, true);
     spos.set(target);
     base.addTo(scene);
-
-    spos.setSidedFromDir(1,1);
-    
-    ChannelState.SetChannel("a",1);
-    ChannelState.SetChannel("b",0);
-    ChannelState.readChannel("or(and(a,b)[+2],or(a[!],b))");
   }
   public override void Update(){
     base.Update();

@@ -101,7 +101,7 @@ public static class ChannelState{
         }
         if(!deps.TryGetValue(from, out var dep)) deps.Add(from,dep = new());
         dep.mods.Add(this);
-        SetChannelRaw(outname, apply(_readChannel(from)));
+        channelStates.Add(outname, apply(_readChannel(from)));
         return;
       }
       DebugConsole.WriteFailure($"Channel {ch} ends in ] but contains no [",true);
@@ -155,7 +155,7 @@ public static class ChannelState{
         dep.calcs.Add(new(){calc=this,index=i++});
       }
       outval = vals.Aggregate(seedval,pred);
-      SetChannelRaw(to,outval);
+      channelStates.Add(to,outval);
     }
     public void Update(int idx, int val){
       vals[idx]=val;
@@ -209,7 +209,7 @@ public static class ChannelState{
     return true;
   }
   static void SetChannelRaw(string ch, int state){
-    if(channelStates.TryGetValue(ch, out int oldst) && oldst == state) return;
+    if(_readChannel(ch)==state) return;
     channelStates[ch] = state;
     if (watching.TryGetValue(ch, out var list)) {
       foreach(IChannelUser b in list){
