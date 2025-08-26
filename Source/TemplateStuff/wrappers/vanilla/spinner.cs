@@ -136,6 +136,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     if(hasCustomCOlor && filler!=null) foreach(var f in filler.Components) if(f is Image i){
       i.Color = customColor;
     }
+    if(filler != null && parent is {} temp) temp.AddNewEnts([filler]);
   }
   Color getColor(){
     Color color = Color.White;

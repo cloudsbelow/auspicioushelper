@@ -16,7 +16,17 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/EvilPackedTemplateRoom")]
 public class EvilPackedTemplateRoom:Entity{
-  static Dictionary<int,List<MarkedRoomParser.TemplateRoom>> parsed = new();
+  public struct PackedRoomCacheKey:IEquatable<PackedRoomCacheKey> {
+    Vector2 offset;
+    Vector2 worldpos;
+    int id;
+    public PackedRoomCacheKey(Vector2 offset, Vector2 worldpos, int id){
+      this.offset=offset; this.worldpos=worldpos; this.id=id;
+    }
+    public bool Equals(PackedRoomCacheKey other)=>offset==other.offset && worldpos==other.worldpos && id==other.id;
+    public override readonly string ToString()=>$"id: {id}, room offset: {offset}, position: {worldpos-offset}";
+  }
+  static Dictionary<PackedRoomCacheKey,List<MarkedRoomParser.TemplateRoom>> parsed = new();
   const int latestVersion = 1;
   static EvilPackedTemplateRoom(){
     auspicioushelperModule.OnEnterMap.enroll(new PersistantAction(()=>{
@@ -26,7 +36,9 @@ public class EvilPackedTemplateRoom:Entity{
   public EvilPackedTemplateRoom(EntityData d,Vector2 offset):base(Vector2.Zero){
     string dat = d.Attr("EncodedRooms", "").Trim();
     if(string.IsNullOrEmpty(dat)) return;
-    if(parsed.TryGetValue(d.ID, out var l)){
+    PackedRoomCacheKey key = new PackedRoomCacheKey(offset, d.Position+offset,d.ID);
+    if(parsed.TryGetValue(key, out var l)){
+      DebugConsole.Write("Using cached room");
       MarkedRoomParser.AddDynamicRooms(l);
     } else try {
       var arr = Convert.FromBase64String(dat);
@@ -42,10 +54,10 @@ public class EvilPackedTemplateRoom:Entity{
       List<MarkedRoomParser.TemplateRoom> rooms = new();
       for(int i=0; i<nrooms; i++) rooms.Add(MarkedRoomParser.parseLeveldata(Util.ReadLeveldata(r), true));
       MarkedRoomParser.AddDynamicRooms(rooms);
-      parsed.Add(d.ID, rooms);
+      parsed.Add(key, rooms);
     } catch(Exception ex){
       DebugConsole.WriteFailure("Could not load your packed template room: \n"+ex.ToString());
-      Logger.Warn("auspicioushelper",$"Could not load your packed template room with id {d.ID}: \n"+ex.ToString());
+      Logger.Warn("auspicioushelper",$"Could not load your packed template room with key {key}: \n"+ex.ToString());
     }
   }
   public static void PackTemplatesEvil(){

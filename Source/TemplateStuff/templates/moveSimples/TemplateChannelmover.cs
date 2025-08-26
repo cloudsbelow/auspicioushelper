@@ -65,8 +65,6 @@ public class TemplateChannelmover:Template, IChannelUser{
     spos = new(SplineEntity.GetSpline(dat, SplineEntity.Types.simpleLinear), Vector2.Zero, true);
     spos.set(target);
     base.addTo(scene);
-
-    spos.setSidedFromDir(1,1);
   }
   public override void Update(){
     base.Update();

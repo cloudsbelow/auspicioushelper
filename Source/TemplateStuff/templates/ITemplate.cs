@@ -352,6 +352,7 @@ public class Template:Entity, ITemplateChild{
   }
   public virtual void remake(){
     makeChildren(Scene);
+    UpdateHook.EnsureUpdateAny();
   }
   public string fullpath=>parent==null?ownidpath.ToString():parent.fullpath+$"/{ownidpath}";
   public static string getOwnID(EntityData e){

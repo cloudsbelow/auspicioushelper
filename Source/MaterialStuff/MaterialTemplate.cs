@@ -33,10 +33,12 @@ public class OverrideVisualComponent:Component, IMaterialObject{
   //tracker woes (kill me)
   public Entity ent;
   public List<VisualOverrideDescr> parents = new();
-  public static Dictionary<Type,Action<Entity>> custom = new();
   public static OverrideVisualComponent Get(Entity e){
     if(e.Get<OverrideVisualComponent>() is {} o) return o;
-    var comp = custom.TryGetValue(e.GetType(),out var fn)?new PatchedRenderComp(){render=fn}:new OverrideVisualComponent();
+    OverrideVisualComponent comp;
+    if(custom.TryGetValue(e.GetType(),out var fn)){
+      comp = fn(e);
+    }else comp = new OverrideVisualComponent();
     e.Add(comp);
     comp.ent = e;
     return comp;
@@ -55,8 +57,14 @@ public class OverrideVisualComponent:Component, IMaterialObject{
     } 
     return -1;
   }
+  public virtual void setNvis(bool newvis){
+    nvis = newvis;
+  }
   public void AddToOverride(VisualOverrideDescr v){
-    if(GetOverriderIdx(v.o)!=-1) throw new Exception("Adding to overrider when alr inside");
+    if(GetOverriderIdx(v.o)!=-1){
+      SetStealUse(v.o,v.steal,v.use);
+      return;
+    }
     int idx = 0;
     bool stolen = false;
     while(idx<parents.Count && parents[idx].order<v.order){
@@ -71,7 +79,7 @@ public class OverrideVisualComponent:Component, IMaterialObject{
       if(v.use)parents[idx].o.RemoveC(this);
       if(parents[idx].steal)break;
     }
-    nvis=false;
+    setNvis(false);
   }
   public void RemoveFromOverride(IOverrideVisuals v){
     int idx = GetOverriderIdx(v);
@@ -104,7 +112,7 @@ public class OverrideVisualComponent:Component, IMaterialObject{
       }
       if(descr.steal)return;
     }
-    nvis=!nsteal;
+    setNvis(!nsteal);
   }
   public override void EntityRemoved(Scene scene) {
     base.EntityRemoved(scene);
@@ -136,41 +144,23 @@ public class OverrideVisualComponent:Component, IMaterialObject{
   public virtual void renderMaterial(IMaterialLayer l, Camera c){
     if(ovis && Entity.Scene!=null)Entity.Render();
   }
+  public static Dictionary<Type,Func<Entity,OverrideVisualComponent>> custom = new();
   public class PatchedRenderComp:OverrideVisualComponent{
-    public Action<Entity> render;
+    public Action render;
+    public Action<bool> onChangeNvis;
+    public Func<bool> isVis;
+    public bool doRender => isVis?.Invoke()??ovis;
     public override void renderMaterial(IMaterialLayer l, Camera c) {
-      if(ovis && Entity.Scene!=null) render(Entity);
+      if(doRender && Entity.Scene!=null) render();
+    }
+    public override void setNvis(bool newvis) {
+      if(nvis == newvis) return;
+      base.setNvis(newvis);
+      if(onChangeNvis!=null) onChangeNvis(newvis);
     }
   }
 }
 
-/*public interface IOverrideVisuals{
-  List<OverrideVisualComponent> comps {get;set;}
-  HashSet<OverrideVisualComponent> toRemove {get;} 
-  bool dirty {set;}
-  void AddC(OverrideVisualComponent comp) {comps.Add(comp); dirty=true;}
-  void RemoveC(OverrideVisualComponent comp) {toRemove.Add(comp); dirty=true; if(toRemove.Count>64)FixList();}
-  void FixList(){
-    List<OverrideVisualComponent> nlist = new();
-    foreach(OverrideVisualComponent v in comps){
-      if(v.Entity.Scene != null && !toRemove.Contains(v)) nlist.Add(v);
-    }
-    toRemove.Clear();
-    comps = nlist;
-  }
-  void PrepareList(bool newvisibility){
-    if(toRemove.Count>0)FixList();
-    double ldepth=double.PositiveInfinity;
-    bool nsort=false;
-    bool steal = !newvisibility;
-    foreach(var v in comps){
-      v.SetStealUse(this,steal);
-      if(v.Entity.actualDepth>ldepth) nsort=true;
-    }
-    if(nsort) comps.Sort((a,b)=>b.Entity.actualDepth.CompareTo(a.Entity.actualDepth));
-    dirty = false;
-  }
-}*/
 public interface IOverrideVisuals{
   void AddC(OverrideVisualComponent c);
   void RemoveC(OverrideVisualComponent c);

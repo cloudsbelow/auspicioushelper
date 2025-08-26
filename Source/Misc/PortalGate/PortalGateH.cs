@@ -22,7 +22,7 @@ public class PortalGateH:Entity{
   public class SurroundingInfoH {
     public PortalGateH left=null;
     public PortalGateH right=null;
-    public Actor actor=null;
+    public Entity actor=null;
     public float leftl=float.NegativeInfinity;
     public float rightl=float.PositiveInfinity;
     public bool leftn;
@@ -35,7 +35,7 @@ public class PortalGateH:Entity{
     }
   }
   //public static Dictionary<Entity,SurroundingInfoH> portalInfos = new Dictionary<Entity, SurroundingInfoH>();
-  public static SurroundingInfoH evalEnt(Actor a){
+  public static SurroundingInfoH evalEnt(Entity a){
     SurroundingInfoH s = new SurroundingInfoH{actor=a};
     foreach(PortalGateH p in a.Scene.Tracker.GetEntities<PortalGateH>()){
       if(p.top1<=a.Top && p.bottom1>=a.Bottom){
@@ -89,6 +89,14 @@ public class PortalGateH:Entity{
     int mdir = Math.Sign(amount.X);
     int ymdir = Math.Sign(amount.Y);
     bool ndir = node?n2dir:n1dir;
+    // List<PortalIntersectInfoH> toremove = new();
+    // foreach(var pair in intersections){
+    //   Entity e = pair.Value.a;
+    //   if(!e.Active || !(e.Collider is Hitbox h) || e.Scene == null){
+    //     toremove.Add(pair.Value);
+    //     continue;
+    //   }
+    // }
     foreach(Actor a in Scene.Tracker.GetEntities<Actor>()){
       if(!a.Active || !(a.Collider is Hitbox h)) continue;
       PortalIntersectInfoH info = null;
@@ -180,6 +188,7 @@ public class PortalGateH:Entity{
   public bool giveRCB;
   public Vector2 drawoffset1 =Vector2.Zero;
   public Vector2 drawoffset2 =Vector2.Zero;
+  public bool instantCamera = false;
   
   public PortalGateH(EntityData d, Vector2 offset):base(d.Position+offset){
     portalHooks.hooks.enable();
@@ -188,6 +197,7 @@ public class PortalGateH:Entity{
     npos=d.Nodes[0]+offset;
     n1dir = d.Bool("right_facing_f0",false);
     n2dir = d.Bool("right_facing_f1",true);
+    instantCamera = d.Bool("instant_camera",false);
     color = Util.hexToColor(d.Attr("color_hex","#FFFA"));
     //DebugConsole.Write(color.ToString()+" "+x1.ToString()+" "+x2.ToString());
     flipped = n1dir==n2dir;
@@ -227,6 +237,40 @@ public class PortalGateH:Entity{
     RcbHelper.hooks.enable();
   }
   
+  public static bool BlockMoveHHook(On.Celeste.Platform.orig_MoveHExactCollideSolids orig, Platform p, int amount, bool thru, Action<Vector2, Vector2, Platform> onCollide){
+    SurroundingInfoH s = evalEnt(p);
+    PortalIntersectInfoH info=null;
+    if(intersections.TryGetValue(p,out info)){
+    } else if(p.Left+amount<=s.leftl) {
+      intersections[p]=(info = new PortalIntersectInfoH(s.leftn, s.left,p));
+      PortalOthersider mn = info.addOthersider();
+    } else if(p.Right+amount>=s.rightl){
+      intersections[p]=(info = new PortalIntersectInfoH(s.rightn, s.right, p));
+      PortalOthersider mn = info.addOthersider();
+    }
+    bool res = orig(p,amount,thru,onCollide);
+    if(info!=null && info.finish()) intersections.Remove(p);
+    return res;
+  }
+  public static bool BlockMoveVHook(On.Celeste.Platform.orig_MoveVExactCollideSolids orig, Platform p, int amount, bool thru, Action<Vector2, Vector2, Platform> onCollide){
+    //var s  = evalEnt(p);
+    if(intersections.TryGetValue(p,out var info) && info.p.contain){
+      int ctr=0;
+      int dir = Math.Sign(amount);
+      while(ctr!=amount){
+        if(info.checkLeaves(ctr+dir)){
+          if(!orig(p,ctr,thru,onCollide)){
+            if(onCollide != null) onCollide.Invoke(dir*Vector2.UnitX,ctr*Vector2.UnitY,fakeSolid);
+          }
+          return true;
+        }
+        ctr+=dir;
+      }
+      return orig(p,ctr,thru,onCollide);
+    } else {
+      return orig(p,amount,thru,onCollide);
+    }
+  }
   public static bool ActorMoveHHook(On.Celeste.Actor.orig_MoveHExact orig, Actor a, int moveH, Collision onCollide, Solid pusher){
     SurroundingInfoH s = evalEnt(a);
     PortalIntersectInfoH info=null;
@@ -269,7 +313,7 @@ public class PortalGateH:Entity{
     }
   }
   public static bool ActorMoveVHook(On.Celeste.Actor.orig_MoveVExact orig, Actor a, int moveV, Collision onCollide, Solid pusher){
-    var s  = evalEnt(a);
+    //var s  = evalEnt(a);
     if(intersections.TryGetValue(a,out var info) && info.p.contain){
       int ctr=0;
       int dir = Math.Sign(moveV);

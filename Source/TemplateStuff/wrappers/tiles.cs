@@ -89,6 +89,8 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
     bounds = new FloatRect(SceneAs<Level>().Bounds);
   }
   public bool hasRiders<T>() where T:Actor{
+    if(Scene==null)DebugConsole.Write("I hate hate hate hate hate hate hate you");
+    if(typeof(T) == typeof(Player)) return UpdateHook.cachedPlayer?.IsRiding(this)??false;
     foreach(T a in Scene.Tracker.GetEntities<T>()){
       if(a.IsRiding(this)) return true;
     }

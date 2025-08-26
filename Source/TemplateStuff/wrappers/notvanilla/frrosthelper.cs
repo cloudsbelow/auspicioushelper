@@ -78,8 +78,12 @@ public static class FrostHelperStuff{
         SetVisible = Util.instanceAction<bool>(spinnerType, "SetVisible");
         CreateSpritesOrig = Util.instanceAction(spinnerType,"CreateSprites");
         UpdateHue = Util.instanceAction(spinnerType,"UpdateHue");
-        OverrideVisualComponent.custom.Add(spinnerType,(Entity e)=>{
-          e.Get<SpinnerWrapper>()?.RenderTheUgh();
+        OverrideVisualComponent.custom.Add(spinnerType,static (Entity e)=>{
+          var c= e.Get<SpinnerWrapper>();
+          if(c == null) throw new Exception("Could not get controlling component from spinner");
+          return c.renderComp = new OverrideVisualComponent.PatchedRenderComp(){
+            render = c.RenderTheUgh, onChangeNvis = c.setMatVis, isVis = c.origVis
+          };
         });
         filler = new(spinnerType, "filler", true);
         fills = new(filler.vtype, "Fills", true);
@@ -98,17 +102,24 @@ public static class FrostHelperStuff{
       StaticMover sm = null;
       while((sm = wrapped.Get<StaticMover>())!=null)wrapped.Remove(sm);
     }
+    OverrideVisualComponent.PatchedRenderComp renderComp;
     bool parentvis=true;
     bool ownvis=false;
+    bool overrideVis=true;
+    bool gtvis =>parentvis && ownvis && overrideVis;
     bool parentcol=true;
     bool owncol=false;
     float offset;
     bool rainbow;
     bool hascollider;
+    bool origVis()=> parentvis && ownvis;
+    void setMatVis(bool nvis)=>setVis(ref overrideVis, nvis);
     void setVis(ref bool field, bool nval){
+      //DebugConsole.Write($"Set nvis old; {ownvis} {parentvis} {overrideVis}");
       field = nval;
+      //DebugConsole.Write($"Set nvis new; {ownvis} {parentvis} {overrideVis}");
       bool o = wrapped.Visible;
-      bool n = parentvis && ownvis;
+      bool n = parentvis && ownvis && overrideVis;
       if(o != n){
         if(n){
           RegisterToRenders(wrapped);
@@ -126,13 +137,15 @@ public static class FrostHelperStuff{
     }
     bool stratosphere = false;
     const int stratosphereHeight = -30000;
-    void CustomUpdate(){
+    void Destratosphere(){
       if(stratosphere){
         wrapped.Position.Y-=stratosphereHeight;
         stratosphere = false;
       }
+    }
+    void CustomUpdate(){
       if(RegisteredToRenderers.get(wrapped) && !wrapped.Visible) UnregisterFromRenderers(wrapped,Scene);
-      if(wrapped.Visible!=ownvis && parentvis) setVis(ref ownvis, ownvis);
+      if(wrapped.Visible!=gtvis) setVis(ref ownvis, ownvis);
       if(!ownvis){
         setCol(ref owncol, false);
         if(InView(wrapped)){
@@ -157,6 +170,7 @@ public static class FrostHelperStuff{
       toffset=wrapped.Position-Vector2.UnitY*(stratosphere?stratosphereHeight:0)-ppos;
     }
     void expandGood(){
+      DebugConsole.Write("Expanded");
       List<Entity> oldSts = Scene.Tracker.Entities[typeof(SolidTiles)];
       Scene.Tracker.Entities[typeof(SolidTiles)] = parent.fgt==null?[]:[parent.fgt];
       bool flag=false;
@@ -172,13 +186,13 @@ public static class FrostHelperStuff{
       if(InView(wrapped)){
         wrapped.Position.Y+=stratosphereHeight;
         stratosphere=true;
+        UpdateHook.AddAfterUpdate(Destratosphere,false,true);
       }
       wrapped.Scene = o;
       wrapped.Active = false;
     }
     public void RenderTheUgh(){
       if(!MaterialPipe.clipBounds.CollidePointExpand(Int2.Round(wrapped.Position),10)) return;
-      if(wrapped.Visible) return;
       foreach(Image i in Images.get(wrapped)){
         i.Render();
       }

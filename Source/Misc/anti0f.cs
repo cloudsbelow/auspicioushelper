@@ -169,10 +169,13 @@ public class Anti0fZone:Entity{
             wjcn = (alwayswjc||p.CollideCheck<Solid>(p.Position-Vector2.UnitX*5)) && p.WallJumpCheck(-1);
             //DebugConsole.Write($"from anti0f: {alwayswjc} {wjcp} {wjcn}");
             if(wjcp){
-              DebugConsole.Write($"anti0fwj happened {p.onGround} {p.Speed} {Input.Jump.bufferCounter}");
+              //DebugConsole.Write($"anti0fwj happened {p.onGround} {p.Speed} {Input.Jump.bufferCounter}");
               if (p.Facing==Facings.Right && Input.GrabCheck && !SaveData.Instance.Assists.NoGrabbing && p.Stamina>0f && 
                 p.Holding==null && !ClimbBlocker.Check(p.Scene, p, p.Position + Vector2.UnitX * 3f)
-              ) p.ClimbJump();
+              ) {
+                var old = p.Speed;
+                p.ClimbJump(); DebugConsole.Write($"0f'd cb {old} {p.Speed} {p.LiftSpeed} {p.liftSpeedTimer}");
+              }
               else if (p.DashAttacking && p.SuperWallJumpAngleCheck) p.SuperWallJump(-1);
               else p.WallJump(-1);
               return true;
@@ -180,7 +183,10 @@ public class Anti0fZone:Entity{
               //DebugConsole.Write($"anti0fwj happened {p.onGround} {p.OnGround()}");
               if(p.Facing==Facings.Left && Input.GrabCheck && !SaveData.Instance.Assists.NoGrabbing && p.Stamina>0f && 
                 p.Holding==null && !ClimbBlocker.Check(p.Scene, p, p.Position + Vector2.UnitX * -3f)
-              ) p.ClimbJump();
+              ) {
+                var old = p.Speed;
+                p.ClimbJump(); DebugConsole.Write($"0f'd cb {old} {p.Speed} {p.LiftSpeed} {p.liftSpeedTimer}");
+              }
               else if (p.DashAttacking && p.SuperWallJumpAngleCheck) p.SuperWallJump(1);
               else p.WallJump(1);
               return true;

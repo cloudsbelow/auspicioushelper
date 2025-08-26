@@ -77,6 +77,8 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   string setCh;
   bool seekersTrigger = false;
   bool throwablesTrigger = false;
+  string skipCh;
+  bool skip = false;
 
   public TemplateTriggerModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateTriggerModifier(EntityData d, Vector2 offset, int depthoffset)
@@ -105,6 +107,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     log = d.Bool("log",false);
     setCh = d.Attr("setChannel","");
     OnDashCollide = handleDash;
+    skipCh = d.Attr("skipChannel","");
   }
   DashCollisionResults handleDash(Player player, Vector2 direction){
     if((prop&Propagation.DashHit) != Propagation.None && (parent!=null)){
@@ -124,6 +127,11 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       Add(new ChannelTracker(channel, (int val)=>{
         if(val!=0) OnTrigger(new ChannelInfo(channel));
       },true));
+    }
+    if(!string.IsNullOrWhiteSpace(skipCh)){
+      Add(new ChannelTracker(skipCh, (int val)=>{
+        skip = val!=0;
+      }, true));
     }
     if(delay>=0) Add(upd = new UpdateHook());
     base.addTo(scene);
@@ -154,6 +162,10 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       if(!string.IsNullOrWhiteSpace(setCh) && TriggerInfo.Test(sm)) ChannelState.SetChannel(setCh,1);
   }
   public void OnTrigger(TriggerInfo sm){
+    if(skip){
+      triggerParent.OnTrigger(sm);
+      return;
+    }
     if(log) DebugConsole.Write($"From trigger modifier: ",sm?.category);
     if(blockTrigger!=(blockManager?.Test(sm?.category)??false)) return;
     if(delay<0) HandleTrigger(sm);

@@ -397,11 +397,16 @@ public class ChannelMathController:Entity{
       return ints[0];
     });
     registerInterop("getCoreMode",(List<string> strs, List<int> ints)=>{
-      if(Engine.Scene is Level l) return l.Session.CoreMode == Session.CoreModes.Cold?1:0;
+      if(Engine.Scene is Level l) return l.CoreMode switch {
+        Session.CoreModes.Cold=>2, Session.CoreModes.Hot=>1, _=>0
+      };
       return 0;
     });
     registerInterop("setCoreMode",(List<string> strs, List<int> ints)=>{
-      if(Engine.Scene is Level l) l.Session.CoreMode = ints[0]==0?Session.CoreModes.Hot:Session.CoreModes.Cold;
+      if(Engine.Scene is Level l) l.CoreMode = ints[0] switch{
+        2=>Session.CoreModes.Cold, 1=>Session.CoreModes.Hot, 0=>Session.CoreModes.None,
+        _=>Util.SafeMod(ints[0],2)==1?Session.CoreModes.Hot:Session.CoreModes.Cold
+      };
       return 0;
     });
     registerInterop("getPlayer",(List<string> strs, List<int> ints)=>{

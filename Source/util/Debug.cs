@@ -18,7 +18,7 @@ public static class DebugConsole {
   private static extern bool FreeConsole();
 
   public static void Open() {
-    if (consoleThread != null) return;
+    if (consoleThread != null || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return;
 
     if (!AllocConsole()) {
       Logger.Log("auspicious","Failed to allocate a console.");
