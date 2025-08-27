@@ -25,7 +25,7 @@ public class MipGrid{
     const int ChunkSize = 32;
     public int gridx;
     public int gridy;
-    ulong[][] chunks;
+    public ulong[][] chunks;
     public Layer(int width, int height){
       this.width = width; this.height = height;
       if(width*height>ChunkSize*ChunkSize*16){
@@ -37,6 +37,7 @@ public class MipGrid{
       }
     }
     public void SetBlock(ulong val, int x, int y){
+      //if(y==0)Console.WriteLine($"x {x} {val}");
       if((uint)x<(uint)width && (uint)y<(uint)height){
         if(d!=null) d[x+y*width] = val;
         else{
@@ -93,10 +94,10 @@ public class MipGrid{
       }
       return o;
     }
-    ulong getBlockChunked(int x, int y){
+    public ulong getBlockChunked(int x, int y){
       int gx=(x+ChunkSize)/ChunkSize-1;
       int gy=(y+ChunkSize)/ChunkSize-1;
-      if((uint)x<(uint)gridx && (uint)y<(uint)gridy && chunks[gx+gy*gridx] is {} c){
+      if((uint)gx<(uint)gridx && (uint)gy<(uint)gridy && chunks[gx+gy*gridx] is {} c){
         return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(c), x+ChunkSize*(y-gx-gy*ChunkSize));
       }
       return 0;
@@ -105,7 +106,7 @@ public class MipGrid{
     /// WARNiNG: undefined behavior for bx,by<-1. 
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void getBlocktile(int bx, int by, out ulong tl, out ulong tr, out ulong bl, out ulong br){
+    public void getBlocktile(int bx, int by, out ulong tl, out ulong tr, out ulong bl, out ulong br){
       if(chunks!=null){
         int gx = (bx+ChunkSize)/ChunkSize-1;
         int gy = (by+ChunkSize)/ChunkSize-1;
@@ -184,7 +185,7 @@ public class MipGrid{
     }
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public ulong getAreaSmearedFast(int x, int y, bool smearH, bool smearV){
-      if(x<=-blockw||y<=-blockh) return 0;
+      if(x<-blockw||y<-blockh) return 0;
       int xb = (x+blockw)/blockw-1;
       int yb = (y+blockh)/blockh-1;
       int xf = x-xb*blockw;
@@ -220,7 +221,7 @@ public class MipGrid{
         res = res|((res&~BYTEMARKER)>>1)|barres;
       }
       if(smearV){
-        res = res | (res<<8) | ((ulong)em)>>56;
+        res = res | (res>>8) | ((ulong)em)<<56;
       }
       return res;
     }
