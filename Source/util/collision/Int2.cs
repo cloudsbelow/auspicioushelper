@@ -26,6 +26,11 @@ public struct Int2{
   public static Int2 operator *(int s, Int2 a) => new(a.x * s, a.y * s);
   public static Int2 operator /(Int2 a, int s) => new(a.x / s, a.y / s);
   public static Int2 operator /(Int2 a, Int2 s) => new(a.x / s.x, a.y / s.y);
+  public static Int2 operator >>(Int2 a, int s) => new(a.x >> s, a.y >> s);
+  public static Int2 operator >>(Int2 a, Int2 s) => new(a.x >> s.x, a.y >> s.y);
+  public static Int2 operator <<(Int2 a, int s) => new(a.x << s, a.y << s);
+  public static Int2 operator <<(Int2 a, Int2 s) => new(a.x << s.x, a.y << s.y);
+  
   public static bool operator ==(Int2 a, Int2 b) => a.x == b.x && a.y == b.y;
   public static bool operator ==(Vector2 a, Int2 b) => a.X == b.x && a.Y == b.y;
   public static bool operator ==(Int2 b, Vector2 a) => a.X == b.x && a.Y == b.y;
@@ -44,6 +49,7 @@ public struct Int2{
   public static Int2 Min(Int2 a, Int2 b)=>new(Math.Min(a.x,b.x),Math.Min(a.y,b.y));
   public static Int2 Min(Int2 a, int b)=>new(Math.Min(a.x,b),Math.Min(a.y,b));
   public Int2 Abs()=>new(Math.Abs(x),Math.Abs(y));
+  public Vector2 asVec()=>this;
   public int MaxComp=>Math.Max(x,y);
   public int MinComp=>Math.Min(x,y);
   public static implicit operator Vector2(Int2 a)=>new Vector2(a.x,a.y);

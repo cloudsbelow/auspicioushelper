@@ -62,7 +62,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       }
     }
     public List<DRect> rects=new();
-    public List<MipGrid> grids=new();
+    public List<MiptileCollider> grids=new();
     public HashSet<BreakableRect> breakable=null;
     public bool Collide(FloatRect o, Vector2 offset, CollisionDirection movedir=CollisionDirection.yes){
       float nx = MathF.Round(o.x)+offset.X;
@@ -76,9 +76,9 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       }
       return false;
     }
-    public bool Collide(MipGrid g, Vector2 offset, CollisionDirection movedir=CollisionDirection.yes){
+    public bool Collide(MiptileCollider g, Vector2 offset, CollisionDirection movedir=CollisionDirection.yes){
       foreach(var grid in grids){
-        if(grid.collideMipGridOffset(g,offset)) return true;
+        if(grid.CollideMipTileOffset(g,offset)) return true;
       }
       foreach(var rect in rects){
         if((movedir&rect.d)!=0 && g.collideFrOffset(rect.f, -offset)) return true;
@@ -96,7 +96,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
   }
   public class QueryIn{
     public List<FloatRect> rects=new();
-    public List<MipGrid> grids=new();
+    public List<MiptileCollider> grids=new();
     public FloatRect bounds = FloatRect.empty;
     public HashSet<Solid> gotten;
     //MipGrids move with their underlying grids. However FloatRects do not.
@@ -109,14 +109,14 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       foreach(var r in rects) if(r.CollideFr(f)) return true;
       return false;
     }
-    public bool Collide(MipGrid g){
+    public bool Collide(MiptileCollider g){
       if(!g.collideFrOffset(bounds,shift)) return false;
       foreach(var r in rects) if(g.collideFrOffset(r,shift)) return true;
-      foreach(var o in grids) if(g.collideMipGrid(o)) return true;
+      foreach(var o in grids) if(g.CollideMipTileOffset(o,Vector2.Zero)) return true;
       return false;
     }
     public bool Collide(Entity e){
-      if(e.Collider is Grid g) return Collide(MipGrid.fromGrid(g));
+      if(e.Collider is Grid g) return Collide(MiptileCollider.fromGrid(g));
       else return Collide(new FloatRect(e));
     }
     public void ApplyShift(Vector2 v){
@@ -134,7 +134,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       if(!s.Collidable || exclude.Contains(s)) continue;
       FloatRect coarseBounds = new FloatRect(s);
       if(s.Collider is Hitbox h && f.CollideFr(coarseBounds)) res.rects.Add(new QueryBounds.DRect(coarseBounds,CollisionDirection.solid));
-      if(s.Collider is Grid g && f.CollideFr(coarseBounds)) res.grids.Add(MipGrid.fromGrid(g));
+      if(s.Collider is Grid g && f.CollideFr(coarseBounds)) res.grids.Add(MiptileCollider.fromGrid(g));
     }
     return res;
   }
@@ -178,7 +178,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     foreach(Solid s in all){
       if(useOwnUncollidable || s.Collidable){
         FloatRect coarseBounds = new FloatRect(s);
-        if(s.Collider is Grid g) res.grids.Add(MipGrid.fromGrid(g));
+        if(s.Collider is Grid g) res.grids.Add(MiptileCollider.fromGrid(g));
         else if(s.Collider is Hitbox f) res.rects.Add(coarseBounds);
         else continue; 
         bounds = bounds._union(coarseBounds);

@@ -62,7 +62,7 @@ public class PartialTiles{
           for(int i=0; i<8; i++){
             Color c = data[(y+j)*w+x+i];
             if(c.R>64 && c.A>64) dat |= num;
-            num = num*2;
+            num<<=1;
           }
         }
         masks[x,y]=dat;

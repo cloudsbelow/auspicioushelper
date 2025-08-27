@@ -37,10 +37,13 @@ public abstract class TriggerInfo{
   }
   public class EntInfo:TriggerInfo{
     string ev;
-    public EntInfo(string type, Entity e){
+    bool use = true;
+    public EntInfo(string type, Entity e, bool use=true){
       ev = type;
       entity=e;
+      this.use=use;
     }
+    public override bool shouldTrigger => use;
     public override string category=>"entity/"+ev;
   }
   public virtual bool shouldTrigger=>true;
