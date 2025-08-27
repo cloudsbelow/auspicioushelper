@@ -107,8 +107,8 @@ public class auspicioushelperModule : EverestModule {
                 MarkedRoomParser.parseMapdata(l.Level.Session.MapData);
             }
             DebugConsole.Write(Engine.Scene?.ToString()??"null scene");
-        } catch (Exception ex){
-            Logger.Warn("auspicioushelper","I don't know what happened here maybe this log can illuminate\n"+ex.ToString());
+        } catch (Exception){
+            Logger.Warn("auspicioushelper","Invalid state. Ausp prevented some potential errors but other mods may not.\n");
         }
         if(Session != null){
             try{

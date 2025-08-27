@@ -432,5 +432,9 @@ anyways i want to praise it more it is wonderful
   public static void defaultModdedSetup(){
     FrostHelperStuff.setup();
     MaddiesStuff.setup();
+    clarify("VortexHelper/PurpleBooster",Types.basic,static (l,d,o,e)=>{
+      if(e.Bool("lavender")) e.Name = "VortexHelper/LavenderBooster";
+      return Level.EntityLoaders.GetValueOrDefault(e.Name)?.Invoke(l,d,o,e);
+    });
   }
 }

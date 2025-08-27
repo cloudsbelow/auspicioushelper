@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks.Dataflow;
 using IL.Celeste.Mod.UI;
 using Microsoft.Xna.Framework;
@@ -21,11 +22,81 @@ public class MipGrid{
     ulong[] d;
     public int width;
     public int height;
+    const int ChunkSize = 32;
+    public int gridx;
+    public int gridy;
+    ulong[][] chunks;
     public Layer(List<ulong> data, int width){
       d=data.ToArray();
       this.width=width;
       height = data.Count/width;
       if(data.Count!=width*height) throw new Exception("mystery!");
+    }
+    public Layer(int width, int height){
+      gridx=Util.UDiv(width,ChunkSize);
+      gridy=Util.UDiv(height,ChunkSize);
+      chunks = new ulong[gridx*gridy][];
+    }
+
+
+    public void FillChunk(List<ulong> data, int x, int y){
+      if(data.Count!=ChunkSize*ChunkSize || (uint)x>(uint)gridx || (uint)y>(uint)gridy) throw new Exception("bad");
+      chunks[x+y*gridx] = data.ToArray();
+    }
+    public ulong getBlockChunked(int x, int y){
+      int gx=(x+ChunkSize)/ChunkSize-1;
+      int gy=(y+ChunkSize)/ChunkSize-1;
+      if((uint)x<(uint)gridx && (uint)y<(uint)gridy && chunks[gx+gy*gridx] is {} c){
+        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(c), x+ChunkSize*(y-gx-gy*ChunkSize));
+      }
+      return 0;
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void getBlocktile(int x, int y, out ulong tl, out ulong tr, out ulong bl, out ulong br){
+      if(x<=-blockw||y<=-blockh){
+        tl=tr=bl=br=0;
+        return;
+      }
+      int bx = (x+blockw)/blockw-1;
+      int by = (y+blockh)/blockh-1;
+      if(chunks!=null){
+        int gx = (bx+ChunkSize)/ChunkSize-1;
+        int gy = (by+ChunkSize)/ChunkSize-1;
+        int fx = bx-gx*ChunkSize;
+        int fy = by-gy*ChunkSize;
+        if(fx<ChunkSize-1 && fy<ChunkSize-1){
+          //everything lies in same chunk
+          if((uint)gx<(uint)gridx && (uint)gy<(uint)gridy && chunks[gx+gy*gridx] is {} chunk){
+            int idx = fy*ChunkSize+fx;
+            ref ulong mloc = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(chunk), idx);
+            tl=mloc; tr=Unsafe.Add(ref mloc,1); 
+            bl=Unsafe.Add(ref mloc, ChunkSize); br=Unsafe.Add(ref mloc,1+ChunkSize);
+            return;
+          } else {
+            tl=tr=bl=br=0;
+            return;
+          }
+        } else {
+          bool negX = bx<0; bool negY = by<0;
+          tl=negX||negY?0:getBlockChunked(bx,by); tr=negY?0:getBlockChunked(bx+1,by);
+          bl=negX?0:getBlockChunked(bx,by+1); br=getBlockChunked(bx+1,by+1);
+          return;
+        }
+      } else {
+        if((uint)bx<(uint)width-1 && (uint)by<(uint)height-1){
+          int idx = bx+by*width;
+          ref ulong mloc = ref Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(d), idx);
+          tl = mloc;
+          tr = Unsafe.Add(ref mloc,1);
+          bl = Unsafe.Add(ref mloc,width);
+          br = Unsafe.Add(ref mloc,1+width);
+        } else {
+          tl = getBlock(bx,by);
+          tr = getBlock(bx+1,by);
+          bl = getBlock(bx,by+1);
+          br = getBlock(bx+1,by+1);
+        }
+      }
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong getBlock(int x, int y){
@@ -138,6 +209,7 @@ public class MipGrid{
       return getBlock(x/blockw,y/blockh);
     }
   }
+  
   internal List<Layer> layers;
   internal int width;
   internal int height;
@@ -285,11 +357,6 @@ public class MipGrid{
     ulong self = layers[level].getBlock(x,y);
     ulong other = o.layers[level].getAreaSmeared((int)owhole.X, (int)owhole.Y, ofrac.X!=0, ofrac.Y!=0);
     ulong hit = self&other;
-    // DebugConsole.Write($"{oloc} {soffset} {owhole} {ofrac}");
-    // DebugConsole.Write($"{x} {y} {level}");
-    // DebugConsole.Write(Util.sideBySide([
-    //   MipGrid.getBlockstr(self), getBlockstr(other)
-    // ]));
     if(level == 0)return hit!=0;
     while(hit!=0){
       int index = System.Numerics.BitOperations.TrailingZeroCount(hit);
@@ -342,34 +409,5 @@ public class MipGrid{
       d.Set("__mipgrid",m);
     }
     return m;
-  }
-}
-
-
-class MipGridCollisionCacher{
-  Dictionary<CacheKey, bool> results = new();
-  struct CacheKey: IEquatable<CacheKey>{
-    MipGrid a;
-    MipGrid b;
-    Vector2 l;
-    Vector2 h;
-    public CacheKey(MipGrid a, MipGrid b, Vector2 boffset){
-      Vector2 dif = (a.tlc-(b.tlc+boffset))/a.cellshape;
-      this.a=a; this.b=b; l=dif.Floor(); h=dif.Ceiling();
-    }
-    public bool Equals(CacheKey o){
-      return ReferenceEquals(a, o.a) && ReferenceEquals(b, o.b) && l==o.l && h==o.h;
-    }
-    public override bool Equals(object obj)=>obj is CacheKey k && Equals(k);
-    public override int GetHashCode() {
-      return HashCode.Combine(RuntimeHelpers.GetHashCode(a), RuntimeHelpers.GetHashCode(b), l, h);
-    }
-  }
-  public bool CollideCheck(MipGrid a, MipGrid b, Vector2 boffset){
-    CacheKey col = new CacheKey(a,b,boffset);
-    if(!results.TryGetValue(col,out var res)){
-      results.Add(col,res = a.collideMipGridOffset(b,boffset));
-    }
-    return res;
   }
 }

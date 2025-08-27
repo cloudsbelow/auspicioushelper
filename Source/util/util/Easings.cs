@@ -30,6 +30,8 @@ public static partial class Util{
     return (r<0)? r+o:r;
   }
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  static public int UDiv(int n, int d)=>(n+d-1)/d;
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float Linear(float val)=>val;
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float Linear(float val, out float derivative){
