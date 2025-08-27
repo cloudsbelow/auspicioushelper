@@ -100,8 +100,10 @@ public class MipGrid{
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong getBlock(int x, int y){
-      if(x<0 || y<0 || x>=width || y>=height) return 0;
-      return d[x+y*width];
+      if((uint) x<width && (uint) y<height){
+        return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(d), x+y*width);
+      }
+      return 0;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ulong getBlockFast(int x, int y){
