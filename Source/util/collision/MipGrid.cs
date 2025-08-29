@@ -40,7 +40,7 @@ public class MipGrid{
       //if(y==0)Console.WriteLine($"x {x} {val}");
       if((uint)x<(uint)width && (uint)y<(uint)height){
         if(d!=null) d[x+y*width] = val;
-        else{
+        if(chunks!=null){
           int gx=x/ChunkSize;
           int gy=y/ChunkSize;
           int idx = x+ChunkSize*(y-gx-gy*ChunkSize);
@@ -56,7 +56,7 @@ public class MipGrid{
       Layer o = new Layer((width+blockw-1)/blockw, (height+blockh-1)/blockh);
       if(d!=null){
         ref ulong mloc = ref MemoryMarshal.GetArrayDataReference(d);
-        for(int ty=0; ty<width; ty+=blockh){
+        for(int ty=0; ty<height; ty+=blockh){
           for(int tx=0; tx<width; tx+=blockw){
             ulong blk = 0;
             ulong p = 1;
@@ -94,7 +94,22 @@ public class MipGrid{
       }
       return o;
     }
-    public ulong getBlockChunked(int x, int y){
+    public Layer GetSublayer(int sx, int sy, int w, int h){
+      Layer o = new((w+blockw-1)/blockw,(h+blockh-1)/blockh);
+      for(int iy=0; iy<h; iy+=blockh)for(int ix=0; ix<w; ix+=blockw){
+        int x = sx+ix; int y=sy+iy;
+        ulong blk = getArea(x,y);
+        int hmm = w-ix;
+        int vmm = h-iy;
+        ulong mask = FULL;
+        if(hmm<blockw || vmm<blockh){
+          mask = (BYTEMARKER*(byte)(0xff>>(Math.Max(0,blockw-hmm))))>>(8*Math.Max(0,blockh-vmm));
+        }
+        o.SetBlock(blk & mask, ix/blockw, iy/blockh);
+      }
+      return o;
+    }
+    ulong getBlockChunked(int x, int y){
       int gx=(x+ChunkSize)/ChunkSize-1;
       int gy=(y+ChunkSize)/ChunkSize-1;
       if((uint)gx<(uint)gridx && (uint)gy<(uint)gridy && chunks[gx+gy*gridx] is {} c){
@@ -106,7 +121,7 @@ public class MipGrid{
     /// WARNiNG: undefined behavior for bx,by<-1. 
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void getBlocktile(int bx, int by, out ulong tl, out ulong tr, out ulong bl, out ulong br){
+    void getBlocktile(int bx, int by, out ulong tl, out ulong tr, out ulong bl, out ulong br){
       if(chunks!=null){
         int gx = (bx+ChunkSize)/ChunkSize-1;
         int gy = (by+ChunkSize)/ChunkSize-1;
@@ -157,7 +172,7 @@ public class MipGrid{
     ulong getDenseBlockFast(int x, int y){
       return Unsafe.Add(ref MemoryMarshal.GetArrayDataReference(d), x+y*width);
     }
-    public ulong getArea(int x, int y){
+    ulong getArea(int x, int y){
       if(x<=-blockw||y<=-blockh) return 0;
       int xb = (x+blockw)/blockw-1;
       int yb = (y+blockh)/blockh-1;
@@ -232,9 +247,7 @@ public class MipGrid{
       }
       return 0;
     }
-    public ulong getAreaAligned(int x, int y){
-      return getBlock(x/blockw,y/blockh);
-    }
+    public ulong getAreaAligned(int x, int y)=>getBlock(x/blockw,y/blockh);
   }
   
 
@@ -254,14 +267,15 @@ public class MipGrid{
     g=grid;
     //cellshape = new Vector2(g.CellWidth,g.CellHeight);
     VirtualMap<bool> map = grid.Data;
-    Layer l = new Layer(map.Columns,map.Rows);
+    Layer l = new Layer((map.Columns+blockw-1)/blockw,(map.Rows+blockh-1)/blockh);
     int ss = VirtualMap<bool>.SegmentSize;
+    DebugConsole.Write($"({grid.CellsX}, {grid.CellsY}) ({l.width}, {l.height})");
     for(int yb=0; yb<map.Rows; yb+=blockh){
       for(int xb=0; xb<map.Columns; xb+=blockw){
         bool flag=false;
         int lx = xb/ss; int hx = (xb+blockw)/ss;
         int ly = yb/ss; int hy = (yb+blockh)/ss;
-        for(int i=lx; i<hx; i++) for(int j=ly; j<hy; j++) flag|=map.AnyInSegment(i,j);
+        for(int i=lx; i<=hx; i++) for(int j=ly; j<=hy; j++) flag|=map.AnyInSegment(i,j);
         if(!flag) continue;
         
         ulong block = 0;
@@ -272,6 +286,7 @@ public class MipGrid{
             if(map[x+xb,y+yb])block |= 1UL<<(x+y*8);
           }
         }
+        
         l.SetBlock(block,xb/blockw,yb/blockh);
       }
     }
@@ -348,7 +363,7 @@ public class MipGrid{
     Vector2 owhole = soffset.Floor();
     Vector2 ofrac = soffset-owhole;
     ulong self = layers[level].getBlock(x,y);
-    ulong other = o.layers[level].getAreaSmeared((int)owhole.X, (int)owhole.Y, ofrac.X!=0, ofrac.Y!=0);
+    ulong other = o.layers[level].getAreaSmearedFast((int)owhole.X, (int)owhole.Y, ofrac.X!=0, ofrac.Y!=0);
     ulong hit = self&other;
     if(level == 0)return hit!=0;
     while(hit!=0){
@@ -361,6 +376,7 @@ public class MipGrid{
   //assumes grids are same cell size; oloc is in local coordinates
   public bool collideGridSameCs(MipGrid o, Vector2 oloc){
     int level = Math.Min(o.highestlevel, highestlevel);
+    //DebugConsole.Write($"{oloc}");
     //int leveldenom = level+level+level;
     int levelDiv = 1<<(3*level);
     Vector2 low = (oloc/levelDiv).Floor();

@@ -99,9 +99,59 @@ public class PartialTiles{
     bad:
       DebugConsole.WriteFailure("Could not set up partial tile hooks");
   }
+
+  static bool UsingPartialtiles;
+  static MipGrid.Layer capturing = null;
+  static MTexture HookChoose(int y, int x, Autotiler.Tiles tiles){
+    if(UsingPartialtiles && capturing is {} mg){
+      if(tiledict.TryGetValue(tiles, out var ulongs)){
+        var texs = tiles.Textures;
+        int choice = Calc.Random.Next(texs.Count);
+        capturing.SetBlock(ulongs[choice],x,y);
+        return texs[choice];
+      } else capturing.SetBlock(0xffff_ffff_ffff_ffffUL,x,y);
+    }
+    return null;
+  }
+  static bool MatchGenarea(ILCursor c, MoveType m, int tilesloc){
+    return c.TryGotoNextBestFit(m,
+      i=>i.MatchLdsfld(typeof(Calc),"Random"),
+      i=>i.MatchLdloc(tilesloc),
+      i=>i.MatchLdfld<Autotiler.Tiles>("Textures"),
+      i=>i.MatchCall(typeof(Calc),"Choose")//,
+      //i=>i.MatchCallvirt(typeof(VirtualMap<Monocle.MTexture>), "set_Item")
+    );
+  }
+  static void GenerateHook(ILContext ctx){
+    ILCursor c= new(ctx);
+    for(int i=0; i<2; i++){
+      int tilesreg = i==1?12:9;
+      if(MatchGenarea(c,MoveType.Before,tilesreg)){
+        ILCursor d = c.Clone();
+        if(MatchGenarea(d,MoveType.After,tilesreg)){
+          c.EmitDup();
+          c.EmitLdloc(i==1?10:5);
+          c.EmitLdarg(2);
+          c.EmitSub();
+          c.EmitLdloc(tilesreg);
+          c.EmitDelegate(HookChoose);
+          c.EmitDup();
+          c.EmitBrtrue(d.Next);
+          c.EmitPop();
+        } else goto bad;
+      } else goto bad;
+    }
+    return;
+    bad:
+      DebugConsole.WriteFailure("Could not make hooks for partial capturing");
+  }
+
+
   public static HookManager hooks = new(()=>{
     IL.Celeste.Autotiler.ctor += Hook;
+    IL.Celeste.Autotiler.Generate += GenerateHook;
   },()=>{
     IL.Celeste.Autotiler.ctor -= Hook;
+    IL.Celeste.Autotiler.Generate -= GenerateHook;
   });
 }

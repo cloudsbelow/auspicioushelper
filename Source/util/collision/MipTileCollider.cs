@@ -18,8 +18,8 @@ public sealed class MiptileCollider:Grid{
   // Left/right/top/bottom all use width and height
   public override float Width { get => cellsize.X*cx; }
   public override float Height { get => cellsize.Y*cy; }
-  public Vector2 tlc=>(Entity?.Position??Vector2.Zero+Position).Round();
-  public Int2 itlc=>Int2.Round(Entity?.Position??Vector2.Zero+Position);
+  public Vector2 tlc=>(lastentity?.Position??Vector2.Zero+Position).Round();
+  public Int2 itlc=>Int2.Round(lastentity?.Position??Vector2.Zero+Position);
   int cx;
   int cy;
   public void SetMg(MipGrid m){
@@ -33,6 +33,7 @@ public sealed class MiptileCollider:Grid{
   }
   public MiptileCollider(Grid g):base(g.CellWidth,g.CellHeight,g.Data){
     SetMg(new(g));
+    cellsize = new Vector2(g.CellWidth,g.CellHeight);
   }
   public override Collider Clone() {
     return new MiptileCollider(mg,cellsize);
@@ -70,11 +71,17 @@ public sealed class MiptileCollider:Grid{
   public override bool Collide(Vector2 point) {
     return mg.collidePoint(Int2.Floor((point-tlc)/cellsize));
   }
+  Entity lastentity;
+  public override void Added(Entity entity) {
+    lastentity=entity;
+    base.Added(entity);
+  }
   public static MiptileCollider fromGrid(Grid g){
     if(g is MiptileCollider gr) return gr;
     DynamicData d = new(g);
     if(!d.TryGet<MiptileCollider>("ausp_mipgrid", out var grid)){
-      d.Set<MiptileCollider>("ausp_mipgrid")
+      d.Set("ausp_mipgrid", grid = new MiptileCollider(g));
+      grid.lastentity = g.Entity;
     }
     return grid;
   }
