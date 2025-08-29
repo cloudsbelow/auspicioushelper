@@ -177,6 +177,7 @@ entities.auspicioushelper/ChannelSwitch.attributes.description.seeker_toggle=Whe
 entities.auspicioushelper/ChannelSwitch.attributes.description.on_value=Value to set when on
 entities.auspicioushelper/ChannelSwitch.attributes.description.off_value=Value to set when off
 entities.auspicioushelper/ChannelSwitch.attributes.description.cooldown=Cooldown for hitting this particular switch (the channel itself is not constrained)
+entities.auspicioushelper/ChannelSwitch.attributes.description.sprite=The name of the XML entity that this should render. Must have the following animations: ice, iceOff, iceLoop, iceOffLoop, hot, hotOff, hotLoop, hotOffLoop, otherwise it might crash
 
 #channelmvoer
 entities.auspicioushelper/ChannelMover.placements.description.main=A block that moves between nodes based on channel. (the modder uses this in their maps and didn't really make it with the intent for others to. It is reccomended to use template channel blocks since they have all the same functionality and actually have visuals)

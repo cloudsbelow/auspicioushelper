@@ -22,17 +22,46 @@ channelswitch.placements = {
       cooldown=1.0,
       onSfx="event:/game/09_core/switch_to_cold",
       offSfx="event:/game/09_core/switch_to_hot",
-      dieSfx="event:/game/09_core/switch_dies"
+      dieSfx="event:/game/09_core/switch_dies",
+      
+      switchsprite="coreFlipSwitch",
     }
   }
 }
+channelswitch.fieldOrder = {
+    "x", "y",
+    "channel",
+    "cooldown",
+    "on_value", "off_value",
+    "onSfx", "offSfx",
+    "dieSfx", "switchsprite",
+    "on_only", "off_only",
+    "player_toggle", "seeker_toggle", "throwable_toggle",
+}
 channelswitch.fieldInformation = {
   on_value = {
-    fieldType="integer"
+    fieldType="integer",
   },
   off_value = {
-    fieldType="integer"
-  }
+    fieldType="integer",
+  },
+  onSfx = {
+    options={"event:/game/09_core/switch_to_cold"},
+    editable=true,    
+  },
+  offSfx = {
+    options={"event:/game/09_core/switch_to_hot"},
+    editable=true,    
+  },
+  dieSfx = {
+    options={"event:/game/09_core/switch_dies"},
+    editable=true,    
+  },
+  
+  switchsprite={
+    options={"coreFlipSwitch"},
+    default="coreFlipSwitch",
+  },
 }
 
 function channelswitch.sprite(room, entity)
