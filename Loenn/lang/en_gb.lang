@@ -468,6 +468,9 @@ entities.auspicioushelper/TemplateTriggerModifier.attributes.description.log=Log
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.blockFilter=Works as a comma seperated white/blacklist. Trigger categories on this list have opposite behavior to the blockTrigger box. Can end strings with * for fuzzy matching
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.delay=Delay all trigger events by this amount.
 
+# template dream block
+entities.auspicioushelper/TemplateDreamblockModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
+
 ### UI
 
 ui.menubar.auspicioushelper_legacyicons=Use Legacy Template Icons [Auspicious Helper]
