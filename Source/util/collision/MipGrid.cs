@@ -37,7 +37,8 @@ public class MipGrid{
       }
     }
     public void SetBlock(ulong val, int x, int y){
-      //if(y==0)Console.WriteLine($"x {x} {val}");
+      // DebugConsole.Write($"Set {x},{y}");
+      // DebugConsole.Write(getBlockstr(val));
       if((uint)x<(uint)width && (uint)y<(uint)height){
         if(d!=null) d[x+y*width] = val;
         if(chunks!=null){
@@ -67,13 +68,13 @@ public class MipGrid{
                 p<<=1;
               }
             }
-            o.SetBlock(blk,tx/blockw,ty/blockh);
+            if(blk!=0) o.SetBlock(blk,tx/blockw,ty/blockh);
           }
         }
       } else {
         if(ChunkSize%blockw!=0 || ChunkSize%blockh!=0) throw new Exception("dont change the numbers");
         for(int gy=0; gy<gridy; gy++) for(int gx=0; gx<gridx; gx++){
-          if(chunks[gx+gridy*gy] is {} c){
+          if(chunks[gx+gridx*gy] is {} c){
             ref ulong mloc = ref MemoryMarshal.GetArrayDataReference(c);
             for(int ty=0; ty<ChunkSize; ty+=blockh) for(int tx=0; tx<ChunkSize; tx+=blockw){
               ulong blk = 0;
@@ -87,7 +88,7 @@ public class MipGrid{
                 if(Unsafe.Add(ref mloc,x+y*ChunkSize)!=0) blk |= p;
                 p<<=1;
               }
-              o.SetBlock(blk,ox/blockw,oy/blockh);
+              if(blk!=0) o.SetBlock(blk,ox,oy);
             }
           }
         }
@@ -329,10 +330,10 @@ public class MipGrid{
   }
   //x and y are in block space for the level
   bool collideFrLevel(int x, int y, Int2 otlc, Int2 obrc, int level){
-    // DebugConsole.Write($"CollideLevel{level} {x} {y}");
+    //DebugConsole.Write($"CollideLevel{level} {x} {y}");
     ulong dat = layers[level].getBlock(x,y);
     ulong mask = makeRectMask(x,y,otlc,obrc,level);
-    // DebugConsole.Write(Util.sideBySide([getBlockstr(dat),getBlockstr(mask)]));
+    //DebugConsole.Write(Util.sideBySide([getBlockstr(dat),getBlockstr(mask)]));
     if(dat == 0 || mask == 0) return false;
     ulong hit = dat&mask;
     if(level == 0) return hit!=0;
@@ -350,8 +351,9 @@ public class MipGrid{
     int leveldenom = level+level+level+3;
     Int2 rtlc = Int2.Max(f.tlc,0);
     Int2 rbrc = Int2.Min(f.brc, new Int2(width,height));
-    // DebugConsole.Write("",level, rtlc, rbrc, width, height);
+    //DebugConsole.Write("",level, rtlc, rbrc, width, height);
     if(rbrc.x<0 || rbrc.y<0 || rtlc.x>=width || rtlc.y>=height) return false;
+    collideFrLevel(rtlc.x>>3,(rtlc.y>>3)+1, rtlc, rbrc, 0);
 
     int addAmt = 1<<leveldenom;
     int xstop = (rbrc.x+addAmt-1)>>leveldenom;

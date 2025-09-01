@@ -153,8 +153,8 @@ internal class PartialTiles{
     // DebugConsole.Write("Setting captruing to null");
     // DebugConsole.Write("layer height", m.layers.Count);
     // DebugConsole.Write(MipGrid.getBlockstr(m.layers[0].getBlock(18,18)));
-    // //collis Int2{113, 104} Int2{121, 115} Int2{14, 13} Int2{15, 14}
-    // DebugConsole.Write("Result:", m.collideInFrame(IntRect.fromCorners(new(113, 104),new(121, 115))));
+    // //1 Int2{1817, 1581} Int2{1825, 1592} 2176 2024
+    // DebugConsole.Write("Result:", m.collideInFrame(IntRect.fromCorners(new(1817, 1581),new(1825, 1592))));
   }
   static bool MatchGenarea(ILCursor c, MoveType m, int tilesloc){
     return c.TryGotoNextBestFit(m,
