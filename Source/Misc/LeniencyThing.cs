@@ -5,10 +5,12 @@
 using System;
 using System.Collections.Generic;
 using Celeste.Mod.auspicioushelper.Import;
+using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.auspicioushelper;
 
+[CustomEntity("auspicioushelper/leniencything")]
 public class PixelLeniencyTrigger:Trigger{
   public struct Ruleset{
     public int staticSlip;
@@ -27,12 +29,12 @@ public class PixelLeniencyTrigger:Trigger{
   public Ruleset rules;
   bool temp;
   public PixelLeniencyTrigger(EntityData d, Vector2 o):base(d,o){
-    rules.staticSlip = d.Int("staticSlip",1);
-    rules.fallingSlip = d.Int("fallingSlip",1);
-    rules.maxGroundedStep = d.Int("maxGroundedStep",2);
-    rules.maxStepSlope = d.Float("maxStepSlope",1);
+    rules.staticSlip = Math.Clamp(d.Int("staticSlip",1),0,4);
+    rules.fallingSlip = Math.Clamp(d.Int("fallingSlip",1),0,6);
+    rules.maxGroundedStep = Math.Clamp(d.Int("maxGroundedStep",2),0,8);
+    rules.maxStepSlope = Math.Clamp(d.Float("maxStepSlope",1),0.25f,4);
     temp = d.Bool("onlyWhenInside");
-    if(d.Bool("configureRoom")){
+    if(d.Bool("setOnAwake")){
       curRules = rules;
     }
     hooks.enable();
@@ -72,11 +74,15 @@ public class PixelLeniencyTrigger:Trigger{
     if(p.Speed.Y<=0) return;
     int threshold = appliedRules.fallingSlip;
     if(!p.CollideCheck<Solid>(p.Position+Vector2.UnitY)) return;
+    bool positive = p.CollideCheck<Solid>(p.Position+Vector2.UnitX*threshold);
+    bool negative = p.CollideCheck<Solid>(p.Position-Vector2.UnitX*threshold);
     for(int i=1; i<=threshold; i++){
       for(int j=1; j>=-1; j-=2){
         if(j*Math.Sign(p.moveX)<0) continue;
+        if(!(j>0?negative:positive)) continue;
         Vector2 v = p.Position+Vector2.UnitY+Vector2.UnitX*i*j;
-        if(!p.CollideCheck<Solid>(v)){
+        Vector2 v2 = p.Position-Vector2.UnitX*(threshold-i+1)*j;
+        if(!p.CollideCheck<Solid>(v) && p.CollideCheck<Solid>(v2)){
           p.MoveHExact(i*j);
           p.MoveVExact(1);
         }
@@ -87,11 +93,15 @@ public class PixelLeniencyTrigger:Trigger{
     int val = orig(p);
     if(p.onGround){
       int threshold = appliedRules.staticSlip;
+      bool positive = p.CollideCheck<Solid>(p.Position+Vector2.UnitX*threshold);
+      bool negative = p.CollideCheck<Solid>(p.Position-Vector2.UnitX*threshold);
       for(int i=1; i<=threshold; i++){
         for(int j=1; j>=-1; j-=2){
           if(j*Math.Sign(p.moveX)<0) continue;
+          if(!(j>0?negative:positive)) continue;
           Vector2 v = p.Position+Vector2.UnitY+Vector2.UnitX*i*j;
-          if(!p.CollideCheck<Solid>(v)){
+          Vector2 v2 = p.Position-Vector2.UnitX*(threshold-i+1)*j;
+          if(!p.CollideCheck<Solid>(v) && p.CollideCheck<Solid>(v2)){
             p.MoveHExact(i*j);
             p.MoveVExact(1);
           }
