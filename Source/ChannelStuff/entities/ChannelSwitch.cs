@@ -51,7 +51,7 @@ public class ChannelSwitch:ChannelBaseEntity {
     maxcd = data.Float("cooldown",1f);
     onsfx = data.Attr("onSfx","event:/game/09_core/switch_to_cold");
     offsfx = data.Attr("offSfx","event:/game/09_core/switch_to_hot");
-    diesfx = data.Attr("diesfx","event:/game/09_core/switch_dies");
+    diesfx = data.Attr("dieSfx","event:/game/09_core/switch_dies");
     //DebugConsole.Write("Constructed switch");
   }
   public override void Added(Scene scene){

@@ -63,7 +63,7 @@ public class MipGrid{
             for(int fy=0; fy<blockh; fy++){
               for(int fx=0; fx<blockw; fx++){
                 int x=tx+fx; int y=ty+fy;
-                if(x<width && y<height && Unsafe.Add(ref mloc,x+y*height)!=0) blk |= p;
+                if(x<width && y<height && Unsafe.Add(ref mloc,x+y*width)!=0) blk |= p;
                 p<<=1;
               }
             }
@@ -259,17 +259,13 @@ public class MipGrid{
   internal int width;
   internal int height;
   internal int highestlevel;
-  Grid g;
-  Vector2 cellRectCorner = Vector2.Zero;
   const ulong FULL = 0xffff_ffff_ffff_ffffUL;
   const ulong BYTEMARKER = 0x0101_0101_0101_0101UL;
   public MipGrid(Grid grid){
-    g=grid;
     //cellshape = new Vector2(g.CellWidth,g.CellHeight);
     VirtualMap<bool> map = grid.Data;
     Layer l = new Layer((map.Columns+blockw-1)/blockw,(map.Rows+blockh-1)/blockh);
     int ss = VirtualMap<bool>.SegmentSize;
-    DebugConsole.Write($"({grid.CellsX}, {grid.CellsY}) ({l.width}, {l.height})");
     int mlx = map.segments.GetLength(0);
     int mly = map.segments.GetLength(1);
     for(int yb=0; yb<map.Rows; yb+=blockh){
@@ -296,6 +292,12 @@ public class MipGrid{
     layers = [l];
     width = map.Columns;
     height = map.Rows;
+    buildMips();
+  }
+  public MipGrid(Layer l){
+    layers = [l];
+    width = l.width*blockw;
+    height = l.height*blockh;
     buildMips();
   }
   void buildMips(){
@@ -327,8 +329,10 @@ public class MipGrid{
   }
   //x and y are in block space for the level
   bool collideFrLevel(int x, int y, Int2 otlc, Int2 obrc, int level){
+    // DebugConsole.Write($"CollideLevel{level} {x} {y}");
     ulong dat = layers[level].getBlock(x,y);
     ulong mask = makeRectMask(x,y,otlc,obrc,level);
+    // DebugConsole.Write(Util.sideBySide([getBlockstr(dat),getBlockstr(mask)]));
     if(dat == 0 || mask == 0) return false;
     ulong hit = dat&mask;
     if(level == 0) return hit!=0;
@@ -346,10 +350,12 @@ public class MipGrid{
     int leveldenom = level+level+level+3;
     Int2 rtlc = Int2.Max(f.tlc,0);
     Int2 rbrc = Int2.Min(f.brc, new Int2(width,height));
+    // DebugConsole.Write("",level, rtlc, rbrc, width, height);
     if(rbrc.x<0 || rbrc.y<0 || rtlc.x>=width || rtlc.y>=height) return false;
 
-    int xstop = (rbrc.x+leveldenom-1)>>leveldenom;
-    int ystop = (rbrc.y+leveldenom-1)>>leveldenom;
+    int addAmt = 1<<leveldenom;
+    int xstop = (rbrc.x+addAmt-1)>>leveldenom;
+    int ystop = (rbrc.y+addAmt-1)>>leveldenom;
     for(int x=rtlc.x>>leveldenom; x<xstop; x++){
       for(int y=rtlc.y>>leveldenom; y<ystop; y++){
         if(collideFrLevel(x,y,rtlc,rbrc,level)) return true;
@@ -378,7 +384,10 @@ public class MipGrid{
   //assumes grids are same cell size; oloc is in local coordinates
   public bool collideGridSameCs(MipGrid o, Vector2 oloc){
     int level = Math.Min(o.highestlevel, highestlevel);
-    //DebugConsole.Write($"{oloc}");
+    // DebugConsole.Write($"{oloc} {level}");
+    // DebugConsole.Write(Util.sideBySide([getBlockstr(layers[0].getBlock(0,0)),getBlockstr(layers[0].getBlock(1,0)),getBlockstr(layers[0].getBlock(2,0))]));
+    // DebugConsole.Write(Util.sideBySide([getBlockstr(layers[0].getBlock(0,1)),getBlockstr(layers[0].getBlock(1,1)),getBlockstr(layers[0].getBlock(2,1))]));
+    // DebugConsole.Write(Util.sideBySide([getBlockstr(layers[1].getBlock(0,0))]));
     //int leveldenom = level+level+level;
     int levelDiv = 1<<(3*level);
     Vector2 low = (oloc/levelDiv).Floor();
@@ -386,8 +395,8 @@ public class MipGrid{
 
     int xstop = Math.Min((int)Math.Ceiling(high.X/blockw),layers[level].width);
     int ystop = Math.Min((int)Math.Ceiling(high.Y/blockh),layers[level].height);
-    for(int x=Math.Max(0,(int)Math.Floor(low.X/blockw)); x<xstop; x++){
-      for(int y=Math.Max(0,(int)Math.Floor(low.Y/blockh)); y<ystop; y++){
+    for(int x=Math.Max(0,(int)Math.Floor(low.X/blockw)); x<=xstop; x++){
+      for(int y=Math.Max(0,(int)Math.Floor(low.Y/blockh)); y<=ystop; y++){
         if(collideMipGridLevel(o,oloc,x,y,level)) return true;
       }
     }

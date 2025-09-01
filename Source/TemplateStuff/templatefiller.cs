@@ -101,8 +101,11 @@ public class templateFiller:Entity{
       }
     }
     static TileView intercept;
-    static Autotiler.Generated subhook(On.Celeste.Autotiler.orig_GenerateMap_VirtualMap1_bool orig, Autotiler self, VirtualMap<char> d, bool piol){
-      if(intercept == null) return orig(self,d,piol);
+    public static bool intercepting => intercept!=null;
+    static Autotiler.Generated Hook(On.Celeste.Autotiler.orig_Generate orig, Autotiler self, 
+      VirtualMap<char> mapData, int startX, int startY, int tilesX, int tilesY, bool forceSolid, char forceID, Autotiler.Behaviour behaviour
+    ){
+      if(intercept == null) return orig(self, mapData, startX,startY,tilesX,tilesY,forceSolid,forceID,behaviour);
       Autotiler.Generated ret;
       ret.TileGrid = new TileGrid(8,8,0,0);
       ret.TileGrid.Tiles = intercept.tiles;
@@ -131,9 +134,9 @@ public class templateFiller:Entity{
       return ret;
     }
     static HookManager hooks = new HookManager(()=>{
-      On.Celeste.Autotiler.GenerateMap_VirtualMap1_bool+=subhook;
+      On.Celeste.Autotiler.Generate+=Hook;
     },()=>{
-      On.Celeste.Autotiler.GenerateMap_VirtualMap1_bool-=subhook;
+      On.Celeste.Autotiler.Generate-=Hook;
     });
     public void InterceptNext(){
       hooks.enable();
@@ -142,35 +145,44 @@ public class templateFiller:Entity{
   } 
   public bool created = false;
   public TileView Fgt = null;
+  public MipGrid FgMipgrid;
   public TileView Bgt = null;
+  void SetMipgrid(SolidTiles solid, Int2 tiletlc, Int2 size){
+    if(solid.Collider is not MiptileCollider col){
+      throw new Exception($"Using partialtiles but solidtile collider {solid.Collider.GetType()}, not MiptileCollider");
+    }
+    FgMipgrid = new(col.mg.layers[0].GetSublayer(tiletlc.x*8, tiletlc.y*8, size.x*8,size.y*8));
+  }
   public void initDynamic(Level l){
     if(created) return;
     created = true;
     if(fgt!=null){
       SolidTiles st = l.SolidTiles;
-      Vector2 sto = ((tiletlc-st.Position)/8).Round();
+      Int2 sto = Int2.Round((tiletlc-st.Position)/8);
+      if(PartialTiles.usingPartialtiles) SetMipgrid(st, sto, new(tr.Width,tr.Height));
       Fgt = new(); 
-      Fgt.Fill(st.Tiles, st.AnimatedTiles,(int)sto.X,(int)sto.Y,tr.Width,tr.Height);
+      Fgt.Fill(st.Tiles, st.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);
     }
     if(bgt!=null){
       BackgroundTiles st = l.BgTiles;
-      Vector2 sto = ((tiletlc-st.Position)/8).Round();
+      Int2 sto = Int2.Round((tiletlc-st.Position)/8);
       Bgt = new();
-      Bgt.Fill(st.Tiles, st.AnimatedTiles,(int)sto.X,(int)sto.Y,tr.Width,tr.Height);
+      Bgt.Fill(st.Tiles, st.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);
     }
   }
   public void initStatic(SolidTiles solid, BackgroundTiles back){
     if(created) return;
     created = true;
     if(fgt!=null){
-      Vector2 sto = ((tiletlc-solid.Position)/8).Round();
+      Int2 sto = Int2.Round((tiletlc-solid.Position)/8);
+      if(PartialTiles.usingPartialtiles) SetMipgrid(solid, sto, new(tr.Width,tr.Height));
       Fgt = new(); 
-      Fgt.Fill(solid.Tiles, solid.AnimatedTiles,(int)sto.X,(int)sto.Y,tr.Width,tr.Height);
+      Fgt.Fill(solid.Tiles, solid.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);
     }
     if(bgt!=null){
-      Vector2 sto = ((tiletlc-back.Position)/8).Round();
+      Int2 sto = Int2.Round((tiletlc-back.Position)/8);
       Bgt = new(); 
-      Bgt.Fill(back.Tiles, back.AnimatedTiles,(int)sto.X,(int)sto.Y,tr.Width,tr.Height);
+      Bgt.Fill(back.Tiles, back.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);
     }
   }
   public void AddTilesTo(Template tem, Scene s){

@@ -13,7 +13,7 @@ using MonoMod.Utils;
 namespace Celeste.Mod.auspicioushelper;
 
 public sealed class MiptileCollider:Grid{
-  MipGrid mg;
+  public MipGrid mg;
   Vector2 cellsize;
   // Left/right/top/bottom all use width and height
   public override float Width { get => cellsize.X*cx; }
@@ -61,6 +61,7 @@ public sealed class MiptileCollider:Grid{
     Vector2 ltlc = tlc;
     Int2 rtlc = Int2.Floor((f.tlc.Round()-ltlc)/cellsize);
     Int2 rbrc = Int2.Ceil((f.brc.Round()-ltlc)/cellsize);
+    //DebugConsole.Write("collis", rtlc, rbrc, rtlc/8, rbrc/8);
     return mg.collideInFrame(IntRect.fromCorners(rtlc,rbrc));
   }
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -80,6 +81,9 @@ public sealed class MiptileCollider:Grid{
     if(g is MiptileCollider gr) return gr;
     DynamicData d = new(g);
     if(!d.TryGet<MiptileCollider>("ausp_mipgrid", out var grid)){
+      if(PartialTiles.usingPartialtiles){
+        throw new Exception($"Partial tiles are enabled: Tile collider should be a MiptileCollider but is a {grid.GetType()}");
+      }
       d.Set("ausp_mipgrid", grid = new MiptileCollider(g));
       grid.lastentity = g.Entity;
     }
