@@ -85,8 +85,8 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
       if(p!=null && !hasInside(p))setVisColAct(uvis,ucol,uact);
       else Add(new Coroutine(appearSequence()));
     }
-    MiptileCollider mtc = MiptileCollider.fromGrid(fgt.Grid);
-    DebugConsole.Write("res", mtc.CollideMipTileOffset(MiptileCollider.fromGrid((scene as Level).SolidTiles.Grid),Vector2.Zero));
+    //MiptileCollider mtc = MiptileCollider.fromGrid(fgt.Grid);
+    //DebugConsole.Write("res", mtc.CollideMipTileOffset(MiptileCollider.fromGrid((scene as Level).SolidTiles.Grid),Vector2.Zero));
   }
 
   IEnumerator appearSequence(){

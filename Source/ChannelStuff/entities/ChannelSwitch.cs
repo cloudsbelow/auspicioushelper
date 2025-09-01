@@ -73,7 +73,6 @@ public class ChannelSwitch:ChannelBaseEntity {
   }
   public override void setChVal(int val){
     bool nval = getVal(val);
-    //DebugConsole.Write($"{val} {onVal} {}{nval}")
     if(nval == on) return;
     on=nval;
     Audio.Play(on ? onsfx : offsfx, Position);

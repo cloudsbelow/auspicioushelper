@@ -240,7 +240,6 @@ public class Template:Entity, ITemplateChild{
   }
   public bool hasRiders<T>() where T:Actor{
     foreach(ITemplateChild c in children){
-      //if(c is TemplateZipmover z) DebugConsole.Write($"check: {z.prop}");
       if((c.prop & Propagation.Riding)!=0 && c.hasRiders<T>()) return true;
     }
     return false;

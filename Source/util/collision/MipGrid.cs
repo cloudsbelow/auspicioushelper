@@ -270,12 +270,14 @@ public class MipGrid{
     Layer l = new Layer((map.Columns+blockw-1)/blockw,(map.Rows+blockh-1)/blockh);
     int ss = VirtualMap<bool>.SegmentSize;
     DebugConsole.Write($"({grid.CellsX}, {grid.CellsY}) ({l.width}, {l.height})");
+    int mlx = map.segments.GetLength(0);
+    int mly = map.segments.GetLength(1);
     for(int yb=0; yb<map.Rows; yb+=blockh){
       for(int xb=0; xb<map.Columns; xb+=blockw){
         bool flag=false;
         int lx = xb/ss; int hx = (xb+blockw)/ss;
         int ly = yb/ss; int hy = (yb+blockh)/ss;
-        for(int i=lx; i<=hx; i++) for(int j=ly; j<=hy; j++) flag|=map.AnyInSegment(i,j);
+        for(int i=lx; i<=hx && i<mlx; i++) for(int j=ly; j<=hy && j<mly; j++) flag|=map.AnyInSegment(i,j);
         if(!flag) continue;
         
         ulong block = 0;
