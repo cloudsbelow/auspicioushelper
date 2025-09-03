@@ -45,7 +45,7 @@ public class ChannelMover:Solid, IChannelUser, IMaterialEnt{
     float lprog = prog;
     prog = System.Math.Clamp(prog+dir*relspd*Engine.DeltaTime,0,1);
     if(lprog != prog){
-      MoveTo(loc, dir*relspd*(p1-p0)+tcomp?.getParentLiftspeed()??Vector2.Zero);
+      MoveTo(loc, dir*relspd*(p1-p0)+(tcomp?.getParentLiftspeed()??Vector2.Zero));
     }
   }
   public override void Render(){

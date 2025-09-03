@@ -55,7 +55,7 @@ public class SpiralBossBeam:Entity {
     dt = data.Float("speed");
     nrad = data.Float("near_radius",8);
     mfrad = data.Float("max_range",2000f);
-    Depth=-10005;
+    Depth = data.Int("depth",-1);
     frame=0;
   }
   public override void Added(Scene scene){

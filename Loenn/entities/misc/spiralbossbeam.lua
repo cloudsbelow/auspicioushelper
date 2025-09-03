@@ -12,7 +12,8 @@ spiralbossbeam.placements = {
     name = "main",
     data = {
       start_angle = 0.,
-      speed = 1.
+      speed = 1.,
+      depth = -1
     }
   }
 }
