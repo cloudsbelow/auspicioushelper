@@ -145,6 +145,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
           AddNewEnts(GetChildren<Entity>());
         }
         this.ownShakeVec = Vector2.Zero;
+        cachedCol = true;
       },
       OnDisable=()=>{
         setVisCol(layer!=null,false);

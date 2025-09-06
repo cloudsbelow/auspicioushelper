@@ -5,6 +5,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -53,11 +54,11 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
   bool broken=false;
   public void breakBlock(){
     if(broken) return;
+    broken=true;
+    if(triggerOnBreak) new TriggerInfo.EntInfo("TemplateBlock",this).Pass(this); 
     Audio.Play(breaksfx,Position);
     destroy(true);
     if(persistent) auspicioushelperModule.Session.brokenTempaltes.Add(fullpath);
-    broken=true;
-    if(triggerOnBreak) new TriggerInfo.EntInfo("TemplateBlock",this).Pass(this); 
   }
   public void OnTrigger(TriggerInfo info){
     if(!triggerable){
