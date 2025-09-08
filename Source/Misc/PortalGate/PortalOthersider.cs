@@ -99,3 +99,100 @@ public class PortalOthersider:Entity{
     return fail?(int)Math.Round(Y-oldY):moveV;
   }*/
 }
+
+
+
+
+
+public class PortalOtherOthersider:Entity{
+  public PortalColliderH info;
+  public bool propegateMove=true;
+  public int mulMoveH = 1;
+  
+
+  public PortalOtherOthersider(Vector2 pos, PortalColliderH h):base(pos){
+    Entity copying = h.Entity;
+    Depth=copying.Depth;
+    Collidable=false;
+    Collider = h.h.Clone();
+    info=h;
+    if(h.p.flipped) mulMoveH=-1;
+  }
+  public override void Render(){
+    if(info.Entity==null){
+      RemoveSelf();
+      return;
+    }
+    base.Render();
+    Vector2 unrendpos = Position;
+    Center = info.getOthersiderPos();
+    if(info.end)return;
+    var delta = -info.Entity.Position+Position;
+    if(info.Entity is Actor){
+      Vector2 mulMove = new Vector2(mulMoveH,1);
+      if(info.Entity is Player p){
+        PlayerHair h = p.Get<PlayerHair>();
+        if(info.p.flipped) p.Facing = (Facings)(0 - p.Facing);
+        var oldpos = p.Position;
+        p.Position+=delta;
+        for(int i=0; i<h.Sprite.HairCount; i++){
+          h.Nodes[i]=(h.Nodes[i]-oldpos)*mulMove+p.Position;
+        }
+        try{
+          p.Render();
+        }catch(Exception ex){
+          DebugConsole.Write("Error in rendering otherside player");
+          DebugConsole.Write(ex.ToString());
+        }
+        for(int i=0; i<h.Sprite.HairCount; i++){
+          h.Nodes[i]=(h.Nodes[i]-p.Position)*mulMove+oldpos;
+        }
+        if(info.p.flipped) p.Facing = (Facings)(0 - p.Facing);
+        p.Position=oldpos;
+        return;
+      }
+
+      foreach(Component c in info.Entity.Components){
+        if(c is Sprite s){
+          var oldpos = s.RenderPosition;
+          s.RenderPosition = oldpos+delta;
+          s.Scale.X*=mulMoveH;
+          s.Render();
+          s.Scale.X*=mulMoveH;
+          s.RenderPosition = oldpos;
+        }
+      }
+    } else {
+      Vector2 pos = info.Entity.Position;
+      info.Entity.Position = this.Position;
+      info.Entity.Render();
+      info.Entity.Position = pos;
+    }
+    Position=unrendpos;
+  }
+  public override void Update(){
+    base.Update();
+    //DebugConsole.Write(info.getOthersiderPos().ToString());
+    if(info.Entity==null){
+      RemoveSelf();
+      return;
+    }
+    // if(info.checkLeaves() || info.checkLeavesHorizontal()){
+    //   info.finish();
+    // }
+  }
+  /*public int tryMoveH(int moveH, Collision onCollide = null, Solid pusher = null){
+    propegateMove = false;
+    float oldX = X;
+    bool fail = MoveHExact(moveH*mulMoveH, onCollide, pusher);
+    propegateMove = true;
+    return fail?(int)Math.Round(X-oldX)*mulMoveH:moveH;
+  }
+  public int tryMoveV(int moveV, Collision onCollide=null, Solid pusher=null){
+    propegateMove = false;
+    float oldY = Y;
+    bool fail = MoveVExact(moveV, onCollide, pusher);
+    propegateMove = true;
+    return fail?(int)Math.Round(Y-oldY):moveV;
+  }*/
+}

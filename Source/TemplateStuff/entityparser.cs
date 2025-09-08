@@ -267,6 +267,7 @@ anyways i want to praise it more it is wonderful
       });
     }
     clarify("introCar", Types.unwrapped, static (l,d,o,e)=>new IntroCarW(e,o));
+    clarify("water", Types.unwrapped, static (l,d,o,e)=>new WaterW(e,o));
     defaultModdedSetup();
     HookVanilla.hooks.enable();
   }

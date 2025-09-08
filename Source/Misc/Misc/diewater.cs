@@ -11,9 +11,9 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/DieWater")]
 public class DieWater:Water{
   
-
+  
   public DieWater(EntityData d,Vector2 offset):base(d,offset){
-
+    
   }
   public override void Added(Scene scene){
     base.Added(scene);
@@ -23,5 +23,8 @@ public class DieWater:Water{
     Add(new PlayerCollider((Player p)=>{
       p.Die(Vector2.UnitY);
     },c));
+  }
+  public override void Render() {
+    base.Render();
   }
 }

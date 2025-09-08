@@ -272,26 +272,43 @@ public class PortalGateH:Entity{
     }
   }
   public static bool ActorMoveHHook(On.Celeste.Actor.orig_MoveHExact orig, Actor a, int moveH, Collision onCollide, Solid pusher){
-    SurroundingInfoH s = evalEnt(a);
-    PortalIntersectInfoH info=null;
-    if(intersections.TryGetValue(a,out info)){
-    } else if(a.Left+moveH<=s.leftl) {
-      intersections[a]=(info = new PortalIntersectInfoH(s.leftn, s.left,a));
-      PortalOthersider mn = info.addOthersider();
-      //collideLim[mn] = s.left.getSidedCollidelim(!s.leftn);
-    } else if(a.Right+moveH>=s.rightl){
-      intersections[a]=(info = new PortalIntersectInfoH(s.rightn, s.right, a));
-      PortalOthersider mn = info.addOthersider();
-      //collideLim[mn] = s.right.getSidedCollidelim(!s.rightn);
-    }
-    if(pusher!=null && info!=null){
-      moveH = info.reinterpertPush(moveH,pusher);
+    
+    if(a.Collider is PortalColliderH info){}
+    else {
+      SurroundingInfoH s = evalEnt(a);
+      if(a.Left+moveH<=s.leftl){
+        DebugConsole.Write("before",a, new FloatRect(a));
+        info = new PortalColliderH(s.leftn, s.left,a);
+        DebugConsole.Write("after",info.getAbsoluteRects(out var r1, out var r2), r1, r2);
+      } 
+      else if(a.Right+moveH>=s.rightl) info = new PortalColliderH(s.rightn, s.right, a);
+      else info=null;
     }
     bool val = orig(a,moveH,onCollide,pusher);
-    if(info != null && info.finish()){
-      intersections.Remove(a);
-    } 
+    info?.finish();
     return val;
+
+    
+    // SurroundingInfoH s = evalEnt(a);
+    // PortalIntersectInfoH info=null;
+    // if(intersections.TryGetValue(a,out info)){
+    // } else if(a.Left+moveH<=s.leftl) {
+    //   intersections[a]=(info = new PortalIntersectInfoH(s.leftn, s.left,a));
+    //   PortalOthersider mn = info.addOthersider();
+    //   //collideLim[mn] = s.left.getSidedCollidelim(!s.leftn);
+    // } else if(a.Right+moveH>=s.rightl){
+    //   intersections[a]=(info = new PortalIntersectInfoH(s.rightn, s.right, a));
+    //   PortalOthersider mn = info.addOthersider();
+    //   //collideLim[mn] = s.right.getSidedCollidelim(!s.rightn);
+    // }
+    // if(pusher!=null && info!=null){
+    //   moveH = info.reinterpertPush(moveH,pusher);
+    // }
+    // bool val = orig(a,moveH,onCollide,pusher);
+    // if(info != null && info.finish()){
+    //   intersections.Remove(a);
+    // } 
+    // return val;
   }
   public static void ActorNaiveMove(On.Celeste.Actor.orig_NaiveMove orig, Actor a, Vector2 amount){
     SurroundingInfoH s = evalEnt(a);

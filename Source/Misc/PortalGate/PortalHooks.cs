@@ -138,39 +138,39 @@ public static class portalHooks{
     );
     boundsHook = new Hook(colliderBounds, Bounds_Detour);*/
 
-    On.Monocle.Hitbox.Intersects_float_float_float_float += HitboxIsect;
-    On.Monocle.Hitbox.Intersects_Hitbox += HitboxIsectHb;
-    On.Monocle.Hitbox.Collide_Vector2 += HitboxCollidePoint;
-    On.Monocle.Hitbox.Collide_Vector2_Vector2 += HitboxCollideLine;
-    On.Monocle.Hitbox.Collide_Rectangle +=HitboxCollideRect;
-    On.Monocle.Hitbox.Collide_Circle += HitboxCollideCircle;
-    On.Monocle.Hitbox.Collide_Grid += HitboxCollideGrid;
-    On.Monocle.Grid.Collide_Hitbox += GridCollideHitbox;
+    // On.Monocle.Hitbox.Intersects_float_float_float_float += HitboxIsect;
+    // On.Monocle.Hitbox.Intersects_Hitbox += HitboxIsectHb;
+    // On.Monocle.Hitbox.Collide_Vector2 += HitboxCollidePoint;
+    // On.Monocle.Hitbox.Collide_Vector2_Vector2 += HitboxCollideLine;
+    // On.Monocle.Hitbox.Collide_Rectangle +=HitboxCollideRect;
+    // On.Monocle.Hitbox.Collide_Circle += HitboxCollideCircle;
+    // On.Monocle.Hitbox.Collide_Grid += HitboxCollideGrid;
+    // On.Monocle.Grid.Collide_Hitbox += GridCollideHitbox;
 
     On.Celeste.Actor.MoveHExact+=PortalGateH.ActorMoveHHook;
-    On.Celeste.Actor.MoveVExact+=PortalGateH.ActorMoveVHook;
-    On.Celeste.Actor.NaiveMove+=PortalGateH.ActorNaiveMove;
-    On.Celeste.Actor.Update+=PortalGateH.ActorUpdateHook;
-    On.Celeste.Platform.MoveHExactCollideSolids += PortalGateH.BlockMoveHHook;
-    On.Celeste.Platform.MoveVExactCollideSolids += PortalGateH.BlockMoveVHook;
+    // On.Celeste.Actor.MoveVExact+=PortalGateH.ActorMoveVHook;
+    // On.Celeste.Actor.NaiveMove+=PortalGateH.ActorNaiveMove;
+    // On.Celeste.Actor.Update+=PortalGateH.ActorUpdateHook;
+    // On.Celeste.Platform.MoveHExactCollideSolids += PortalGateH.BlockMoveHHook;
+    // On.Celeste.Platform.MoveVExactCollideSolids += PortalGateH.BlockMoveVHook;
   }
   
   public static void unsetupHooks(){
-    On.Monocle.Hitbox.Intersects_float_float_float_float -= HitboxIsect;
-    On.Monocle.Hitbox.Intersects_Hitbox -= HitboxIsectHb;
-    On.Monocle.Hitbox.Collide_Vector2 -= HitboxCollidePoint;
-    On.Monocle.Hitbox.Collide_Vector2_Vector2 -= HitboxCollideLine;
-    On.Monocle.Hitbox.Collide_Rectangle -=HitboxCollideRect;
-    On.Monocle.Hitbox.Collide_Circle -= HitboxCollideCircle;
-    On.Monocle.Hitbox.Collide_Grid -= HitboxCollideGrid;
-    On.Monocle.Grid.Collide_Hitbox -= GridCollideHitbox;
+    // On.Monocle.Hitbox.Intersects_float_float_float_float -= HitboxIsect;
+    // On.Monocle.Hitbox.Intersects_Hitbox -= HitboxIsectHb;
+    // On.Monocle.Hitbox.Collide_Vector2 -= HitboxCollidePoint;
+    // On.Monocle.Hitbox.Collide_Vector2_Vector2 -= HitboxCollideLine;
+    // On.Monocle.Hitbox.Collide_Rectangle -=HitboxCollideRect;
+    // On.Monocle.Hitbox.Collide_Circle -= HitboxCollideCircle;
+    // On.Monocle.Hitbox.Collide_Grid -= HitboxCollideGrid;
+    // On.Monocle.Grid.Collide_Hitbox -= GridCollideHitbox;
 
     On.Celeste.Actor.MoveHExact-=PortalGateH.ActorMoveHHook;
-    On.Celeste.Actor.MoveVExact-=PortalGateH.ActorMoveVHook;
-    On.Celeste.Actor.NaiveMove-=PortalGateH.ActorNaiveMove;
-    On.Celeste.Actor.Update-=PortalGateH.ActorUpdateHook;
-    On.Celeste.Platform.MoveHExactCollideSolids -= PortalGateH.BlockMoveHHook;
-    On.Celeste.Platform.MoveVExactCollideSolids -= PortalGateH.BlockMoveVHook;
+    // On.Celeste.Actor.MoveVExact-=PortalGateH.ActorMoveVHook;
+    // On.Celeste.Actor.NaiveMove-=PortalGateH.ActorNaiveMove;
+    // On.Celeste.Actor.Update-=PortalGateH.ActorUpdateHook;
+    // On.Celeste.Platform.MoveHExactCollideSolids -= PortalGateH.BlockMoveHHook;
+    // On.Celeste.Platform.MoveVExactCollideSolids -= PortalGateH.BlockMoveVHook;
     //absoluteLeftHook.Dispose();
     //absoluteRightHook.Dispose();
     //boundsHook.Dispose();

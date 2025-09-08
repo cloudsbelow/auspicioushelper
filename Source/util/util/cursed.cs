@@ -232,12 +232,10 @@ public static partial class Util{
     public Action<object,object> setter = null;
     public Type vtype;
     public ValueHelper(Type T, string fieldname, bool onlyread = false){
-      vtype = GetInstFieldtype(T,fieldname);
-      if(vtype!=null){
+      if((vtype = GetInstFieldtype(T,fieldname))!=null){
         getter = instanceFieldGetter(T,fieldname);
         setter = !onlyread?instanceFieldSetter(T,fieldname):null;
-      } else {
-        vtype = GetInstProptype(T,fieldname);
+      } else if ((vtype = GetInstProptype(T,fieldname)) != null){
         getter = instancePropGetter(T,fieldname);
         setter = !onlyread?instancePropSetter(T,fieldname):null;
       }
@@ -245,17 +243,17 @@ public static partial class Util{
     public object get(object o)=>getter(o);
     public void set(object o, object v)=>setter(o,v);
   }
+
   public class ValueHelper<TValue>{
     public Func<object,TValue> getter = null;
     public Action<object,TValue> setter = null;
     Type vtype;
+    public bool valid=>vtype!=null;
     public ValueHelper(Type T, string fieldname, bool onlyread = false){
-      vtype = GetInstFieldtype(T,fieldname);
-      if(vtype!=null){
+      if((vtype = GetInstFieldtype(T,fieldname))!=null){
         getter = instanceFieldGetter<TValue>(T,fieldname);
         setter = !onlyread?instanceFieldSetter<TValue>(T,fieldname):null;
-      } else {
-        vtype = GetInstProptype(T,fieldname);
+      } else if ((vtype = GetInstProptype(T,fieldname)) != null){
         getter = instancePropGetter<TValue>(T,fieldname);
         setter = !onlyread?instancePropSetter<TValue>(T,fieldname):null;
       }
