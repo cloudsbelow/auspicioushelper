@@ -28,6 +28,10 @@ public static partial class Util{
       (float)((rgba>>shift)&mask)*mult, 
       (float)(rgba&mask)*mult);
   }
+  public static bool tryGetStr(this EntityData d, string key, out string str){
+    str = d.Attr(key,"");
+    return !string.IsNullOrWhiteSpace(str);
+  }
   public static string removeWhitespace(string s){
     if(s==null) return null;
     Span<char> buf = stackalloc char[s.Length];

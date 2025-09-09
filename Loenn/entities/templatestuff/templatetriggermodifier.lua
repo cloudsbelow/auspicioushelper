@@ -55,6 +55,7 @@ entity.placements = {
       blockTrigger = false,
       seekersTrigger = false,
       holdablesTrigger = false,
+      useAdvancedSetch = false,
       delay = -1,
       blockFilter = "",
       log=false,

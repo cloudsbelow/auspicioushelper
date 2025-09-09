@@ -19,6 +19,10 @@ public class ChannelClearController:Entity {
       ChannelState.clearChannels(s);
     }
     ChannelState.SetChannel(data.Attr("channel",""),data.Int("value",0));
+    if(data.tryGetStr("advanced",out var str))new ChannelState.AdvancedSetter(str).Apply();
+  }
+  public override void Added(Scene scene) {
+    base.Added(scene);
     RemoveSelf();
   }
 }

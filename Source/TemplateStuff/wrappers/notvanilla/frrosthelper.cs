@@ -170,7 +170,6 @@ public static class FrostHelperStuff{
       toffset=wrapped.Position-Vector2.UnitY*(stratosphere?stratosphereHeight:0)-ppos;
     }
     void expandGood(){
-      DebugConsole.Write("Expanded");
       List<Entity> oldSts = Scene.Tracker.Entities[typeof(SolidTiles)];
       Scene.Tracker.Entities[typeof(SolidTiles)] = parent.fgt==null?[]:[parent.fgt];
       bool flag=false;

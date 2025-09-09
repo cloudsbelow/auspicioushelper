@@ -21,11 +21,15 @@ public class ChannelPlayerTrigger:Trigger{
   bool activateOnEnter=false;
   bool activateOnleave=false;
   bool onlyOnce;
+  ChannelState.AdvancedSetter adv=null;
 
   public ChannelPlayerTrigger(EntityData data, Vector2 offset):base(data, offset){
     onlyOnce = data.Bool("only_once",false);
     channel = data.Attr("channel","");
     value = data.Int("value",1);
+    if(!string.IsNullOrWhiteSpace(data.Attr("advanced"))){
+      adv = new(data.Attr("advanced"));
+    }
     switch(data.Attr("action")){
       case "dash":
         Add(new DashListener((Vector2 d)=>{
@@ -67,6 +71,7 @@ public class ChannelPlayerTrigger:Trigger{
       Op.min => Math.Min(value, oldval),
       _=>oldval
     });
+    adv?.Apply();
     if(onlyOnce) RemoveSelf();
   }
   public override void OnEnter(Player player){

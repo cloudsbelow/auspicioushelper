@@ -126,7 +126,7 @@ public static class ChannelState{
   }
   class InlineCalc{
     enum Ops{
-      and, or, sum, invalid
+      and, or, sum, xor, prod, invalid
     }
     public string to;
     List<string> from = new();
@@ -136,6 +136,8 @@ public static class ChannelState{
     static Func<int, int, int> andPred = (a,b)=>(a!=0&&b!=0)?1:0;
     static Func<int, int, int> sumPred = (a,b)=>a+b;
     static Func<int, int, int> orPred = (a,b)=>(a!=0||b!=0)?1:0;
+    static Func<int, int, int> xorPred = (a,b)=>a^b;
+    static Func<int, int, int> prodPred = (a,b)=>a*b;
     int seedval;
     static Regex termReg = new Regex(@"^[^\(]*",RegexOptions.Compiled);
     public InlineCalc(string expr){
@@ -145,8 +147,8 @@ public static class ChannelState{
         DebugConsole.WriteFailure($"Invalid function {op} in {expr}");
         op = Ops.and;
       } 
-      pred = op switch {Ops.and=>andPred, Ops.or=>orPred, Ops.sum=>sumPred, _=>andPred};
-      seedval = op switch {Ops.and=>1, _=>0};
+      pred = op switch {Ops.and=>andPred, Ops.or=>orPred, Ops.sum=>sumPred, Ops.xor=>xorPred, Ops.prod=>prodPred, _=>andPred};
+      seedval = op switch {Ops.and=>1, Ops.prod=>1, _=>0};
       from = Util.listparseflat(expr.Substring(term.Length),true,false);
       int i=0;
       foreach(var ch in from){
@@ -212,7 +214,7 @@ public static class ChannelState{
     if(_readChannel(ch)==state) return;
     channelStates[ch] = state;
     if (watching.TryGetValue(ch, out var list)) {
-      foreach(IChannelUser b in list){
+      foreach(IChannelUser b in list.ToArray()){
         b.setChVal(state);
       }
     }
@@ -220,7 +222,7 @@ public static class ChannelState{
   }
   public static void SetChannel(string ch, int state, bool fromInterop=false){
     ch=Util.removeWhitespace(ch);
-    if(!checkClean(ch)) return;
+    if(ch.Length == 0 || !checkClean(ch)) return;
     SetChannelRaw(ch,state);
     if(!fromInterop && ch.Length>0){
       if(ch[0]=='$')(Engine.Instance.scene as Level)?.Session.SetFlag(ch.Substring(1),state!=0);
@@ -319,6 +321,23 @@ public static class ChannelState{
       if(pair.Key.StartsWith(prefix)) ToForceRemove.Enqueue(pair.Key);
     }
     ForceRemove(null);
+  }
+
+  public class AdvancedSetter{
+    Dictionary<string, Tuple<string, int>> toDo = new();
+    public AdvancedSetter(string str){
+      foreach(var v in Util.kvparseflat(str)){
+        if(v.Value.Length == 0) DebugConsole.WriteFailure($"No set parameter for {v.Key}",true);
+        Tuple<string,int> n=null;
+        if(v.Value[0]=='@') n = new(v.Value.Substring(1),0);
+        else if(int.TryParse(v.Value, out var ival)) n=new(null,ival);
+        else DebugConsole.WriteFailure("No operation defined for thing");
+        if(!toDo.TryAdd(v.Key,n)) DebugConsole.WriteFailure("Duplicate key; forbidden");
+      }
+    }
+    public void Apply(){
+      foreach(var v in toDo) SetChannel(v.Key,v.Value.Item1 is {} str? readChannel(str) : v.Value.Item2);
+    }
   }
 
 

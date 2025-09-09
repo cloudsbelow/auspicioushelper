@@ -78,6 +78,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   bool log;
   Util.Trie blockManager;
   string setCh;
+  ChannelState.AdvancedSetter adv = null;
   bool seekersTrigger = false;
   bool throwablesTrigger = false;
   string skipCh;
@@ -108,7 +109,8 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       blockManager.Add(s);
     }
     log = d.Bool("log",false);
-    setCh = d.Attr("setChannel","");
+    if(d.Bool("useAdvancedSetch") && !string.IsNullOrWhiteSpace(d.Attr("setChannel",""))) adv = new(d.Attr("setChannel",""));
+    else setCh = d.Attr("setChannel","");
     OnDashCollide = handleDash;
     skipCh = d.Attr("skipChannel","");
   }
@@ -163,6 +165,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     }
     end:
       if(!string.IsNullOrWhiteSpace(setCh) && TriggerInfo.Test(sm)) ChannelState.SetChannel(setCh,1);
+      adv?.Apply();
   }
   public void OnTrigger(TriggerInfo sm){
     if(skip){

@@ -197,7 +197,7 @@ internal class PartialTiles{
     On.Celeste.SolidTiles.ctor += HookSolidtiles;
     auspicioushelperModule.OnEnterMap.enroll(resetState = new(()=>{
       usingPartialtiles = false;
-      DebugConsole.Write("\n\n\n\n\n Set using partialtiles to false");
+      DebugConsole.Write("Set using partialtiles to false");
     }));
   },()=>{
     IL.Celeste.Autotiler.ctor -= ParseHook;

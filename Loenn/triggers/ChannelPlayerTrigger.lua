@@ -20,7 +20,8 @@ trigger.placements = {
       value = 1,
       op = "set",
       action = "enter",
-      only_once = false
+      only_once = false,
+      advanced = ""
     }
 }
 trigger.fieldInformation = {
