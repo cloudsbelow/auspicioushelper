@@ -397,7 +397,7 @@ public class Anti0fZone:Entity{
   }
   static void NaiveMoveHook(On.Celeste.Actor.orig_NaiveMove orig, Actor a, Vector2 dist){
     Player p = null;
-    if(a is Player play && Math.Max(Math.Abs(dist.X),Math.Abs(dist.Y))>1 && runNaive.Or(play)){
+    if(a is Player play && Math.Max(Math.Abs(dist.X),Math.Abs(dist.Y))>1 && runNaive.Or(play) && inPlayerUpdate){
       p=play;
     } else {
       orig(a,dist);
@@ -468,14 +468,22 @@ public class Anti0fZone:Entity{
     bad:
       DebugConsole.Write("Something went wrong while setting up player update hooks for anti0f");
   }
+  static bool inPlayerUpdate = false;
+  static void Hook(On.Celeste.Player.orig_Update orig, Player p){
+    inPlayerUpdate = true;
+    orig(p);
+    inPlayerUpdate = false;
+  }
   public static HookManager hooks = new HookManager(()=>{
     MethodInfo update = typeof(Player).GetMethod(
       "orig_Update", BindingFlags.Public |BindingFlags.Instance
     );
     updateHook = new ILHook(update, ILUpdateHook);
     On.Celeste.Actor.NaiveMove+=NaiveMoveHook;
+    On.Celeste.Player.Update+=Hook;
   },void ()=>{
     updateHook.Dispose();
     On.Celeste.Actor.NaiveMove-=NaiveMoveHook;
+    On.Celeste.Player.Update-=Hook;
   },auspicioushelperModule.OnEnterMap);
 }

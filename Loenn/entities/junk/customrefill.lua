@@ -16,6 +16,7 @@ entity.placements = {
       respawnTimer = 2.5,
       oneUse = false,
       twoDash = false,
+      triggering=false,
     }
   }
 }

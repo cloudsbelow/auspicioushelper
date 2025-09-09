@@ -37,10 +37,13 @@ public abstract class TriggerInfo{
   }
   public class EntInfo:TriggerInfo{
     string ev;
-    public EntInfo(string type, Entity e){
+    bool use = true;
+    public EntInfo(string type, Entity e, bool use=true){
       ev = type;
       entity=e;
+      this.use=use;
     }
+    public override bool shouldTrigger => use;
     public override string category=>"entity/"+ev;
   }
   public virtual bool shouldTrigger=>true;
@@ -121,6 +124,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   TemplateTriggerModifier modifierParent;
   UpdateHook upd;
   public override void addTo(Scene scene) {
+    if(delay>=0) Add(upd = new UpdateHook());
     triggerParent = parent?.GetFromTree<ITemplateTriggerable>();
     modifierParent = parent?.GetFromTree<TemplateTriggerModifier>();
     if(!string.IsNullOrWhiteSpace(channel)){
@@ -133,7 +137,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
         skip = val!=0;
       }, true));
     }
-    if(delay>=0) Add(upd = new UpdateHook());
     base.addTo(scene);
   }
 

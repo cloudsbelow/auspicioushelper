@@ -364,16 +364,6 @@ public class PortalGateH:Entity{
     }
     return new Vector2(mX,mY);
   }
-  public Vector2 getSidedCollidelim(bool node){
-    Vector2 b = new Vector2(float.NegativeInfinity,float.PositiveInfinity);
-    float x = node?x2:x1;
-    if(node?n2dir:n1dir){
-      b.X=x;
-    } else {
-      b.Y=x;
-    }
-    return b;
-  }
 
 
   public override void Render(){

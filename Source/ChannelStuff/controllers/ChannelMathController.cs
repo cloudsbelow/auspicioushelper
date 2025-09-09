@@ -12,6 +12,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using System.Collections;
 using Celeste.Mod.auspicioushelper.channelmath;
+using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -305,18 +306,18 @@ public class ChannelMathController:Entity{
   void triggerNode(int idx, bool all=false){
     if(idx<0||idx>=nodes.Length) return;
     Vector2 loc = nodes[idx];
-    Trigger smallest = null;
+    Trigger smallestTrigger = null;
     float carea = float.PositiveInfinity;
     foreach(Trigger t in Scene.Tracker.GetEntities<Trigger>()){
       if(t.Collidable && t.CollidePoint(loc)){
-        if(all) t.OnEnter(null);
+        if(all) t.OnEnter(Scene.Tracker.GetEntity<Player>() ?? (Player)RuntimeHelpers.GetUninitializedObject(typeof(Player)));
         else if(t.Width*t.Height<carea){
-          smallest = t;
+          smallestTrigger = t;
           carea = t.Width*t.Height;
         }
       }
     }
-    smallest?.OnEnter(null);
+    smallestTrigger?.OnEnter(Scene.Tracker.GetEntity<Player>() ?? (Player)RuntimeHelpers.GetUninitializedObject(typeof(Player)));
   }
   static Dictionary<string, Func<List<string>,List<int>,int>> iopFuncs = new();
   public static ChannelMathController callingController = null;

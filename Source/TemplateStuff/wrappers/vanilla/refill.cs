@@ -9,63 +9,64 @@ using Monocle;
 
 namespace Celeste.Mod.auspicioushelper.Wrappers;
 
-public class RefillW:Refill,ISimpleEnt {
-  public Template parent {get;set;}
-  public Template.Propagation prop=>Template.Propagation.None;
-  public float respawnTime = 2.5f;
-  public RefillW(EntityData d, Vector2 offset):base(d,offset){
-    hooks.enable();
-    respawnTime = d.Float("respawnTimer",2.5f);
-    if(respawnTime!=2.5f) Get<PlayerCollider>().OnCollide = CustomOnPlayer;
-  }
-  public Vector2 toffset {get;set;}
-  public void setOffset(Vector2 ppos){
-    toffset = Position-ppos;
-    Depth+=parent.depthoffset;
-  }
-  public void relposTo(Vector2 loc, Vector2 ls){
-    Position = toffset+loc;
-  }
+// public class RefillW:Refill,ISimpleEnt {
+//   public Template parent {get;set;}
+//   public Template.Propagation prop=>Template.Propagation.None;
+//   public float respawnTime = 2.5f;
+//   public bool triggering;
+//   public RefillW(EntityData d, Vector2 offset):base(d,offset){
+//     hooks.enable();
+//     respawnTime = d.Float("respawnTimer",2.5f);
+//     if(respawnTime!=2.5f) Get<PlayerCollider>().OnCollide = CustomOnPlayer;
+//   }
+//   public Vector2 toffset {get;set;}
+//   public void setOffset(Vector2 ppos){
+//     toffset = Position-ppos;
+//     Depth+=parent.depthoffset;
+//   }
+//   public void relposTo(Vector2 loc, Vector2 ls){
+//     Position = toffset+loc;
+//   }
 
-  bool selfCol = true;
-  bool parentCol = true;
-  public void parentChangeStat(int vis, int col, int act){
-    if(vis!=0)Visible = vis>0;
-    if(col!=0){
-      parentCol = col>0;
-      if(col>0)Collidable = selfCol;
-      else{
-        selfCol=Collidable;
-        Collidable = false;
-      }
-    }
-    if(act!=0) Active = act>0;
-  }
-  void CustomOnPlayer(Player p){
-    if (p.UseRefill(twoDashes)){
-      Audio.Play(twoDashes ? "event:/new_content/game/10_farewell/pinkdiamond_touch" : "event:/game/general/diamond_touch", Position);
-      Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
-      Collidable = false;
-      Add(new Coroutine(RefillRoutine(p)));
-      respawnTimer = respawnTime;
-    }
-  }
+//   bool selfCol = true;
+//   bool parentCol = true;
+//   public void parentChangeStat(int vis, int col, int act){
+//     if(vis!=0)Visible = vis>0;
+//     if(col!=0){
+//       parentCol = col>0;
+//       if(col>0)Collidable = selfCol;
+//       else{
+//         selfCol=Collidable;
+//         Collidable = false;
+//       }
+//     }
+//     if(act!=0) Active = act>0;
+//   }
+//   void CustomOnPlayer(Player p){
+//     if (p.UseRefill(twoDashes)){
+//       Audio.Play(twoDashes ? "event:/new_content/game/10_farewell/pinkdiamond_touch" : "event:/game/general/diamond_touch", Position);
+//       Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
+//       Collidable = false;
+//       Add(new Coroutine(RefillRoutine(p)));
+//       respawnTimer = respawnTime;
+//     }
+//   }
 
-  static void respawnHook(On.Celeste.Refill.orig_Respawn orig, Refill self){
-    if(self is RefillW rw){
-      rw.Collidable = false;
-      orig(rw);
-      rw.selfCol = true;
-      rw.Collidable = rw.parentCol;
-      rw.Depth+=rw.parent?.depthoffset??0;
-    } else orig(self);
-  }
-  static HookManager hooks = new HookManager(()=>{
-    On.Celeste.Refill.Respawn+=respawnHook;
-  }, void ()=>{
-    On.Celeste.Refill.Respawn-=respawnHook;
-  });
-}
+//   static void respawnHook(On.Celeste.Refill.orig_Respawn orig, Refill self){
+//     if(self is RefillW rw){
+//       rw.Collidable = false;
+//       orig(rw);
+//       rw.selfCol = true;
+//       rw.Collidable = rw.parentCol;
+//       rw.Depth+=rw.parent?.depthoffset??0;
+//     } else orig(self);
+//   }
+//   static HookManager hooks = new HookManager(()=>{
+//     On.Celeste.Refill.Respawn+=respawnHook;
+//   }, void ()=>{
+//     On.Celeste.Refill.Respawn-=respawnHook;
+//   });
+// }
 
 
 // Extending the base refill caused bad behavior with some unspecified mods loaded
@@ -89,6 +90,7 @@ public class RefillW2 : Entity, ISimpleEnt{
   public ParticleType p_glow;
   public float respawnTimer;
   public float respawnTime;
+  public bool triggering;
   public RefillW2(Vector2 position, bool twoDashes, bool oneUse):base(position){
     base.Collider = new Hitbox(16f, 16f, -8f, -8f);
     Add(new PlayerCollider(OnPlayer));
@@ -137,6 +139,7 @@ public class RefillW2 : Entity, ISimpleEnt{
   }
   public RefillW2(EntityData d, Vector2 o):this(d.Position + o, d.Bool("twoDash"), d.Bool("oneUse")){
     respawnTime = d.Float("respawnTimer",2.5f);
+    triggering = d.Bool("triggering",false);
   }
   public override void Added(Scene scene){
     base.Added(scene);
@@ -193,6 +196,7 @@ public class RefillW2 : Entity, ISimpleEnt{
       Collidable = (selfCol = false);
       Add(new Coroutine(RefillRoutine(player)));
       respawnTimer = respawnTime;
+      if(triggering)parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new TriggerInfo.EntInfo("refill",this));
     }
   }
 

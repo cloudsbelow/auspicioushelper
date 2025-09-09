@@ -26,7 +26,6 @@ internal static class MarkedRoomParser{
       if(!emptyTemplates.TryAdd(e.Position,e)){
         DebugConsole.WriteFailure("overlapping empty templates");
       }
-      DebugConsole.Write($"adding empty {d} {e.Name}");
     }
   }
   public static Dictionary<string, TemplateRoom> staticRooms = new();

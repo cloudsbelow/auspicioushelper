@@ -266,6 +266,7 @@ anyways i want to praise it more it is wonderful
         return null;
       });
     }
+    clarify("introCar", Types.unwrapped, static (l,d,o,e)=>new IntroCarW(e,o));
     defaultModdedSetup();
     HookVanilla.hooks.enable();
   }
