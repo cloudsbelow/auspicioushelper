@@ -27,6 +27,8 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
   bool triggerOnEnter;
   bool triggerOnLeave;
   bool useVisuals = true;
+  bool reverse=false;
+  bool conserve=false;
   public class DreamInfo:TriggerInfo{
     bool exiting;
     Vector2 dir;
@@ -79,15 +81,22 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     triggerOnLeave = d.Bool("triggerOnLeave",true);
     channel = d.Attr("normalChannel","");
     useVisuals = d.Bool("useVisuals",true);
+    reverse = d.Bool("reverse",false);
+    conserve = d.Bool("conserve",false);
   }
   public override void addTo(Scene scene) {
     fake = (SentinalDb)RuntimeHelpers.GetUninitializedObject(typeof(SentinalDb));
     fake.parent = this;
     fake.Position = Vector2.Zero;
     fake.Collider = new Hitbox(2000000000,2000000000,-1000000000,-1000000000);
-    if(renderer == null && useVisuals){
-      MaterialPipe.addLayer(renderer = new DreamRenderer());
-    } else if(useVisuals) MaterialPipe.addLayer(renderer);
+    if(useVisuals){
+      if(reverse){
+        renderer = (revrender??=new DreamRenderer(true));
+      } else {
+        renderer = (normrenderer??=new DreamRenderer(false));
+      }
+      MaterialPipe.addLayer(renderer);
+    } 
     if(!string.IsNullOrWhiteSpace(channel)){
       ChannelTracker ct = new ChannelTracker(channel,(int val)=>{
         bool orig = dreaming;
@@ -120,7 +129,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
           };
         }
       }
-      if(e.Collider == null) continue;
+      if(e.Collider == null && e is not Wrappers.Spinner.SpinnerFiller) continue;
       e.Add(new PlayerCollider((Player p)=>{
         if(DreamCheckStart(p,Vector2.Zero)){
           //DebugConsole.Write($"{e} {e.Collidable} {e.Scene}", e.Scene);
@@ -143,19 +152,43 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     static VirtualShaderList effect = new VirtualShaderList{
       null,auspicioushelperGFX.LoadShader("misc/dream")
     };
-    public DreamRenderer():base(effect,-11001){}
+    static VirtualShaderList reveffect = new VirtualShaderList{
+      null,auspicioushelperGFX.LoadShader("misc/revdream")
+    };
+    bool reverse;
+    public DreamRenderer(bool reverse):base(reverse?reveffect:effect,-11001){
+      this.reverse=reverse;
+    }
     public override void onRemove() {
       base.onRemove();
-      renderer = null;
+      if(reverse) revrender = null;
+      else normrenderer = null;
     }
   }
-  public static DreamRenderer renderer;
+  public static DreamRenderer normrenderer;
+  public static DreamRenderer revrender;
+  DreamRenderer renderer;
+  public static TemplateDreamblockModifier speedSetter;
+  public static Vector2 speedReplaceHook(Vector2 speed, Player p){
+    DebugConsole.Write("Here!", speedSetter);
+    if(speedSetter!=null){
+      speed = speedSetter.getNewSpeed(speed, p);
+      speedSetter = null;
+    }
+    return speed;
+  }
+  public Vector2 getNewSpeed(Vector2 speed, Player p){
+    if(conserve) speed=p.Speed;
+    return speed*(reverse? -1:1);
+  }
   bool DreamCheckStart(Player p, Vector2 dir){
     bool flag = dreaming && p.Inventory.DreamDash && p.DashAttacking && (
       (dir == Vector2.Zero&&p.DashDir!=Vector2.Zero) || Vector2.Dot(dir, p.DashDir)>0
     );
     if(flag){
+      speedSetter = this;
       p.StateMachine.State = Player.StDreamDash;
+      speedSetter = null;
       p.dashAttackTimer = 0f;
       p.gliderBoostTimer = 0f;
       GetFromTree<ITemplateTriggerable>()?.OnTrigger(new DreamInfo(false, triggerOnEnter, p.DashDir));
@@ -172,14 +205,20 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
   static void Hook(On.Celeste.Player.orig_OnCollideH orig, Player p, CollisionData d){
     if(!DDsh(p)){
       TemplateDreamblockModifier t = d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateDreamblockModifier>();
-      if(t!=null && t.dreaming && t.DreamCheckStart(p,d.Direction)) return;
+      while(t!=null){
+        if(t.dreaming && t.DreamCheckStart(p,d.Direction)) return;
+        t = t.parent?.GetFromTree<TemplateDreamblockModifier>();
+      }
     }
     orig(p,d);
   }
   static void Hook(On.Celeste.Player.orig_OnCollideV orig, Player p, CollisionData d){
     if(!DDsh(p)){
       TemplateDreamblockModifier t = d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateDreamblockModifier>();
-      if(t!=null && t.dreaming && t.DreamCheckStart(p,d.Direction)) return;
+      while(t!=null){
+        if(t.dreaming && t.DreamCheckStart(p,d.Direction)) return;
+        t = t.parent?.GetFromTree<TemplateDreamblockModifier>();
+      }
     }
     orig(p,d);
   }
@@ -195,22 +234,38 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
       DebugConsole.Write("failed to add hook");
     }
   }
+  static void DDashBeginIL(ILContext ctx){
+    ILCursor c = new(ctx);
+    if(c.TryGotoNextBestFit(MoveType.Before,
+      i=>i.MatchStfld<Player>(nameof(Player.Speed)),
+      i=>i.MatchLdarg0(),
+      i=>i.MatchLdcI4(1),
+      i=>i.MatchStfld<Actor>(nameof(Player.TreatNaive))
+    )){
+      c.EmitLdarg0();
+      c.EmitDelegate(speedReplaceHook);
+    } else {
+      DebugConsole.WriteFailure("Failed to add hook");
+    }
+  }
   static void Hook(On.Celeste.DreamBlock.orig_OnPlayerExit orig, DreamBlock self, Player p){
     if(self is SentinalDb b){
       b.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new DreamInfo(true, b.parent.triggerOnLeave, p.DashDir));
       return;
     }
     orig(self,p);
-  }
+  } 
   public static HookManager hooks = new HookManager(()=>{
     On.Celeste.Player.OnCollideH+=Hook;
     On.Celeste.Player.OnCollideV+=Hook;
     IL.Celeste.Player.DreamDashUpdate+=DDashIL;
+    IL.Celeste.Player.DreamDashBegin+=DDashBeginIL;
     On.Celeste.DreamBlock.OnPlayerExit+=Hook;
   },()=>{
     On.Celeste.Player.OnCollideH-=Hook;
     On.Celeste.Player.OnCollideV-=Hook;
     IL.Celeste.Player.DreamDashUpdate-=DDashIL;
+    IL.Celeste.Player.DreamDashBegin-=DDashBeginIL;
     On.Celeste.DreamBlock.OnPlayerExit-=Hook;
   },auspicioushelperModule.OnEnterMap);
 }

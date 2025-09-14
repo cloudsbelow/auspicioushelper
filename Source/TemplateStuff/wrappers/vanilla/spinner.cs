@@ -98,6 +98,9 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     if(parent == null) return (Scene as Level)?.SolidTiles?.CollidePoint(pos)??false;
     return parent.fgt?.CollidePoint(pos)??false;
   }
+  public class SpinnerFiller:Entity{
+    public SpinnerFiller(Vector2 position):base(position){}
+  }
   void CreateSpritesOther(){
     if (expanded)return;
     Calc.PushRandom(randomSeed);
@@ -125,6 +128,10 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
       if(entity is Spinner o && o.makeFiller){
         if(parent != o.parent) continue;
         if (o.id > id && (entity.Position - Position).LengthSquared() < 576f){
+          if (filler == null){
+            base.Scene.Add(filler = new SpinnerFiller(Position));
+            filler.Depth = base.Depth + 1;
+          }
           AddSprite((Position + entity.Position) / 2f - Position);
         }
       }

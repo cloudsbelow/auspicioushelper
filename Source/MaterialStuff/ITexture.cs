@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using IL.Monocle;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -16,7 +17,7 @@ public abstract class ITexture{
     string i;
     public override Texture2D tex{get{
       if(l == null){
-        l = MaterialController.getLayer(i);
+        if(!string.IsNullOrWhiteSpace(i)) l = MaterialController.getLayer(i);
         if(l == null) DebugConsole.WriteFailure($"Tried to access the layer {i} which does not exist");
       }
       if(!l.enabled){
@@ -27,6 +28,9 @@ public abstract class ITexture{
     }}
     public UserLayerWrapper(string ident){
       i=ident;
+    }
+    public UserLayerWrapper(IMaterialLayer l){
+      this.l=l;
     }
   }
   public class ImageWrapper:ITexture{
@@ -45,6 +49,7 @@ public abstract class ITexture{
           cached.Add(asset, tex = Texture2D.FromStream(auspicioushelperGFX.gd, stream));
         }
       } else tex=texture;
+      DebugConsole.Write("Texture:", tex, tex?.Width, tex?.Height);
     }
     public ImageWrapper(string pathToAsset)
       :this(Everest.Content.Get(Util.concatPaths("Graphics",pathToAsset))){}

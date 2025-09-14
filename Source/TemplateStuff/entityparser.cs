@@ -105,7 +105,7 @@ anyways i want to praise it more it is wonderful
           etype = parseMap[d.Name] = Types.removeSMbasic;
         }
         loaders[d.Name] = loader;
-        DebugConsole.Write($"{d.Name} auto-classified as {etype}");
+        //DebugConsole.Write($"{d.Name} auto-classified as {etype}");
       } catch(Exception ex){
         DebugConsole.Write($"Entityloader generation for {d.Name} failed: \n{ex}");
         etype = parseMap[d.Name] = l!=null?Types.unable:Types.initiallyerrors;

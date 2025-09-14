@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using AsmResolver.DotNet.Cloning;
 using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -65,14 +67,15 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       }break;
     }
   }
-  List<Tuple<int,ITexture>> textures;
+  List<Tuple<int,ITexture>> textures = new();
+  SamplerList samplers = new();
+
   internal static UserLayer make(EntityData d){
     VirtualShaderList list = new();
     foreach(string p in Util.listparseflat(d.Attr("passes"),true,true)){
       if(string.IsNullOrWhiteSpace(p)||p=="null") list.Add(null);
       else list.Add(auspicioushelperGFX.LoadExternShader(p));
     }
-    List<Tuple<int,ITexture>> textures = new();
     LayerFormat l = new LayerFormat{
       //useBg = d.Bool("usebg",false),
       //independent = d.Bool("independent",true),
@@ -81,35 +84,15 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       alwaysRender = d.Bool("always", true),
       drawInScene = d.Bool("drawInScene",true),
     };
-    foreach(var p in Util.kvparseflat(d.Attr("textures"),true,true)){
-      if(p.Key=="0")DebugConsole.Write($"Warning: Binding to texture 0 is strange. Use 00 to hide this message");
-      if(!int.TryParse(p.Key.Trim(),out var idx)||idx>15||idx<0) DebugConsole.WriteFailure($"Invalid texture slot {p.Key}");
-      else if(string.IsNullOrWhiteSpace(p.Value)) DebugConsole.WriteFailure($"Invalid texutre resource at {idx}"); 
-      else switch(p.Value.ToLower()){
-        case "bg": case "background": 
-          l.useBg=true;
-          textures.Add(new(idx,ITexture.bgWrapper));
-          break;
-        case "gp": case "gameplay":
-          l.independent=false;
-          textures.Add(new(idx,ITexture.gpWrapper));
-          break;
-        default:
-          switch(p.Value[0]){
-            case '/': //photo
-              break;
-            case '$': //child layer
-              textures.Add(new(idx, new ITexture.UserLayerWrapper(p.Value.Substring(1))));
-              break;
-          }
-          break;
-      }
-    }
-    return new UserLayer(d,list,l){textures=textures};
+    
+    return new UserLayer(d,list,l);
   }  
   public IFadingLayer.FadeTypes fadeTypeIn {get;set;} = IFadingLayer.FadeTypes.Linear;
   public IFadingLayer.FadeTypes fadeTypeOut {get;set;} = IFadingLayer.FadeTypes.Linear;
+  int swapch=0;
   public UserLayer(EntityData d, VirtualShaderList l, LayerFormat f):base(l,f){
+    SetupTextures(d);
+    for(int i=0; i<swapch; i++) handles.Add(new RenderTargetPool.RenderTargetHandle(false));
     try{
       foreach(var pair in Util.kvparseflat(d.Attr("params",""))){
         setparamval(pair.Key,pair.Value);
@@ -118,9 +101,54 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       DebugConsole.WriteFailure($"error setting shader params: {err}");
     }
   }
+  void SetupTextures(EntityData d){
+    foreach(var p in Util.kvparseflat(d.Attr("textures"),true,true)){
+      if(p.Key=="0")DebugConsole.Write($"Warning: Binding to texture 0 is strange. Use 00 to hide this message");
+      if(p.Key.Trim().StartsWith('s')){
+        if(!int.TryParse(p.Key.Trim().Substring(1), out var slot)||slot>15||slot<0) DebugConsole.WriteFailure($"Invalid sampler slot {p.Key}");
+        samplers.Add(slot, p.Value);
+        continue;
+      }
+      if(!int.TryParse(p.Key.Trim(),out var idx)||idx>15||idx<0) DebugConsole.WriteFailure($"Invalid texture slot {p.Key}");
+      else if(string.IsNullOrWhiteSpace(p.Value)) DebugConsole.WriteFailure($"Invalid texutre resource at {idx}"); 
+      else switch(p.Value.ToLower()){
+        case "bg": case "background": 
+          info.usesbg = layerformat.useBg=true;
+          textures.Add(new(idx,ITexture.bgWrapper));
+          break;
+        case "gp": case "gameplay":
+          info.independent = layerformat.independent=false;
+          textures.Add(new(idx,ITexture.gpWrapper));
+          break;
+        case "prev": case "last":
+          textures.Add(new(idx, new ITexture.UserLayerWrapper(this)));
+          swapch = 1;
+          break;
+        default:
+          switch(p.Value[0]){
+            case '/': //photo
+              textures.Add(new(idx, new ITexture.ImageWrapper(p.Value.Substring(1))));
+              break;
+            case '$': //child layer
+              textures.Add(new(idx, new ITexture.UserLayerWrapper(p.Value.Substring(1))));
+              break;
+          }
+          break;
+      }
+    }
+  }
   public override void render(SpriteBatch sb, Camera c) {
     foreach(var a in chset)a(); 
     foreach(var t in textures) MaterialPipe.gd.Textures[t.Item1] = t.Item2;
-    base.render(sb, c);
+    using(samplers.Apply(MaterialPipe.gd))base.render(sb, c);
+    if(swapch>0){
+      int i=passes.Count;
+      var o = handles[passes.Count-1];
+      for(; i<handles.Count; i++){
+        handles[i-1]=handles[i];
+      }
+      handles[handles.Count-1]= o;
+    }
   }
+  public override string ToString()=>base.ToString()+" "+RuntimeHelpers.GetHashCode(this).ToString();
 }

@@ -128,7 +128,9 @@ public static class MaterialPipe {
   static void ontrans(On.Celeste.Level.orig_TransitionTo orig, Level self, LevelData next, Vector2 dir){
     camAt = 0;
     entering.Clear();
-    foreach(var l in layers) if(l.autoManageRemoval)leaving.Add(l);
+    foreach(var l in layers) if(l.autoManageRemoval){
+      leaving.Add(l);
+    }
     NextTransitionDuration = self.NextTransitionDuration;
     orig(self, next, dir);
     transroutine = new Coroutine(transitionRoutine());
@@ -190,19 +192,20 @@ public static class MaterialPipe {
 
   static void reorderBg(ILContext ctx){
     ILCursor c = new ILCursor(ctx);
-    //DebugConsole.DumpIl(c,0,50);
+    //DebugConsole.DumpIl(c,0,50); 
     if(!c.TryGotoNextBestFit(MoveType.After,
-      itr=>itr.MatchLdsfld(typeof(GameplayBuffers),"Level"),
+      itr=>itr.MatchLdsfld(typeof(GameplayBuffers),nameof(GameplayBuffers.Level)),
       itr => itr.MatchCall(out _),
       itr=>itr.MatchCallvirt<GraphicsDevice>("SetRenderTarget")
     ))goto bad;
     ILCursor d = c.Clone();
-    if(!d.TryGotoNext(MoveType.Before,
-      itr=>itr.MatchLdsfld(typeof(GameplayBuffers),"Gameplay")
+    if(!d.TryGotoNextBestFit(MoveType.Before,
+      itr=>itr.MatchLdsfld(typeof(GameplayBuffers),nameof(GameplayBuffers.Gameplay))
     )) goto bad;
     Instruction target = d.Next;
     c.EmitDelegate(backdropReorderDetour);
     c.EmitBrtrue(target);
+    return;
     bad:
     DebugConsole.WriteFailure($"Failed to add background reordering hook");
   }

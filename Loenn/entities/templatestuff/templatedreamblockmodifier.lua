@@ -16,6 +16,8 @@ entity.placements = {
       triggerOnEnter=true,
       triggerOnLeave=true,
       normalChannel="",
+      reverse=false,
+      conserve=false,
       useVisuals=true,
     }
   }

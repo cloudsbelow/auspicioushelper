@@ -5,6 +5,7 @@ using System;
 using Celeste.Mod.Entities;
 using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -29,6 +30,9 @@ public class ChannelPlayerTrigger:Trigger{
     value = data.Int("value",1);
     if(!string.IsNullOrWhiteSpace(data.Attr("advanced"))){
       adv = new(data.Attr("advanced"));
+    }
+    if(data.Bool("everywhere",false)){
+      Collider = new Hitbox(int.MaxValue,int.MaxValue,-int.MaxValue/2,-int.MaxValue/2);
     }
     switch(data.Attr("action")){
       case "dash":
