@@ -64,7 +64,7 @@ public class PixelLeniencyTrigger:Trigger{
     if(p.onGround && p.StateMachine.State==Player.StNormal && maxStep>0){
       for(int i=0; i<=maxStep; i++){
         Vector2 v = p.Position-i*Vector2.UnitY+Math.Sign(c.Direction.X)*Vector2.UnitX;
-        Vector2 vc = p.Position-i*Vector2.UnitY+Math.Sign(c.Direction.X)*Vector2.UnitX/appliedRules.maxStepSlope;
+        Vector2 vc = p.Position-i*Vector2.UnitY+i*Math.Sign(c.Direction.X)*Vector2.UnitX/appliedRules.maxStepSlope;
         if(!p.CollideCheck<Solid>(v) && !p.CollideCheck<Solid>(vc)){
           p.MoveVExact(-i);
           p.MoveHExact(Math.Sign(c.Direction.X));
