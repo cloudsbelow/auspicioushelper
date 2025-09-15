@@ -40,6 +40,8 @@ entity.placements = {
       dangerous = false,
       voidDieOffset = 100,
       tutorial = false,
+      minHoldTimer = 0.35,
+      customThrowspeeds = "",
       
       _loenn_display_template = true,
     }

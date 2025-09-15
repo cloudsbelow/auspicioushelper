@@ -36,6 +36,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
       hasCustomCOlor = true;
       customColor = Util.hexToColor(d.Attr("customColor"));
     }
+    numdebris = d.Int("numDebris",4);
   }
   bool hvisible = true;
   bool hcollidable = true;
@@ -152,8 +153,9 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     else if (this.color == CrystalColor.Purple) color = Calc.HexToColor("ff4fef");
     return color;
   }
+  int numdebris = 4;
   public void destroy(bool yes){
-    if(yes)SpinnerDebris.CreateBurst(Scene,4,Position,parent.gatheredLiftspeed,getColor());
+    if(yes)SpinnerDebris.CreateBurst(Scene,numdebris,Position,parent.gatheredLiftspeed,hasCustomCOlor?customColor:getColor());
     RemoveSelf();
   }
 

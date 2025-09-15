@@ -21,11 +21,11 @@ public class PixelLeniencyTrigger:Trigger{
       return $"staticSlip={staticSlip}, fallingSlip={fallingSlip}, maxGroundedStep={maxGroundedStep}, maxStepSlope={maxStepSlope}";
     }
   }
-  static Ruleset partialTileRules=>new(){staticSlip=1, fallingSlip=2, maxGroundedStep=2, maxStepSlope=1};
+  static Ruleset defaultRules=>new(){staticSlip=0, fallingSlip=0, maxGroundedStep=0, maxStepSlope=0};
   //static Ruleset regularRules=>new(){staticSlip=0, fallingSlip=0, maxGroundedStep=0, maxStepSlope=0};
-  static Ruleset curRules = partialTileRules;
+  static Ruleset curRules = defaultRules;
   static LinkedList<Ruleset> overRules = new();
-  static Ruleset appliedRules = partialTileRules;
+  static Ruleset appliedRules = defaultRules;
   public Ruleset rules;
   bool temp;
   public PixelLeniencyTrigger(EntityData d, Vector2 o):base(d,o){
@@ -116,7 +116,7 @@ public class PixelLeniencyTrigger:Trigger{
     On.Celeste.Player.OnCollideV+=Hook;
     On.Celeste.Player.NormalUpdate+=Hook;
   },()=>{
-    curRules = partialTileRules;
+    curRules = defaultRules;
     FixRules();
     overRules.Clear();
     On.Celeste.Player.OnCollideH-=Hook;

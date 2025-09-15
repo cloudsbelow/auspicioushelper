@@ -324,6 +324,7 @@ public class Template:Entity, ITemplateChild{
     foreach(ITemplateChild c in children){
       c.parentChangeStat(vis,col,act);
     }
+    if(act != 0) Active = act>0;
     if(act==-1) ownLiftspeed = Vector2.Zero;
   }
   bool destroying;
@@ -368,11 +369,13 @@ public class Template:Entity, ITemplateChild{
     }
     prevpos.Clear();
   }
+  Coroutine shroutine = null;
   public void shake(float time){
     if(time <= 0) return;
-    if(shakeTimer<=0) Add(new Coroutine(shakeRoutine()));
+    if(shakeTimer<=0 && shroutine==null) Add(shroutine=new Coroutine(shakeRoutine()));
     shakeTimer = MathF.Max(time,shakeTimer);
   }
+  public void EndShake()=>shakeTimer = 0;
   BeforeAfterRender bar;
   IEnumerator shakeRoutine(){
     if(bar!=null)Remove(bar);
@@ -395,6 +398,7 @@ public class Template:Entity, ITemplateChild{
     foreach(Entity e in GetChildren<Entity>(Propagation.Shake)){
       if(e is IChildShaker s) s.OnShakeFrame(ownShakeVec);
     }
+    shroutine = null;
     yield break;
   }
   public static HookManager shakeHooks = new HookManager(()=>{

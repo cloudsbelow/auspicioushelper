@@ -69,7 +69,7 @@ public abstract class TriggerInfo{
 [CustomEntity("auspicioushelper/TemplateTriggerModifier")]
 public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   bool triggerOnTouch;
-  HashSet<TouchInfo.Type> advtouch = new();
+  Dictionary<TouchInfo.Type,HashSet<int>> advtouch = new();
   bool passTrigger;
   bool hideTrigger;
   bool blockTrigger;
@@ -88,7 +88,17 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   public TemplateTriggerModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
     foreach(string s in Util.listparseflat(d.Attr("advancedTouchOptions",""),true)){
-      if(Enum.TryParse<TouchInfo.Type>(s,out var res))advtouch.Add(res);
+      string[] strs = s.Split('/');
+      if(Enum.TryParse<TouchInfo.Type>(strs[0],out var res)){
+        if(!advtouch.TryGetValue(res, out var n)) n = advtouch[res] = new();
+        if(strs.Length == 1) n = advtouch[res] = null;
+        if(n!=null){
+          for(int i=1; i<strs.Length; i++) if(int.TryParse(strs[i], out int st)){
+            DebugConsole.Write($"Add {res} {st}");
+            n.Add(st);
+          } 
+        }
+      }
     }
     triggerOnTouch = d.Bool("triggerOnTouch",false);
     seekersTrigger = d.Bool("seekersTrigger",false);
@@ -145,7 +155,11 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   Queue<Tuple<float, TriggerInfo>> delayed;
   float activeTime = 0;
   public void HandleTrigger(TriggerInfo sm){
-    if(sm is TouchInfo tinfo && triggerOnTouch != advtouch.Contains(tinfo.ty)) tinfo.asUsable();
+    if(sm is TouchInfo tinfo){
+      bool has = advtouch.TryGetValue(tinfo.ty,out var l) && 
+        (l==null || (sm.entity is Player p && l.Contains(p.StateMachine.state)));
+      if(has!=triggerOnTouch)tinfo.asUsable();
+    } 
     if(sm is HitInfo hinfo){
       if(seekersTrigger && hinfo.entity is Seeker seeker && Math.Abs(seeker.Speed.X)>100) {
         if(seeker.State.State==Seeker.StAttack||seeker.State.State==Seeker.StSkidding)hinfo.asUsable();
@@ -203,7 +217,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       use = true;
       return this;
     }
-    public override string category => "touch/"+ty.ToString();
+    public override string category => "touch/"+ty.ToString()+(entity is Player p?$"/{p.StateMachine.state}":"");
   }
   class HitInfo:TriggerInfo{
     public bool use = false;

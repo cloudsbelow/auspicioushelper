@@ -15,6 +15,7 @@ entity.placements = {
     data = {
       customColor = "ffffff",
       makeFiller = true,
+      numDebris = 4,
     }
   }
 }

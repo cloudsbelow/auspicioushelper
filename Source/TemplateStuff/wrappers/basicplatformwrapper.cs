@@ -60,7 +60,7 @@ internal class BasicPlatform:ITemplateChild{
     if(p == null||p.Scene==null)return;
     if(vis!=0)p.Visible = vis>0;
     if(col!=0)p.Collidable = col>0;
-    if(act!=0)p.Active = col>0;
+    if(act!=0)p.Active = act>0;
     if(col>0) p.EnableStaticMovers();
     else if(col<0) p.DisableStaticMovers();
   }

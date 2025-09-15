@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -83,11 +84,79 @@ public class TemplateDisappearer:Template{
   public bool getSelfCol(){
     return selfCol;
   }
+  public bool getSelfVis()=>selfVis;
+  public bool getSelfAct()=>selfAct;
   public void enforce(){
     bool Vis = selfVis&&parentVis; 
     bool Col = selfCol&&parentCol; 
     bool Act = selfAct&&parentAct;
     if(Vis && Col && Act) return;
     parentChangeStatBypass(Vis?0:-1,Col?0:-1,Act?0:-1);
+  }
+}
+
+[CustomEntity("auspicioushelper/TemplateEntityModifier")]
+public class TemplateEntityModifier:TemplateDisappearer{
+  public TemplateEntityModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
+  string actCh;
+  string colCh;
+  string visCh;
+  string shakeCh;
+  HashSet<string> only;
+  GroupTracker.TrackedGroupComp ents;
+  bool log;
+  public TemplateEntityModifier(EntityData d, Vector2 offset, int depthoffset)
+  :base(d,d.Position+offset,depthoffset){
+    actCh = d.Attr("activeChannel");
+    colCh = d.Attr("collidableChannel");
+    visCh = d.Attr("visibleChannel");
+    shakeCh = d.Attr("shakeChannel");
+    log = d.Bool("log",false);
+    if(d.tryGetStr("only", out string lis)){
+      only = new(Util.listparseflat(lis,false,true));
+    }
+  }
+  void AddChwatcher(string s, bool vis, bool col, bool act){
+    if(string.IsNullOrWhiteSpace(s)) return;
+    Add(new ChannelTracker(s, (int nval)=>{
+      bool num = nval!=0;
+      if(ents==null) setVisColAct(vis?num:getSelfVis(), col?num:getSelfCol(), act?num:getSelfAct());
+      else foreach(Entity e in ents){
+        if(vis) e.Visible = num;
+        if(col) e.Collidable = num;
+        if(act) e.Active = num;
+      }
+    }, true));
+  }
+  public override void OnNewEnts(List<Entity> l) {
+    if(only!=null || log) foreach(Entity e in l){
+      string name = e.GetType().FullName;
+      if(log) DebugConsole.Write($"In {this}: adding extra {name}");
+      if(only?.Contains(e.GetType().FullName)??false) ents.Add(e);
+    }
+    base.OnNewEnts(l);
+  }
+  public override void addTo(Scene scene) {
+    base.addTo(scene);
+    if(only!=null || log){
+      List<Entity> l = new();
+      AddAllChildren(l);
+      if(only!=null)Add(ents = new());
+      foreach(Entity e in l){
+        string name = e.GetType().FullName;
+        if(log) DebugConsole.Write($"In {this}: contains {name}");
+        if(only?.Contains(e.GetType().FullName)??false) ents.Add(e);
+      }
+    }
+    //feels like a crime
+    foreach(string s in new HashSet<string>(){actCh?.Trim(),colCh?.Trim(),visCh?.Trim()}){
+      AddChwatcher(s, s==visCh, s==colCh, s==actCh);
+    }
+    if(!string.IsNullOrWhiteSpace(shakeCh)){
+      Add(new ChannelTracker(shakeCh,(int n)=>{
+        if(n!=0) shake(100000);
+        else EndShake();
+      }));
+    }
   }
 }

@@ -54,6 +54,8 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   bool startFloating = false;
   bool dangerous = false;
   float voidDieOffset = 100;
+  float minHoldTimer = 0.35f;
+  float[] customThrowspeeds;
   public TemplateHoldable(EntityData d, Vector2 offset):base(d.Position+offset){
     Position+=new Vector2(d.Width/2, d.Height);
     hoffset = d.Nodes.Length>0?(d.Nodes[0]-new Vector2(d.Width/2, d.Height)):new Vector2(0,-d.Height/2);
@@ -99,7 +101,9 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     startFloating = d.Bool("start_floating",false);
     dangerous = d.Bool("dangerous",false);
     voidDieOffset = d.Float("voidDieOffset",100);
+    minHoldTimer = d.Float("minHoldTimer",0.35f);
     SquishCallback = OnSquish2;
+    customThrowspeeds = Util.csparseflat(d.Attr("customThrowspeeds"));
   }
   Util.HybridSet<Platform> Mysolids;
   void make(Scene s){
@@ -169,8 +173,8 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   void OnPickup()
   {
     touched();
-    if (lastPickup != null){
-      lastPickup.Speed = lastPickup.Speed * playerfrac + Speed * theofrac;
+    if (Hold.Holder is Player p){
+      p.Speed = p.Speed * playerfrac + Speed * theofrac;
     }
     Speed = Vector2.Zero;
     if (!keepCollidableAlways) te.setCollidability(false);
@@ -262,14 +266,18 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       e.RemoveTag(Tags.Persistent);
       if(e is IBoundsHaver h) h.bounds = new FloatRect(SceneAs<Level>().Bounds);
     }
+    force = force*200f;
     if (force.X != 0f && force.Y == 0f){
-      force.Y = -0.4f;
+      force.Y = -0.4f*200;
     }
+    if(customThrowspeeds.Length>0) force.X = Math.Sign(force.X)*customThrowspeeds[0];
+    if(customThrowspeeds.Length>1 && force.X!=0) force.Y = -customThrowspeeds[1];
     if(!keepCollidableAlways) te.setCollidability(true);
-    Speed = force * 200f;
+    Speed = force;
     if (Speed != Vector2.Zero){
       noGravityTimer = 0.1f;
     }
+    DebugConsole.Write("thrown speed: ",Speed);
   }
   void OnCollideH(CollisionData data){
     if (data.Hit is DashSwitch){
@@ -410,10 +418,12 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     Hold.CheckAgainstColliders();
   }
   bool inRelpos;
-  static Player lastPickup;
-  public static bool PickupHook(On.Celeste.Holdable.orig_Pickup orig, Holdable self, Player player){
-    lastPickup = player;
-    return orig(self, player);
+  public static bool PickupHook(On.Celeste.Player.orig_Pickup orig, Player self, Holdable hold){
+    bool ret =  orig(self, hold);
+    if(ret && hold.Entity is TemplateHoldable t){
+      self.minHoldTimer = t.minHoldTimer;
+    }
+    return ret;
   }
   public static bool MoveHHook(On.Celeste.Actor.orig_MoveHExact orig, Actor self, int amount, Collision cb, Solid pusher){
     //DebugConsole.Write($"HereH", self, amount, pusher, self.Scene.TimeActive, self.Position.X, jumpthruMoving);
@@ -468,7 +478,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     jumpthruMoving--;
   }
   static HookManager hooks = new HookManager(()=>{
-    On.Celeste.Holdable.Pickup += PickupHook;
+    On.Celeste.Player.Pickup += PickupHook;
     On.Celeste.Actor.MoveHExact+=MoveHHook;
     On.Celeste.Actor.MoveVExact+=MoveVHook;
     On.Celeste.Player.Update+=PlayerUpdateHook;
@@ -477,7 +487,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     On.Celeste.JumpThru.MoveVExact+=JumpThruMoveVHook;
     ICustomHoldableRelease.hooks.enable();
   },()=>{
-    On.Celeste.Holdable.Pickup -= PickupHook;
+    On.Celeste.Player.Pickup -= PickupHook;
     On.Celeste.Actor.MoveHExact-=MoveHHook;
     On.Celeste.Actor.MoveVExact-=MoveVHook;
     On.Celeste.Player.Update-=PlayerUpdateHook;

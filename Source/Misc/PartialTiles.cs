@@ -190,6 +190,10 @@ internal class PartialTiles{
   }
 
   static PersistantAction resetState;
+  [Command("ausp_usingPartialtiles","Whether the map is currently using partialtiles")]
+  public static void ausp_usingPartialtiles(){
+    Engine.Commands.Log($"Partial tiles: {(usingPartialtiles?"on":"off")}");
+  }
   public static HookManager hooks = new(()=>{
     IL.Celeste.Autotiler.ctor += ParseHook;
     IL.Celeste.Autotiler.Generate += GenerateHook;
@@ -197,7 +201,6 @@ internal class PartialTiles{
     On.Celeste.SolidTiles.ctor += HookSolidtiles;
     auspicioushelperModule.OnEnterMap.enroll(resetState = new(()=>{
       usingPartialtiles = false;
-      DebugConsole.Write("Set using partialtiles to false");
     }));
   },()=>{
     IL.Celeste.Autotiler.ctor -= ParseHook;

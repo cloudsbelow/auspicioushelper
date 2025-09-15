@@ -67,7 +67,8 @@ public sealed class MiptileCollider:Grid{
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public bool collideFrOffset(FloatRect f, Vector2 offset)=>collideFr(new FloatRect(f.x+offset.X,f.y+offset.Y,f.w,f.h));
   public override bool Collide(Vector2 from, Vector2 to) {
-    throw new NotImplementedException("");
+    //TODO: use mips
+    return base.Collide(from,to);
   }
   public override bool Collide(Vector2 point) {
     return mg.collidePoint(Int2.Floor((point-tlc)/cellsize));
