@@ -57,6 +57,64 @@
     <set mask="padding" tiles="5,0;5,1;5,2;5,3;5,4;5,5;5,6;5,7;5,8;5,9;5,10;5,11"/>
     <set mask="center" tiles="5,12"/>
   </Tileset>
+  <Tileset id="p" path="auspicioushelper/slopetemplate" displayName="ausp slopes" ausp_partialtiles="auspicioushelper/slopetemplate">
+    <!-- 45 degree -->
+    <set mask="001-011-11x" tiles="6,0;4,2"/>
+    <set mask="100-110-x11" tiles="7,0;5,2"/>
+    <set mask="11x-011-001" tiles="6,1;4,3"/>
+    <set mask="x10-110-000" tiles="7,1;5,3"/>
+    <set mask="000-011-01x" tiles="6,0;4,2"/>
+    <set mask="000-110-x10" tiles="7,0;5,2"/>
+    <set mask="01x-011-000" tiles="6,1;4,3"/>
+    <set mask="x10-110-000" tiles="7,1;5,3"/>
+    
+    <!--gentle slopes horizontal-->
+    <set mask="000-011-x1x" tiles="0,0;2,2"/>
+    <set mask="000-110-x1x" tiles="5,0;1,2"/>
+    <set mask="x1x-011-000" tiles="0,1;2,3"/>
+    <set mask="x1x-110-000" tiles="5,1;1,3"/>
+
+    <set mask="001-111-11x" tiles="1,0;3,2"/>
+    <set mask="100-111-x11" tiles="2,0;0,2"/>
+    <set mask="11x-111-001" tiles="1,1;3,3"/>
+    <set mask="x11-111-100" tiles="2,1;0,3"/>
+    <set mask="000-111-100" tiles="1,0;3,2"/>
+    <set mask="000-111-001" tiles="2,0;0,2"/>
+    <set mask="100-111-000" tiles="1,1;3,3"/>
+    <set mask="001-111-000" tiles="2,1;0,3"/>
+    
+    <!--gentle slopes vertical-->
+    <set mask="x10-110-x00" tiles="7,7;5,5"/>
+    <set mask="x00-110-x10" tiles="7,2;5,6"/>
+    <set mask="01x-011-00x" tiles="6,7;4,5"/>
+    <set mask="00x-011-01x" tiles="6,2;4,6"/>
+
+    <set mask="x11-110-110" tiles="7,6;5,4"/>
+    <set mask="110-110-x11" tiles="7,5;5,7"/>
+    <set mask="11x-011-011" tiles="6,6;4,4"/>
+    <set mask="011-011-11x" tiles="6,5;4,7"/>
+    <set mask="010-010-110" tiles="7,6;5,4"/>
+    <set mask="110-010-010" tiles="7,5;5,7"/>
+    <set mask="010-010-011" tiles="6,6;4,4"/>
+    <set mask="011-010-010" tiles="6,5;4,7"/>
+
+    <!--slabs-->
+    <set mask="000-111-x1x" tiles="3,0;4,0"/>
+    <set mask="x1x-111-000" tiles="3,1;4,1"/>
+    <set mask="x10-110-x10" tiles="7,4;7,3"/>
+    <set mask="01x-011-01x" tiles="6,4;6,3"/>
+
+    <!--peaks-->
+    <set mask="x0x-010-x1x" tiles="0,4;1,4"/>
+    <set mask="x1x-010-x0x" tiles="0,5;1,5"/>
+    <set mask="x0x-011-x0x" tiles="2,4;2,5"/>
+    <set mask="x0x-110-x0x" tiles="3,4;3,5"/>
+    <set mask="xxx-010-xxx" tiles="2,6;2,7"/>
+    <set mask="x0x-x1x-x0x" tiles="3,6;3,7"/>
+    <set mask="xxx-x1x-xxx" tiles="0,6;0,7"/>
+    <set mask="padding" tiles="0,6;0,7"/>
+    <set mask="center" tiles="1,6;1,7"/>
+  </Tileset>
   
   <Tileset id="1" copy="z" path="dirt" ignores="g"/>
   <Tileset id="3" copy="z" path="snow"/>
