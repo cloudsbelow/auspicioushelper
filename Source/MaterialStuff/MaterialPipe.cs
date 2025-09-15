@@ -34,12 +34,13 @@ public static class MaterialPipe {
   public static Camera camera;
   static bool needsImmUpdate;
   static public IntRect clipBounds;
-
+  public static Level renderingLevel; 
   public static void GameplayRender(On.Celeste.GameplayRenderer.orig_Render orig, GameplayRenderer self, Scene scene){
     orderFlipped = false;
     var camdim = ExtendedCameraIop.cameraSize();
     RenderTargetPool.Resize(camdim.Item1,camdim.Item2);
-    Int2 cloc = Int2.Round((scene as Level)?.Camera.Position??Vector2.Zero);
+    renderingLevel = scene as Level;
+    Int2 cloc = Int2.Round(renderingLevel?.Camera.Position??Vector2.Zero);
     clipBounds = new IntRect(cloc.x,cloc.y,camdim.Item1,camdim.Item2).expandAll_(8);
     if(transroutine!=null) transroutine.Update();
     if(layers.Count==0){
@@ -105,6 +106,7 @@ public static class MaterialPipe {
     OverrideVisualComponent.Restore(scene);
     gd.SamplerStates[1]=SamplerState.LinearClamp;
     gd.SamplerStates[2]=SamplerState.LinearClamp;
+    renderingLevel = null;
   }
 
   public static void continueDefault(){

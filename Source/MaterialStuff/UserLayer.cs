@@ -3,19 +3,15 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using AsmResolver.DotNet.Cloning;
-using Celeste.Mod.auspicioushelper;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Mono.Cecil.Cil;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
 public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettableDepth, CachedUserMaterial{
+  List<MaterialResource> resources = new();
   public string identifier {get;set;}
   public float depth {set{
     info.depth=value;
@@ -132,6 +128,11 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
             case '$': //child layer
               textures.Add(new(idx, new ITexture.UserLayerWrapper(p.Value.Substring(1))));
               break;
+            case '%': //backdrop
+              var backdrop = BackdropCapturer.Get(p.Value.Substring(1).Trim());
+              textures.Add(new(idx, new ITexture.LayerWrapper(backdrop)));
+              resources.Add(backdrop.resource);
+              break;
           }
           break;
       }
@@ -150,5 +151,28 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       handles[handles.Count-1]= o;
     }
   }
+  public override void onEnable() {
+    base.onEnable();
+    foreach(var r in resources) r.Use();
+  }
+  public override void onRemove() {
+    base.onRemove();
+    foreach(var r in resources) r.Unuse();
+  }
   public override string ToString()=>base.ToString()+" "+RuntimeHelpers.GetHashCode(this).ToString();
+}
+
+public class MaterialResource{
+  int users;
+  public bool inUse=>users>0;
+  public Action<bool> a;
+  public MaterialResource(Action<bool> OnChange){
+    a=OnChange;
+  }
+  public void Use(){
+    if(users++==0)a(true);
+  }
+  public void Unuse(){
+    if(--users==0)a(false);
+  }
 }

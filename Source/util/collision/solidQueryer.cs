@@ -57,6 +57,7 @@ public static class SolidMiptree{
       int bucketX = (int)((center.x-offset.X)/cellsize);
       var l = buckets[stride*bucketY+bucketX];
       if(l == null) return null;
+      FloatRect f = FloatRect.fromRadius(center,radius);
       foreach(var r in l) if((r.dir&dir)!=0){
         if(r.f.x<center.x+radius.x && r.f.x+r.f.w>center.x-radius.x){
           if(r.f.y<center.y+radius.y && r.f.y+r.f.h>center.y-radius.y){
@@ -68,13 +69,17 @@ public static class SolidMiptree{
                 if(d.X*d.X+d.Y*d.Y<c.Radius*c.Radius) return r.e;
                 continue;
               case Grid g:
-                var offset = center-radius-r.f.tlc;
-                var offsetbrc = center+radius-r.f.tlc;
-                Int2 cs = new Int2((int)g.CellWidth,(int)g.CellHeight);
-                Int2 start = offset/cs;
-                for(int x=Math.Max(start.x,0); x*cs.x<offsetbrc.x; x++){
-                  for(int y=Math.Max(start.y,0); y*cs.y<offsetbrc.y; y++){
-                    if(g.Data[x,y]) return r.e;
+                if(g is MiptileCollider mtc){
+                  if(mtc.collideFr(f)) return r.e;
+                } else {
+                  var offset = center-radius-r.f.tlc;
+                  var offsetbrc = center+radius-r.f.tlc;
+                  Int2 cs = new Int2((int)g.CellWidth,(int)g.CellHeight);
+                  Int2 start = offset/cs;
+                  for(int x=Math.Max(start.x,0); x*cs.x<offsetbrc.x; x++){
+                    for(int y=Math.Max(start.y,0); y*cs.y<offsetbrc.y; y++){
+                      if(g.Data[x,y]) return r.e;
+                    }
                   }
                 }
                 continue;

@@ -65,6 +65,9 @@ public struct FloatRect{
   public static FloatRect fromCorners(Vector2 tlc, Vector2 brc){
     return new FloatRect(tlc.X,tlc.Y,brc.X-tlc.X,brc.Y-tlc.Y);
   }
+  public static FloatRect fromRadius(Vector2 center, Vector2 radius){
+    return new FloatRect(center.X-radius.X,center.Y-radius.Y,radius.X*2,radius.Y*2);
+  }
   public void shift(Vector2 shift){
     x+=shift.X; y+=shift.Y;
   }

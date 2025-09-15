@@ -67,9 +67,11 @@ internal static class SpeedrunToolIop{
     }, new object[]{
       typeof(ChannelBaseEntity), new string[] {"layerA"}
     }, new object[]{
-      typeof(TemplateDreamblockModifier), new string[] {"renderer"}
+      typeof(TemplateDreamblockModifier), new string[] {nameof(TemplateDreamblockModifier.normrenderer),nameof(TemplateDreamblockModifier.revrender)}
     }, new object[]{
       typeof(PixelLeniencyTrigger), new string[] {"curRules","overRules","appliedRules"}
+    }, new object[]{
+      typeof(BackdropCapturer), new string[] {nameof(BackdropCapturer.groups)}
     }
   };
 

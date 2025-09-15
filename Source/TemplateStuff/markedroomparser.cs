@@ -107,7 +107,7 @@ internal static class MarkedRoomParser{
           Scale = d.Scale,
           Rotation = d.Rotation,
           ColorHex = d.ColorHex,
-          Depth = d.GetDepth(-10500)
+          Depth = d.Depth??-10500
         });
       }
     }
@@ -123,7 +123,7 @@ internal static class MarkedRoomParser{
           Scale = d.Scale,
           Rotation = d.Rotation,
           ColorHex = d.ColorHex,
-          Depth = d.GetDepth(9000)
+          Depth = d.Depth??9000
         });
       }
     }

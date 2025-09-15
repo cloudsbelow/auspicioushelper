@@ -65,7 +65,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, IChann
         }
         if(!flag)setCollidability(false);
       }
-      if(!flag) return;
+      if(!flag) return; 
     }
     if(layer!=null) foreach(var c in comps)c.SetStealUse(layer,false,false);
     there = State.there;

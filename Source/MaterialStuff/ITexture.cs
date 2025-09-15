@@ -33,6 +33,19 @@ public abstract class ITexture{
       this.l=l;
     }
   }
+  public class LayerWrapper:ITexture{
+    IMaterialLayer l = null;
+    public override Texture2D tex{get{
+      if(!l.enabled){
+        DebugConsole.WriteFailure("Trying to use disabled texture as input");
+        return null;
+      }
+      return l.outtex;
+    }}
+    public LayerWrapper(IMaterialLayer l){
+      this.l=l;
+    }
+  }
   public class ImageWrapper:ITexture{
     static Dictionary<ModAsset, Texture2D> cached = new();
     static ImageWrapper(){

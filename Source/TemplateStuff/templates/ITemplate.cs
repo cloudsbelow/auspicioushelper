@@ -193,7 +193,7 @@ public class Template:Entity, ITemplateChild{
       else if(e!=null)scene.Add(e);
     }
     foreach(DecalData d in t.decals){
-      Decal e = new Decal(d.Texture, simoffset+d.Position, d.Scale, d.GetDepth(0), d.Rotation, d.ColorHex){
+      Decal e = new Decal(d.Texture, simoffset+d.Position, d.Scale, d.Depth??0, d.Rotation, d.ColorHex){
         DepthSetByPlacement = true
       };
       AddBasicEnt(e, simoffset+d.Position-virtLoc);
