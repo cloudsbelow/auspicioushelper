@@ -46,7 +46,7 @@ public class TemplateInstanceable:Template{
 }
 
 [CustomEntity("auspicioushelper/TemplateInstancer")]
-public class TemplateInstancer:TemplateInstanceable{
+public sealed class TemplateInstancer:TemplateInstanceable{
   Vector2[] nodes;
   public TemplateInstancer(EntityData d, Vector2 o):this(d,o,d.Int("depthoffset",0)){}
   public TemplateInstancer(EntityData d, Vector2 o, int depthoffset)
