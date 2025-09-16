@@ -166,6 +166,7 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
     }
   }
   public virtual bool drawMaterials => layerformat.quadfirst || willdraw.Count!=0;
+  public ITexture overrideFirstResource = null;
   public virtual void render(SpriteBatch sb, Camera c){
     if(toRemove.Count>0){
       List<IMaterialObject> nlist = new();
@@ -183,7 +184,10 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
         StartSb(sb,passes[i],c);
         if(layerformat.quadfirst){
           Vector2 tlc = c.ScreenToCamera(Vector2.Zero);
-          sb.Draw(RenderTargetPool.zero, tlc, Color.White);
+          if(overrideFirstResource!=null){
+            Rectangle dst = Int2.Round(tlc).withWidthHeight(RenderTargetPool.size);
+            sb.Draw(overrideFirstResource,dst,Color.White);
+          }else sb.Draw(RenderTargetPool.zero, tlc, Color.White);
         }
         rasterMats(sb,c);
         sb.End();

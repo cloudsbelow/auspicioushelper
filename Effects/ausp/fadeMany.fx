@@ -8,7 +8,6 @@ sampler2D sampler4 : register(s4);
 uniform float choose;
 
 float4 main(float4 color : COLOR0, float2 pos : TEXCOORD0) : COLOR0{
-
   float a = choose-floor(choose);
   float ia = 1-a;
   float4 t1 = tex2D(sampler1, pos);

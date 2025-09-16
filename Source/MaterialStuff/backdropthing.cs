@@ -45,13 +45,11 @@ public class BackdropCapturer{
     bool IMaterialLayer.autoManageRemoval=>false;
     bool IMaterialLayer.drawInScene=>false;
     string selector;
-    bool fg;
     public MaterialResource resource;
     Level last = null;
-    public CapturedBackdrops(Level l, string selector, bool fg){
+    public CapturedBackdrops(Level l, string selector){
       tex = new(false);
       this.selector = "%"+selector;
-      this.fg=fg;
       resource = new((bool change)=>{
         if(change){ 
           MaterialPipe.addLayer(this);
@@ -70,8 +68,13 @@ public class BackdropCapturer{
       captured.Clear();
       if(l == null) return;
       last = l;
-      List<Backdrop> li = fg?l.Foreground.Backdrops:l.Background.Backdrops;
-      foreach(var b in li) if(b.OnlyIn.Contains(selector)){
+      foreach(var b in l.Background.Backdrops) if(b.OnlyIn.Contains(selector)){
+        DebugConsole.Write($"Captured backdrop layer {b} with {selector}");
+        captured.Add(b);
+        if(!back.TryGetValue(b, out var br))back.Add(b, br=new BackdropRef(b));
+        br.Use();
+      }
+      foreach(var b in l.Foreground.Backdrops) if(b.OnlyIn.Contains(selector)){
         DebugConsole.Write($"Captured backdrop layer {b} with {selector}");
         captured.Add(b);
         if(!back.TryGetValue(b, out var br))back.Add(b, br=new BackdropRef(b));
@@ -114,13 +117,12 @@ public class BackdropCapturer{
     public void onRemove(){
       tex.Free();
     }
-    public override string ToString()=>base.ToString()+":"+selector+(fg? " (fg)":"");
+    public override string ToString()=>base.ToString()+":"+selector;
   }
   public static Dictionary<string, CapturedBackdrops> groups = new();
   public static CapturedBackdrops Get(string s){
     if(groups.TryGetValue(s, out var c)) return c;
-    bool fg = s.StartsWith("f-");
-    return  groups[s] = new(null,s.Substring(fg?2:0),fg);
+    return  groups[s] = new(null,s);
   }
   static bool Hook(On.Celeste.Backdrop.orig_IsVisible orig, Backdrop self, Level l){
     bool res = orig(self, l);

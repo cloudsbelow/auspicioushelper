@@ -9,7 +9,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 public abstract class OnAnyRemoveComp:Component{
-  public OnAnyRemoveComp(bool a, bool b):base(a,b){}
+  public OnAnyRemoveComp(bool active, bool bisible):base(active,bisible){}
   public abstract void OnRemove();
   public override void EntityRemoved(Scene scene) {
     base.EntityRemoved(scene);

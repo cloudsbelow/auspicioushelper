@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using System;
+using Celeste.Mod.Backdrops;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -120,5 +121,44 @@ internal class MaterialController:Entity, IDeclareLayers{
   }
   public override void Added(Scene scene){
     base.Added(scene);
+  }
+  [CustomBackdrop("auspicioushelper/MaterialEffect")]
+  public class MaterialBackdrop:Backdrop{
+    string identifier;
+    CachedUserMaterial u;
+    public MaterialBackdrop(BinaryPacker.Element e){
+      identifier=e.Attr("identifier");
+      if(string.IsNullOrWhiteSpace(identifier)){
+        identifier = e.Attr("passes","")+"###"+e.Attr("params","");
+        if(!string.IsNullOrWhiteSpace(e.Attr("textures",""))) identifier+="###"+e.Attr("textures");
+      }
+      bool reload = e.AttrBool("reload",false);
+      if(e.Attr("passes","").Length == 0)return;
+      CachedUserMaterial l = null;
+      if(reload && loadedMats.TryGetValue(identifier, out l)){
+        if(l.enabled) MaterialPipe.removeLayer(l);
+        loadedMats.Remove(identifier);
+      }
+      DebugConsole.Write($"Loading material backdrop from {e.Attr("passes","")} as {identifier}");
+      if(!loadedMats.TryGetValue(identifier, out var layer)){
+        layer = UserLayer.make(e);
+        loadedMats[identifier]=layer;
+        layer.identifier = identifier;
+      }
+      u=layer;
+    }
+    public override void Update(Scene scene) {
+      base.Update(scene);
+      if(Visible && !u.enabled){
+        MaterialPipe.addLayer(u);
+        MaterialPipe.indicateImmidiateAddition();
+      }
+      if(!Visible && u.enabled){
+        MaterialPipe.removeLayer(u);
+      }
+    }
+    public override void Render(Scene scene) {
+      Draw.SpriteBatch.Draw(u.outtex,Vector2.Zero,Color.White);
+    }
   }
 }
