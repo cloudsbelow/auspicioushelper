@@ -21,6 +21,7 @@ public class ChannelPlayerTrigger:Trigger{
   public int value;
   bool activateOnEnter=false;
   bool activateOnleave=false;
+  bool activateOnStay=false;
   bool onlyOnce;
   ChannelState.AdvancedSetter adv=null;
 
@@ -49,6 +50,8 @@ public class ChannelPlayerTrigger:Trigger{
         activateOnEnter=true; break;
       case "leave":
         activateOnleave=true; break;
+      case "stay":
+        activateOnStay=true; break;
 
       default: DebugConsole.Write("Unknown action"+data.Attr("action")); break;
     }
@@ -85,5 +88,9 @@ public class ChannelPlayerTrigger:Trigger{
   public override void OnLeave(Player player){
     base.OnLeave(player);
     if(activateOnleave) activate();
+  }
+  public override void OnStay(Player player) {
+    base.OnStay(player);
+    if(activateOnStay) activate();
   }
 }

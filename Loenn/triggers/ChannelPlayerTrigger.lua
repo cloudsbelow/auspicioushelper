@@ -11,7 +11,7 @@ trigger.triggerText = function(room, self)
     
     return string.format("channel \"%s\" %s %s", self.channel, self.op, self.value)
 end
-local actions = {"jump","dash","enter","leave"}
+local actions = {"jump","dash","enter","leave","stay"}
 local ops = {"xor", "and", "or", "set", "max", "min", "add"}
 trigger.placements = {
     name = "main",

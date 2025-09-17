@@ -9,26 +9,26 @@ channelplayerwatcher.depth = 2000
 
 local ops = {"xor", "and", "or", "set", "max", "min", "add"}
 local actions = {"dash"}
+local modes = {"custom", "dashAttacking", "grounded", "ducking", "state", "dead", "speed", "holding"}
 
 channelplayerwatcher.placements = {
   {
     name = "Channel Player Watcher",
     data = {
       channel = "",
-      value = 1,
-      op = "set",
-      action = "dash"
+      valueWhenMissing = 0,
+      mode = "dashAttacking",
+      custom = ""
     }
   }
 }
 channelplayerwatcher.fieldInformation = {
-  op = {
-    options=ops,
+  mode = {
+    options=modes,
     editable=false,
   },
-  action = {
-    options = actions,
-    editable=false,
+  valueWhenMissing = {
+    fieldType="integer"
   }
 }
 channelplayerwatcher.texture = "loenn/auspicioushelper/controllers/playerwatcher"

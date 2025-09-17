@@ -149,6 +149,7 @@ internal class MaterialController:Entity, IDeclareLayers{
     }
     public override void Update(Scene scene) {
       base.Update(scene);
+      if(u==null) return;
       if(Visible && !u.enabled){
         MaterialPipe.addLayer(u);
         MaterialPipe.indicateImmidiateAddition();
@@ -158,6 +159,11 @@ internal class MaterialController:Entity, IDeclareLayers{
       }
     }
     public override void Render(Scene scene) {
+      if(u==null) return;
+      if(Visible && !u.enabled){
+        DebugConsole.Write("Layer not yet enabled in backdrop render!");
+        return;
+      }
       Draw.SpriteBatch.Draw(u.outtex,Vector2.Zero,Color.White);
     }
   }

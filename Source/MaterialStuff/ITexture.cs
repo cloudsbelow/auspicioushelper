@@ -18,7 +18,10 @@ public abstract class ITexture{
     public override Texture2D tex{get{
       if(l == null){
         if(!string.IsNullOrWhiteSpace(i)) l = MaterialController.getLayer(i);
-        if(l == null) DebugConsole.WriteFailure($"Tried to access the layer {i} which does not exist");
+        if(l == null){
+          DebugConsole.WriteFailure($"Tried to access the layer {i} which does not exist");
+          return null;
+        }
       }
       if(!l.enabled){
         DebugConsole.WriteFailure("Trying to use disabled texture as input");
