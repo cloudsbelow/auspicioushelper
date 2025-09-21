@@ -227,4 +227,7 @@ public static partial class Util{
   public static float Lerp(float a, float b, float fac){
     return a*(1-fac)+b*fac;
   }
+  public static bool pass<T>(T val, T low, T high) where T:IComparable{
+    return val.CompareTo(low) >= 0 && val.CompareTo(high) < 0;
+  }
 }

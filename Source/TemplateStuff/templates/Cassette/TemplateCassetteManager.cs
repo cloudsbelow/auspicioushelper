@@ -57,6 +57,7 @@ public class TemplateCassetteManager:Entity, IChannelUser, IDeclareLayers{
   bool visualOnly = false;
   List<string> channels = new List<string>{"","","",""};
   public TemplateCassetteManager(EntityData d, Vector2 offset):base(d.Position+offset){
+    Depth=10;
     if(d.Name == "auspicioushelper/TemplateCassetteManager"){
       material = Util.kvparseflat(d.Attr("materials",""));
       var timingDict = Util.kvparseflat(d.Attr("timings",""));

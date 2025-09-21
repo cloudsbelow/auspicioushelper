@@ -71,6 +71,10 @@ public static class DebugConsole {
     }
     Write(res);
   }
+  public static T Pass<T>(string s, T inf){
+    Write($"{s} {inf}");
+    return inf;
+  }
   public static void DumpIl(ILCursor c, int n1=20, int? n2 = null){
     int h; int l;
     if(n2 is int j){

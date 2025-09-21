@@ -11,6 +11,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using Microsoft.Build.Utilities;
+using System.Diagnostics;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -37,18 +38,28 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, IChann
     channel = d.Attr("channel","");
     prop = prop&~Propagation.Inside;
     doBoost = d.Bool("do_boost",false);
-    doRaise = d.Bool("do_raise",false);
   }
-  public override void Added(Scene scene){
-    base.Added(scene);
+  public override void addTo(Scene scene) {
     int num = ChannelState.watch(this);
+    if(num == 0 && doBoost) hoffset=2;
+    base.addTo(scene);
     CassetteMaterialLayer.layers.TryGetValue(channel,out layer);
     if(num==0)setChVal(0);
     setupEnts(GetChildren<Entity>());
   }
+  const float fakeshake=0.2f;
+  public override Vector2? getShakeVector(float n) {
+    float time = fakeshake-n;
+    return time switch{
+      <0.04f=>Vector2.UnitY*-2,
+      <0.07f=>Vector2.UnitY*-1,
+      <0.12f=>Vector2.Zero,
+      <0.2f=>Vector2.UnitY,
+      _=>Vector2.Zero,
+    };
+  }
   public void tryManifest(){
     Player p = Scene?.Tracker.GetEntity<Player>();
-    if(there!=State.trying) return;
     if(getParentCol() && p!=null && !p.Dead && hasInside(p)){
       p.Position.Y-=4;
       bool inside = hasInside(p);
@@ -72,39 +83,30 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, IChann
     prop|=Propagation.Inside;
     setVisColAct(true,true,true);
   }
-  float bumpTarget = 1;
-  IEnumerator bumpUp(){
-    float at = 0;
-    while(at>-bumpTarget){
-      at=Calc.Approach(at,-bumpTarget,Engine.DeltaTime*120);
-      hoffset = at;
-      ownLiftspeed = Vector2.UnitY*-60;
-      childRelposSafe();
-      yield return null;
-    }
-    ownLiftspeed=Vector2.Zero;
-    yield return 0.2f;
-    while(at<0){
-      at=Calc.Approach(at,0,Engine.DeltaTime*30);
-      hoffset = at;
-      ownLiftspeed = Vector2.UnitY*30;
-      childRelposSafe();
-      yield return null;
-    }
-    ownLiftspeed=Vector2.Zero;
-  }
   public void setChVal(int val){
     if(val==0){
       if(there == State.there){
         setVisColAct(layer!=null,false,!freeze);
+        if(doBoost && hoffset!=2){
+          hoffset = 2;
+          childRelposSafe();
+        }
         if(layer!=null) foreach(var c in comps)c.SetStealUse(layer,true,true);
       }
       there = State.gone;
       prop&=~Propagation.Inside;
     } else {
-      there = State.trying;
-      tryManifest();
-      if(doBoost)Add(new Coroutine(bumpUp()));
+      if(there == State.gone){
+        there = State.trying;
+        tryManifest();
+      }
+      if(doBoost && there == State.there){
+        shake(fakeshake);
+        ownLiftspeed = -Vector2.UnitY*60;
+        hoffset = 0;
+        childRelposSafe();
+        ownLiftspeed = Vector2.Zero;
+      }
     }
   }
   public override void Update(){

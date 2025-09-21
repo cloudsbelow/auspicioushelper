@@ -220,11 +220,16 @@ public static class MaterialPipe {
     UpdateHook.TimeSinceTransMs = 1000000;
     remLeaving();
   }
+  public static void SceneEnd(On.Celeste.Level.orig_End orig, Level l){
+    foreach(var v in layers) removeLayer(v);
+    orig(l);
+  }
   static PersistantAction cleanup;
   static HookManager hooks = new HookManager(()=>{
     On.Celeste.GameplayRenderer.Render += GameplayRender;
     On.Celeste.Level.TransitionTo += ontrans;
     On.Celeste.Player.ctor += playerCtorHook;
+    On.Celeste.Level.End+=SceneEnd;
     auspicioushelperModule.OnExitMap.enroll(cleanup = new PersistantAction(()=>{
       foreach(var l in layers) removeLayer(l);
       toRemove.Clear();
@@ -234,6 +239,7 @@ public static class MaterialPipe {
     On.Celeste.GameplayRenderer.Render-= GameplayRender;
     On.Celeste.Level.TransitionTo -= ontrans;
     On.Celeste.Player.ctor -= playerCtorHook;
+    On.Celeste.Level.End-=SceneEnd;
     cleanup.remove();
   });
 

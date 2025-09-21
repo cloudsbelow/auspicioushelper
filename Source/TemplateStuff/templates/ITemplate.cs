@@ -372,24 +372,28 @@ public class Template:Entity, ITemplateChild{
   Coroutine shroutine = null;
   public void shake(float time){
     if(time <= 0) return;
-    if(shakeTimer<=0 && shroutine==null) Add(shroutine=new Coroutine(shakeRoutine()));
+    if(shakeTimer<=0 && shroutine==null){
+      if(bar!=null)Remove(bar);
+      Add(bar = new(()=>{
+        foreach(Entity e in GetChildren<Entity>(Propagation.Shake)){
+          prevpos.TryAdd(e,e.Position);
+          e.Position+=ownShakeVec;
+          if(e is IChildShaker s) s.OnShakeFrame(ownShakeVec);
+        }
+      }));
+      shakeHooks.enable();
+      Add(shroutine=new Coroutine(shakeRoutine()));
+    } 
     shakeTimer = MathF.Max(time,shakeTimer);
   }
   public void EndShake()=>shakeTimer = 0;
+  public virtual Vector2? getShakeVector(float n)=>Scene.OnInterval(0.04f)?Calc.Random.ShakeVector():null;
   BeforeAfterRender bar;
   IEnumerator shakeRoutine(){
-    if(bar!=null)Remove(bar);
-    Add(bar = new(()=>{
-      foreach(Entity e in GetChildren<Entity>(Propagation.Shake)){
-        prevpos.TryAdd(e,e.Position);
-        e.Position+=ownShakeVec;
-        if(e is IChildShaker s) s.OnShakeFrame(ownShakeVec);
-      }
-    }));
-    shakeHooks.enable();
     while(shakeTimer>0){
-      shakeTimer-=Engine.DeltaTime;
-      if(Scene.OnInterval(0.04f)) ownShakeVec = Calc.Random.ShakeVector();
+      float nTimer = shakeTimer-Engine.DeltaTime;
+      if(getShakeVector(nTimer) is Vector2 v)ownShakeVec=v;
+      shakeTimer = nTimer;
       yield return null;
     }
     ownShakeVec = Vector2.Zero;

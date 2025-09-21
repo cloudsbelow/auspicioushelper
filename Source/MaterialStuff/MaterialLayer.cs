@@ -77,6 +77,13 @@ internal class LayerMarkingEntity:Entity{
     }
     base.Removed(scene);
   }
+  public override void SceneEnd(Scene scene) {
+    if(layer.enabled && layer.markingEntity == this){
+      DebugConsole.Write($"Layer is still active! is it ok {layer}!");
+    }
+    base.SceneEnd(scene);
+  }
+  
   public override void Render() {
     base.Render();
     if(layer.enabled) layer.paste();
