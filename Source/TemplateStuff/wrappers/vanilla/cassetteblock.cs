@@ -1,6 +1,7 @@
 
 
 
+using System;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -140,5 +141,62 @@ public class CassetteW:CassetteBlock, ISimpleEnt{
   }, ()=>{
     On.Celeste.CassetteBlock.FindInGroup-=Hook;
     On.Celeste.CassetteBlock.CheckForSame-=Hook;
+  },auspicioushelperModule.OnEnterMap);
+}
+
+[Tracked]
+[CustomEntity("auspicioushelper/CassetteFixerThing")]
+public class CassetteBlockFixer:Entity{
+  class WillToggleLock:IDisposable{
+    static int count;
+    public static bool locked=>count>0;
+    public WillToggleLock(){count++;}
+    void IDisposable.Dispose()=>count--;
+  }
+  [Tracked]
+  class OrigHeightComp:Component{
+    public int h;
+    public bool toUse=false;
+    public OrigHeightComp(int orig):base(false,false){
+      h=orig;
+    }
+    public override void EntityAdded(Scene scene) {
+      base.EntityAdded(scene);
+      if(scene.Tracker.GetEntity<CassetteBlockFixer>() is {}) toUse=true;
+    }
+  }
+  public CassetteBlockFixer():base(Vector2.Zero){
+    hooks.enable();
+  }
+  public override void Awake(Scene scene) {
+    base.Awake(scene);
+    foreach(OrigHeightComp h in scene.Tracker.GetComponents<OrigHeightComp>()) h.toUse=true;
+  }
+  static void Hook(On.Celeste.CassetteBlock.orig_WillToggle orig, CassetteBlock b){
+    using(new WillToggleLock()) orig(b);
+  }
+  static void Hook(On.Celeste.CassetteBlock.orig_ShiftSize orig, CassetteBlock b, int shift){
+    if(b.Get<OrigHeightComp>() is not {} oh || !oh.toUse){
+      orig(b,shift);
+      return;
+    }
+    if(WillToggleLock.locked) b.blockHeight=1;
+    else b.blockHeight = b.Activated?2:0;
+    b.MoveToY(oh.h+2-b.blockHeight);
+  }
+  static void Hook(On.Celeste.CassetteBlock.orig_ctor_Vector2_EntityID_float_float_int_float orig, CassetteBlock s, Vector2 o, EntityID id, float a, float b, int c, float d){
+    orig(s,o,id,a,b,c,d);
+    if(s.GetType()==typeof(CassetteBlock)){
+      s.Add(new OrigHeightComp((int)Math.Round(s.Position.Y)));
+    }
+  }
+  static HookManager hooks = new(()=>{
+    On.Celeste.CassetteBlock.ShiftSize+=Hook;
+    On.Celeste.CassetteBlock.WillToggle+=Hook;
+    On.Celeste.CassetteBlock.ctor_Vector2_EntityID_float_float_int_float+=Hook;
+  },()=>{
+    On.Celeste.CassetteBlock.ShiftSize-=Hook;
+    On.Celeste.CassetteBlock.WillToggle-=Hook;
+    On.Celeste.CassetteBlock.ctor_Vector2_EntityID_float_float_int_float-=Hook;
   },auspicioushelperModule.OnEnterMap);
 }

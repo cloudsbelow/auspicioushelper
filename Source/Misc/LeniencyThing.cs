@@ -32,7 +32,7 @@ public class PixelLeniencyTrigger:Trigger{
   public PixelLeniencyTrigger(EntityData d, Vector2 o):base(d,o){
     rules.staticSlip = Math.Clamp(d.Int("staticSlip",1),0,4);
     rules.fallingSlip = Math.Clamp(d.Int("fallingSlip",1),0,6);
-    rules.fallDepth = Math.Clamp(d.Int("neededFallDist",3),1,8);
+    rules.fallDepth = Math.Clamp(d.Int("neededFallDist",2),1,8);
     rules.maxGroundedStep = Math.Clamp(d.Int("maxGroundedStep",2),0,8);
     rules.maxStepSlope = Math.Clamp(d.Float("maxStepSlope",1),0.25f,4);
     temp = d.Bool("onlyWhenInside");

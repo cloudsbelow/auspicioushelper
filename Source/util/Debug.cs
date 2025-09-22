@@ -54,6 +54,9 @@ public static class DebugConsole {
   public static void Write(string message, object o){
     Write(message+" "+(o==null?"NULL":o.ToString()));
   }
+  public static void nl(int n){
+    for(int i=0; i<n; i++) Write("");
+  }
   public static void Write(string message, params object[] os){
     string str = message+" ";
     foreach(var o in os){

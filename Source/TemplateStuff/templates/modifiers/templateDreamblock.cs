@@ -4,15 +4,19 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -64,6 +68,24 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
         } 
       }
       return null;
+    }
+    public static bool CheckDDiag(Player p){
+      p.Position.Y+=1;
+      bool flag=false;
+      DebugConsole.Write($"here", p, p?.Scene);
+      foreach(DreamMarkerComponent c in p.Scene.Tracker.GetComponents<DreamMarkerComponent>()){
+        if(!c.dbm.dreaming || c.Entity.Collidable == false) continue;
+        if(c.Collider==null) flag = p.CollideCheck(c.Entity);
+        else{
+          Collider orig = c.Entity.Collider;
+          c.Entity.Collider=c.Collider;
+          flag = p.CollideCheck(c.Entity);
+          c.Entity.Collider=orig;
+        }
+        if(flag) break;
+      }
+      p.Position.Y-=1;
+      return flag;
     }
   }
   public class SentinalDb:DreamBlock{
@@ -130,6 +152,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
         }
       }
       if(e.Collider == null && e is not Wrappers.Spinner.SpinnerFiller) continue;
+      if(e is Trigger t) continue;
       e.Add(new PlayerCollider((Player p)=>{
         if(DreamCheckStart(p,Vector2.Zero)){
           //DebugConsole.Write($"{e} {e.Collidable} {e.Scene}", e.Scene);
@@ -229,9 +252,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     )){
       c.EmitLdarg0();
       c.EmitDelegate(DreamMarkerComponent.CheckContinue);
-    } else {
-      DebugConsole.Write("failed to add hook");
-    }
+    } else DebugConsole.Write("failed to add hook",true);
   }
   static void DDashBeginIL(ILContext ctx){
     ILCursor c = new(ctx);
@@ -243,9 +264,20 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     )){
       c.EmitLdarg0();
       c.EmitDelegate(speedReplaceHook);
-    } else {
-      DebugConsole.WriteFailure("Failed to add hook");
-    }
+    } else DebugConsole.WriteFailure("Failed to add hook",true);
+  }
+  static void DashDowndiag(ILContext ctx){
+    ILCursor c = new (ctx);
+    ILLabel target=null;
+    if(c.TryGotoNextBestFit(MoveType.After,
+      itr=>itr.MatchCallvirt<Entity>(nameof(CollideCheck)) &&
+        itr.Operand is GenericInstanceMethod g && g.GenericArguments.Count==1 && g.GenericArguments[0].FullName==typeof(DreamBlock).FullName,
+      itr=>itr.MatchBrtrue(out target)
+    )){
+      c.EmitLdloc1();
+      c.EmitDelegate(DreamMarkerComponent.CheckDDiag);
+      c.EmitBrtrue(target);
+    } else DebugConsole.WriteFailure("Failed to add hook");
   }
   static void Hook(On.Celeste.DreamBlock.orig_OnPlayerExit orig, DreamBlock self, Player p){
     if(self is SentinalDb b){
@@ -254,17 +286,22 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     }
     orig(self,p);
   } 
+  static ILHook ddhook;
   public static HookManager hooks = new HookManager(()=>{
     On.Celeste.Player.OnCollideH+=Hook;
     On.Celeste.Player.OnCollideV+=Hook;
+    On.Celeste.DreamBlock.OnPlayerExit+=Hook;
     IL.Celeste.Player.DreamDashUpdate+=DDashIL;
     IL.Celeste.Player.DreamDashBegin+=DDashBeginIL;
-    On.Celeste.DreamBlock.OnPlayerExit+=Hook;
+    MethodInfo dc = typeof(Player).GetMethod("DashCoroutine",BindingFlags.Instance | BindingFlags.NonPublic);
+    MethodInfo dc2 = dc.GetStateMachineTarget();
+    ddhook = new ILHook(dc2,DashDowndiag);
   },()=>{
     On.Celeste.Player.OnCollideH-=Hook;
     On.Celeste.Player.OnCollideV-=Hook;
+    On.Celeste.DreamBlock.OnPlayerExit-=Hook;
     IL.Celeste.Player.DreamDashUpdate-=DDashIL;
     IL.Celeste.Player.DreamDashBegin-=DDashBeginIL;
-    On.Celeste.DreamBlock.OnPlayerExit-=Hook;
+    ddhook?.Dispose();
   },auspicioushelperModule.OnEnterMap);
 }
