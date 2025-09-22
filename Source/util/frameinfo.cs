@@ -38,6 +38,7 @@ public class UpdateHook:Component{
           if(updateBefore){
             updateAny = (updateBefore = false);
             self.Entities.UpdateLists();
+            updateListFlags.Clear();
           }
           using(new AfterUpdateLock())foreach(var a in afterUpd) a();
           afterUpd.Clear();
@@ -47,6 +48,7 @@ public class UpdateHook:Component{
         if(updateAfter||updateAny){
           updateAny = (updateAfter = false);
           self.Entities.UpdateLists();
+          updateListFlags.Clear();
         }
       }
     }
@@ -57,6 +59,7 @@ public class UpdateHook:Component{
   public Action afterAction=null;
   public bool updatedThisFrame = false;
   public static float TimeSinceTransMs=0;
+  public static HashSet<string> updateListFlags = new();
 
   public UpdateHook(Action before=null, Action after=null):base(true,false){
     beforeAction=before;afterAction =after;
@@ -84,6 +87,7 @@ public class UpdateHook:Component{
     }
   }
   internal static void updateHook(On.Celeste.Level.orig_Update update, Level self){
+    updateListFlags.Clear();
     cachedPlayer = self.Tracker.GetEntity<Player>();
     AfterUpdateLock.ExtraUpdate(self);
     if(self.Paused){

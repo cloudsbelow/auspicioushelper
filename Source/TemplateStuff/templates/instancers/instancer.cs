@@ -16,18 +16,11 @@ public class TemplateInstanceable:Template{
   public Template addInstance(Vector2 offset, templateFiller template=null){
     template = template??t;
     Template res;
-    if(template.chain is {}){
-      if(EntityParser.create(template.ChildEntities.First(),(Scene??addingScene) as Level,template.roomdat,virtLoc+offset-t.origin,this,fullpath) is Template temp){
-        temp.ownidpath = numInstances++.ToString();
-        addEnt(res=temp);
-      } else throw new System.Exception("oops");
-    } else {
-      addEnt(res=useDisappearer?new TemplateDisappearer(offset+virtLoc){
-        t=template, ownidpath=numInstances++.ToString()
-      }:new Template(offset+virtLoc){
-        t=template, ownidpath=numInstances++.ToString()
-      });
-    }
+    addEnt(res=useDisappearer?new TemplateDisappearer(offset+virtLoc){
+      t=template, ownidpath=numInstances++.ToString()
+    }:new Template(offset+virtLoc){
+      t=template, ownidpath=numInstances++.ToString()
+    });
     if(addingScene==null){
       AddNewEnts(res.GetChildren<Entity>());
     }
@@ -56,5 +49,15 @@ public sealed class TemplateInstancer:TemplateInstanceable{
   public override void makeInitialInstances() {
     base.makeInitialInstances();
     foreach(Vector2 n in nodes) addInstance(n);
+  }
+}
+
+
+public interface IRemovableContainer{
+  public void RemoveChild(ITemplateChild c){
+
+  }
+  public bool RestoreChild(ITemplateChild c){
+    return false;
   }
 }

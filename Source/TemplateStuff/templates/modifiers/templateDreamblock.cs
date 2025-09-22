@@ -170,7 +170,6 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
   DreamRenderer renderer;
   public static TemplateDreamblockModifier speedSetter;
   public static Vector2 speedReplaceHook(Vector2 speed, Player p){
-    DebugConsole.Write("Here!", speedSetter);
     if(speedSetter!=null){
       speed = speedSetter.getNewSpeed(speed, p);
       speedSetter = null;

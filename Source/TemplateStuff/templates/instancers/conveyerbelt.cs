@@ -13,11 +13,13 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateBelt")]
-public class ConveyerTemplate:TemplateInstanceable{
+public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
   class BeltItem{
     public Template te;
     public SplineAccessor sp;
+    public ITemplateChild removedChild;
     public float extent;
+    public bool active = true;
   }
   Queue<BeltItem> belt = new();  
   bool loop;
@@ -67,13 +69,24 @@ public class ConveyerTemplate:TemplateInstanceable{
     base.Update();
     if(!loop){
       while(belt.Count>0 && belt.Peek().extent>=spline.segments-1){
-        Template child = belt.Dequeue().te;
-        children.Remove(child);
-        child.destroy(false);
+        var child = belt.Dequeue();
+        if(!child.active){
+          List<Template> toEmancipate = new();
+          foreach(var te in child.te.children) if(te is Template tem) toEmancipate.Add(tem);
+          foreach(var te in toEmancipate){
+            te.emancipate();
+            children.Add(te);
+            te.parent = this;
+          }
+          child.te.destroy(false);
+        } else {
+          child.te.destroy(false);
+        }
       }
     }
     foreach(var desc in belt){
       desc.extent+=Engine.DeltaTime*speed;
+      if(!desc.active) continue;
       desc.sp.set(desc.extent);
       desc.te.ownLiftspeed = desc.sp.tangent*speed;
       desc.te.toffset = desc.sp.pos;
@@ -87,5 +100,36 @@ public class ConveyerTemplate:TemplateInstanceable{
       Template nte = addInstance(spos.pos);
       belt.Enqueue(new(){te=nte,sp=spos,extent = extent});
     } else timer-=Engine.DeltaTime;
+  }
+  public void RemoveChild(ITemplateChild c){
+    foreach(var desc in belt) if(desc.te == c.parent && desc.te.children.Count==1){
+      desc.active=false;
+      desc.removedChild = c;
+      DebugConsole.Write("Found thing to deactivate");
+      return;
+    }
+  }
+  public TemplateDisappearer.vcaTracker stat=new();
+  public override void parentChangeStat(int vis, int col, int act) {
+    base.parentChangeStat(vis, col, act);
+    stat.Align(vis,col,act);
+  }
+  public bool RestoreChild(ITemplateChild c){
+    foreach(var desc in belt) if(desc.removedChild==c){
+      DebugConsole.Write("Restored");
+      if(c is Template te) te.emancipate();
+      c.parent = desc.te;
+      desc.te.children.Add(c);
+      desc.active = true;
+      desc.sp.set(desc.extent);
+      desc.te.ownLiftspeed = desc.sp.tangent*speed;
+      desc.te.toffset = desc.sp.pos;
+      if(stat.Collidable)c.parentChangeStat(0,-1,0);
+      relposOne(desc.te);
+      if(stat.Collidable)c.parentChangeStat(0,1,0);
+      return true;
+    }
+    DebugConsole.Write("COuld not restore");
+    return false;
   }
 }

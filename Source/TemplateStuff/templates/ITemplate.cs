@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Celeste.Mod.auspicioushelper.Wrappers;
@@ -143,6 +144,12 @@ public class Template:Entity, ITemplateChild{
       }
     }
   }
+  public void relposOne(ITemplateChild c){
+    var tc = children;
+    children = new List<ITemplateChild>(){c};
+    childRelposSafe();
+    children = tc;
+  }
   public bool PropagateEither(Template other,Propagation req){
     Template c=other;
     while(c!=null){
@@ -165,7 +172,7 @@ public class Template:Entity, ITemplateChild{
     if(c is Template ct){
       ct.depthoffset+=depthoffset;
       if(t.chain!=null){
-        ct.t=t.chain.NextFiller();
+        ct.t??=t.chain.NextFiller();
       }
     }
     c.addTo(Scene??addingScene);

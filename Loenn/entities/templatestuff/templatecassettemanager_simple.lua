@@ -19,6 +19,7 @@ entity.placements = {
       tintActive = true,
       translucent = false,
       no_visuals = false,
+      useVanillaMistiming = false,
     }
   }
 }

@@ -29,6 +29,7 @@ entity.placements = {
       movesfx = "event:/game/04_cliffside/arrowblock_move",
       arrow_texture = "small",
       decal_depth = -10001,
+      decal_colors = "#50cf50ff, #ffff",
       max_leniency=4,
       hitJumpthrus=true,
       throughDashblocks=false,

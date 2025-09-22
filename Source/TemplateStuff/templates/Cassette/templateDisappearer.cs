@@ -18,6 +18,16 @@ public class TemplateDisappearer:Template{
   bool parentVis = true;
   bool parentCol = true;
   bool parentAct = true;
+  public class vcaTracker{
+    public bool Active=true; 
+    public bool Collidable=true; 
+    public bool Visible=true;
+    public void Align(int vis, int col, int act){
+      if(vis!=0) Visible=vis>0;
+      if(col!=0) Collidable=col>0;
+      if(act!=0) Active=act>0; 
+    }
+  }
   public TemplateDisappearer(EntityData data, Vector2 pos, int depthoffset):base(data,pos,depthoffset){
   }
   public TemplateDisappearer(Vector2 pos, int depthoffset=0):base(pos,depthoffset){}

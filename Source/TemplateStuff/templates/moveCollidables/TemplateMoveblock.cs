@@ -25,6 +25,8 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
   string moveevent = "event:/game/04_cliffside/arrowblock_move";
   List<Vector2> decalOffset = new();
   List<MTexture> arrows;
+  Color c1 = Util.hexToColor("#50cf50ff");
+  Color c2 = Util.hexToColor("#ffff");
   public TemplateMoveBlock(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateMoveBlock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
@@ -54,6 +56,9 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
       arrows = GFX.Game.GetAtlasSubtextures("objects/auspicioushelper/templates/movearrows/"+d.Attr("arrow_texture","small"));
       Visible = true;
     }
+    var l = Util.listparseflat(d.Attr("decal_colors"));
+    if(l.Count>=1)c1 = Util.hexToColor(l[0]);
+    if(l.Count>=2)c2 = Util.hexToColor(l[1]);
   }
   public override void Awake(Scene scene) {
     base.Awake(scene);
@@ -72,6 +77,7 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
       steerdelay = 0.2f;
       while(!triggered && !hasRiders<Player>()) yield return null;
       disconnect();
+      parent?.GetFromTree<IRemovableContainer>()?.RemoveChild(this);
       triggered=true;
       speed = 0;
       Audio.Play("event:/game/04_cliffside/arrowblock_activate", Position);
@@ -146,6 +152,12 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
       fgt = null;
       yield return maxrespawntimer;
       reconnect(origpos);
+      if(parent?.GetFromTree<IRemovableContainer>() is {} cont){
+        if(!cont.RestoreChild(this)){
+          destroy(false);
+          yield break;
+        }
+      }
       remake();
       AddNewEnts(GetChildren<Entity>());
       gone=false;
@@ -163,9 +175,9 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
     if(gone) return;
     float tau = MathF.PI * 2f;
     int dir = (int)Math.Floor((0f - lastmovevec.Angle() + tau) % tau / tau * 8f + 0.5f);
-    Vector2 vec = virtLoc+gatheredShakeVec;
+    Vector2 vec = (virtLoc+gatheredShakeVec).Round();
     foreach(Vector2 o in decalOffset){
-      arrows[Calc.Clamp(dir, 0, 7)].DrawCentered(o+vec);
+      arrows[Calc.Clamp(dir, 0, 7)].DrawCentered(o+vec, detatched?c1:c2);
     }
   }
   public override void Removed(Scene scene) {

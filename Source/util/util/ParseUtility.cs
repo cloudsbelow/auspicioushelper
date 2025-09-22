@@ -144,6 +144,7 @@ public static partial class Util{
       goto parsekey;
   }
   public static List<string> listparseflat(string str,bool strip=false,bool stripout=false){
+    if(string.IsNullOrWhiteSpace(str)) return new();
     if(strip) str=stripEnclosure(str);
     Stack<char> unescaped = new Stack<char>();
     var o = new List<string>();

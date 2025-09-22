@@ -45,6 +45,9 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     dislocated = true;
     prop &= ~Propagation.Shake;
   }
+  public void removeFromContainer(){
+    parent?.GetFromTree<IRemovableContainer>()?.RemoveChild(this);
+  }
   public virtual void reconnect(Vector2? fallback=null){
     dislocated = false;
     prop |= Propagation.Shake;
