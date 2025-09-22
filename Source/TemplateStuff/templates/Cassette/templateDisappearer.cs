@@ -18,10 +18,11 @@ public class TemplateDisappearer:Template{
   bool parentVis = true;
   bool parentCol = true;
   bool parentAct = true;
-  public class vcaTracker{
+  public struct vcaTracker{
     public bool Active=true; 
     public bool Collidable=true; 
     public bool Visible=true;
+    public vcaTracker(){}
     public void Align(int vis, int col, int act){
       if(vis!=0) Visible=vis>0;
       if(col!=0) Collidable=col>0;

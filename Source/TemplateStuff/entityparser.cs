@@ -267,7 +267,7 @@ anyways i want to praise it more it is wonderful
       });
     }
     clarify("introCar", Types.unwrapped, static (l,d,o,e)=>new IntroCarW(e,o));
-    clarify("cassetteBlock", Types.basic, static (l,d,o,e)=>new CassetteBlock(e,o, new EntityID(d.Name,e.ID)));
+    clarify("cassetteBlock", Types.unwrapped, static (l,d,o,e)=>new CassetteW(e,o, new EntityID(d.Name,e.ID)));
     defaultModdedSetup();
     HookVanilla.hooks.enable();
   }

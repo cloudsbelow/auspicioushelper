@@ -105,7 +105,6 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
     foreach(var desc in belt) if(desc.te == c.parent && desc.te.children.Count==1){
       desc.active=false;
       desc.removedChild = c;
-      DebugConsole.Write("Found thing to deactivate");
       return;
     }
   }
@@ -116,7 +115,6 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
   }
   public bool RestoreChild(ITemplateChild c){
     foreach(var desc in belt) if(desc.removedChild==c){
-      DebugConsole.Write("Restored");
       if(c is Template te) te.emancipate();
       c.parent = desc.te;
       desc.te.children.Add(c);
@@ -129,7 +127,6 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
       if(stat.Collidable)c.parentChangeStat(0,1,0);
       return true;
     }
-    DebugConsole.Write("COuld not restore");
     return false;
   }
 }

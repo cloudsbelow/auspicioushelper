@@ -7,6 +7,7 @@ using System.Reflection;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
+using Microsoft.VisualBasic;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Cil;
@@ -91,13 +92,14 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       string[] strs = s.Split('/');
       if(Enum.TryParse<TouchInfo.Type>(strs[0],out var res)){
         if(!advtouch.TryGetValue(res, out var n)) n = advtouch[res] = new();
-        if(strs.Length == 1) n = advtouch[res] = null;
-        if(n!=null){
-          for(int i=1; i<strs.Length; i++) if(int.TryParse(strs[i], out int st)){
-            DebugConsole.Write($"Add {res} {st}");
-            n.Add(st);
-          } 
+        if(strs.Length == 1){
+          n = advtouch[res] = null;
         }
+        if(n!=null){
+          for(int i=1; i<strs.Length; i++) if(int.TryParse(strs[i], out int st))n.Add(st);
+        }
+      } else {
+        DebugConsole.Write($"Invalid trigger option {strs[0]}");
       }
     }
     triggerOnTouch = d.Bool("triggerOnTouch",false);
@@ -265,7 +267,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   }
   static void Hook(On.Celeste.Player.orig_ClimbJump orig, Player p){
     orig(p);
-    triggerFromArr(p.temp,new TouchInfo(p,TouchInfo.Type.climbjump));
+    triggerFromArr(p.CollideAll<Platform>(p.Position+Vector2.UnitX*(float)p.Facing*4f),new TouchInfo(p,TouchInfo.Type.climbjump));
   }
   static void Hook(On.Celeste.Player.orig_OnCollideH orig, Player p, CollisionData c){
     orig(p,c);
