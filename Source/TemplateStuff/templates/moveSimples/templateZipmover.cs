@@ -13,16 +13,10 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateZipmover")]
 public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
-  public enum Themes{
-    Normal,
-    Moon
-  }
   private SoundSource sfx = new SoundSource();
-  Themes theme = Themes.Normal;
   public override Vector2 virtLoc=>Position+spos.pos;
   SplineAccessor spos;
   EntityData dat;
-  Vector2 offset;
   public string channel {get;set;} = null;
   public enum ReturnType{
     loop,
@@ -38,6 +32,10 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
     manual
   }
   ActivationType atype;
+  Util.Easings outEasing = Util.Easings.SineIn;
+  Util.Easings inEasing = Util.Easings.SineIn;
+  float outSpeed = 2;
+  float inSpeed = 0.5f;
   public TemplateZipmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateZipmover(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
@@ -45,7 +43,6 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
     Add(upd = new UpdateHook());
     Add(sfx);
     dat=d;
-    this.offset=offset;
     rtype = d.Attr("return_type","normal") switch {
       "loop"=>ReturnType.loop,
       "none"=>ReturnType.none,
@@ -61,6 +58,10 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
     };
     if(!d.Bool("propegateRiding"))prop &= ~Propagation.Riding;
     if(!string.IsNullOrWhiteSpace(d.Attr("channel","")))channel = d.Attr("channel");
+    outSpeed = d.Float("speed",2);
+    inSpeed = d.Float("returnSpeed",0.5f);
+    outEasing = d.Enum<Util.Easings>("easing",Util.Easings.SineIn);
+    inEasing = d.Enum<Util.Easings>("returnEasing",Util.Easings.SineIn);
   }
   UpdateHook upd;
   public override void Added(Scene scene) {
@@ -74,23 +75,18 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
   }
   public override void addTo(Scene scene){
     Spline spline = SplineEntity.GetSpline(dat, SplineEntity.Types.compoundLinear);
-    spos = new SplineAccessor(spline, Vector2.Zero);
+    spos = new SplineAccessor(spline, Vector2.Zero,true);
     if(atype == ActivationType.dash || atype==ActivationType.dashAutomatic){
       OnDashCollide = (Player p, Vector2 dir)=>{
         if(dashed == 0){
           dashed = 1;
-          Add(new Coroutine(dashAudioSeq()));
+          Add(new AudioMangler(Audio.Play("event:/new_content/game/10_farewell/fusebox_hit_1"),0.15f));
           return DashCollisionResults.Rebound;
         }
         return DashCollisionResults.NormalCollision;
       };
     }
     base.addTo(scene);
-  }
-  IEnumerator dashAudioSeq(){
-    var audio = Audio.Play("event:/new_content/game/10_farewell/fusebox_hit_1");
-    yield return 0.15f;
-    Audio.Stop(audio,true);
   }
   int dashed;
   bool triggerNextFrame;
@@ -103,9 +99,9 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
     base.Update();
   }
   
-  
+  int currentSegment = 0;
   private IEnumerator FancySequence(){
-    bool done; float at;
+    float at;
     waiting:
       dashed = 0;
       triggered = false;
@@ -119,35 +115,34 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
       goto waiting;
     going:
       triggered = true;
-      sfx.Play((theme == Themes.Normal) ? "event:/game/01_forsaken_city/zip_mover" : "event:/new_content/game/10_farewell/zip_mover");
+      sfx.Play("event:/auspicioushelper/zip/ah_zip_start");
       yield return 0.1f;
       at=0;
-      done = false;
-      while(!done){
-        at+=Engine.DeltaTime*2;
-        Vector2 old = virtLoc;
-        done = spos.towardsNext((float)(2*(Math.PI/2)*Math.Sin(at*Math.PI/2)*Engine.DeltaTime));
-        //DebugConsole.Write($"{at}, {spos.t}");
-        if(!done) ownLiftspeed = Math.Sign(Engine.DeltaTime)*(virtLoc-old)/Engine.DeltaTime;
+      while(at<1){
+        at+=Engine.DeltaTime*outSpeed;
+        float pos = Util.ApplyEasingBounded(outEasing,at, out var deriv);
+        spos.setSidedFromDir(pos+currentSegment, at==0?-1:1);
+        ownLiftspeed = spos.tangent*deriv*outSpeed;
         childRelposSafe();
         yield return null;
       }
+      currentSegment = (currentSegment+1)%spos.numsegs;
+      spos.set(currentSegment);
       ownLiftspeed = Vector2.Zero;
       
       Input.Rumble(RumbleStrength.Strong, RumbleLength.Medium);
       SceneAs<Level>().Shake();
       shake(0.1f);
       if(channel!=null)ChannelState.SetChannel(channel,0);
+      sfx.instance.setParameterValue("start_end",1);
       yield return 0.25f;
 
       if((atype == ActivationType.rideAutomatic || atype==ActivationType.dashAutomatic) && 
       (rtype == ReturnType.loop || spos.t<spos.numsegs-1)){
-        sfx.Stop();
         goto going;
       } else{
-        if(spos.t==spos.numsegs-1 && rtype == ReturnType.normal)goto returning;
-        sfx.Stop();
-        if(spos.t<spos.numsegs-1 || rtype == ReturnType.loop)goto waiting;
+        if(currentSegment==spos.numsegs-1 && rtype == ReturnType.normal)goto returning;
+        if(currentSegment<spos.numsegs-1 || rtype == ReturnType.loop)goto waiting;
         else yield break;
       }
 
@@ -155,22 +150,23 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
       triggered=false;
       yield return 0.25f;
       sfx.Stop();
-      sfx.Play((theme == Themes.Normal) ? "event:/game/01_forsaken_city/zip_mover" : "event:/new_content/game/10_farewell/zip_mover");
-      sfx.instance.setTimelinePosition(1000);
-      done = false;
+      sfx.Play("event:/auspicioushelper/zip/ah_zip_return");
       at=0;
-      while(!done){
+      while(at<1){
         yield return null;
-        at+=Engine.DeltaTime/2;
-        Vector2 old = virtLoc;
-        done = spos.towardsNext((float)(-(Math.PI/2)*Math.Sin(at*Math.PI/2)*Engine.DeltaTime/2));
-        //virtLoc = Position+spos.pos;
-        if(!done) ownLiftspeed = Math.Sign(Engine.DeltaTime)*(virtLoc-old)/Engine.DeltaTime;
+        at+=Engine.DeltaTime*inSpeed;
+        float pos = Util.ApplyEasingBounded(inEasing,at, out var deriv);
+        spos.setSidedFromDir(currentSegment-pos,at==0?1:-1);
+        ownLiftspeed = -spos.tangent*deriv*inSpeed;
         childRelposSafe();
       }
-      ownLiftspeed = Vector2.Zero;
+      currentSegment--;
+      sfx.instance.setParameterValue("return_end",1);
       shake(0.1f);
-      if(spos.t>0) goto returning;
+      yield return null;
+
+      ownLiftspeed = Vector2.Zero;
+      if(currentSegment>0) goto returning;
       yield return 0.5f;
       goto waiting;
   }

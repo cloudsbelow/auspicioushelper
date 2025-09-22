@@ -174,6 +174,12 @@ public static partial class Util{
     if(val>1) return 1;
     return ApplyEasing(easing,val,out derivative);
   }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static float ApplyEasingBounded(Easings easing, float val, out float derivative){
+    if(val<0) return ApplyEasing(easing,0,out derivative);
+    if(val>1) return ApplyEasing(easing,1,out derivative);
+    return ApplyEasing(easing,val,out derivative);
+  }
   const int MAXITER = 16;
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float getEasingPreimage(Easings easing, float target, float tolerence = 0.0001f){

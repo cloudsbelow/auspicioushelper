@@ -12,6 +12,7 @@ entity.nodeLineRenderType = "line"
 local rtypes = {"loop","none", "normal"}
 local atypes = {"ride","rideAutomatic","dash","dashAutomatic","manual"}
 local splineTypes = {"simpleLinear","compoundLinear","centripetalNormalized","centripetalDenormalized","uniformNormalized","uniformDenormalized"}
+local easings = {"Linear","SineIn","SineOut","SineInOut","QuadIn","QuadOut","CubeIn","CubeOut","Smoothstep","QuartIn","QuartOut","QuintIn","QuintOut"}
 
 entity.placements = {
   {
@@ -25,6 +26,11 @@ entity.placements = {
       propegateRiding = false,
       spline = "compoundLinear",
       lastNodeIsKnot = true,
+      speed=2,
+      returnSpeed=0.5,
+      easing="SineIn",
+      returnEasing="SineIn",
+
       
       _loenn_display_template = true,
     }
@@ -47,6 +53,8 @@ entity.fieldInformation = function(entity)
         options = atypes,
         editable=false,
       },
+      easing = {options=easings, editable=false},
+      returnEasing = {options=easings, editable=false},
     }
 end
 
