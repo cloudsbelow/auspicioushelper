@@ -1,5 +1,8 @@
-{d60bcbdf-e06c-4c6e-8583-31078c4cdd3d} event:/auspicioushelper/ah_zip_return
-{cd1b3104-3f58-4266-b0d0-178399e2e015} event:/auspicioushelper/ah_zip_start
+{29e20335-512a-43d6-90e2-30d18bab71e2} event:/auspicioushelper/channel_switch/switch_dies
+{e171131e-d302-4f44-a210-3dee1baaaa79} event:/auspicioushelper/channel_switch/switch_off
+{785f5f93-353d-4558-8e0d-e7a97d73ae81} event:/auspicioushelper/channel_switch/switch_on
+{d60bcbdf-e06c-4c6e-8583-31078c4cdd3d} event:/auspicioushelper/zip/ah_zip_return
+{cd1b3104-3f58-4266-b0d0-178399e2e015} event:/auspicioushelper/zip/ah_zip_start
 {ad25a031-880b-4f88-ac12-82d6c52fbdea} event:/char/badeline/appear
 {7a71fc61-b688-4d82-a2b7-781c2434e942} event:/char/badeline/booster_begin
 {b2ee45d8-e1b0-43f1-baaa-f6e77d37ddb5} event:/char/badeline/booster_final
