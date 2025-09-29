@@ -1,5 +1,5 @@
 - Name: auspicioushelper
-  Version: 0.3
+  Version: 0.3.1
   DLL: bin/auspicioushelper.dll
   Dependencies:
     - Name: EverestCore

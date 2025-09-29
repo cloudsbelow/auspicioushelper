@@ -128,7 +128,7 @@ internal static class MarkedRoomParser{
       }
     }
     
-    if(simulatedRoom){
+    if(simulatedRoom) using(new ConnectedBlocks.PaddingLock()){
       var fgtd = Util.toCharmap(l.Solids, tilepadding);
       var bgtd = Util.toCharmap(l.Bg, tilepadding);
       var fgt = new SolidTiles(-Vector2.One*tilepadding*8,fgtd);

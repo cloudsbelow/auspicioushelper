@@ -18,8 +18,8 @@ public sealed class MiptileCollider:Grid{
   // Left/right/top/bottom all use width and height
   public override float Width { get => cellsize.X*cx; }
   public override float Height { get => cellsize.Y*cy; }
-  public Vector2 tlc=>(lastentity?.Position??Vector2.Zero+Position).Round();
-  public Int2 itlc=>Int2.Round(lastentity?.Position??Vector2.Zero+Position);
+  public Vector2 tlc=>((lastentity?.Position??Vector2.Zero)+Position).Round();
+  public Int2 itlc=>Int2.Round((lastentity?.Position??Vector2.Zero)+Position);
   int cx;
   int cy;
   public void SetMg(MipGrid m){
@@ -30,6 +30,11 @@ public sealed class MiptileCollider:Grid{
   public MiptileCollider(MipGrid m, Vector2 cs):base(0,0,cs.X,cs.Y){
     SetMg(m);
     cellsize = cs;
+  }
+  public MiptileCollider(MipGrid.Layer l, Vector2 cs, Vector2 tlc, bool skipMips=false):base(0,0,cs.X,cs.Y){
+    SetMg(new MipGrid(l,skipMips));
+    cellsize = cs;
+    Position = tlc;
   }
   public MiptileCollider(Grid g):base(g.CellWidth,g.CellHeight,g.Data){
     SetMg(new(g));
@@ -61,7 +66,7 @@ public sealed class MiptileCollider:Grid{
     Vector2 ltlc = tlc;
     Int2 rtlc = Int2.Floor((f.tlc.Round()-ltlc)/cellsize);
     Int2 rbrc = Int2.Ceil((f.brc.Round()-ltlc)/cellsize);
-    //DebugConsole.Write("collis", rtlc, rbrc, rtlc/8, rbrc/8);
+    // DebugConsole.Write("collis", ltlc, rtlc, rbrc, rtlc/8, rbrc/8);
     return mg.collideInFrame(IntRect.fromCorners(rtlc,rbrc));
   }
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

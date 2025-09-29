@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -15,7 +16,7 @@ namespace Celeste.Mod.auspicioushelper;
 public class TemplateBehaviorChain:Entity{
   public static Dictionary<Vector2,EntityData> mainRoom=new();
   public static void setup(){
-    auspicioushelperModule.OnNewScreen.enroll(new PersistantAction(()=>{mainRoom.Clear();}));
+    auspicioushelperModule.OnReset.enroll(new PersistantAction(()=>{mainRoom.Clear();}));
     EntityParser.clarify("auspicioushelper/TemplateBehaviorChain",EntityParser.Types.unwrapped,(l,d,o,e)=>{
       string templateStr = e.Attr("template","");
       if(!MarkedRoomParser.getTemplate(templateStr, EntityParser.currentParent, l, out var t)){
@@ -25,7 +26,7 @@ public class TemplateBehaviorChain:Entity{
     },true);
   }
   public static void AddEmptyTemplate(EntityData d){
-    mainRoom[d.Position] = d;
+    if(!EntityParser.FakeLock.fake)mainRoom[d.Position] = d;
   }
   public static IEnumerator GetChainEnumerator(Vector2[] nodes, Template source){
     var contents = source?.t.room.emptyTemplates??mainRoom;
@@ -34,8 +35,8 @@ public class TemplateBehaviorChain:Entity{
         if(e.Name == "auspicioushelper/TemplateBehaviorChain") yield return GetChainEnumerator(e.Nodes,source);
         else yield return e;
       } else {
-        if(source!=null)DebugConsole.WriteFailure($"Did not find empty template at {n} in {source} with path {source.fullpath}");
-        else DebugConsole.WriteFailure($"Did not find empty template at {n}");
+        if(source!=null)DebugConsole.Write($"Did not find empty template at {n} in {source} with path {source.fullpath}");
+        else DebugConsole.Write($"Did not find empty template at {n}");
       }
     }
   }
@@ -45,6 +46,13 @@ public class TemplateBehaviorChain:Entity{
     templateFiller final;
     public Chain(templateFiller finalFiller, Vector2[] nodes, Template source = null){
       sequence = new Util.EnumeratorStack<EntityData>(GetChainEnumerator(nodes,source)).toList();
+      idx = 0;
+      final = finalFiller;
+    }
+    public Chain(templateFiller finalFiller, List<EntityData> list, Template source = null){
+      sequence = new Util.EnumeratorStack<EntityData>(list.Select<EntityData,object>(x=>{
+        return x.Name=="auspicioushelper/TemplateBehaviorChain"?GetChainEnumerator(x.Nodes,source):x;
+      }).GetEnumerator()).toList();
       idx = 0;
       final = finalFiller;
     }

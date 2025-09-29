@@ -17,6 +17,8 @@ entity.placements = {
       oneUse = false,
       twoDash = false,
       triggering=false,
+      useOnPickup = true,
+      useOnRelease = true,
     }
   }
 }

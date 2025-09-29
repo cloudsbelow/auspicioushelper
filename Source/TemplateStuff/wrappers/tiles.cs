@@ -108,18 +108,31 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
   public void destroy(bool particles){
     Vector2 ls = parent.gatheredLiftspeed;
     if(particles){
-      Rectangle bounds = (this as IBoundsHaver).GetTilebounds(Position,AnimatedTiles.GetClippedRenderTiles(5));
+      Rectangle bounds = (this as IBoundsHaver).GetTilebounds(Position,AnimatedTiles.GetClippedRenderTiles(32));
       Vector2 ppos = parent?.virtLoc??Center;
       for(int i=bounds.X; i<bounds.X+bounds.Width; i++){
         for(int j=bounds.Y; j<bounds.Height; j++){
           char tile = tileTypes[i,j];
           if(tile == '0' || tile == '\0') continue;
           Vector2 offset = new Vector2(i*8+4,j*8+4);
-          Scene.Add(Engine.Pooler.Create<TileDebris>().Init(Position+offset,tile).BlastFrom(ppos,ls));
+          Scene.Add(Engine.Pooler.Create<TileDebris>().Init(Position+offset,tile).RandFrom(ppos,ls));
         }
       }
     }
     RemoveSelf();
+  }
+  public void fakeDestroy(){
+    Vector2 ls = parent.gatheredLiftspeed;
+    Rectangle bounds = (this as IBoundsHaver).GetTilebounds(Position,AnimatedTiles.GetClippedRenderTiles(32));
+    Vector2 ppos = parent?.virtLoc??Center;
+    for(int i=bounds.X; i<bounds.X+bounds.Width; i++){
+      for(int j=bounds.Y; j<bounds.Height; j++){
+        char tile = tileTypes[i,j];
+        if(tile == '0' || tile == '\0') continue;
+        Vector2 offset = new Vector2(i*8+4,j*8+4);
+        Scene.Add(Engine.Pooler.Create<TileDebris>().Init(Position+offset,tile).RandFrom(ppos,ls));
+      }
+    }
   }
 
   public override void MoveHExact(int move){

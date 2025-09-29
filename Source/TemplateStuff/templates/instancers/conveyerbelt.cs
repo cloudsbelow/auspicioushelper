@@ -119,7 +119,7 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
       c.parent = desc.te;
       desc.te.children.Add(c);
       desc.active = true;
-      desc.sp.set(desc.extent);
+      desc.sp.setSidedFromDir(desc.extent,1);
       desc.te.ownLiftspeed = desc.sp.tangent*speed;
       desc.te.toffset = desc.sp.pos;
       if(stat.Collidable)c.parentChangeStat(0,-1,0);

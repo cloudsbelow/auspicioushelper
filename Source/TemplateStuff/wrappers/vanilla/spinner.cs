@@ -37,6 +37,14 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
       customColor = Util.hexToColor(d.Attr("customColor"));
     }
     numdebris = d.Int("numDebris",4);
+    dreamThru = d.Bool("dreamThru",false);
+    neverClip = d.Bool("neverClip",false);
+    Get<PlayerCollider>().OnCollide = OtherOnPlayer;
+    Depth = d.Int("depth", -8500);
+  }
+  void OtherOnPlayer(Player p){
+    if(dreamThru && p.StateMachine.state == Player.StDreamDash) return;
+    p.Die((p.Position - Position).SafeNormalize());
   }
   bool hvisible = true;
   bool hcollidable = true;
@@ -45,6 +53,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   bool makeFiller = true;
   Color customColor;
   bool hasCustomCOlor;
+  bool dreamThru;
   public override void Update(){
     if(!inView){
       Collidable = false;
@@ -88,14 +97,17 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     toffset = Position-ppos;
     Depth+=parent.depthoffset;
   }
+  bool neverClip;
   static bool CheckSolidHook(On.Celeste.CrystalStaticSpinner.orig_SolidCheck orig, CrystalStaticSpinner self, Vector2 pos){
     if(self is Spinner s){
+      if(s.neverClip) return false;
       return s.parent?.fgt?.CollidePoint(pos)??false;
     }
     return orig(self,pos);
   }
   //On.Celeste.CrystalStaticSpinner.orig_CreateSprites orig, CrystalStaticSpinner self
   bool SolidCheck_(Vector2 pos){
+    if(neverClip)return false;
     if(parent == null) return (Scene as Level)?.SolidTiles?.CollidePoint(pos)??false;
     return parent.fgt?.CollidePoint(pos)??false;
   }

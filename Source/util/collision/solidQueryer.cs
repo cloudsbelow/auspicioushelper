@@ -114,8 +114,8 @@ public static class SolidMiptree{
       DebugConsole.Write($"Maxlevel:, {maxlevel}");
     } else for(int i=0; i<levels.Count; i++)levels[i].Clear();
     lbounds = bounds;
-    foreach(Solid s in scene.Tracker.GetEntities<Solid>())Add(s,CollisionDirection.solid);
-    foreach(JumpThru j in scene.Tracker.GetEntities<JumpThru>())Add(j,CollisionDirection.up);
+    foreach(Solid s in scene.Tracker.GetEntities<Solid>())if(s.Collidable)Add(s,CollisionDirection.solid);
+    foreach(JumpThru j in scene.Tracker.GetEntities<JumpThru>())if(j.Collidable)Add(j,CollisionDirection.up);
     if(MaddiesIop.jt!=null && Engine.Scene.Tracker.Entities.TryGetValue(MaddiesIop.jt, out var li)) foreach(var j in li){
       if(j.Collidable) Add(j,MaddiesIop.side.get(j)?CollisionDirection.right:CollisionDirection.left);
     }

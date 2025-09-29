@@ -219,4 +219,10 @@ public class TileDebris:FastDebris{
     speed = speed.Rotate(Calc.Random.Range(-MathF.PI / 12f, MathF.PI / 12f))+liftspeed;
     return this;
   }
+  public TileDebris RandFrom(Vector2 from, Vector2 liftspeed){
+    float length = Calc.Random.Range(30, 40);
+    speed = -Vector2.UnitY*length;
+    speed = speed.Rotate(Calc.Random.Range(-MathF.PI, MathF.PI))+liftspeed;
+    return this;
+  }
 }

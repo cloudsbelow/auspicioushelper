@@ -11,6 +11,14 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 public static class EntityParser{
+  public class FakeLock:IDisposable{
+    static int ctr = 0;
+    public static bool fake=>ctr>0;
+    public FakeLock(){
+      ctr++;
+    }
+    void IDisposable.Dispose()=>ctr--;
+  }
   public enum Types{
     unable,
     platformbasic,
@@ -86,11 +94,11 @@ anyways i want to praise it more it is wonderful
   static Level dummyLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level));
   static LevelData dummyLd = (LevelData)RuntimeHelpers.GetUninitializedObject(typeof(LevelData));
   public static Types generateLoader_(EntityData d, LevelData ld, Level l){
-    if(!parseMap.TryGetValue(d.Name, out var etype) || (l!=null && etype == Types.initiallyerrors)){
+    if(!parseMap.TryGetValue(d.Name, out var etype) || (l!=null && etype == Types.initiallyerrors)) using(new FakeLock()){
       Level.EntityLoader loader = Level.EntityLoaders.GetValueOrDefault(d.Name)??skitzoGuess(d.Name);
       if(loader == null){
         parseMap[d.Name] = Types.unable;
-        DebugConsole.Write($"No loader found for ${d.Name}");
+        DebugConsole.Write($"No loader found for {d.Name}");
         return Types.unable;
       }
       try{
@@ -268,6 +276,8 @@ anyways i want to praise it more it is wonderful
     }
     clarify("introCar", Types.unwrapped, static (l,d,o,e)=>new IntroCarW(e,o));
     clarify("cassetteBlock", Types.unwrapped, static (l,d,o,e)=>new CassetteW(e,o, new EntityID(d.Name,e.ID)));
+    clarify(ConnectedBlocks.InplaceTemplateWrapper.creationDat.Name, Types.unwrapped, static (l,d,o,e)=>
+      new ConnectedBlocks.InplaceTemplateWrapper(d.Position+o),true);
     defaultModdedSetup();
     HookVanilla.hooks.enable();
   }

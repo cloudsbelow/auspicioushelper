@@ -36,6 +36,9 @@ public class MipGrid{
         d=new ulong[width*height];
       }
     }
+    public static Layer fromAreasize(int width, int height){
+      return new Layer((width+blockw-1)/blockw, (height+blockh-1)/2);
+    }
     public void SetBlock(ulong val, int x, int y){
       // DebugConsole.Write($"Set {x},{y}");
       // DebugConsole.Write(getBlockstr(val));
@@ -52,6 +55,17 @@ public class MipGrid{
           }
         }
       } else throw new Exception($"setting invalid area of block {x},{y} on grid of dim {width},{height}");
+    }
+    public void SetRect(bool val, Int2 tlc, Int2 brc){
+      var bdim = new Int2(blockw, blockh);
+      var low = Int2.Max(tlc/bdim,Int2.Zero);
+      var high = Int2.Min((brc+bdim-1)/bdim,new Int2(width,height));
+      for(int x=low.x; x<high.x; x++) for(int y=low.y; y<high.y; y++){
+        ulong orig = getBlock(x,y);
+        ulong mask = makeRectMask(x,y,tlc,brc,0);
+        if(val)SetBlock(orig|mask,x,y);
+        else SetBlock(orig&~mask,x,y);
+      }
     }
     public Layer BuildParent(){
       Layer o = new Layer((width+blockw-1)/blockw, (height+blockh-1)/blockh);
@@ -295,11 +309,13 @@ public class MipGrid{
     height = map.Rows;
     buildMips();
   }
-  public MipGrid(Layer l){
+  public MipGrid(Layer l, bool noMips=false){
     layers = [l];
     width = l.width*blockw;
     height = l.height*blockh;
-    buildMips();
+    if(noMips){
+      highestlevel = 0;
+    } else buildMips();
   }
   void buildMips(){
     Layer b = layers[0];

@@ -10,7 +10,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateIceblock")]
-public class TemplateIceblock:Template,ITemplateTriggerable{
+public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
   Vector2 offset = Vector2.Zero;
   public override Vector2 virtLoc => Position+offset;
   float sinkTime;
@@ -66,13 +66,22 @@ public class TemplateIceblock:Template,ITemplateTriggerable{
     if(!info.TestPass(this)) return;
     trigger();
   }
+  bool reforming = false;
   public override void Update() {
     base.Update();
+    if(reforming && !(UpdateHook.cachedPlayer is {} player && hasInside(player))){
+      reforming = false;
+      setVisCol(true,true);
+      Audio.Play("event:/game/09_core/iceblock_reappear",Position);
+    }
     if(respawnTimer>0){
       respawnTimer-=Engine.DeltaTime;
       if(respawnTimer<=0){
         remake();
-        Audio.Play("event:/game/09_core/iceblock_reappear",Position);
+        if(UpdateHook.cachedPlayer is {} p && hasInside(p)){
+          reforming = true;
+          setVisCol(false,false);
+        } else Audio.Play("event:/game/09_core/iceblock_reappear",Position);
       }
     } else if(ridingTriggers && routine == null && hasRiders<Player>()) trigger();
   }

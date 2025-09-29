@@ -178,6 +178,11 @@ public class Template:Entity, ITemplateChild{
     c.addTo(Scene??addingScene);
     c.setOffset(virtLoc);
   }
+  public void restoreEnt(ITemplateChild c){
+    c.parent = this;
+    if(c.shouldAddAsChild)children.Add(c);
+    relposOne(c);
+  }
   public void setOffset(Vector2 ppos){
     this.toffset = Position-ppos;
   }

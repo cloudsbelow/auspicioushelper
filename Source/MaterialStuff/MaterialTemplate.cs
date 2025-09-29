@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using FMOD;
 using Microsoft.Xna.Framework;
@@ -14,7 +15,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [Tracked(true)]
-public class OverrideVisualComponent:Component, IMaterialObject{
+public class OverrideVisualComponent:Component, IMaterialObject, IFreeableComp{
   public struct VisualOverrideDescr{
     public IOverrideVisuals o;
     public short order;

@@ -14,8 +14,11 @@ entity.placements = {
     name = "Recolorable spinner",
     data = {
       customColor = "ffffff",
+      depth = -8500,
       makeFiller = true,
       numDebris = 4,
+      dreamThru = false,
+      neverClip = false,
     }
   }
 }

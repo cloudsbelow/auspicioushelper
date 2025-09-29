@@ -72,7 +72,7 @@ namespace Celeste.Mod.auspicioushelper.Wrappers;
 // Extending the base refill caused bad behavior with some unspecified mods loaded
 // Therefore we do a bit of ctrl+C, ctrl+V
 [CustomEntity("auspicioushelper/CustomRefill")]
-public class RefillW2 : Entity, ISimpleEnt{
+public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
   public Template parent {get;set;}
   public Vector2 toffset {get;set;}
   public Sprite sprite;
@@ -91,6 +91,8 @@ public class RefillW2 : Entity, ISimpleEnt{
   public float respawnTimer;
   public float respawnTime;
   public bool triggering;
+  bool useOnPickup;
+  bool useOnRelase;
   public RefillW2(Vector2 position, bool twoDashes, bool oneUse):base(position){
     base.Collider = new Hitbox(16f, 16f, -8f, -8f);
     Add(new PlayerCollider(OnPlayer));
@@ -140,6 +142,8 @@ public class RefillW2 : Entity, ISimpleEnt{
   public RefillW2(EntityData d, Vector2 o):this(d.Position + o, d.Bool("twoDash"), d.Bool("oneUse")){
     respawnTime = d.Float("respawnTimer",2.5f);
     triggering = d.Bool("triggering",false);
+    useOnPickup = d.Bool("useOnPickup",false);
+    useOnRelase = d.Bool("useOnRelease",false);
   }
   public override void Added(Scene scene){
     base.Added(scene);
@@ -199,7 +203,12 @@ public class RefillW2 : Entity, ISimpleEnt{
       if(triggering)parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new TriggerInfo.EntInfo("refill",this));
     }
   }
-
+  void TemplateHoldable.IPickupChild.OnPickup(Player p){
+    if(Collidable && useOnPickup && p!=null) OnPlayer(p);
+  }
+  void TemplateHoldable.IPickupChild.OnRelease(Player p, Vector2 force) {
+    if(Collidable && useOnRelase && p!=null) OnPlayer(p);
+  }
   public IEnumerator RefillRoutine(Player player){
     Celeste.Freeze(0.05f);
     yield return null;

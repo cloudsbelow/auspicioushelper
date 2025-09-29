@@ -11,14 +11,17 @@ using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
+
+
 public interface ICustomHoldableRelease{
   bool replaceNormalRelease {get;}
+  static Player releasing;
   static void ReleaseHook(On.Celeste.Holdable.orig_Release orig, Holdable s, Vector2 force){
+    releasing = s.Holder;
     if(s.Entity is ICustomHoldableRelease c && c.replaceNormalRelease && s.OnRelease!=null){
       s.OnRelease(force);
-      return;
-    }
-    orig(s,force);
+    } else orig(s,force);
+    releasing = null;
   }
   public static HookManager hooks = new(()=>{
     On.Celeste.Holdable.Release+=ReleaseHook;
@@ -29,6 +32,10 @@ public interface ICustomHoldableRelease{
 
 [CustomEntity("auspicioushelper/templateholdable")]
 public class TemplateHoldable:Actor, ICustomHoldableRelease{
+  public interface IPickupChild{
+    void OnPickup(Player p);
+    void OnRelease(Player p, Vector2 force);
+  }
   TemplateDisappearer te;
   Vector2 hoffset;
   Vector2 lpos;
@@ -177,19 +184,20 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       p.Speed = p.Speed * playerfrac + Speed * theofrac;
     }
     Speed = Vector2.Zero;
-    if (!keepCollidableAlways) te.setCollidability(false);
     AddTag(Tags.Persistent);
     foreach (Entity e in te.GetChildren<Entity>()){
       e.AddTag(Tags.Persistent);
+      if(e is IPickupChild pc) pc.OnPickup(Hold.Holder);
       if(e is IBoundsHaver h) h.bounds = new FloatRect(-0x0fffffff,-0x0fffffff,0x1fffffff,0x1fffffff);
     }
+    if (!keepCollidableAlways) te.setCollidability(false);
   }
   public bool replaceNormalRelease {get;}=false;
   void OnRelease(Vector2 force){
+    Player p = Hold.Holder??ICustomHoldableRelease.releasing;
     if(replaceNormalRelease){
       FloatRect bounds;
       int num=8;
-      Player p = Hold.Holder;
       float boundsbottom = MathF.Min(p.Top,Bottom)+Height+p.Height;
       if(Width>p.Width) bounds = FloatRect.fromCorners(
         new Vector2(p.Right-Width,Top),
@@ -259,11 +267,12 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
         Hold.cannotHoldTimer=Hold.cannotHoldDelay;
         Hold.Holder = null;
     }
-    
     RemoveTag(Tags.Persistent);
+    if(!keepCollidableAlways) te.setCollidability(true);
     if(te==null) return;
     foreach (Entity e in te.GetChildren<Entity>()){
       e.RemoveTag(Tags.Persistent);
+      if(e is IPickupChild pc) pc.OnRelease(p, force);
       if(e is IBoundsHaver h) h.bounds = new FloatRect(SceneAs<Level>().Bounds);
     }
     force = force*200f;
@@ -272,7 +281,6 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     }
     if(customThrowspeeds.Length>0) force.X = Math.Sign(force.X)*customThrowspeeds[0];
     if(customThrowspeeds.Length>1 && force.X!=0) force.Y = -customThrowspeeds[1];
-    if(!keepCollidableAlways) te.setCollidability(true);
     Speed = force;
     if (Speed != Vector2.Zero){
       noGravityTimer = 0.1f;

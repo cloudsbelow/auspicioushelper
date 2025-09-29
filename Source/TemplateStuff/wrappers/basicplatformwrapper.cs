@@ -85,7 +85,7 @@ internal class BasicPlatformDisobedient:BasicPlatform{
   }
 }
 
-public class ChildMarker:Component{
+public class ChildMarker:Component,IFreeableComp{
   public Template parent;
   public ChildMarker(Template parent):base(false,false){
     this.parent=parent;
@@ -93,4 +93,9 @@ public class ChildMarker:Component{
   public bool propagatesTo(Template other){
     return ((ITemplateChild) parent).propagatesTo(other)!=Template.Propagation.None;
   }
+  void IFreeableComp.Free()=>Entity.Remove(this);
+}
+
+public interface IFreeableComp{
+  void Free()=>((Component)this).Entity?.Remove((Component)this);
 }

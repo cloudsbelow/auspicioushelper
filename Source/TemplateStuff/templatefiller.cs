@@ -37,6 +37,9 @@ public class templateFiller:Entity{
     this.offset = d.Nodes?.Length>0?d.Position-d.Nodes[0]:Vector2.Zero;
     leveloffset = offset;
   }
+  internal templateFiller(Int2 pos, Int2 size):base(pos){
+    tr = new Rectangle(pos.x/8,pos.y/8,size.x/8,size.y/8);
+  }
   internal templateFiller(){}
   public override void Awake(Scene scene){
     RemoveSelf();  
@@ -76,6 +79,17 @@ public class templateFiller:Entity{
     // };
     fgt = keepfg? new VirtualMap<char>(fgtiles):null;
     bgt = keepbg? new VirtualMap<char>(bgtiles):null;
+  }
+  internal void setTiles(VirtualMap<char> tiles, bool foreground = true){
+    char[,] fill = new char[tr.Width,tr.Height];
+    bool has = false;
+    for(int i=0; i<tr.Width; i++) for(int j=0; j<tr.Height; j++){
+      char c = tiles[i+tr.Left,j+tr.Top];
+      fill[i,j]=c;
+      has |= c!='0';
+    }  
+    if(foreground) fgt = has?new VirtualMap<char>(fill):null;
+    else bgt = has?new VirtualMap<char>(fill):null;
   }
 
   public class TileView{
