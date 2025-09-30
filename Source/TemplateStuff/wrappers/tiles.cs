@@ -83,6 +83,7 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
     if(PartialTiles.usingPartialtiles){
       Collider = new MiptileCollider(t.FgMipgrid, Vector2.One);
     }
+    RemoveTag(Tags.Global);
   }
   public void setOffset(Vector2 ppos){
     Add(new ChildMarker(parent));
@@ -115,7 +116,7 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
           char tile = tileTypes[i,j];
           if(tile == '0' || tile == '\0') continue;
           Vector2 offset = new Vector2(i*8+4,j*8+4);
-          Scene.Add(Engine.Pooler.Create<TileDebris>().Init(Position+offset,tile).RandFrom(ppos,ls));
+          Scene.Add(Engine.Pooler.Create<TileDebris>().Init(Position+offset,tile).RandFrom(ls));
         }
       }
     }
@@ -130,7 +131,7 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
         char tile = tileTypes[i,j];
         if(tile == '0' || tile == '\0') continue;
         Vector2 offset = new Vector2(i*8+4,j*8+4);
-        Scene.Add(Engine.Pooler.Create<TileDebris>().Init(Position+offset,tile).RandFrom(ppos,ls));
+        Scene.Add(Engine.Pooler.Create<TileDebris>().Init(Position+offset,tile).RandFrom(ls));
       }
     }
   }

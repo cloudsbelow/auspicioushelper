@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using MonoMod.Cil;
@@ -108,5 +110,11 @@ public static class DebugConsole {
     if(alwayserror||(auspicioushelperModule.Settings?.CrashOnFail??false)){
       throw new Exception(s);
     }
+  }
+  public static void LogFullStackTrace(){
+    var trace = new StackTrace(true); 
+    nl(2);
+    Write(trace.ToString());
+    nl(2);
   }
 }

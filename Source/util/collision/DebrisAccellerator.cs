@@ -213,16 +213,40 @@ public class TileDebris:FastDebris{
     image.FlipY = Calc.Random.Chance(0.5f);
     return this;
   }
-  public TileDebris BlastFrom(Vector2 from, Vector2 liftspeed){
-    float length = Calc.Random.Range(30, 40);
-    speed = (Position - from).SafeNormalize(length);
-    speed = speed.Rotate(Calc.Random.Range(-MathF.PI / 12f, MathF.PI / 12f))+liftspeed;
+  public TileDebris RandFrom(Vector2 liftspeed){
+    if(DebrisSource.fn is {} fn){
+      speed = fn(Position, liftspeed);
+    } else {
+      float length = Calc.Random.Range(30, 40);
+      speed = -Vector2.UnitY*length;
+      speed = speed.Rotate(Calc.Random.Range(-MathF.PI, MathF.PI))+liftspeed;
+    }
     return this;
   }
-  public TileDebris RandFrom(Vector2 from, Vector2 liftspeed){
-    float length = Calc.Random.Range(30, 40);
-    speed = -Vector2.UnitY*length;
-    speed = speed.Rotate(Calc.Random.Range(-MathF.PI, MathF.PI))+liftspeed;
-    return this;
+}
+
+
+public class DebrisSource:IDisposable{
+  public delegate Vector2 SpeedCalcLs(Vector2 debrisPos, Vector2 liftspeed);
+  public delegate Vector2 SpeedCalc(Vector2 debrisPos);
+  public static SpeedCalcLs fn = null;
+  bool root;
+  public DebrisSource(SpeedCalcLs f){
+    root = fn==null;
+    if(root) fn=f;
+  }
+  public DebrisSource(SpeedCalc f):this(Vector2 (Vector2 debrisPos, Vector2 ls)=>f(debrisPos)+ls){}
+  public DebrisSource(Vector2 from, float angle=MathF.PI/12f, int high=40, float frac = 0.75f):this((pos, ls)=>{
+    float length = Calc.Random.Range(high*frac, high);
+    Vector2 speed = (pos - from).SafeNormalize(length);
+    return speed.Rotate(Calc.Random.Range(-angle, angle))+ls;
+  }){}
+  public DebrisSource(Vector2 from, Vector2 add, float angle=MathF.PI/12f, int high=40, float frac = 0.75f):this((pos, ls)=>{
+    float length = Calc.Random.Range(high*frac, high);
+    Vector2 speed = (pos - from).SafeNormalize(length)+add*(length/high);
+    return speed.Rotate(Calc.Random.Range(-angle, angle))+ls;
+  }){}
+  void IDisposable.Dispose() {
+    if(root) fn=null;
   }
 }

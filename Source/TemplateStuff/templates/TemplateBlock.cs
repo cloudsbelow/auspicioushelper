@@ -39,7 +39,7 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
         if (!candash && p.StateMachine.State != 5 && p.StateMachine.State != 10){
           return DashCollisionResults.NormalCollision;
         }
-        breakBlock();
+        using(new DebrisSource(p.Position, dir*40, high:75))breakBlock();
         return DashCollisionResults.Rebound;
       };
       prop &= ~Propagation.DashHit;

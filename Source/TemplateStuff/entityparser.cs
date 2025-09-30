@@ -276,8 +276,9 @@ anyways i want to praise it more it is wonderful
     }
     clarify("introCar", Types.unwrapped, static (l,d,o,e)=>new IntroCarW(e,o));
     clarify("cassetteBlock", Types.unwrapped, static (l,d,o,e)=>new CassetteW(e,o, new EntityID(d.Name,e.ID)));
-    clarify(ConnectedBlocks.InplaceTemplateWrapper.creationDat.Name, Types.unwrapped, static (l,d,o,e)=>
-      new ConnectedBlocks.InplaceTemplateWrapper(d.Position+o),true);
+    clarify(ConnectedBlocks.InplaceTemplateWrapper.creationDat.Name, Types.unwrapped, static (l,d,o,e)=>{
+      return new ConnectedBlocks.InplaceTemplateWrapper(e.Position+o);
+    },true);
     defaultModdedSetup();
     HookVanilla.hooks.enable();
   }

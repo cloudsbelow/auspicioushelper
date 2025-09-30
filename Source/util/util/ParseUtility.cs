@@ -9,6 +9,7 @@ using Monocle;
 using Microsoft.Xna.Framework;
 using System;
 using System.Text.RegularExpressions;
+using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.auspicioushelper;
 public static partial class Util{
@@ -31,6 +32,12 @@ public static partial class Util{
   public static bool tryGetStr(this EntityData d, string key, out string str){
     str = d.Attr(key,"");
     return !string.IsNullOrWhiteSpace(str);
+  }
+  static public EntityData cloneWithForcepos(this EntityData a, Vector2? forcepos){
+    if(forcepos is not Vector2 v) return a;
+    EntityData e = Util.shallowCopy(a);
+    e.Position = v;
+    return e;
   }
   public static string removeWhitespace(string s){
     if(s==null) return null;

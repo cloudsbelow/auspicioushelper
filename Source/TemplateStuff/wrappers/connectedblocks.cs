@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Formats.Tar;
 using System.Linq;
 using Celeste.Mod.auspicioushelper.Wrappers;
@@ -69,17 +70,19 @@ public class ConnectedBlocks:Entity{
       f.setTiles(bgd,false);
       if(f.fgt!=null)using(new PaddingLock()) s=new(Vector2.Zero, fgd);
       if(f.bgt!=null)using(new PaddingLock()) b=new(Vector2.Zero, bgd);
-      Scene.Add(s);
       f.initStatic(s,b);
       MiptileCollider checker = new(l, Vector2.One*8, minimum, true);
       foreach(var pair in TemplateBehaviorChain.mainRoom){
         if(checker.collideFr(FloatRect.fromRadius(pair.Key+levelOffset,Vector2.One))){
-          TemplateBehaviorChain.Chain chain = new(f, new List<EntityData>(){pair.Value,InplaceTemplateWrapper.creationDat}); 
+          Vector2 pos = pair.Key+levelOffset;
+          f.offset = minimum-pos;
+          Vector2? forcepos = pair.Value.Name=="auspicioushelper/TemplateBehaviorChain"&&pair.Value.Bool("forceOwnPosition",false)?pair.Key:null;
+          TemplateBehaviorChain.Chain chain = new(f, new List<EntityData>(){pair.Value,InplaceTemplateWrapper.creationDat}, null, forcepos); 
           var first = chain.NextEnt();
           if(first == null) throw new Exception("idk shouldn't be possible");
           if(Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
             Level lv = scene as Level;
-            Entity e = loader(lv,lv.Session.LevelData,minimum-first.Position,first);
+            Entity e = loader(lv,lv.Session.LevelData,pos-first.Position,first);
             if(e is Template te){
               te.t = chain.NextFiller();
               lv.Add(e);
@@ -133,7 +136,6 @@ public class ConnectedBlocks:Entity{
         fgt.parentChangeStat(vca.Visible?-1:0,vca.Collidable?-1:0,vca.Active?-1:0);
         z.fakeDestroy();
         ((IChildShaker) z).OnShakeFrame(Vector2.Zero);
-        DebugConsole.Write("shake",gatheredShakeVec);
         children.Remove(fgt);
         if(t is not InplaceFiller tf) throw new Exception("how");
         tf.saved=z;

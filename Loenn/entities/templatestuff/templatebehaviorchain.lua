@@ -17,7 +17,7 @@ entity.placements = {
     name = "Template Behavior Chain",
     data = {
       template = "",
-      
+      forceOwnPosition=true,
       _loenn_display_template = true,
     }
   }

@@ -44,47 +44,49 @@ public class TemplateBehaviorChain:Entity{
     readonly List<EntityData> sequence;
     int idx;
     templateFiller final;
-    public Chain(templateFiller finalFiller, Vector2[] nodes, Template source = null){
+    Vector2? forcePos = null;
+    public Chain(templateFiller finalFiller, Vector2[] nodes, Template source, Vector2? forcepos = null){
       sequence = new Util.EnumeratorStack<EntityData>(GetChainEnumerator(nodes,source)).toList();
       idx = 0;
       final = finalFiller;
+      forcePos = forcepos;
     }
-    public Chain(templateFiller finalFiller, List<EntityData> list, Template source = null){
+    public Chain(templateFiller finalFiller, List<EntityData> list, Template source, Vector2? forcepos = null){
       sequence = new Util.EnumeratorStack<EntityData>(list.Select<EntityData,object>(x=>{
         return x.Name=="auspicioushelper/TemplateBehaviorChain"?GetChainEnumerator(x.Nodes,source):x;
       }).GetEnumerator()).toList();
       idx = 0;
       final = finalFiller;
+      forcePos = forcepos;
     }
-    private Chain(templateFiller final, List<EntityData> sequence, int idx){
-      this.sequence=sequence; this.final=final; this.idx=idx;
-    }
-    public Chain Clone()=>new(final, sequence, idx);
+    public Chain Clone()=>(Chain)MemberwiseClone();
     public templateFiller NextFiller(){
       Chain c = Clone();
       EntityData e = c.NextEnt();
       if(e==null) return final;
-      return templateFiller.MkNestingFiller(e,c).setRoomdat(final.roomdat);
+      EntityData n = Util.cloneWithForcepos(e,forcePos);
+      return templateFiller.MkNestingFiller(n,c).setRoomdat(final.roomdat);
     }
     public EntityData NextEnt(){
       if(idx<sequence.Count){
-        return sequence[idx++];
+        return Util.cloneWithForcepos(sequence[idx++],forcePos);
       } else return null;
     }
   }
-  Vector2[] nodes;
   string templateStr;
   EntityData dat;
+  bool forcePos;
   public TemplateBehaviorChain(EntityData d, Vector2 o):base(d.Position+o){
-    nodes = d.Nodes;
     dat=d;
     templateStr = d.Attr("template","");
     if(string.IsNullOrWhiteSpace(templateStr)){
       AddEmptyTemplate(d);
     }
+    forcePos = d.Bool("forceOwnPosition",false);
   }
   static Template startChain(templateFiller final, EntityData dat, Vector2 pos, Level l, Template scope=null){
-    var chain = new Chain(final,dat.Nodes,scope);
+    Vector2? fp = dat.Bool("forceOwnPosition",false)?dat.Position:null; 
+    var chain = new Chain(final,dat.Nodes,scope,fp);
     var first = chain.NextEnt();
     if(first == null){
       return new Template(dat, pos, 0);
