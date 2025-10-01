@@ -27,6 +27,7 @@ public class ConnectedBlocks:Entity{
     tid = d.Attr("tiletype","0").FirstOrDefault();
     bg = d.Name.EndsWith("Bg");
     levelOffset = offset;
+    Depth = -10000000; //low depth type entity
   }
   static void FillRect(VirtualMap<char> m, Int2 tlc, Int2 brc, char v){
     for(int i=tlc.x; i<brc.x; i++) for(int j=tlc.y; j<brc.y; j++) m.orig_set_Item(i,j,v);
@@ -36,6 +37,7 @@ public class ConnectedBlocks:Entity{
     base.Awake(scene);
     if(!used){
       used = true;
+      MaddiesIop.hooks.enable();
       List<(IntRect,char,bool)> things = [new(new(this),tid,bg)];
       search:
         foreach(ConnectedBlocks c in Scene.Tracker.GetEntities<ConnectedBlocks>()){
@@ -71,6 +73,18 @@ public class ConnectedBlocks:Entity{
       if(f.fgt!=null)using(new PaddingLock()) s=new(Vector2.Zero, fgd);
       if(f.bgt!=null)using(new PaddingLock()) b=new(Vector2.Zero, bgd);
       f.initStatic(s,b);
+      if(s!=null){
+        s.Position+=minimum-Int2.One*8*padding;
+        Util.OrderedSet<Entity> all = new();
+        foreach (StaticMover smover in scene.Tracker.GetComponents<StaticMover>()){
+          if (smover.Platform == null && smover.IsRiding(s))addAllSms(smover.Entity,all);
+        }
+        foreach(var e in all){
+          e.RemoveSelf();
+          f.ChildEntities.Add(Util.cloneWithForcepos(e.SourceData,e.Position-minimum+padding*8*Vector2.One));
+          UpdateHook.EnsureUpdateAny();
+        }
+      }
       MiptileCollider checker = new(l, Vector2.One*8, minimum, true);
       foreach(var pair in TemplateBehaviorChain.mainRoom){
         if(checker.collideFr(FloatRect.fromRadius(pair.Key+levelOffset,Vector2.One))){
@@ -93,10 +107,7 @@ public class ConnectedBlocks:Entity{
           }
         }
       }
-      if(s!=null){
-        s.Position+=minimum-Int2.One*8*padding;
-        Scene.Add(s);
-      }
+      if(s!=null)Scene.Add(s);
       if(b!=null){
         b.Position+=minimum-Int2.One*8*padding;
         Scene.Add(b);
@@ -105,25 +116,48 @@ public class ConnectedBlocks:Entity{
     end:
       RemoveSelf();
   }
+  public static void addAllSms(Entity e, Util.OrderedSet<Entity> all){
+    if(all.Contains(e)) return;
+    List<StaticMover> sms = null;
+    if(e is Platform p) sms = p.staticMovers;
+    if(MaddiesIop.at != null && e.GetType() == MaddiesIop.at){
+      Solid intSolid = MaddiesIop.playerInteractingSolid.get(e);
+      sms = new();
+      bool old = intSolid.Collidable;
+      intSolid.Collidable=true;
+      foreach (StaticMover smover in e.Scene.Tracker.GetComponents<StaticMover>()){
+        if (smover.Platform == null && smover.IsRiding(intSolid)) sms.Add(smover);
+      }
+      intSolid.Collidable=old;
+      //sms = MaddiesIop.playerInteractingSolid.get(e).staticMovers;
+    }
+    all.Add(e);
+    if(sms!=null)foreach(var sm in sms) addAllSms(sm.Entity, all);
+  }
   public class InplaceFiller:templateFiller{
     internal FgTiles saved = null;
     public InplaceFiller(Int2 tlc, Int2 size):base(tlc,size){}
   }
   public class InplaceTemplateWrapper:Template{
+    bool useKeep = false;
     public InplaceTemplateWrapper(Vector2 position):base(position, 0){
     }
     public override void addTo(Scene scene) {
       if(t is not InplaceFiller tf) throw new Exception("how");
-      if(tf.saved is {} z){
-        base.addTo(scene);
-        restoreEnt(z);
-        fgt=z;
-        z.parentChangeStat(1,1,1);
-        z.Add(new ChildMarker(this));
+      if(useKeep){
+        if(tf.saved is {} z){
+          base.addTo(scene);
+          restoreEnt(z);
+          fgt=z;
+          z.parentChangeStat(1,1,1);
+          z.Add(new ChildMarker(this));
+        } else {
+          base.addTo(scene);
+          tf.fgt = null;
+          tf.Fgt = null;
+        }
       } else {
         base.addTo(scene);
-        tf.fgt = null;
-        tf.Fgt = null;
       }
     }
     TemplateDisappearer.vcaTracker vca = new();
@@ -132,7 +166,7 @@ public class ConnectedBlocks:Entity{
       vca.Align(vis,col,act);
     }
     public override void destroy(bool particles) {
-      if(fgt is {} z){
+      if(useKeep && fgt is {} z){
         fgt.parentChangeStat(vca.Visible?-1:0,vca.Collidable?-1:0,vca.Active?-1:0);
         z.fakeDestroy();
         ((IChildShaker) z).OnShakeFrame(Vector2.Zero);

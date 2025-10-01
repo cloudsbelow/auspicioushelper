@@ -244,4 +244,17 @@ public partial class Util{
     public IEnumerator<T> GetEnumerator()=>usingSet?set.GetEnumerator():list.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
   }
+  public class OrderedSet<T>:IEnumerable<T>{
+    HashSet<T> set = new();
+    List<T> list = new();
+    public void Add(T n){
+      if(!set.Contains(n)){
+        set.Add(n); list.Add(n);
+      }
+    }
+    public bool Contains(T n)=>set.Contains(n);
+    IEnumerator<T> IEnumerable<T>.GetEnumerator()=>list.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator()=>list.GetEnumerator();
+    public int Count=>list.Count;
+  }
 }
