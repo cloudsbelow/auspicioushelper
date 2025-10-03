@@ -125,4 +125,5 @@ public struct IntRect{
     f.expandV(a);
     return f;
   }
+  public static implicit operator FloatRect(IntRect o)=>new FloatRect(o.x,o.y,o.w,o.h); 
 }

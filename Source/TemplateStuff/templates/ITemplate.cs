@@ -87,6 +87,12 @@ public class Template:Entity, ITemplateChild{
   public Wrappers.BasicMultient basicents = null;
   public DashCollision OnDashCollide = null;
   string templateStr;
+  public class ChainLock:IDisposable{
+    static int ctr = 0;
+    public static bool locked=>ctr>0; 
+    public ChainLock(){ctr++;}
+    void IDisposable.Dispose()=>ctr--;
+  }
   /// <summary>
   /// WARNING: by the time templates are constructed, the entitydata
   /// position has already been added to pos. 
@@ -101,7 +107,7 @@ public class Template:Entity, ITemplateChild{
     Depth = 10000+depthoffset;
     this.ownidpath=getOwnID(data);
     MovementLock.skiphooks.enable();
-    if(string.IsNullOrEmpty(templateStr)){
+    if(string.IsNullOrEmpty(templateStr) && !ChainLock.locked){
       TemplateBehaviorChain.AddEmptyTemplate(data);
     }
   }
@@ -222,6 +228,7 @@ public class Template:Entity, ITemplateChild{
       DebugConsole.Write($"No template found with identifier \"{templateStr}\" in {this} at {Position}");
     }
   }
+  public void setTemplate(templateFiller nt)=>t=nt;
   public virtual void addTo(Scene scene){
     addingScene = scene;
     setTemplate(templateStr, scene);

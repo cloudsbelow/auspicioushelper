@@ -72,7 +72,6 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     public static bool CheckDDiag(Player p){
       p.Position.Y+=1;
       bool flag=false;
-      DebugConsole.Write($"here", p, p?.Scene);
       foreach(DreamMarkerComponent c in p.Scene.Tracker.GetComponents<DreamMarkerComponent>()){
         if(!c.dbm.dreaming || c.Entity.Collidable == false) continue;
         if(c.Collider==null) flag = p.CollideCheck(c.Entity);

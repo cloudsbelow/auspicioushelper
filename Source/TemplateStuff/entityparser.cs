@@ -93,7 +93,7 @@ anyways i want to praise it more it is wonderful
   //all because I needed it's help 
   static Level dummyLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level));
   static LevelData dummyLd = (LevelData)RuntimeHelpers.GetUninitializedObject(typeof(LevelData));
-  public static Types generateLoader_(EntityData d, LevelData ld, Level l){
+  static Types generateLoader_(EntityData d, LevelData ld, Level l){
     if(!parseMap.TryGetValue(d.Name, out var etype) || (l!=null && etype == Types.initiallyerrors)) using(new FakeLock()){
       Level.EntityLoader loader = Level.EntityLoaders.GetValueOrDefault(d.Name)??skitzoGuess(d.Name);
       if(loader == null){
@@ -101,8 +101,8 @@ anyways i want to praise it more it is wonderful
         DebugConsole.Write($"No loader found for {d.Name}");
         return Types.unable;
       }
-      try{
-        Entity t = loader(l??dummyLevel,ld??dummyLd,Vector2.Zero,d);
+      using(new Template.ChainLock())try{
+        Entity t = t=loader(l??dummyLevel,ld??dummyLd,Vector2.Zero,d);
         if(t is Template){
           etype = parseMap[d.Name] = Types.template;
         }else if(t is Platform){
@@ -149,7 +149,8 @@ anyways i want to praise it more it is wonderful
     }
     
     currentParent = t;
-    Entity e = loader(l,ld,simoffset,d);
+    Entity e = null; 
+    using (new Template.ChainLock()) e = loader(l,ld,simoffset,d);
     if(e==null) goto done;
     if(path!=null && EntityMarkingFlag.flagged.TryGetValue(path+$"/{d.ID}",out var ident)){
       new FoundEntity(d,ident).finalize(e);

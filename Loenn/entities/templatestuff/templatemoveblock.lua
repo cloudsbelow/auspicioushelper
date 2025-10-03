@@ -33,6 +33,7 @@ entity.placements = {
       max_leniency=4,
       hitJumpthrus=true,
       throughDashblocks=false,
+      triggerFromRiding=true,
       
       _loenn_display_template = true,
     }

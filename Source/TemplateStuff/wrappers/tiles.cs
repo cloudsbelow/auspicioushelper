@@ -44,7 +44,7 @@ public interface IBoundsHaver{
 }
 
 internal class BgTiles:BackgroundTiles, ISimpleEnt, IBoundsHaver{
-  public Template.Propagation prop => Template.Propagation.None;
+  public Template.Propagation prop => Template.Propagation.Shake;
   public Template parent {get;set;}
   public Vector2 toffset {get;set;}
   public FloatRect bounds {get;set;}

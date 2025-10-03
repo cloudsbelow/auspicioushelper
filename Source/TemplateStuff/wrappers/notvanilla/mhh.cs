@@ -55,7 +55,7 @@ public class MaddiesStuff{
     }
   }
   public static void setup(){
-    EntityParser.clarify(["MaxHelpingHand/SidewaysJumpThru"], EntityParser.Types.unwrapped, (l,d,o,e)=>{
+    EntityParser.clarify(["MaxHelpingHand/SidewaysJumpThru","MaxHelpingHand/AttachedSidewaysJumpThru"], EntityParser.Types.unwrapped, (l,d,o,e)=>{
       if(Level.EntityLoaders.TryGetValue("MaxHelpingHand/SidewaysJumpThru",out var orig)) 
         EntityParser.currentParent.addEnt(new SidewaysJt(orig(l,d,o,e),EntityParser.currentParent));
       return null;

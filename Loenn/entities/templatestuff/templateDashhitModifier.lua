@@ -20,7 +20,7 @@ entity.placements = {
       Right="Normal",
       Up="Normal",
       Down="Normal",
-
+      refillOptions="0",
       
       _loenn_display_template = true,
     }

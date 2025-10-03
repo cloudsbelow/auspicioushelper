@@ -263,6 +263,6 @@ public static partial class Util{
     public TValue get(object o)=>getter(o);
     public void set(object o, TValue v)=>setter(o,v);
   }
-  public static Func<object,object> cloneFunc = instanceFunc<object>(typeof(object),"MemberwiseClone");
+  static Func<object,object> cloneFunc = instanceFunc<object>(typeof(object),"MemberwiseClone");
   public static T shallowCopy<T>(T thing)=>(T)cloneFunc(thing);
 }

@@ -113,8 +113,10 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     customThrowspeeds = Util.csparseflat(d.Attr("customThrowspeeds"));
   }
   Util.HybridSet<Platform> Mysolids;
-  void make(Scene s){
-    te = new TemplateDisappearer(d,Position+hoffset,d.Int("depthoffset",0));
+  void make(Scene s, templateFiller use = null){
+    created = true;
+    using(new Template.ChainLock())te = new TemplateDisappearer(d,Position+hoffset,d.Int("depthoffset",0));
+    if(use!=null) te.setTemplate(use);
     te.addTo(s);
     Mysolids = new (te.GetChildren<Solid>());
   }
@@ -123,9 +125,16 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     yield return 0.25f;
     if(tutorialGui!=null) tutorialGui.Open=true;
   }
+  bool created = false;
+  public void makeExternally(templateFiller f){
+    if(created) return;
+    make(Scene,f);
+  }
   public override void Added(Scene scene){
     base.Added(scene);
-    make(scene);
+    if(!string.IsNullOrEmpty(d.Attr("template",""))) make(scene);
+    else Active = false;
+
     if(showTutorial){
       tutorialGui = new BirdTutorialGui(this, new Vector2(0f, -Height/2-8), Dialog.Clean("tutorial_carry"), Dialog.Clean("tutorial_hold"), BirdTutorialGui.ButtonPrompt.Grab);
       tutorialGui.Open = false;

@@ -7,25 +7,53 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Formats.Tar;
 using System.Linq;
+using System.Reflection;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
+using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.auspicioushelper;
 
-[CustomEntity("auspicioushelper/ConnectedBlocks", "auspicioushelper/ConnectedBlocksBg")]
+[CustomEntity("auspicioushelper/ConnectedBlocks", "auspicioushelper/ConnectedBlocksBg", "auspicioushelper/ConnectedContainer")]
 [Tracked]
 public class ConnectedBlocks:Entity{
   bool used;
   char tid;
-  bool bg;
   Vector2 levelOffset;
+  HashSet<string> permittedEnts = null;
+  HashSet<string> permittedDecals = null;
+  bool allEnts;
+  bool allDecals;
+  bool permits(string s, bool decal)=>decal?(allDecals!=permittedDecals?.Contains(s)):(allEnts!=permittedEnts?.Contains(s));
+  bool permits(Entity e){
+    if(e is ConnectedBlocks or TemplateHoldable) return false;
+    if(e is Decal d){
+      return d.Get<DecalMarker>() is DecalMarker dm && permits(dm.d.Texture.Substring(0,dm.d.Texture.Length-4),true);
+    }
+    return e.SourceData?.Name is {} s && permits(s,false);
+  }
+  enum Category {
+    fgt, bgt, ent
+  }
+  Category c;
   public ConnectedBlocks(EntityData d, Vector2 offset):base(offset+d.Position){
     Collider = new Hitbox(d.Width,d.Height);
     tid = d.Attr("tiletype","0").FirstOrDefault();
-    bg = d.Name.EndsWith("Bg");
+    if(d.Name.EndsWith("Bg"))c = Category.bgt;
+    else if(d.Name.EndsWith("er")) c=Category.ent;
+    else c=Category.fgt;
+    if(c == Category.ent){
+      var v = Util.listparseflat(d.Attr("filterEntities", ""));
+      if(v.Count>0) permittedEnts = [..v];
+      v = Util.listparseflat(d.Attr("filterDecals",""));
+      if(v.Count>0) permittedDecals = [..v];
+      allEnts = d.Bool("getEntities",true);
+      allDecals = d.Bool("getDecals",false);
+    }
     levelOffset = offset;
     Depth = -10000000; //low depth type entity
   }
@@ -38,13 +66,13 @@ public class ConnectedBlocks:Entity{
     if(!used){
       used = true;
       MaddiesIop.hooks.enable();
-      List<(IntRect,char,bool)> things = [new(new(this),tid,bg)];
+      List<(IntRect,char,ConnectedBlocks)> things = [new(new(this),tid,this)];
       search:
         foreach(ConnectedBlocks c in Scene.Tracker.GetEntities<ConnectedBlocks>()){
           if(c.used) continue;
           IntRect r = new(c);
           foreach(var t in things) if(t.Item1.CollideIr(r)){
-            things.Add(new(r,c.tid,c.bg));
+            things.Add(new(r,c.tid,c));
             c.used = true;
             goto search;
           }
@@ -53,16 +81,22 @@ public class ConnectedBlocks:Entity{
       Int2 minimum = Int2.Round(Position);
       Int2 maximum = Int2.Round(Position);
       foreach(var t in things){
+        if(t.Item3.c == Category.ent) continue;
         minimum = Int2.Min(minimum, t.Item1.tlc);
         maximum = Int2.Max(maximum, t.Item1.brc);
       }
       VirtualMap<char> fgd = new(maximum.x-minimum.x+2*padding,maximum.y-minimum.y+2*padding,'0');
       VirtualMap<char> bgd = new(maximum.x-minimum.x+2*padding,maximum.y-minimum.y+2*padding,'0');
+      QuickCollider<ConnectedBlocks> qcl = new();
       var l = MipGrid.Layer.fromAreasize((maximum-minimum).x,(maximum-minimum).y);
       foreach(var t in things){
         Int2 dloc = (t.Item1.tlc-minimum)/8;
         Int2 hloc = (t.Item1.brc-minimum)/8;
-        FillRect(t.Item3?bgd:fgd, dloc+padding, hloc+padding,t.Item2);
+        switch(t.Item3.c){
+          case Category.fgt: FillRect(fgd, dloc+padding, hloc+padding,t.Item2); break;
+          case Category.bgt: FillRect(bgd, dloc+padding, hloc+padding,t.Item2); break;
+          case Category.ent: qcl.Add(t.Item3,t.Item1); break;
+        }
         l.SetRect(true,dloc,hloc);
       }
       SolidTiles s=null;
@@ -73,21 +107,29 @@ public class ConnectedBlocks:Entity{
       if(f.fgt!=null)using(new PaddingLock()) s=new(Vector2.Zero, fgd);
       if(f.bgt!=null)using(new PaddingLock()) b=new(Vector2.Zero, bgd);
       f.initStatic(s,b);
+      Util.OrderedSet<Entity> all = new();
+      foreach(Entity e in scene){
+        foreach(var t in qcl.Test(new(e))) if(t.permits(e)){
+          addAllSms(e,all);
+          break;
+        } 
+      }
       if(s!=null){
         s.Position+=minimum-Int2.One*8*padding;
-        Util.OrderedSet<Entity> all = new();
         foreach (StaticMover smover in scene.Tracker.GetComponents<StaticMover>()){
           if (smover.Platform == null && smover.IsRiding(s))addAllSms(smover.Entity,all);
-        }
-        foreach(var e in all){
-          e.RemoveSelf();
-          f.ChildEntities.Add(Util.cloneWithForcepos(e.SourceData,e.Position-minimum+padding*8*Vector2.One));
-          UpdateHook.EnsureUpdateAny();
         }
       }
       MiptileCollider checker = new(l, Vector2.One*8, minimum, true);
       foreach(var pair in TemplateBehaviorChain.mainRoom){
         if(checker.collideFr(FloatRect.fromRadius(pair.Key+levelOffset,Vector2.One))){
+          foreach(var e in all){
+            e.RemoveSelf();
+            Vector2 fpos = e.Position-minimum+padding*8*Vector2.One;
+            if(e is Decal d) f.decals.Add(d.Get<DecalMarker>().withDepthAndForcepos(fpos));
+            else if(e.SourceData is EntityData dat)f.ChildEntities.Add(Util.cloneWithForcepos(dat,fpos));
+            UpdateHook.EnsureUpdateAny();
+          }
           Vector2 pos = pair.Key+levelOffset;
           f.offset = minimum-pos;
           Vector2? forcepos = pair.Value.Name=="auspicioushelper/TemplateBehaviorChain"&&pair.Value.Bool("forceOwnPosition",false)?pair.Key:null;
@@ -210,4 +252,47 @@ public class ConnectedBlocks:Entity{
       IL.Celeste.BackgroundTiles.ctor-=paddingHook;
     });
   }
+}
+
+class DecalMarker:Component{
+  public DecalData d;
+  bool fg;
+  public DecalMarker(DecalData data, bool fg):base(false,false){
+    this.d=data;
+    this.fg = fg;
+  }
+  static void FgLoad(Decal d, DecalData dat){
+    d.Add(new DecalMarker(dat, true));
+  }
+  static void BgLoad(Decal d, DecalData dat){
+    d.Add(new DecalMarker(dat, false));
+  }
+  public DecalData withDepthAndForcepos(Vector2 forcepos){
+    DecalData n = Util.shallowCopy(d);
+    n.Depth = fg?-10500:8000;
+    n.Position = forcepos;
+    return n;
+  }
+  static void Manip(ILContext ctx){
+    ILCursor c = new(ctx);
+    foreach(int reg in new List<int>(){51,52}){
+      if(c.TryGotoNextBestFit(MoveType.After,
+        itr=>itr.MatchLdloc(reg),
+        itr=>itr.MatchLdfld<DecalData>(nameof(DecalData.ColorHex)),
+        itr=>itr.MatchNewobj<Decal>()
+      )){
+        c.EmitDup();
+        c.EmitLdloc(reg);
+        c.EmitDelegate<Action<Decal,DecalData>>(reg==51?FgLoad:BgLoad);
+      } else goto bad;
+    }
+    bad: DebugConsole.WriteFailure("Could not add decal marking hook");
+  }
+  static ILHook loadLevelHook;
+  public static HookManager hooks = new(()=>{
+    MethodInfo oll = typeof(Level).GetMethod("orig_LoadLevel",BindingFlags.Public |BindingFlags.Instance);
+    loadLevelHook = new(oll, Manip);
+  },()=>{
+    loadLevelHook.Dispose();
+  },auspicioushelperModule.OnEnterMap);
 }

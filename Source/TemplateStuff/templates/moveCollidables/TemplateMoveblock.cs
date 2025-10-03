@@ -27,6 +27,7 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
   List<MTexture> arrows;
   Color c1 = Util.hexToColor("#50cf50ff");
   Color c2 = Util.hexToColor("#ffff");
+  bool triggerFromRiding = true;
   public TemplateMoveBlock(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateMoveBlock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
@@ -46,6 +47,7 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
     cansteer = d.Bool("cansteer", false);
     maxleniency = d.Int("max_leniency",4);
     moveevent = d.Attr("movesfx","event:/game/04_cliffside/arrowblock_move");
+    triggerFromRiding = d.Bool("triggerFromRiding",true);
     if(d.Nodes!=null) foreach(Vector2 node in d.Nodes){
       decalOffset.Add(node-d.Position);
     }
@@ -75,7 +77,7 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
     waiting:
       stuckTimer = maxStuckTime;
       steerdelay = 0.2f;
-      while(!triggered && !hasRiders<Player>()) yield return null;
+      while(!triggered && !(triggerFromRiding && hasRiders<Player>())) yield return null;
       disconnect();
       parent?.GetFromTree<IRemovableContainer>()?.RemoveChild(this);
       triggered=true;

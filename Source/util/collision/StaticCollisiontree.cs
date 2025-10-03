@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Xml.Serialization;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -82,5 +83,20 @@ public abstract class LinearRaster<T>{
     }
     //DebugConsole.Write($"{this.GetType().ToString()} {active.Count} {step}");
     return true;
+  }
+}
+
+public class QuickCollider<T>{
+  List<(FloatRect, T)> items = new();
+  FloatRect bounds = FloatRect.empty;
+  public int Count=>items.Count;
+  public void Add(T item, FloatRect itemBounds){
+    items.Add(new(itemBounds,item));
+    bounds = bounds._union(itemBounds);
+  }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public IEnumerable<T> Test(FloatRect test){
+    if(!bounds.CollideFr(test)) yield break;
+    foreach(var i in items) if(i.Item1.CollideFr(test)) yield return i.Item2;
   }
 }

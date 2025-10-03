@@ -151,6 +151,7 @@ public class auspicioushelperModule : EverestModule {
         PartialTiles.hooks.enable();
         BackdropCapturer.hooks.enable();
         TemplateBehaviorChain.setup();
+        DecalMarker.hooks.enable();
         MapHider.uncache();
         
         typeof(Anti0fIopExp).ModInterop();
