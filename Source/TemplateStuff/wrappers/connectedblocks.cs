@@ -81,7 +81,6 @@ public class ConnectedBlocks:Entity{
       Int2 minimum = Int2.Round(Position);
       Int2 maximum = Int2.Round(Position);
       foreach(var t in things){
-        if(t.Item3.c == Category.ent) continue;
         minimum = Int2.Min(minimum, t.Item1.tlc);
         maximum = Int2.Max(maximum, t.Item1.brc);
       }
@@ -123,13 +122,7 @@ public class ConnectedBlocks:Entity{
       MiptileCollider checker = new(l, Vector2.One*8, minimum, true);
       foreach(var pair in TemplateBehaviorChain.mainRoom){
         if(checker.collideFr(FloatRect.fromRadius(pair.Key+levelOffset,Vector2.One))){
-          foreach(var e in all){
-            e.RemoveSelf();
-            Vector2 fpos = e.Position-minimum+padding*8*Vector2.One;
-            if(e is Decal d) f.decals.Add(d.Get<DecalMarker>().withDepthAndForcepos(fpos));
-            else if(e.SourceData is EntityData dat)f.ChildEntities.Add(Util.cloneWithForcepos(dat,fpos));
-            UpdateHook.EnsureUpdateAny();
-          }
+          RemChildren(all,minimum,f);
           Vector2 pos = pair.Key+levelOffset;
           f.offset = minimum-pos;
           Vector2? forcepos = pair.Value.Name=="auspicioushelper/TemplateBehaviorChain"&&pair.Value.Bool("forceOwnPosition",false)?pair.Key:null;
@@ -149,6 +142,15 @@ public class ConnectedBlocks:Entity{
           }
         }
       }
+      foreach(TemplateHoldable hold in scene.Tracker.GetEntities<TemplateHoldable>()){
+        if(hold.isCreated || !string.IsNullOrWhiteSpace(hold.d.Attr("template",""))) continue;
+        if(checker.collideFr(new(hold))){
+          RemChildren(all,minimum,f);
+          f.offset = minimum-(hold.Position+hold.Offset);
+          hold.makeExternally(f);
+          goto end;
+        }
+      }
       if(s!=null)Scene.Add(s);
       if(b!=null){
         b.Position+=minimum-Int2.One*8*padding;
@@ -157,6 +159,15 @@ public class ConnectedBlocks:Entity{
     }
     end:
       RemoveSelf();
+  }
+  void RemChildren(Util.OrderedSet<Entity> all, Vector2 minimum, templateFiller f){
+    foreach(var e in all){
+      e.RemoveSelf();
+      Vector2 fpos = e.Position-minimum+padding*8*Vector2.One;
+      if(e is Decal d) f.decals.Add(d.Get<DecalMarker>().withDepthAndForcepos(fpos));
+      else if(e.SourceData is EntityData dat)f.ChildEntities.Add(Util.cloneWithForcepos(dat,fpos));
+      UpdateHook.EnsureUpdateAny();
+    }
   }
   public static void addAllSms(Entity e, Util.OrderedSet<Entity> all){
     if(all.Contains(e)) return;
@@ -286,6 +297,7 @@ class DecalMarker:Component{
         c.EmitDelegate<Action<Decal,DecalData>>(reg==51?FgLoad:BgLoad);
       } else goto bad;
     }
+    return;
     bad: DebugConsole.WriteFailure("Could not add decal marking hook");
   }
   static ILHook loadLevelHook;
@@ -294,5 +306,5 @@ class DecalMarker:Component{
     loadLevelHook = new(oll, Manip);
   },()=>{
     loadLevelHook.Dispose();
-  },auspicioushelperModule.OnEnterMap);
+  });
 }

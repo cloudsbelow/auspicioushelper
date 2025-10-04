@@ -31,6 +31,7 @@ public interface ICustomHoldableRelease{
 }
 
 [CustomEntity("auspicioushelper/templateholdable")]
+[Tracked]
 public class TemplateHoldable:Actor, ICustomHoldableRelease{
   public interface IPickupChild{
     void OnPickup(Player p);
@@ -38,6 +39,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   }
   TemplateDisappearer te;
   Vector2 hoffset;
+  public Vector2 Offset=>hoffset;
   Vector2 lpos;
   Vector2 prevLiftspeed;
   Vector2 Speed;
@@ -54,7 +56,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   bool dietobarrier;
   bool respawning;
   float respawndelay;
-  EntityData d;
+  public EntityData d;
   bool dontFlingOff=false;
   bool hasBeenTouched = false;
   bool showTutorial = false;
@@ -126,9 +128,11 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     if(tutorialGui!=null) tutorialGui.Open=true;
   }
   bool created = false;
+  public bool isCreated=>created;
   public void makeExternally(templateFiller f){
     if(created) return;
     make(Scene,f);
+    Active = true;
   }
   public override void Added(Scene scene){
     base.Added(scene);
