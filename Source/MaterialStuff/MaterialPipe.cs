@@ -118,9 +118,6 @@ public static class MaterialPipe {
       leaving.Contains(l) || entering.Contains(l)? l.transalpha(leaving.Contains(l),camAt):1
     );
   }
-  public static void indicateImmidiateAddition(){
-    needsImmUpdate=true;
-  }
 
   static float camAt;
   static float NextTransitionDuration = 0.65f;
@@ -165,6 +162,8 @@ public static class MaterialPipe {
       DebugConsole.Write($"Dangerously adding layer {l} - this should only occur when reloading assets");
       blockedAddingEnt.Add(new LayerMarkingEntity(l));
     }
+    if(UpdateHook.inUpdate) UpdateHook.EnsureUpdateAny();
+    else needsImmUpdate = true;
     l.onEnable();
     if(layers.Contains(l)) return;
     dirty = true;

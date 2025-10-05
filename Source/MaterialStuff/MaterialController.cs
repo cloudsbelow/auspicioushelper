@@ -152,7 +152,6 @@ internal class MaterialController:Entity, IDeclareLayers{
       if(u==null) return;
       if(Visible && !u.enabled){
         MaterialPipe.addLayer(u);
-        MaterialPipe.indicateImmidiateAddition();
       }
       if(!Visible && u.enabled){
         MaterialPipe.removeLayer(u);

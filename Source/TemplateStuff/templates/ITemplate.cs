@@ -182,7 +182,7 @@ public class Template:Entity, ITemplateChild{
       }
     }
     c.addTo(Scene??addingScene);
-    c.setOffset(virtLoc);
+    c.setOffset(virtLoc.Round());
   }
   public void restoreEnt(ITemplateChild c){
     c.parent = this;
@@ -201,7 +201,7 @@ public class Template:Entity, ITemplateChild{
     //if(t.fgt!=null) addEnt(fgt=new Wrappers.FgTiles(t, virtLoc, depthoffset));
     t.AddTilesTo(this, scene);
     Level l = scene as Level;
-    Vector2 simoffset = this.virtLoc-t.origin;
+    Vector2 simoffset = this.virtLoc.Round()-t.origin;
     string fp = fullpath;
     foreach(EntityData w in t.ChildEntities){
       Entity e = EntityParser.create(w,l,t.roomdat,simoffset,this,fp);
@@ -214,7 +214,7 @@ public class Template:Entity, ITemplateChild{
       Decal e = new Decal(d.Texture, simoffset+d.Position, d.Scale, d.Depth??0, d.Rotation, d.ColorHex){
         DepthSetByPlacement = true
       };
-      AddBasicEnt(e, simoffset+d.Position-virtLoc);
+      AddBasicEnt(e, simoffset+d.Position-virtLoc.Round());
     }
     if(!recursive) templateAwake();
   }

@@ -15,40 +15,40 @@ internal static class SpeedrunToolIop{
   internal static List<object> toDeregister = new List<object>();
   static void loadState(Dictionary<Type, Dictionary<string, object>> values, Level level){
     try{
-    MaterialPipe.fixFromSrt();
-    ChannelState.unwatchAll();
-    PortalGateH.intersections.Clear();
-    foreach(Entity e in Engine.Instance.scene.Entities){
-      if(e is IChannelUser e_){
-        ChannelState.watch(e_);
-      }
-      if(e is PortalOthersider m) m.RemoveSelf();
-      if(e is PortalGateH portalgateh){
-        portalHooks.hooks.enable();
-      }
-      if(e is Actor a){
-        PortalGateH.SurroundingInfoH s = PortalGateH.evalEnt(a);
-        PortalIntersectInfoH info = null;
-        if(a.Left<s.leftl) {
-          PortalGateH.intersections[a]=(info = new PortalIntersectInfoH(s.leftn, s.left,a));
-        } else if(a.Right>s.rightl){
-          PortalGateH.intersections[a]=(info = new PortalIntersectInfoH(s.rightn, s.right, a));
+      MaterialPipe.fixFromSrt();
+      ChannelState.unwatchAll();
+      PortalGateH.intersections.Clear();
+      foreach(Entity e in Engine.Instance.scene.Entities){
+        if(e is IChannelUser e_){
+          ChannelState.watch(e_);
         }
-        if(info!=null) info.addOthersider();
+        if(e is PortalOthersider m) m.RemoveSelf();
+        if(e is PortalGateH portalgateh){
+          portalHooks.hooks.enable();
+        }
+        if(e is Actor a){
+          PortalGateH.SurroundingInfoH s = PortalGateH.evalEnt(a);
+          PortalIntersectInfoH info = null;
+          if(a.Left<s.leftl) {
+            PortalGateH.intersections[a]=(info = new PortalIntersectInfoH(s.leftn, s.left,a));
+          } else if(a.Right>s.rightl){
+            PortalGateH.intersections[a]=(info = new PortalIntersectInfoH(s.rightn, s.right, a));
+          }
+          if(info!=null) info.addOthersider();
+        }
+        // if(e is IDeclareLayers idl){
+        //   if(idl is MaterialController ma) DebugConsole.Write($"material controlner {ma.identifier}");
+        //   idl.declareLayers();
+        // }
       }
-      // if(e is IDeclareLayers idl){
-      //   if(idl is MaterialController ma) DebugConsole.Write($"material controlner {ma.identifier}");
-      //   idl.declareLayers();
-      // }
-    }
-    foreach(ChannelTracker t in Engine.Instance.scene.Tracker.GetComponents<ChannelTracker>()){
-      ChannelState.watch(t);
-    }
-    //TemplateCassetteManager.unfrickMats(level);
-    FoundEntity.clear(Engine.Instance.scene);
+      foreach(ChannelTracker t in Engine.Instance.scene.Tracker.GetComponents<ChannelTracker>()){
+        ChannelState.watch(t);
+      }
+      //TemplateCassetteManager.unfrickMats(level);
+      FoundEntity.clear(Engine.Instance.scene);
+      BackdropCapturer.CapturedBackdrops.FixFromSrt(level);
     }catch(Exception ex){
-      DebugConsole.Write($"Auspicioushelper speedruntool failed: \n {ex}");
-      Logger.Log(typeof(auspicioushelperModule).ToString(),$"Failed Speedruntool fixing for reason:\n{ex} ");
+      DebugConsole.WriteFailure($"Auspicioushelper speedruntool failed: \n {ex}");
       throw new Exception();
     }
   }

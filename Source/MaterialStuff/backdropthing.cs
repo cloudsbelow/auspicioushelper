@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Celeste.Mod.Helpers;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
@@ -39,6 +40,9 @@ public class BackdropCapturer{
   public class CapturedBackdrops:IMaterialLayerSimple{
     public MaterialLayerInfo info {get;set;} = new(true, int.MaxValue/2);
     List<Backdrop> captured = new();
+    public static void FixFromSrt(Level l){
+      foreach(var g in groups) g.Value.last = null;
+    }
     bool IMaterialLayer.checkdo()=>info.enabled;
     RenderTargetPool.RenderTargetHandle tex;
     RenderTarget2D IMaterialLayer.outtex=>tex;
@@ -53,7 +57,6 @@ public class BackdropCapturer{
       resource = new((bool change)=>{
         if(change){ 
           MaterialPipe.addLayer(this);
-          MaterialPipe.indicateImmidiateAddition();
         }
         else MaterialPipe.removeLayer(this);
       });

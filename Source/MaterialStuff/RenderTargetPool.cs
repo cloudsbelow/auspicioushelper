@@ -33,7 +33,10 @@ public static class RenderTargetPool{
       if(h.index>=Pool.Count){
         throw new Exception("Cannot get the rendertarget with this handle");
       }
-      if(h.index == -1) throw new Exception("This handle is not in use");
+      if(h.index == -1){
+        DebugConsole.WriteFailure("Used a handle that is not in use");
+        return zero;
+      }
       return Pool[h.index];
     }
     public RenderTargetHandle(bool instantiate = true){

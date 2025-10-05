@@ -104,7 +104,6 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
     FadeMaterialLayer f = new FadeMaterialLayer(c,8000);
     f._alpha=0;
     MaterialPipe.addLayer(f);
-    MaterialPipe.indicateImmidiateAddition();
     yield return null;
     while((f._alpha = f._alpha+Engine.DeltaTime)<1){
       yield return null;

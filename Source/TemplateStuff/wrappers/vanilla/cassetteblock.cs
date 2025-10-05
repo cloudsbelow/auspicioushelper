@@ -13,14 +13,14 @@ public class CassetteW:CassetteBlock, ISimpleEnt{
   public Template parent {get;set;}
   Vector2 ppos;
   public Vector2 toffset {get;set;}
-  public CassetteW(EntityData d, Vector2 o, EntityID id):base(d,o,id){
+  public CassetteW(EntityData d, Vector2 o, EntityID id):base(d,o.Round(),id){
     hooks.enable();
   }
   void setPosition(Vector2 ls){
-    MoveTo(ppos+toffset+Vector2.UnitY*(2-blockHeight), (parent?.gatheredLiftspeed??Vector2.Zero)+ls);
+    MoveTo((ppos+toffset+Vector2.UnitY*(2-blockHeight)).Round(), (parent?.gatheredLiftspeed??Vector2.Zero)+ls);
   }
   void sposPreadded(Vector2 ls){
-    MoveTo(ppos+toffset+Vector2.UnitY*(2-blockHeight), ls);
+    MoveTo((ppos+toffset+Vector2.UnitY*(2-blockHeight)).Round(), ls);
   }
   void ITemplateChild.setOffset(Vector2 l){
     ppos = l;

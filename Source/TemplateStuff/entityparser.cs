@@ -159,8 +159,8 @@ anyways i want to praise it more it is wonderful
       case Types.platformbasic: case Types.platformdisobedient:
         if(e is Platform p){
           if(etype == Types.platformdisobedient)
-            t.addEnt(new Wrappers.BasicPlatformDisobedient(p,t,simoffset+d.Position-t.virtLoc));
-          t.addEnt(new Wrappers.BasicPlatform(p,t,simoffset+d.Position-t.virtLoc));
+            t.addEnt(new Wrappers.BasicPlatformDisobedient(p,t,simoffset+d.Position-t.virtLoc.Round()));
+          t.addEnt(new Wrappers.BasicPlatform(p,t,simoffset+d.Position-t.virtLoc.Round()));
           goto done;
         }else{
           DebugConsole.Write("Wrongly classified!!! "+d.Name);
@@ -171,7 +171,7 @@ anyways i want to praise it more it is wonderful
         return e;
       case Types.basic:
         if(e!=null){
-          t.AddBasicEnt(e,simoffset+d.Position-t.virtLoc);
+          t.AddBasicEnt(e,simoffset+d.Position-t.virtLoc.Round());
         }
         goto done;
       case Types.removeSMbasic: case Types.managedBasic:
@@ -183,7 +183,7 @@ anyways i want to praise it more it is wonderful
         }
         if(etype == Types.managedBasic) e.Add(new ChildMarker(t));
         foreach(StaticMover sm in SMRemove) e.Remove(sm);
-        t.AddBasicEnt(e,simoffset+d.Position-t.virtLoc);
+        t.AddBasicEnt(e,simoffset+d.Position-t.virtLoc.Round());
         goto done;
       default:
         goto done;

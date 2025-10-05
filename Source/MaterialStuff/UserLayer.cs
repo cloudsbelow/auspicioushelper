@@ -90,11 +90,13 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       alwaysRender = d.AttrBool("alwaysRender"),
       drawInScene = false,
     };
-    return new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l);
+    return new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l){backdropLayer=true};
   }
   public IFadingLayer.FadeTypes fadeTypeIn {get;set;} = IFadingLayer.FadeTypes.Linear;
   public IFadingLayer.FadeTypes fadeTypeOut {get;set;} = IFadingLayer.FadeTypes.Linear;
   int swapch=0;
+  bool backdropLayer=false;
+  bool IMaterialLayer.autoManageRemoval => !backdropLayer;
   public UserLayer(string texstring, string paramstring, VirtualShaderList l, LayerFormat f):base(l,f){
     SetupTextures(texstring);
     for(int i=0; i<swapch; i++) handles.Add(new RenderTargetPool.RenderTargetHandle(false));

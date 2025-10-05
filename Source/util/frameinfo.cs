@@ -31,7 +31,7 @@ public class UpdateHook:Component{
       updateAfter|=causesEntUpd;
     }
     static public void EnsureUpdateAny()=>updateAny = true;
-    public static void ExtraUpdate(Level self){
+    public static void ExtraUpdate(Level self, bool last = false){
       if(afterUpd.Count>0 || updateBefore || updateAfter || updateAny){
         //DebugConsole.Write($"Doign extra update {updateBefore} {updateAfter} ({updateAny})");
         while(afterUpd.Count>0){
@@ -45,6 +45,7 @@ public class UpdateHook:Component{
           foreach(var t in enqd) AddAfterUpdate(t.Item1,t.Item2,t.Item3);
           enqd.Clear();
         }
+        if(last) updating = false;
         if(updateAfter||updateAny){
           updateAny = (updateAfter = false);
           self.Entities.UpdateLists();
@@ -60,6 +61,11 @@ public class UpdateHook:Component{
   public bool updatedThisFrame = false;
   public static float TimeSinceTransMs=0;
   public static HashSet<string> updateListFlags = new();
+  static bool updating = false;
+  /// <summary>
+  /// Indicates whether ensuring update any will properly cause an update
+  /// </summary>
+  public static bool inUpdate=>updating;
 
   public UpdateHook(Action before=null, Action after=null):base(true,false){
     beforeAction=before;afterAction =after;
@@ -89,7 +95,8 @@ public class UpdateHook:Component{
   internal static void updateHook(On.Celeste.Level.orig_Update update, Level self){
     updateListFlags.Clear();
     cachedPlayer = self.Tracker.GetEntity<Player>();
-    AfterUpdateLock.ExtraUpdate(self);
+    updating = true;
+    AfterUpdateLock.ExtraUpdate(self,false);
     if(self.Paused){
       update(self);
       return;
@@ -106,7 +113,7 @@ public class UpdateHook:Component{
     foreach(UpdateHook u in self.Tracker.GetComponents<UpdateHook>()){
       if(u.afterAction!=null)u.afterAction();
     }
-    AfterUpdateLock.ExtraUpdate(self);
+    AfterUpdateLock.ExtraUpdate(self,true);
   }
 
   static PersistantAction clear;

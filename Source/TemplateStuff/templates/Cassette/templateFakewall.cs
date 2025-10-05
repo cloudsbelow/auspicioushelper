@@ -88,7 +88,6 @@ public class TemplateFakewall:TemplateDisappearer{
     setVisCol(false,false);
     FadeMaterialLayer f = new FadeMaterialLayer(c,ddepth);
     MaterialPipe.addLayer(f);
-    MaterialPipe.indicateImmidiateAddition();
     yield return null;
     while((f._alpha = f._alpha-Engine.DeltaTime*fadespeed*1)>0){
       yield return null;

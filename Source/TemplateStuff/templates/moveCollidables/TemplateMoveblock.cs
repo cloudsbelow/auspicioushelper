@@ -38,6 +38,7 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
       "right"=>Vector2.UnitX,
       _=>Vector2.UnitX
     };
+    lastmovevec = movedir;
     useOwnUncollidable = d.Bool("uncollidable_blocks",false);
     maxspeed = d.Float("speed",75);
     acceleration = d.Float("acceleration", 300);
