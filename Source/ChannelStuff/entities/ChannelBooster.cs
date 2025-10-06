@@ -254,7 +254,7 @@ public class ChannelBooster : ChannelBaseEntity, IMaterialEnt, ISimpleEnt, IBoos
     sprite.Play("loop", restart: true);
     sprite.Visible = true;
     outline.Visible = false;
-    if(parent!=null) Position = parent.virtLoc+toffset;
+    if(parent!=null) Position = parent.roundLoc+toffset;
     if(remanifest){
       Audio.Play("event:/game/04_cliffside/greenbooster_reappear", Position);
       ParticleSystem particlesBG = SceneAs<Level>().ParticlesBG;

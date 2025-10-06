@@ -203,11 +203,11 @@ public class templateFiller:Entity{
     initDynamic(s as Level);
     if(Fgt != null){
       Fgt.InterceptNext();
-      tem.addEnt(tem.fgt = new FgTiles(this, tem.virtLoc, tem.depthoffset));
+      tem.addEnt(tem.fgt = new FgTiles(this, tem.roundLoc, tem.depthoffset));
     }
     if(Bgt != null){
       Bgt.InterceptNext();
-      tem.addEnt(new BgTiles(this, tem.virtLoc, tem.depthoffset));
+      tem.addEnt(new BgTiles(this, tem.roundLoc, tem.depthoffset));
     }
   }
   

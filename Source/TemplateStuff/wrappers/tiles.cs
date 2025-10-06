@@ -110,7 +110,6 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
     Vector2 ls = parent.gatheredLiftspeed;
     if(particles){
       Rectangle bounds = (this as IBoundsHaver).GetTilebounds(Position,AnimatedTiles.GetClippedRenderTiles(32));
-      Vector2 ppos = parent?.virtLoc??Center;
       for(int i=bounds.X; i<bounds.X+bounds.Width; i++){
         for(int j=bounds.Y; j<bounds.Height; j++){
           char tile = tileTypes[i,j];
@@ -125,7 +124,6 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
   public void fakeDestroy(){
     Vector2 ls = parent.gatheredLiftspeed;
     Rectangle bounds = (this as IBoundsHaver).GetTilebounds(Position,AnimatedTiles.GetClippedRenderTiles(32));
-    Vector2 ppos = parent?.virtLoc??Center;
     for(int i=bounds.X; i<bounds.X+bounds.Width; i++){
       for(int j=bounds.Y; j<bounds.Height; j++){
         char tile = tileTypes[i,j];

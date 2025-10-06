@@ -12,7 +12,7 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/TemplateIceblock")]
 public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
   Vector2 offset = Vector2.Zero;
-  public override Vector2 virtLoc => Position+offset;
+  protected override Vector2 virtLoc => Position+offset;
   float sinkTime;
   float sinkDist;
   float respawnTimer=0;

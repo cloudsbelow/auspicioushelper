@@ -17,6 +17,7 @@ entity.placements = {
         filterDecals="",
         getEntities=true,
         getDecals=false,
+        excludeSolids=false,
     }
   }
 }

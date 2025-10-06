@@ -55,7 +55,9 @@ public class StaticmoverLock:MovementLock,IDisposable{
 [CustomEntity("auspicioushelper/TemplateStaticmover")]
 public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOverrideVisuals{
   public override Vector2 gatheredLiftspeed=>ownLiftspeed;
-  public override void relposTo(Vector2 loc, Vector2 liftspeed) {}
+  public override void relposTo(Vector2 loc, Vector2 liftspeed) {
+    if(sm?.Platform==null) base.relposTo(loc,liftspeed);
+  }
   int smearamount;
   Vector2[] pastLiftspeed;
   bool averageSmear;
@@ -117,7 +119,8 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   CassetteMaterialLayer layer = null;
   bool made=false;
   public void make(Scene s){
-    if(made) return;
+    if(made || shouldDie) return;
+    addingScene = s;
     made = true;
     makeChildren(s,false);
     if(!getSelfCol()) parentChangeStatBypass(layer==null?-1:0,-1,0);
@@ -128,11 +131,16 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     }
     SetupEnts(allChildren);
   }
+  bool shouldDie=false;
   public override void addTo(Scene scene){
     //base.addTo(scene);
     if(parent!=null || t?.chain!=null)scene.Add(this);
     if(sm!=null) return;
     setTemplate(scene:scene);
+    if(t==null){
+      shouldDie=true;
+      return;
+    }
     if(channel != "")CassetteMaterialLayer.layers.TryGetValue(channel,out layer);
     if(enableUnrooted) make(scene);
     Add(sm = new StaticMover(){
@@ -190,13 +198,25 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   }
   public override void Awake(Scene scene) {
     base.Awake(scene);
+    if(shouldDie) return;
     if(enableUnrooted && sm.Platform == null){
       setVisCol(true, true);
       Remove(sm);
+      return;
+    }
+    if(sm.Platform == null){
+      foreach(Solid s in Scene.Tracker.GetEntities<Solid>()){
+        if(sm.SolidChecker(s)){
+          s.staticMovers.Add(sm);
+          sm.Platform=s;
+          sm.OnAttach(s);
+        }
+      }
     }
   }
   public override void Update(){
     base.Update();
+    if(shouldDie) return;
     evalLiftspeed(true);
     if(ridingTrigger){
       if(hasRiders<Player>()) sm.TriggerPlatform();
@@ -272,7 +292,6 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   static Player Hook(On.Celeste.Solid.orig_GetPlayerRider orig, Solid s){
     var p = orig(s);
     if(p!=null) return p;
-    //DebugConsole.Write("Here");
     foreach(StaticMover sm in s.staticMovers) if(sm.Entity is TemplateStaticmover tsm){
       if(tsm.conveyRiding && tsm.hasRiders<Player>()) return UpdateHook.cachedPlayer;
       if(tsm.hasTrigger>0){
@@ -284,6 +303,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   }
   public override void destroy(bool particles){
     base.destroy(particles);
+    shouldDie = true;
   }
   static HookManager hooks = new HookManager(()=>{
     On.Celeste.Platform.MoveHExactCollideSolids += MoveHPlatHook;

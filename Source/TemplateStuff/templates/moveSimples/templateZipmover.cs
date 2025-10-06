@@ -14,7 +14,7 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/TemplateZipmover")]
 public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
   private SoundSource sfx = new SoundSource();
-  public override Vector2 virtLoc=>Position+spos.pos;
+  protected override Vector2 virtLoc=>Position+spos.pos;
   SplineAccessor spos;
   EntityData dat;
   public string channel {get;set;} = null;

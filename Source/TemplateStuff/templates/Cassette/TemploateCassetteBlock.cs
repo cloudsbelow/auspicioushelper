@@ -27,7 +27,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, IChann
   public List<Entity> todraw=new List<Entity>();
   public bool doBoost;
   public bool doRaise;
-  public override Vector2 virtLoc =>Position+Vector2.UnitY*hoffset;
+  protected override Vector2 virtLoc =>Position+Vector2.UnitY*hoffset;
   float hoffset; 
   bool freeze;
   CassetteMaterialLayer layer = null;

@@ -32,7 +32,7 @@ public static class FrostHelperStuff{
         } else {
           twoffset = Vector2.Lerp(Vector2.Zero,delta,t.Eased);
         }
-        d.Set("anchor",parent.virtLoc+toffset+twoffset);
+        d.Set("anchor",parent.roundLoc+toffset+twoffset);
       };
     }
     public void relposTo(Vector2 loc, Vector2 liftspeed){

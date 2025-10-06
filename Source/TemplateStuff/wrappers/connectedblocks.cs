@@ -28,13 +28,14 @@ public class ConnectedBlocks:Entity{
   HashSet<string> permittedDecals = null;
   bool allEnts;
   bool allDecals;
-  bool permits(string s, bool decal)=>decal?(allDecals!=permittedDecals?.Contains(s)):(allEnts!=permittedEnts?.Contains(s));
+  bool excludeSolids;
   bool permits(Entity e){
-    if(e is ConnectedBlocks or TemplateHoldable) return false;
+    if(e is ConnectedBlocks or TemplateHoldable || e is Template t && t.t==null) return false;
     if(e is Decal d){
-      return d.Get<DecalMarker>() is DecalMarker dm && permits(dm.d.Texture.Substring(0,dm.d.Texture.Length-4),true);
-    }
-    return e.SourceData?.Name is {} s && permits(s,false);
+      return d.Get<DecalMarker>() is DecalMarker dm && allDecals!=permittedDecals?.Contains(dm.texstr);
+    } else if(excludeSolids && e is Solid){
+      return e.SourceData?.Name is {} sn && (permittedEnts?.Contains(sn)??false);
+    } else return e.SourceData?.Name is {} s && (permittedEnts?.Contains(s)??false)!=allEnts;
   }
   enum Category {
     fgt, bgt, ent
@@ -53,6 +54,7 @@ public class ConnectedBlocks:Entity{
       if(v.Count>0) permittedDecals = [..v];
       allEnts = d.Bool("getEntities",true);
       allDecals = d.Bool("getDecals",false);
+      excludeSolids = d.Bool("excludeSolids",false);
     }
     levelOffset = offset;
     Depth = -10000000; //low depth type entity
@@ -161,8 +163,13 @@ public class ConnectedBlocks:Entity{
       RemoveSelf();
   }
   void RemChildren(Util.OrderedSet<Entity> all, Vector2 minimum, templateFiller f){
+    HashSet<Entity> donot = new();
+    foreach(var e in all) if(e is Template t) foreach(Entity en in t.GetChildren<Entity>()){
+      if(en!=t || t.parent!=null)donot.Add(en);
+    }
     foreach(var e in all){
       e.RemoveSelf();
+      if(donot.Contains(e)) continue;
       Vector2 fpos = e.Position-minimum+padding*8*Vector2.One;
       if(e is Decal d) f.decals.Add(d.Get<DecalMarker>().withDepthAndForcepos(fpos));
       else if(e.SourceData is EntityData dat)f.ChildEntities.Add(Util.cloneWithForcepos(dat,fpos));
@@ -267,6 +274,7 @@ public class ConnectedBlocks:Entity{
 
 class DecalMarker:Component{
   public DecalData d;
+  public string texstr=>d.Texture.Substring(0,d.Texture.Length-4);
   bool fg;
   public DecalMarker(DecalData data, bool fg):base(false,false){
     this.d=data;

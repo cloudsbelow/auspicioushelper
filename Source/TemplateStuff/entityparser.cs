@@ -159,8 +159,8 @@ anyways i want to praise it more it is wonderful
       case Types.platformbasic: case Types.platformdisobedient:
         if(e is Platform p){
           if(etype == Types.platformdisobedient)
-            t.addEnt(new Wrappers.BasicPlatformDisobedient(p,t,simoffset+d.Position-t.virtLoc.Round()));
-          t.addEnt(new Wrappers.BasicPlatform(p,t,simoffset+d.Position-t.virtLoc.Round()));
+            t.addEnt(new Wrappers.BasicPlatformDisobedient(p,t,simoffset+d.Position-t.roundLoc));
+          t.addEnt(new Wrappers.BasicPlatform(p,t,simoffset+d.Position-t.roundLoc));
           goto done;
         }else{
           DebugConsole.Write("Wrongly classified!!! "+d.Name);
@@ -171,7 +171,7 @@ anyways i want to praise it more it is wonderful
         return e;
       case Types.basic:
         if(e!=null){
-          t.AddBasicEnt(e,simoffset+d.Position-t.virtLoc.Round());
+          t.AddBasicEnt(e,simoffset+d.Position-t.roundLoc);
         }
         goto done;
       case Types.removeSMbasic: case Types.managedBasic:
@@ -183,7 +183,7 @@ anyways i want to praise it more it is wonderful
         }
         if(etype == Types.managedBasic) e.Add(new ChildMarker(t));
         foreach(StaticMover sm in SMRemove) e.Remove(sm);
-        t.AddBasicEnt(e,simoffset+d.Position-t.virtLoc.Round());
+        t.AddBasicEnt(e,simoffset+d.Position-t.roundLoc);
         goto done;
       default:
         goto done;
@@ -410,6 +410,7 @@ anyways i want to praise it more it is wonderful
       case "cutsceneNode": return static (l,d,o,e)=>new CutsceneNode(e, o);
       case "kevins_pc": return static (l,d,o,e)=>new KevinsPC(e, o);
       case "templeGate": return static (l,d,o,e)=>new TempleGate(e,o, d.Name);
+      case "payphone": return static (l,d,o,e)=>new Payphone(e.Position+o);
 
       case "eventTrigger": return static (l,d,o,e)=>new EventTrigger(e, o);
       case "musicFadeTrigger": return static (l,d,o,e)=>new MusicFadeTrigger(e, o);

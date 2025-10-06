@@ -17,7 +17,7 @@ public class TemplateMoonblock:Template{
   float sinkSpeed;
   float dashmagn;
   Vector2 offset;
-  public override Vector2 virtLoc => Position+offset;
+  protected override Vector2 virtLoc => Position+offset;
   float sinkTimer = 0;
   float ylerp = 0;
   float sinephase =0;

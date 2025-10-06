@@ -18,7 +18,7 @@ public class TemplateSwapblock:Template{
     set=>spos.t=value;
   }
   float target=0;
-  public override Vector2 virtLoc=>Position+spos.pos;
+  protected override Vector2 virtLoc=>Position+spos.pos;
   SplineAccessor spos;
   EntityData dat;
   Vector2 offset;

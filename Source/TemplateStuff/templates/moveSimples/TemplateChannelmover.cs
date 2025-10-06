@@ -14,7 +14,7 @@ public class TemplateChannelmover:Template, IChannelUser{
   float asym;
   public string channel {get;set;}
   SplineAccessor spos;
-  public override Vector2 virtLoc => Position+spos.pos;
+  protected override Vector2 virtLoc => Position+spos.pos;
   bool toggle = false;
   bool altern = false;
   bool doshake = false;

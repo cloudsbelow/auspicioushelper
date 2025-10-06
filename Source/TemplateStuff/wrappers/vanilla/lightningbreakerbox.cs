@@ -12,7 +12,7 @@ public class LightningBreakerW:LightningBreakerBox,ISimpleEnt{
   public Vector2 toffset{get;set;}
   public LightningBreakerW(EntityData e, Vector2 o):base(e,o){}
   public override void Update() {
-    start = parent.virtLoc+toffset;
+    start = parent.roundLoc+toffset;
     base.Update();
     if (!Collidable){
       sink = Calc.Approach(sink, 0, 2f * Engine.DeltaTime);

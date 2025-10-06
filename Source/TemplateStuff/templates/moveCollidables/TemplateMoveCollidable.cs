@@ -20,7 +20,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
   public bool triggered;
   Vector2 movementCounter;
   public Vector2 exactPosition=>Position+movementCounter;
-  public override Vector2 virtLoc => dislocated?Position.Round():Position;
+  protected override Vector2 virtLoc => dislocated?Position.Round():Position;
   public bool useOwnUncollidable = false;
   bool hitJumpthrus;
   bool moveThroughDashblocks;
@@ -53,7 +53,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     prop |= Propagation.Shake;
     bool old = getSelfCol();
     setCollidability(false);
-    relposTo(parent?.virtLoc??fallback??Position, Vector2.Zero);
+    relposTo(parent?.roundLoc??fallback??Position, Vector2.Zero);
     setCollidability(old);
   }
   public class QueryBounds {

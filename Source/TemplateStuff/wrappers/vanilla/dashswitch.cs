@@ -39,7 +39,7 @@ public class DashSwitchW:DashSwitch, ISimpleEnt{
     base.Awake(scene);
   }
   public override void Update(){
-    startY = parent.virtLoc.Y+origtoffset.Y;
+    startY = parent.roundLoc.Y+origtoffset.Y;
     base.Update();
   }
   Vector2 lpos {get;set;}

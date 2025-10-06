@@ -52,7 +52,7 @@ public class BasicMultient:ITemplateChild{
   public BasicMultient(Template t){
     parent = t;
     depthoffset = t.depthoffset;
-    lloc = t.virtLoc;
+    lloc = t.roundLoc;
   }
   public void add(Entity e, Vector2 offset){
     ents.Add(new EntEnt(e,offset));
@@ -111,7 +111,7 @@ public class BasicMultient:ITemplateChild{
     orig(d,s);
     if(d.Get<ChildMarker>()?.parent is Template t){
       if(decalSolids.get(d) is {} l)foreach(Solid solid in l){
-        t.addEnt(new BasicPlatform(solid,t,solid.Position-t.virtLoc));
+        t.addEnt(new BasicPlatform(solid,t,solid.Position-t.roundLoc));
       }
     }
   }

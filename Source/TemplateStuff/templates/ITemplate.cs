@@ -78,7 +78,8 @@ public class Template:Entity, ITemplateChild{
       Inside = 1<<4,
       All = Riding|DashHit|Shake|Inside
   }
-  public virtual Vector2 virtLoc=>Position;
+  protected virtual Vector2 virtLoc=>Position;
+  public Vector2 roundLoc=>virtLoc.Round();
   public Vector2 ownLiftspeed;
   public virtual Vector2 gatheredLiftspeed=>parent==null?ownLiftspeed:ownLiftspeed+parent.gatheredLiftspeed;
   public Vector2 parentLiftspeed=>parent==null?Vector2.Zero:parent.gatheredLiftspeed;
@@ -122,8 +123,9 @@ public class Template:Entity, ITemplateChild{
     childRelposTo(virtLoc, parentLiftspeed+ownLiftspeed);
   }
   public void childRelposTo(Vector2 loc, Vector2 liftspeed){
+    Vector2 rounded = loc.Round();
     foreach(ITemplateChild c in children){
-      c.relposTo(loc, liftspeed);
+      c.relposTo(c is Template?loc:rounded, liftspeed);
     }
   }
 
@@ -182,7 +184,7 @@ public class Template:Entity, ITemplateChild{
       }
     }
     c.addTo(Scene??addingScene);
-    c.setOffset(virtLoc.Round());
+    c.setOffset(roundLoc);
   }
   public void restoreEnt(ITemplateChild c){
     c.parent = this;

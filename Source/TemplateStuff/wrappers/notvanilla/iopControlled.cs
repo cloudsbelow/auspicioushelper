@@ -69,7 +69,7 @@ public class IopControlled:ITemplateChild{
     if(AddTo!=null)AddTo(s);
     own.parent.set(iopTarget,parent);
     List<Entity> l_ = new();
-    lloc = parent.virtLoc;
+    lloc = parent.roundLoc;
     if(AddSelf!=null)AddSelf(l_);
     else l_.Add(e);
     foreach(Entity e in l_){
