@@ -75,34 +75,23 @@ internal static class SpeedrunToolIop{
     }
   };
 
-  internal static void srtloaduseasm(){
-    DebugConsole.Write("Found speedruntool, setting up");
-    var stmodule = Everest.Modules.FirstOrDefault(m=>m.Metadata.Name == "SpeedrunTool");
-    if(stmodule == null) return;
-    interoptype = stmodule.GetType().Assembly.GetType("Celeste.Mod.SpeedrunTool.SpeedrunToolInterop+SaveLoadExports");
-    if(interoptype == null) return;
-    do{
-      MethodInfo registerfn = interoptype.GetMethod("RegisterStaticTypes");
-      if(registerfn == null) break;
-      try {
-        foreach(var o in staticTypes){
-          toDeregister.Add(registerfn.Invoke(null, o));
+  [AttributeUsage(AttributeTargets.Field)]
+  public class Static : Attribute { }
+  static void SetupStaticAttr(){
+    Dictionary<Type,string[]> d = new();
+    foreach(var sr in staticTypes) d[(Type)sr[0]]=(string[])sr[1];
+    foreach(var t in typeof(auspicioushelperModule).Assembly.GetTypesSafe()){
+      List<string> st = d.TryGetValue(t,out var da)?da.ToList():new();
+      foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)){
+        if(f.IsDefined(typeof(Static))){
+          if(!f.IsStatic) DebugConsole.WriteFailure("SrtIOP.Static attribute applied to non-static class",true);
+          else if(!st.Contains(f.Name)) st.Add(f.Name);
         }
-      } catch (Exception ex) {
-        DebugConsole.WriteFailure($"Failed to register static types: {ex}");
       }
-    }while(false);
-    do{
-      MethodInfo registerfn = interoptype.GetMethod("RegisterSaveLoadAction");
-      if(registerfn == null)break;
-      try {
-        toDeregister.Add(registerfn.Invoke(null, new object[]{
-          null, (object)loadState, null, null, null, null
-        }));
-      } catch(Exception ex){
-        DebugConsole.WriteFailure($"Failed to register action: {ex}");
-      }
-    }while(false);
+      if(st.Count==0) continue;
+      DebugConsole.Write($"(SRT) Type {t.FullName}: adding static fields [{string.Join(", ",st)}]");
+      toDeregister.Add(SpeedrunToolImport.RegisterStaticTypes(t, st.ToArray()));
+    }
   }
 
   #pragma warning disable CS0649
@@ -125,11 +114,12 @@ internal static class SpeedrunToolIop{
     DebugConsole.Write("Doing srt setup");
     typeof(SpeedrunToolImport).ModInterop();
     if(SpeedrunToolImport.RegisterStaticTypes!=null){
-      try{
-        foreach(var o in staticTypes) toDeregister.Add(SpeedrunToolImport.RegisterStaticTypes((Type)o[0], (string[])o[1]));
-      } catch(Exception ex){
-        DebugConsole.Write($"Failed to register static types: {ex}");
-      }
+      // try{
+      //   foreach(var o in staticTypes) toDeregister.Add(SpeedrunToolImport.RegisterStaticTypes((Type)o[0], (string[])o[1]));
+      // } catch(Exception ex){
+      //   DebugConsole.Write($"Failed to register static types: {ex}");
+      // }
+      SetupStaticAttr();
     }
     if(SpeedrunToolImport.RegisterSaveLoadAction!=null){
       try{

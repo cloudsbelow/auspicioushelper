@@ -29,11 +29,12 @@ public class ConnectedBlocks:Entity{
   bool allEnts;
   bool allDecals;
   bool excludeSolids;
+  bool excludeTriggers;
   bool permits(Entity e){
     if(e is ConnectedBlocks or TemplateHoldable || e is Template t && t.t==null) return false;
     if(e is Decal d){
       return d.Get<DecalMarker>() is DecalMarker dm && allDecals!=permittedDecals?.Contains(dm.texstr);
-    } else if(excludeSolids && e is Solid){
+    } else if((excludeSolids && e is Solid) || (excludeTriggers && e is Trigger)){
       return e.SourceData?.Name is {} sn && (permittedEnts?.Contains(sn)??false);
     } else return e.SourceData?.Name is {} s && (permittedEnts?.Contains(s)??false)!=allEnts;
   }
@@ -55,6 +56,7 @@ public class ConnectedBlocks:Entity{
       allEnts = d.Bool("getEntities",true);
       allDecals = d.Bool("getDecals",false);
       excludeSolids = d.Bool("excludeSolids",false);
+      excludeTriggers = d.Bool("excludeTriggers",false);
     }
     levelOffset = offset;
     Depth = -10000000; //low depth type entity

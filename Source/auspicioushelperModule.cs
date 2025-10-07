@@ -149,6 +149,7 @@ public class auspicioushelperModule : EverestModule {
         SpringTracker.hooks.enable();
         ChannelState.hooks.enable();
         PartialTiles.hooks.enable();
+        RecolorTiles.hooks.enable();
         BackdropCapturer.hooks.enable();
         TemplateBehaviorChain.setup();
         DecalMarker.hooks.enable();

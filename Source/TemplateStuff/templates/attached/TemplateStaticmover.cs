@@ -68,6 +68,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   bool convertTriggering;
   bool firstZeroAfter;
   int hasTrigger=0;
+  Vector2 smoffset = Vector2.Zero;
   
   public TemplateStaticmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateStaticmover(EntityData d, Vector2 offset, int depthoffset):base(d,d.Position+offset,depthoffset){
@@ -97,6 +98,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     }));
     shakeHooks.enable();
     TemplateMoveCollidable.triggerHooks.enable();
+    if(d.Nodes?.Length>=1) smoffset = d.Nodes[0]-d.Position;
   }
   void evalLiftspeed(bool precess = true){
     float mX=0;
@@ -165,7 +167,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
         if(!enableUnrooted) UpdateHook.AddAfterUpdate(()=>make(Scene));
       },
       SolidChecker=(Solid s)=>{
-        bool check = !doNot.Contains(s) && s.CollidePoint(Position);
+        bool check = !doNot.Contains(s) && s.CollidePoint(Position+smoffset);
         if(!check) return false;
         if(!s.Collidable){
           setVisCol(layer!=null,false);

@@ -18,6 +18,7 @@ entity.placements = {
         getEntities=true,
         getDecals=false,
         excludeSolids=false,
+        excludeTriggers=true,
     }
   }
 }

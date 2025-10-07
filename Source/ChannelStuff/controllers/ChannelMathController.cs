@@ -111,7 +111,10 @@ public class ChannelMathController:Entity{
     if(notifyingChannels!=null)foreach(var ch in notifyingChannels){
       if(!used.Contains(ch))Add(new ChannelTracker(ch,(val)=>changeReg(-1,val)));
     }
-    if(runWhenAwake)Add(activeCoroutine = new Coroutine(run8bitsimple()));
+    if(runWhenAwake){
+      Add(activeCoroutine = new Coroutine(run8bitsimple()));
+      activeCoroutine.Update();
+    }
   }
   bool locked;
   Coroutine activeCoroutine;

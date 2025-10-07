@@ -24,6 +24,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
   bool setTch=false;
   bool triggeredByRiding = true;
   UpdateHook upd;
+  float[] delays;
   public TemplateFallingblock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
     basefalldir = d.Attr("direction") switch{
@@ -42,6 +43,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     gravity = d.Float("gravity", 500);
     setTch = d.Bool("set_trigger_channel",false) && !string.IsNullOrWhiteSpace(tch);
     triggeredByRiding = d.Bool("triggeredByRiding",true);
+    delays = Util.csparseflat(d.Attr("customFallTiming",""),0.25f,0.1f);
 
     Add(new Coroutine(Sequence()));
     if(setTch)Add(upd = new UpdateHook());
@@ -56,18 +58,18 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     disconnect();
     //emancipate();
     parent?.GetFromTree<IRemovableContainer>()?.RemoveChild(this);
-    shake(0.2f);
+    shake(delays[0]);
     Audio.Play(ShakeSfx,Position);
-    yield return 0.25f;
+    yield return delays[0];
     trying:
       yield return null;
       Query qs = getq(falldir);
       if(TestMove(qs, 1, falldir)){
         speed = 0;
         if(!first){
-          shake(0.2f);
+          shake(delays[1]);
           Audio.Play(ShakeSfx,Position);
-          yield return 0.1f;
+          yield return delays[1];
           goto falling;
         }
       } else goto trying;

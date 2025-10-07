@@ -6,6 +6,8 @@ local entity = {}
 
 entity.name = aelperLib.register_template_name("auspicioushelper/TemplateStaticmover")
 entity.depth = -13000
+entity.nodeLimits = {0,1}
+entity.nodeLineRenderType = "line"
 
 entity.placements = {
   {

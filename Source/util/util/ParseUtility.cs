@@ -29,6 +29,17 @@ public static partial class Util{
       (float)((rgba>>shift)&mask)*mult, 
       (float)(rgba&mask)*mult);
   }
+  public struct PreciseColor{
+    float r;
+    float g;
+    float b;
+    float a;
+    public PreciseColor(float r, float g, float b, float a){
+      this.r=r;this.g=g;this.b=b;this.a=a;
+    }
+    public static implicit operator Color(PreciseColor o)=>new Color(o.r,o.g,o.b,o.a);
+    //public static PreciseColor operator +(PreciseColor o)=>new PreciseColor(r+o.r,b+o.b,g+o)
+  }
   public static bool tryGetStr(this EntityData d, string key, out string str){
     str = d.Attr(key,"");
     return !string.IsNullOrWhiteSpace(str);
@@ -228,6 +239,15 @@ public static partial class Util{
       float.TryParse(s, out var l);
       return l;
     }).ToArray();
+  }
+  public static float[] csparseflat(string str, params float[] defaults){
+    if(string.IsNullOrWhiteSpace(str)) return defaults;
+    float[] res = new float[defaults.Length];
+    var l = str.Split(",");
+    for(int i=0; i<defaults.Length; i++){
+      res[i]=(i<l.Length && float.TryParse(l[i], out float f))?f:defaults[i];
+    }
+    return res;
   }
   public static int[] ciparseflat(string str){
     if(string.IsNullOrWhiteSpace(str)) return [];

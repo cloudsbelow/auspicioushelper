@@ -18,6 +18,7 @@ entity.placements = {
       respawnTime=1.6,
       triggerable=true,
       ridingTriggers=true,
+      disconnect=true,
     }
   }
 }
