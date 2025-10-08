@@ -17,7 +17,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateCassetteBlock")]
 [Tracked(true)]
-public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, IChannelUser, ITemplateChild{
+public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITemplateChild{
   
   public string channel{get;set;}
   enum State {
@@ -40,7 +40,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, IChann
     doBoost = d.Bool("do_boost",false);
   }
   public override void addTo(Scene scene) {
-    int num = ChannelState.watch(this);
+    int num = new ChannelTracker(channel, setChVal).AddTo(this).value;
     if(num == 0 && doBoost) hoffset=2;
     base.addTo(scene);
     CassetteMaterialLayer.layers.TryGetValue(channel,out layer);

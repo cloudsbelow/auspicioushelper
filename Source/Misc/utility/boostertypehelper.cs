@@ -24,6 +24,7 @@ public interface IBooster{
     lastUsed = (IBooster) s;
     p.Boost(inst);
   }
+  [Import.SpeedrunToolIop.Static]
   static IBooster lastUsed;
   static void boostHandler(On.Celeste.Booster.orig_PlayerBoosted orig, Booster self, Player p, Vector2 dir){
     if(self is SentinalBooster){

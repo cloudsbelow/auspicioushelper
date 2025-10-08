@@ -195,9 +195,12 @@ public static class ChannelState{
       foreach(var li in l2) li.calc.Remove();
     }
   }
+  [Import.SpeedrunToolIop.Static]
   private static Dictionary<string, Deps> deps = new();
+  [Import.SpeedrunToolIop.Static]
   private static Dictionary<string, int> channelStates = new Dictionary<string, int>();
-  private static Dictionary<string, List<IChannelUser>> watching = new Dictionary<string, List<IChannelUser>>();
+  [Import.SpeedrunToolIop.Static]
+  private static Dictionary<string, ChannelTracker.ChannelTrackerList> watching = new();
 
   public static int readChannel(string ch)=>_readChannel(Util.removeWhitespace(ch));
   private static int _readChannel(string ch){
@@ -213,11 +216,7 @@ public static class ChannelState{
   static void SetChannelRaw(string ch, int state){
     if(_readChannel(ch)==state) return;
     channelStates[ch] = state;
-    if (watching.TryGetValue(ch, out var list)) {
-      foreach(IChannelUser b in list.ToArray()){
-        b.setChVal(state);
-      }
-    }
+    if (watching.TryGetValue(ch, out var list)) list.Apply(state);
     if(deps.TryGetValue(ch, out var ms))ms.Update(state);
   }
   public static void SetChannel(string ch, int state, bool fromInterop=false){
@@ -229,19 +228,14 @@ public static class ChannelState{
       if(ch[0]=='#')(Engine.Instance.scene as Level)?.Session.SetCounter(ch.Substring(1),state);
     }
   }
-  public static void unwatchNow(IChannelUser b){
-    if (watching.TryGetValue(Util.removeWhitespace(b.channel), out var list)) {
-      list.Remove(b);
-    }
-  }
-  public static int watch(IChannelUser b){
+  public static int watch(ChannelTracker b){
     if(b.channel == null) return 0;
     string ch = Util.removeWhitespace(b.channel);
     if (!watching.TryGetValue(ch, out var list)) {
-      list = new List<IChannelUser>();
+      list = new();
       watching[ch] = list;
     }
-    list.Add(b);
+    list.Add(b); 
     return _readChannel(ch);
   }
   static void clearModifiers(){
@@ -275,17 +269,7 @@ public static class ChannelState{
     clearModifiers();
     List<string> toRemove = new List<string>();
     foreach(var pair in watching){
-      var newlist = new List<IChannelUser>();
-      foreach(IChannelUser e in pair.Value){
-        Entity en = (e as Entity)??((e as ChannelTracker)?.Entity);
-        if(en!=null && (en.TagCheck(Tags.Persistent) || en.TagCheck(Tags.Global))){
-          newlist.Add(e);
-        }
-      }
-      if(newlist.Count>0){
-        watching[pair.Key] = newlist;
-        addModifier(pair.Key);
-      }
+      if(pair.Value.RemoveTemp())addModifier(pair.Key);
       else toRemove.Add(pair.Key);
     }
     foreach(var ch in toRemove) watching.Remove(ch);

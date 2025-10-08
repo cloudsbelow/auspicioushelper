@@ -82,7 +82,7 @@ internal class MaterialController:Entity, IDeclareLayers{
     DebugConsole.Write($"Loading material shader from {path} as {identifier}");
     if(!loadedMats.ContainsKey(identifier)){
       if(identifier == "auspicioushelper/ChannelMatsEN###"){
-        l = loadedMats[identifier] = (ChannelBaseEntity.layerA = new ChannelMaterialsA());
+        l = loadedMats[identifier] = (ChannelMaterialsA.layerA = new ChannelMaterialsA());
       } else {
         l = UserLayer.make(e);
         if(l!=null){

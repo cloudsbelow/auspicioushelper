@@ -10,7 +10,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [Tracked]
 [CustomEntity("auspicioushelper/ChannelTheo")]
-public class ChannelTheo:TheoCrystal, IChannelUser{
+public class ChannelTheo:TheoCrystal{
   public string channel {get; set;}
   public bool active=false;
   public bool switchThrown;
@@ -48,8 +48,7 @@ public class ChannelTheo:TheoCrystal, IChannelUser{
   }
   public override void Added(Scene scene){
     base.Added(scene);
-    ChannelState.watch(this);
-    setChVal(ChannelState.readChannel(channel));
+    Add(new ChannelTracker(channel, setChVal, true));
   }
   public void setChVal(int val){
     active = (val&1)==1;

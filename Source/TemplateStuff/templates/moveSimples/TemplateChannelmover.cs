@@ -9,7 +9,7 @@ using System;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateChannelmover")]
-public class TemplateChannelmover:Template, IChannelUser{
+public class TemplateChannelmover:Template{
   float relspd;
   float asym;
   public string channel {get;set;}
@@ -61,7 +61,7 @@ public class TemplateChannelmover:Template, IChannelUser{
     }
   }
   public override void addTo(Scene scene){
-    target = low = ChannelState.watch(this);
+    target = low = new ChannelTracker(channel, setChVal).AddTo(this).value;
     spos = new(SplineEntity.GetSpline(dat, SplineEntity.Types.simpleLinear), Vector2.Zero, true);
     spos.set(target);
     base.addTo(scene);

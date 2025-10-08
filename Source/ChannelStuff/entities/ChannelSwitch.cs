@@ -10,7 +10,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [Tracked]
 [CustomEntity("auspicioushelper/ChannelSwitch")]
-public class ChannelSwitch:ChannelBaseEntity {
+public class ChannelSwitch:Entity {
   public bool onOnly;
   public bool offOnly;
   public int onVal;
@@ -28,6 +28,7 @@ public class ChannelSwitch:ChannelBaseEntity {
     }
     return false;
   }
+  string channel;
 
   public ChannelSwitch(EntityData data, Vector2 offset):base(data.Position+offset){
     Depth=5;
@@ -57,7 +58,7 @@ public class ChannelSwitch:ChannelBaseEntity {
   public override void Added(Scene scene){
     base.Added(scene);
     //DebugConsole.Write("Added switch");
-    on = getVal(ChannelState.readChannel(channel));
+    on = getVal(new ChannelTracker(channel, setChVal).AddTo(this).value);
     if(usable()){
       sprite.Play(on?"iceLoop":"hotLoop");
     } else {
@@ -71,7 +72,7 @@ public class ChannelSwitch:ChannelBaseEntity {
     else if(onOnly) return true;
     else return val!=0;
   }
-  public override void setChVal(int val){
+  public void setChVal(int val){
     bool nval = getVal(val);
     if(nval == on) return;
     on=nval;

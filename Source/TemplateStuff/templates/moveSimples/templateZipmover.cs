@@ -12,7 +12,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateZipmover")]
-public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
+public class TemplateZipmover:Template, ITemplateTriggerable{
   private SoundSource sfx = new SoundSource();
   protected override Vector2 virtLoc=>Position+spos.pos;
   SplineAccessor spos;
@@ -66,7 +66,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable, IChannelUser{
   UpdateHook upd;
   public override void Added(Scene scene) {
     base.Added(scene);
-    if(channel!=null) ChannelState.watch(this);
+    if(channel!=null) Add(new ChannelTracker(channel, setChVal));
     
   }
   public void setChVal(int val){

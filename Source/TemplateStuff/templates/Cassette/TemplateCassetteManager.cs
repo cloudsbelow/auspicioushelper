@@ -15,7 +15,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateCassetteManager","auspicioushelper/TemplateCassetteManagerSimple")]
 [Tracked]
-public class TemplateCassetteManager:Entity, IChannelUser, IDeclareLayers{
+public class TemplateCassetteManager:Entity, IDeclareLayers{
   Dictionary<string, string> material = null;
   static Dictionary<string,string> nameTrans = new Dictionary<string, string>{
     {"small","event:/game/general/cassette_block_switch_1"},
@@ -155,10 +155,7 @@ public class TemplateCassetteManager:Entity, IChannelUser, IDeclareLayers{
     if(subordinate){
       return;
     }
-    if(useChannel){
-      setChVal(ChannelState.readChannel(channel));
-      ChannelState.watch(this);
-    } 
+    if(useChannel) Add(new ChannelTracker(channel, setChVal, true));
     if(!useChannel && active){
       runToCurrent();
     }

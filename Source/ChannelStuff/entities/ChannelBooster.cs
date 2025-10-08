@@ -15,7 +15,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [Tracked]
 [CustomEntity("auspicioushelper/ChannelBooster")]
-public class ChannelBooster : ChannelBaseEntity, IMaterialEnt, ISimpleEnt, IBooster{
+public class ChannelBooster : Entity, IMaterialEnt, ISimpleEnt, IBooster{
   public void parentChangeStat(int vis, int col, int act){
     if(vis!=0) Visible=vis>0;
     if(col!=0) Collidable=col>0;
@@ -117,7 +117,7 @@ public class ChannelBooster : ChannelBaseEntity, IMaterialEnt, ISimpleEnt, IBoos
   public Color iinnerColor;
   bool trigger;
   bool givels;
-
+  string channel;
 
 
   public ChannelBooster(EntityData data, Vector2 offset, EntityID _id): base(data.Position+offset){
@@ -156,7 +156,7 @@ public class ChannelBooster : ChannelBaseEntity, IMaterialEnt, ISimpleEnt, IBoos
   public override void Added(Scene scene)
   {
     base.Added(scene);
-    layerA?.addEnt(this);
+    ChannelMaterialsA.layerA?.addEnt(this);
     Image image = new Image(GFX.Game["objects/booster/outline"]);
     image.CenterOrigin();
     image.Color = Color.White * 0.75f;
@@ -167,7 +167,7 @@ public class ChannelBooster : ChannelBaseEntity, IMaterialEnt, ISimpleEnt, IBoos
     outline.Add(new MirrorReflection());
     scene.Add(outline);
     
-    setChVal(ChannelState.readChannel(channel));
+    Add(new ChannelTracker(channel, setChVal, true));
   }
   Player insideplayer;
   private void OnPlayer(Player player){
@@ -287,7 +287,7 @@ public class ChannelBooster : ChannelBaseEntity, IMaterialEnt, ISimpleEnt, IBoos
     }
     if(dirty && !BoostingPlayer) setChVal(ChannelState.readChannel(channel));
   }
-  public override void setChVal(int val){
+  void setChVal(int val){
     if(dirty = BoostingPlayer) return;
     currentState = val & 1;
     

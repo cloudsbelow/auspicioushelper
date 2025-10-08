@@ -9,7 +9,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 [Tracked]
 [CustomEntity("auspicioushelper/ChannelMover")]
-public class ChannelMover:Solid, IChannelUser, IMaterialEnt{
+public class ChannelMover:Solid, IMaterialEnt{
   public Vector2 p0;
   public Vector2 p1;
   public Vector2 loc => prog*p1+(1-prog)*p0;
@@ -34,9 +34,9 @@ public class ChannelMover:Solid, IChannelUser, IMaterialEnt{
   }
   public override void Added(Scene scene){
     base.Added(scene);
-    ChannelBaseEntity.layerA?.addEnt(this);
-    ChannelState.watch(this);
-    dir = (ChannelState.readChannel(channel) &1)==1?1:-1*asym;
+    ChannelMaterialsA.layerA?.addEnt(this);
+    ChannelTracker ct = new ChannelTracker(channel, setChVal).AddTo(this);
+    dir = (ct.value &1)==1?1:-1*asym;
     Position = dir==1?p1:p0;
     prog = dir == 1?1:0;
   }

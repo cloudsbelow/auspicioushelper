@@ -12,6 +12,8 @@ public class ChannelMaterialsA:BasicMaterialLayer, CachedUserMaterial{
   private List<IMaterialObject> bgItemsDraw = new List<IMaterialObject>();
   public RenderTargetPool.RenderTargetHandle bgtex = new(false);
   public bool enabled=>info.enabled;
+  [Import.SpeedrunToolIop.Static]
+  public static ChannelMaterialsA layerA;
   //public override RenderTarget2D outtex => bgtex;
   public ChannelMaterialsA():base([null,auspicioushelperGFX.LoadShader("emptynoise/channelmats")],new LayerFormat{
     depth = -13000

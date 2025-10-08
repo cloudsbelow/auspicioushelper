@@ -12,7 +12,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 
 [CustomEntity("auspicioushelper/ChannelJelly")]
-public class ChannelJelly : Glider, IChannelUser {
+public class ChannelJelly : Glider {
 
   JumpThru platform;
   public enum JellyState {
@@ -80,9 +80,7 @@ public class ChannelJelly : Glider, IChannelUser {
   public override void Added(Scene scene){
     base.Added(scene);
     scene.Add(platform = new JumpThru(Position, platformWidth, false));
-    ChannelState.watch(this);
-    setChVal(ChannelState.readChannel(channel) & 1);
-    //DebugConsole.Write("called added");
+    Add(new ChannelTracker(channel, setChVal, true));
   }
   public override void Update(){
     if(cs == JellyState.normal){

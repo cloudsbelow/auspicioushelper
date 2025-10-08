@@ -10,13 +10,14 @@ using Celeste.Mod.Entities;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/ChannelSprite")]
-public class ChannelSprite:ChannelBaseEntity{
+public class ChannelSprite:Entity{
   public int num;
   public Sprite sprite;
   public enum edgeTypes{
     loop, clamp, hide,
   }
   edgeTypes ty; 
+  string channel;
   public ChannelSprite(EntityData d, Vector2 offset):base(d.Position+offset){
     channel=d.Attr("channel","");
     Add(sprite=GFX.SpriteBank.Create(d.Attr("xml_spritename")));
@@ -38,7 +39,7 @@ public class ChannelSprite:ChannelBaseEntity{
   private bool checkSolid(Solid solid){
     return Collide.CheckPoint(solid, Position);
   }
-  public override void setChVal(int val){
+  public void setChVal(int val){
     if(val<0 || val>=num){
       switch(ty){
         case edgeTypes.loop: val=(val%num+num)%num; break;
@@ -53,6 +54,6 @@ public class ChannelSprite:ChannelBaseEntity{
   }
   public override void Added(Scene scene){
     base.Added(scene);
-    setChVal(ChannelState.readChannel(channel));
+    Add(new ChannelTracker(channel, setChVal, true));
   }
 }

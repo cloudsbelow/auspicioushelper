@@ -24,8 +24,11 @@ public class PixelLeniencyTrigger:Trigger{
   }
   static Ruleset defaultRules=>new(){staticSlip=0, fallingSlip=0, maxGroundedStep=0, maxStepSlope=0, fallDepth=3};
   //static Ruleset regularRules=>new(){staticSlip=0, fallingSlip=0, maxGroundedStep=0, maxStepSlope=0};
+  [Import.SpeedrunToolIop.Static]
   static Ruleset curRules = defaultRules;
+  [Import.SpeedrunToolIop.Static]
   static LinkedList<Ruleset> overRules = new();
+  [Import.SpeedrunToolIop.Static]
   static Ruleset appliedRules = defaultRules;
   public Ruleset rules;
   bool temp;
