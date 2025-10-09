@@ -35,8 +35,15 @@ public class ChannelTracker : OnAnyRemoveComp{
     List<ChannelTracker> deferredAdd = new();
     List<ChannelTracker> deferredRemove = new();
     bool locked = false;
+    Queue<int> ToApply = new();
+    int lval = 0;
     public void Apply(int n){
+      if(locked){
+        ToApply.Enqueue(n);
+        return;
+      }
       locked = true;
+      lval = n;
       if(toRemove.Count==0) foreach(var ct in list)ct.setChVal(n);
       else {
         List<ChannelTracker> nlist = new();
@@ -55,8 +62,13 @@ public class ChannelTracker : OnAnyRemoveComp{
       if(deferredAdd.Count==0 && deferredRemove.Count==0) return;
       foreach(var v in deferredAdd) Add(v);
       deferredAdd.Clear();
-      foreach(var v in deferredRemove) Add(v);
+      foreach(var v in deferredRemove) Remove(v);
       deferredRemove.Clear();
+      while(ToApply.Count>0){
+        int n = ToApply.Dequeue();
+        if(n==lval) continue;
+        Apply(n);
+      }
     }
     public void Remove(ChannelTracker c){
       if(locked){
@@ -93,9 +105,11 @@ public class ChannelTracker : OnAnyRemoveComp{
       }
       if(ct.inList!=null){
         DebugConsole.WriteFailure("Rewatching watched channel tracker");
+        return;
       }
       list.Add(ct);
       ct.inList = this;
     }
+    public int Count=>list.Count;
   }
 }

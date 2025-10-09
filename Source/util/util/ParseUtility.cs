@@ -50,6 +50,16 @@ public static partial class Util{
     e.Position = v;
     return e;
   }
+  static public EntityData cloneWithForceposOffset(this EntityData a, Vector2 forcepos){
+    Vector2 offset = a.Position-forcepos;
+    EntityData e = shallowCopy(a);
+    if(e.Nodes!=null){
+      e.Nodes = (Vector2[])e.Nodes.Clone();
+      for(int i=0; i<e.Nodes.Length; i++) e.Nodes[i]=e.Nodes[i]-offset; 
+    }
+    e.Position = forcepos;
+    return e;
+  }
   public static string removeWhitespace(string s){
     if(s==null) return null;
     Span<char> buf = stackalloc char[s.Length];

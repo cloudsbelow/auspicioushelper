@@ -289,6 +289,15 @@ public class Template:Entity, ITemplateChild{
       }
     }
   }
+  public List<Entity> GetChildren(Func<Template, bool> prop, List<Entity> addTo = null) {
+    addTo??=new();
+    foreach(var c in children){
+      if(c is Template te){
+        if(prop(te)) te.GetChildren(prop,addTo);
+      } else c.AddAllChildren(addTo);
+    }
+    return addTo;
+  }
   public void MarkChildrenImmediate(){
     List<Entity> list = new();
     foreach(ITemplateChild c in children){

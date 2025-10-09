@@ -8,7 +8,8 @@ public class EnterExitTriggerTrigger:Trigger{
   Vector2 n1;
   Vector2 n2;
   public EnterExitTriggerTrigger(EntityData d, Vector2 offset):base(d,offset){
-
+    n1 = d.Nodes[0]+offset;
+    n2 = d.Nodes[1]+offset;
   }
   public override void OnEnter(Player p){
     base.OnEnter(p);

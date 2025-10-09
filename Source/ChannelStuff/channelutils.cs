@@ -15,7 +15,7 @@ public static class ChannelState{
   struct Modifier{
       enum Ops{
       none, not, lnot, xor, and, or, add, sub, mult, div, mrecip, mod, safemod, 
-      min, max, ge, le, gt, lt, eq, ne,rshift, lshift, shiftr, shiftl
+      min, max, ge, le, gt, lt, eq, ne,rshift, lshift, shiftr, shiftl, abs
     }
     int y;
     Ops op;
@@ -49,6 +49,7 @@ public static class ChannelState{
         case ">>":op=Ops.rshift; break;
         case "x<<":op=Ops.shiftl; break;
         case "x>>":op=Ops.shiftr; break;
+        case "abs":op=Ops.abs; break;
         default: success = false; break;
       }
       if(!success && s.Length>0){
@@ -81,6 +82,7 @@ public static class ChannelState{
         case Ops.rshift: return x>>y;
         case Ops.shiftl: return y<<x;
         case Ops.shiftr: return y>>x;
+        case Ops.abs: return Math.Abs(x);
         default: return x;
       }
     }
@@ -402,5 +404,14 @@ public static class ChannelState{
   public static void ClearChCommand(string channel){
     ForceRemove(channel);
     Engine.Commands.Log($"Cleared {channel}");
+  }
+  [Command("auspDebug_numWatched", "Print number of watched things per channel")]
+  public static void CountDebCmd(){
+    Engine.Commands.Log("");
+    Engine.Commands.Log("===CHANNEL COUNTS===");
+    foreach(var pair in watching){
+      Engine.Commands.Log($"{pair.Key} {pair.Value.Count}");
+    }
+    Engine.Commands.Log("===================");
   }
 }

@@ -174,7 +174,7 @@ public class ConnectedBlocks:Entity{
       if(donot.Contains(e)) continue;
       Vector2 fpos = e.Position-minimum+padding*8*Vector2.One;
       if(e is Decal d) f.decals.Add(d.Get<DecalMarker>().withDepthAndForcepos(fpos));
-      else if(e.SourceData is EntityData dat)f.ChildEntities.Add(Util.cloneWithForcepos(dat,fpos));
+      else if(e.SourceData is EntityData dat)f.ChildEntities.Add(Util.cloneWithForceposOffset(dat,fpos));
       UpdateHook.EnsureUpdateAny();
     }
   }
