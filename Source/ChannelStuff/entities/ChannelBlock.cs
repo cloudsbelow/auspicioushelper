@@ -8,7 +8,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [Tracked]
 [CustomEntity("auspicioushelper/ChannelBlock")]
-public class ChannelBlock:Entity, IMaterialEnt {
+public class ChannelBlock:Entity, ICustomMatRender {
   public bool inverted;
   public float width;
   public float height;
@@ -33,7 +33,9 @@ public class ChannelBlock:Entity, IMaterialEnt {
   }
   public override void Added(Scene scene){
     base.Added(scene);
-    ChannelMaterialsA.layerA?.addEnt(this);
+    if(ChannelMaterialsA.layerA is {} layera && layera.enabled){
+      OverrideVisualComponent.Get(this).AddToOverride(new(layera,-100,true));
+    }
     scene.Add(solid = new Solid(Position, width, height, safe));
     new ChannelTracker(channel, setChVal, true).AddTo(this);
   }
@@ -48,7 +50,7 @@ public class ChannelBlock:Entity, IMaterialEnt {
       Draw.HollowRect(Position, width, height, Color.Red);
     }
   }
-  public void renderMaterial(IMaterialLayer l, Camera c){
+  void ICustomMatRender.MatRender(){
     if(curstate == SolidState.there){
       Draw.SpriteBatch.Draw(Draw.Pixel.Texture.Texture_Safe, new Rectangle((int)Position.X, (int)Position.Y, (int)width, (int)height), Draw.Pixel.ClipRect, new Color(1,0,0,255));
     }

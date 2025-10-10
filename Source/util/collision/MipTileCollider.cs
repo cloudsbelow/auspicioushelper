@@ -95,4 +95,7 @@ public sealed class MiptileCollider:Grid{
     }
     return grid;
   }
+  public override void Render(Camera camera, Color color) {
+    Draw.HollowRect(AbsoluteX, AbsoluteY, Width, Height, color);
+  }
 }

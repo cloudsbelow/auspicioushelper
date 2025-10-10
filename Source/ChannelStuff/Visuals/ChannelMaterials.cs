@@ -9,8 +9,9 @@ namespace Celeste.Mod.auspicioushelper;
 //OK to be sort of fair I intended to do a custom rasterMats for this but decided not.
 public class ChannelMaterialsA:BasicMaterialLayer, CachedUserMaterial{
   public string identifier {get;set;}
-  private List<IMaterialObject> bgItemsDraw = new List<IMaterialObject>();
+  public IOverrideVisualsEasy.Class bg = new();
   public RenderTargetPool.RenderTargetHandle bgtex = new(false);
+  public override RenderTarget2D outtex => base.outtex;
   public bool enabled=>info.enabled;
   [Import.SpeedrunToolIop.Static]
   public static ChannelMaterialsA layerA;
@@ -25,21 +26,21 @@ public class ChannelMaterialsA:BasicMaterialLayer, CachedUserMaterial{
   public override void onRemove() {
     base.onRemove();
     bgtex.Free();
+    layerA=null;
   }
-  public void planDrawBG(IMaterialObject t){
-    if(info.enabled) bgItemsDraw.Add(t);
+  public void planDrawBG(OverrideVisualComponent t){
+    t.AddToOverride(new(bg,-30000,false,true));
   }
   public override void render(SpriteBatch sb, Camera c){
     MaterialPipe.gd.SetRenderTarget(bgtex);
     MaterialPipe.gd.Clear(Color.Transparent);
     
     StartSb(sb,null,c);
-    foreach(IMaterialObject b in bgItemsDraw){
+    foreach(var b in bg.comps){
       b.renderMaterial(this, c);
     }
     sb.End();
     MaterialPipe.gd.Textures[1]=bgtex;
-    bgItemsDraw.Clear();
     base.render(sb,c);
   }
 }

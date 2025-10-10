@@ -11,11 +11,10 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/ChannelReskinnedSpinner")]
-public class ChannelReskinnedSpinner:Entity, IMaterialEnt{
+public class ChannelReskinnedSpinner:Entity, ICustomMatRender{
 
   public float offset;
   public int randomSeed;
-  public bool otherVisible=true;
   public static MTexture bigspinner=null;
   public static MTexture minispinner=null;
   public bool mini;
@@ -48,8 +47,9 @@ public class ChannelReskinnedSpinner:Entity, IMaterialEnt{
     randomSeed = Calc.Random.Next();
   }
   public override void Awake(Scene scene){
-    if(ChannelMaterialsA.layerA?.enabled??false) otherVisible = false;
-    ChannelMaterialsA.layerA?.addEnt(this);
+    if(ChannelMaterialsA.layerA is {} layera && layera.enabled){
+      OverrideVisualComponent.Get(this).AddToOverride(new(layera,-100,true));
+    }
   }
   private bool InView(){
     Camera c = (base.Scene as Level).Camera;
@@ -79,22 +79,14 @@ public class ChannelReskinnedSpinner:Entity, IMaterialEnt{
     }
   }
   public override void Render(){
-    if(!otherVisible) return;
-    //Draw.Rect(Position-new Vector2(12,12),24,24,Color.Red);
     base.Render();
     Draw.SpriteBatch.Draw(sprite.Texture.Texture_Safe, Position, sprite.ClipRect, Color.White, 
       ((float)Math.PI/2)*(float)(randomSeed & 3), origin,1,(randomSeed&4) !=0?SpriteEffects.FlipHorizontally:SpriteEffects.None,0);
     /*Draw.SpriteBatch.Draw(innersprite.Texture.Texture_Safe, Position, innersprite.ClipRect, new Color(1,1,1,1), 
       (float)Math.PI/2*(randomSeed & 3), new Vector2(12f, 12f), 1, (randomSeed&4) !=0?SpriteEffects.FlipHorizontally:SpriteEffects.None, 0f);*/
   }
-  public void renderMaterial(IMaterialLayer l, Camera c){
+  void ICustomMatRender.MatRender(){
     Draw.SpriteBatch.Draw(sprite.Texture.Texture_Safe, Position, sprite.ClipRect, Color.White, 
       ((float)Math.PI/2)*(float)(randomSeed & 3), origin,1,(randomSeed&4) !=0?SpriteEffects.FlipHorizontally:SpriteEffects.None,0);
-    // Vector2 pos = Position-new Vector2(2,2);
-    // if(state[currentState]!=BoosterType.none)pos+=sprite.Position;
-    // pos=pos.Floor();
-    // sb.Draw(Draw.Pixel.Texture.Texture_Safe,new Rectangle(
-    //   (int)pos.X,(int)pos.Y, 4,4
-    // ),Draw.Pixel.ClipRect,iinnerColor);
   }
 }

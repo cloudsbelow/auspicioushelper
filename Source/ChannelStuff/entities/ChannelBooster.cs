@@ -15,7 +15,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [Tracked]
 [CustomEntity("auspicioushelper/ChannelBooster")]
-public class ChannelBooster : Entity, IMaterialEnt, ISimpleEnt, IBooster{
+public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
   public void parentChangeStat(int vis, int col, int act){
     if(vis!=0) Visible=vis>0;
     if(col!=0) Collidable=col>0;
@@ -156,7 +156,9 @@ public class ChannelBooster : Entity, IMaterialEnt, ISimpleEnt, IBooster{
   public override void Added(Scene scene)
   {
     base.Added(scene);
-    ChannelMaterialsA.layerA?.addEnt(this);
+    if(ChannelMaterialsA.layerA is {} layera){
+      OverrideVisualComponent.Get(this).AddToOverride(new(layera,-100,false));
+    }
     Image image = new Image(GFX.Game["objects/booster/outline"]);
     image.CenterOrigin();
     image.Color = Color.White * 0.75f;
@@ -314,17 +316,11 @@ public class ChannelBooster : Entity, IMaterialEnt, ISimpleEnt, IBooster{
     base.Render();
     sprite.Position = position;
   }
-  public void renderMaterial(IMaterialLayer l, Camera c){
+  void ICustomMatRender.MatRender(){
     if(respawnTimer<=0 && sprite.Visible){
       innersprite.Position = sprite.Position.Floor();
       innersprite.Render();
     }
-    // Vector2 pos = Position-new Vector2(2,2);
-    // if(state[currentState]!=BoosterType.none)pos+=sprite.Position;
-    // pos=pos.Floor();
-    // sb.Draw(Draw.Pixel.Texture.Texture_Safe,new Rectangle(
-    //   (int)pos.X,(int)pos.Y, 4,4
-    // ),Draw.Pixel.ClipRect,iinnerColor);
   }
 }
 

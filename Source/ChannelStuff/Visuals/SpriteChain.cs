@@ -11,7 +11,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 [Tracked]
 [CustomEntity("auspicioushelper/SpriteAnimChain")]
-public class SpriteAnimChain:Entity, IMaterialObject{
+public class SpriteAnimChain:Entity{
   public class ActiveSprite{
     public float addedTime;
     public uint h;
@@ -52,6 +52,7 @@ public class SpriteAnimChain:Entity, IMaterialObject{
     ogen = new NoiseSamplerOS2_2DLoop(6*data.Float("tangent_freq",1f),20);
     tangm = data.Float("tangent_magnitude",16);
     textures = GFX.Game.GetAtlasSubtextures(data.Attr("atlas_directory","particles/starfield/"));
+    Depth = 9999;
     AddTag(Tags.TransitionUpdate);
   }
   public void addSprite(float time){
@@ -74,6 +75,7 @@ public class SpriteAnimChain:Entity, IMaterialObject{
     }
   }
   public override void Added(Scene scene){
+    base.Added(scene);
     needsFill=true;
     if(needsFill){
       needsFill=false;
@@ -84,11 +86,11 @@ public class SpriteAnimChain:Entity, IMaterialObject{
         addSprite(ct-dur*addTimes.NextFloat());
       }
     }
+    if(ChannelMaterialsA.layerA is {} layera && layera.enabled){
+      OverrideVisualComponent.Get(this).AddToOverride(new(layera.bg,-100,true));
+    }
   }
-  public void registerMaterials(){
-    ChannelMaterialsA.layerA?.planDrawBG(this);
-  }
-  public void renderMaterial(IMaterialLayer l, Camera c){
+  public override void Render(){
     // well since this is initially for towercollab there's no need to do culling (forgive me I am so sorry like)
     int n = nodes.Count;
     foreach(ActiveSprite s in chain){

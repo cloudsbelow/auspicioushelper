@@ -45,18 +45,8 @@ public interface IMaterialLayer{
   bool checkdo();
   void onRemove(){}
   void onEnable(){}
-  void addEnt(IMaterialObject o){}
-  void removeEnt(IMaterialObject o){}
-}
-public interface IMaterialObject{
-  void registerMaterials(){}
-  void renderMaterial(IMaterialLayer l, Camera c);
-  bool shouldRemove=>false;
-  float _depth=>0;
-}
-public interface IMaterialEnt:IMaterialObject{
-  float IMaterialObject._depth => (float)(this as Entity).actualDepth;
-  bool IMaterialObject.shouldRemove=>(this as Entity).Scene==null;
+  void addEnt(OverrideVisualComponent o){}
+  void removeEnt(OverrideVisualComponent o){}
 }
 
 [Tracked]
@@ -150,7 +140,7 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
     foreach(var h in handles)h.Free();
   }
   bool dirtyWilldraw=false;
-  public List<IMaterialObject> willdraw=new();
+  public List<OverrideVisualComponent> willdraw=new();
   public virtual bool checkdo(){
     return layerformat.quadfirst || layerformat.alwaysRender || willdraw.Count>0;
   }
@@ -176,7 +166,7 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
   public ITexture overrideFirstResource = null;
   public virtual void render(SpriteBatch sb, Camera c){
     if(toRemove.Count>0){
-      List<IMaterialObject> nlist = new();
+      List<OverrideVisualComponent> nlist = new();
       foreach(var o in willdraw) if(!toRemove.Contains(o))nlist.Add(o);
       toRemove.Clear();
       willdraw=nlist;
@@ -206,15 +196,15 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
     }
   }
 
-  HashSet<IMaterialObject> toRemove = new();
-  public void addEnt(IMaterialObject o){
+  HashSet<OverrideVisualComponent> toRemove = new();
+  public void addEnt(OverrideVisualComponent o){
     if(toRemove.Remove(o))return;
     if(info.enabled){
       willdraw.Add(o); 
       dirtyWilldraw = true;
     }
   }
-  public void removeEnt(IMaterialObject o){
+  public void removeEnt(OverrideVisualComponent o){
     toRemove.Add(o);
   }
   public void AddC(OverrideVisualComponent c)=>addEnt(c);

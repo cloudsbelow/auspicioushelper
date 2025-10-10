@@ -47,7 +47,7 @@ public class CassetteGate:Entity{
 
   public override void Added(Scene s){
     base.Added(s);
-    s.Add(s1 = new CassetteGateSolid(Position-major*majorAxis,blockWidth,blockHeight));
+    //s.Add(s1 = new CassetteGateSolid(Position-major*majorAxis,blockWidth,blockHeight));
     //s.Add(s2 = new CassetteGateSolid(Position, blockWidth, blockHeight));
   }
   // bool PlayerClose(){

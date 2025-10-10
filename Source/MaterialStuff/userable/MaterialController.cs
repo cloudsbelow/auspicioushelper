@@ -59,9 +59,7 @@ internal class MaterialController:Entity, IDeclareLayers{
   static Dictionary<string, CachedUserMaterial> loadedMats = new();
   public static IMaterialLayer getLayer(string ident)=>loadedMats.TryGetValue(ident, out var layer)?layer:null;
   static MaterialController(){
-    auspicioushelperModule.OnEnterMap.enroll(new ScheduledAction(()=>{
-      loadedMats.Clear(); return false;
-    }, "clear material cache"));
+    auspicioushelperModule.OnEnterMap.enroll(new PersistantAction(loadedMats.Clear, "clear material cache"));
   }
   EntityData e;
   internal string identifier;

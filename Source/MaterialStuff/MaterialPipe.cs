@@ -63,18 +63,6 @@ public static class MaterialPipe {
       blockedAddingEnt.Clear();
       needsImmUpdate = false;
     }
-
-    double curdepth = float.PositiveInfinity;
-    bool sorted = true;
-    foreach(Entity e in scene.Entities.entities){
-      if(e.Visible && (e is IMaterialObject en)){
-        en.registerMaterials();
-      }
-      if(curdepth<e.actualDepth) sorted=false;
-      curdepth=e.actualDepth;
-    }
-    //strawberries change their depth for the sole reason of making my life harder...;
-    if(!sorted)scene.Entities.entities.Sort(EntityList.CompareDepth);
     
     gd.SamplerStates[1] = SamplerState.PointClamp;
     gd.SamplerStates[2] = SamplerState.PointClamp;
