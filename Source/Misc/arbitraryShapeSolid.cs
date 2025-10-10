@@ -53,6 +53,6 @@ public class ArbitraryShapeSolid:Solid{
   }
   public override void Render() {
     base.Render();
-    imag.DrawCentered(Position, Color.White, 1, Scene.TimeActive);
+    imag.DrawCentered(Position);
   }
 }
