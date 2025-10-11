@@ -132,24 +132,10 @@ public class Template:Entity, ITemplateChild{
 
   public void childRelposSafe(){
     using(new MovementLock()){
-      Entity movewith = UpdateHook.getFollowEnt();
+      Entity movewith = PlayerHelper.getFollowEnt();
       Vector2 mwp = movewith?.Position??Vector2.Zero;
       childRelposTo(virtLoc,gatheredLiftspeed);
-      if(movewith!=null && mwp!=movewith.Position && UpdateHook.cachedPlayer is Player p){
-        Vector2 del = movewith.Position-mwp;
-        if(p.TreatNaive){
-          if(!MovementLock.movedX(p))p.NaiveMove(Vector2.UnitX*del.X);
-          if(!MovementLock.movedY(p))p.NaiveMove(Vector2.UnitY*del.Y);
-        } else {
-          if(!MovementLock.movedX(p))p.MoveH(del.X);
-          if(!MovementLock.movedY(p))p.MoveV(del.Y);
-        }
-        Template parent = null;
-        if(movewith is ITemplateChild itc)parent=itc.parent;
-        if(movewith.Get<ChildMarker>() is ChildMarker cm)parent=cm.parent;
-        if(parent!=null) p.LiftSpeed = parent.gatheredLiftspeed;
-        else p.LiftSpeed = del/MathF.Max(0.001f,Engine.DeltaTime);
-      }
+      if(movewith!=null && mwp!=movewith.Position)PlayerHelper.MovePlayer(this, movewith, mwp);
     }
   }
   public void relposOne(ITemplateChild c){
@@ -270,6 +256,7 @@ public class Template:Entity, ITemplateChild{
       if(((c.prop&Propagation.Inside)!=Propagation.None) && c.hasInside(a)) return true;
     return false;
   }
+  public bool PlayerIsInside() =>  UpdateHook.cachedPlayer is {} play && hasInside(play);
   public override void Removed(Scene scene){
     destroy(false);
     base.Removed(scene);
@@ -380,9 +367,13 @@ public class Template:Entity, ITemplateChild{
     expanded=false;
     destroying = false;
   }
-  public virtual void remake(){
-    makeChildren(Scene);
-    UpdateHook.EnsureUpdateAny();
+  public virtual void remake(Action a = null){
+    UpdateHook.AddAfterUpdate(()=>{
+      makeChildren(Scene);
+      AddNewEnts(GetChildren<Entity>());
+      if(this is TemplateDisappearer d) UpdateHook.AddAfterUpdate(d.enforce, false,true);
+      if(a!=null) a();
+    }, true, false);
   }
   public string fullpath=>parent==null?ownidpath.ToString():parent.fullpath+$"/{ownidpath}";
   public static string getOwnID(EntityData e){

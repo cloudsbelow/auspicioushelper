@@ -12,7 +12,7 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.auspicioushelper;
 
-public partial class Util{
+public static partial class Util{
   public static void Write(BinaryWriter w, Vector2 v){
     w.Write(v.X); w.Write(v.Y);
   }

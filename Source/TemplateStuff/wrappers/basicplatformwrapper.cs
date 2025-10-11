@@ -50,7 +50,7 @@ internal class BasicPlatform:ITemplateChild{
     return false;
   }
   public bool hasInside(Actor a){
-    if(p == null||p.Scene==null)return false;
+    if(p == null)return false;
     return (p is Solid) && p.Collider.Collide(a.Collider);
   }
   public void AddAllChildren(List<Entity> l){

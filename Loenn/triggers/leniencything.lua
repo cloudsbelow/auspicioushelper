@@ -15,7 +15,7 @@ entity.placements = {
       maxGroundedStep = 2,
       maxStepSlope = 1,
       neededFallDist = 2,
-      onlyWhenInside=false,
+      onlyWhenInside=true,
       setOnAwake=false,
     }
 

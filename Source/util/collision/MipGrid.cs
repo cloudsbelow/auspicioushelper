@@ -324,6 +324,12 @@ public class MipGrid{
       layers.Add(b = b.BuildParent());
     }
     highestlevel = layers.Count-1;
+    //DebugConsole.Write("Highest level:",highestlevel, width, height, layers[highestlevel].width);
+  }
+  void forceMip(){
+    if(layers.Count !=1) return;
+    layers.Add(layers[0].BuildParent());
+    highestlevel=1;
   }
   
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -402,11 +408,6 @@ public class MipGrid{
   //assumes grids are same cell size; oloc is in local coordinates
   public bool collideGridSameCs(MipGrid o, Vector2 oloc){
     int level = Math.Min(o.highestlevel, highestlevel);
-    // DebugConsole.Write($"{oloc} {level}");
-    // DebugConsole.Write(Util.sideBySide([getBlockstr(layers[0].getBlock(0,0)),getBlockstr(layers[0].getBlock(1,0)),getBlockstr(layers[0].getBlock(2,0))]));
-    // DebugConsole.Write(Util.sideBySide([getBlockstr(layers[0].getBlock(0,1)),getBlockstr(layers[0].getBlock(1,1)),getBlockstr(layers[0].getBlock(2,1))]));
-    // DebugConsole.Write(Util.sideBySide([getBlockstr(layers[1].getBlock(0,0))]));
-    //int leveldenom = level+level+level;
     int levelDiv = 1<<(3*level);
     Vector2 low = (oloc/levelDiv).Floor();
     Vector2 high = ((oloc+new Vector2(o.width+1,o.height+1))/levelDiv).Ceiling();
@@ -416,6 +417,41 @@ public class MipGrid{
     for(int x=Math.Max(0,(int)Math.Floor(low.X/blockw)); x<=xstop; x++){
       for(int y=Math.Max(0,(int)Math.Floor(low.Y/blockh)); y<=ystop; y++){
         if(collideMipGridLevel(o,oloc,x,y,level)) return true;
+      }
+    }
+    return false;
+  }
+  bool collideMipGridLevelOffset(MipGrid o, Vector2 oloc, int x, int y, int level){
+    //offset in level's blockspace
+    float sofac = level==-1? 8f : 1f/(1<<(level*3));
+    Vector2 soffset = new Vector2(x*blockw, y*blockh) - oloc*sofac;
+    Vector2 owhole = soffset.Floor();
+    Vector2 ofrac = soffset-owhole;
+    ulong self = level==-1?FULL:layers[level].getBlock(x,y);
+    ulong other = o.layers[level+1].getAreaSmearedFast((int)owhole.X, (int)owhole.Y, ofrac.X!=0, ofrac.Y!=0);
+    ulong hit = self&other;
+    if(level == -1)return hit!=0;
+    while(hit!=0){
+      int index = System.Numerics.BitOperations.TrailingZeroCount(hit);
+      if(collideMipGridLevelOffset(o,oloc,x*blockw+index%8,y*blockh+index/8,level-1)) return true;
+      hit &= hit-1;
+    }
+    return false;
+  }
+  //assumes MipGrid o is one level more detailed
+  public bool collideGridLowCs(MipGrid o, Vector2 oloc){
+    if(o.highestlevel == 0)o.forceMip();
+    int level = Math.Min(o.highestlevel-1, highestlevel);
+    int levelDiv = 1<<(3*level);
+    Vector2 low = (oloc/levelDiv).Floor();
+    //We don't worry about rounding here because all instances of partialtiles constructed via layer; will be multiples
+    Vector2 high = ((oloc+new Vector2(o.width/blockw+1,o.height/blockh+1))/levelDiv).Ceiling();
+
+    int xstop = Math.Min((int)Math.Ceiling(high.X/blockw),layers[level].width);
+    int ystop = Math.Min((int)Math.Ceiling(high.Y/blockh),layers[level].height);
+    for(int x=Math.Max(0,(int)Math.Floor(low.X/blockw)); x<=xstop; x++){
+      for(int y=Math.Max(0,(int)Math.Floor(low.Y/blockh)); y<=ystop; y++){
+        if(collideMipGridLevelOffset(o,oloc,x,y,level)) return true;
       }
     }
     return false;

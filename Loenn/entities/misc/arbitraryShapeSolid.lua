@@ -21,6 +21,7 @@ entity.placements = {
       color="fff",
       rotation=0,
       depth=-100,
+      alphaCutoff=0.5,
     }
   }
 }
@@ -32,6 +33,31 @@ entity.fieldInformation = {
   }
 function entity.texture(room, entity)
   return entity.image
+end
+function entity.scale(room, entity)
+  return {entity.flipH and -1 or 1,entity.flipV and -1 or 1} -- flip horizontally
+end
+function entity.rotation(room, entity)
+  return math.rad(entity.rotation or 0) -- flip horizontally
+end
+function entity.depth(room,entity)
+  return entity.depth or -100
+end
+function entity.flip(room, entity, horizontal, vertical)
+  if vertical then
+    entity.flipV = not entity.flipV
+  end
+  if horizontal then
+    entity.flipH = not entity.flipH
+  end
+  return true
+end
+
+function entity.rotate(room, entity, direction)
+  if direction ~= 0 then
+      entity.rotation = ((entity.rotation or 0) + direction * 90) % 360
+  end
+  return direction ~= 0
 end
 
 return entity

@@ -133,7 +133,7 @@ internal class PartialTiles{
     Autotiler.Generated gen; 
     if(usingPartialtiles && building!=null){
       capturing = new(tilesX,tilesY);
-      DebugConsole.Write($"Making capturing of size {tilesX}, {tilesY}");
+      //DebugConsole.Write($"Making capturing of size {tilesX}, {tilesY}");
       gen = orig(self, mapData, startX,startY,tilesX,tilesY,forceSolid,forceID,behaviour);
       building = null;
     } else gen = orig(self, mapData, startX,startY,tilesX,tilesY,forceSolid,forceID,behaviour);

@@ -100,11 +100,12 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
           }
           parent?.relposOne(this);
         }
-        remake();
-        if(UpdateHook.cachedPlayer is {} p && hasInside(p)){
-          reforming = true;
-          setVisCol(false,false);
-        } else Audio.Play("event:/game/09_core/iceblock_reappear",Position);
+        remake(()=>{
+          if(PlayerIsInside()){
+            reforming = true;
+            setVisCol(false,false);
+          } else Audio.Play("event:/game/09_core/iceblock_reappear",Position);
+        });
       }
     } else if(ridingTriggers && routine == null && hasRiders<Player>()) trigger();
   }

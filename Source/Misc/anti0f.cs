@@ -20,7 +20,6 @@ namespace Celeste.Mod.auspicioushelper;
 [Tracked]
 public class Anti0fZone:Entity{
   public FloatRect bounds;
-  float maxstep = 4;
   bool ctriggers = true;
   bool cplayercolliders = true;
   bool cthrowables = false;
@@ -30,7 +29,6 @@ public class Anti0fZone:Entity{
   public Anti0fZone(EntityData d, Vector2 offset):base(d.Position+offset){
     bool ci = d.Bool("completely_inside",false);
     bounds = new FloatRect(Position.X,Position.Y,d.Width,d.Height);
-    maxstep = d.Int("step",1);
     hooks.enable();
     cthrowables = d.Bool("holdables", false);
     cplayercolliders = d.Bool("player_colliders",true);

@@ -46,14 +46,18 @@ public sealed class MiptileCollider:Grid{
   public override bool Collide(Circle circle)=>false; //so does vanilla...
   public override bool Collide(Grid grid) {
     if(grid is MiptileCollider o){
-      if(o.cellsize!=cellsize) throw new NotImplementedException("Miptile grids must have same cellsize to collide");
-      return mg.collideGridSameCs(o.mg,(o.tlc-tlc)/cellsize);
+      return CollideMipTileOffset(o,Vector2.Zero);
     } else {
       throw new NotImplementedException();
     }
   }
   public bool CollideMipTileOffset(MiptileCollider o, Vector2 offset){
-    if(o.cellsize!=cellsize) throw new NotImplementedException("Miptile grids must have same cellsize to collide");
+    if(o.cellsize!=cellsize){
+      if(o.cellsize.X>cellsize.X) return o.CollideMipTileOffset(this, -offset);
+      if(o.cellsize*8 == cellsize){
+        return mg.collideGridLowCs(o.mg,(o.tlc+offset-tlc)/cellsize);
+      } else throw new Exception("Miptile collider must be either same cell size or one apart");
+    }
     return mg.collideGridSameCs(o.mg,(o.tlc+offset-tlc)/cellsize);
   }
   public override bool Collide(ColliderList list)=>list.Collide(this);

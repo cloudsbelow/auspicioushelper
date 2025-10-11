@@ -161,10 +161,19 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
           yield break;
         }
       }
-      remake();
-      AddNewEnts(GetChildren<Entity>());
       gone=false;
+      remake(()=>{
+        if(PlayerIsInside()){
+          gone=true;
+          setVisCol(false,false);
+        }
+      });
       yield return null;
+      if(gone){
+        while(PlayerIsInside()) yield return null;
+        setVisCol(true,true);
+        gone=false;
+      }
       Audio.Play("event:/game/04_cliffside/arrowblock_reappear", Position);
       goto waiting;
   }

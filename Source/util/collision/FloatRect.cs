@@ -65,6 +65,10 @@ public struct FloatRect{
   public static FloatRect fromCorners(Vector2 tlc, Vector2 brc){
     return new FloatRect(tlc.X,tlc.Y,brc.X-tlc.X,brc.Y-tlc.Y);
   }
+  public static FloatRect fromCornersUnordered(Vector2 one, Vector2 two){
+    FloatRect r = new FloatRect(Math.Min(one.X,two.X),Math.Min(one.Y,two.Y),Math.Abs(one.X-two.X),Math.Abs(one.Y-two.Y));
+    return r;
+  }
   public static FloatRect fromRadius(Vector2 center, Vector2 radius){
     return new FloatRect(center.X-radius.X,center.Y-radius.Y,radius.X*2,radius.Y*2);
   }
@@ -279,5 +283,17 @@ public struct FloatRect{
     var c1 = Vector2.Min(tlc,f.tlc);
     var c2 = Vector2.Max(brc,f.brc);
     return fromCorners(c1,c2);
+  }
+  public FloatRect _rot90By(int amt){
+    amt=Util.SafeMod(amt,4);
+    FloatRect f = amt>=2?fromCorners(-brc, -tlc):copy();
+    if(amt%2!=0){
+      return fromCorners(new(-f.blc.Y,f.blc.X),new(-f.trc.Y,f.trc.X));
+    }
+    return f;
+  }
+  public FloatRect _flip(bool h, bool v){
+    Vector2 flip = new(h?-1:1,v?-1:1);
+    return fromCornersUnordered(tlc*flip,brc*flip);
   }
 }

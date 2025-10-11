@@ -42,7 +42,7 @@ public class TemplateDisappearer:Template{
   public TemplateDisappearer(Vector2 pos, int depthoffset=0):base(pos,depthoffset){}
   public override void Added(Scene scene){
     base.Added(scene);
-    if(children.Count>0)UpdateHook.AddAfterUpdate(enforce,true,false);
+    if(children.Count>0)UpdateHook.AddAfterUpdate(enforce,false,true);
   }
   int permute(bool action, ref bool activator, bool other){
     if(action == activator){

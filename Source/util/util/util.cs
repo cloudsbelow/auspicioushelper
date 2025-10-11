@@ -10,7 +10,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
-public partial class Util{
+public static partial class Util{
   public class EnumeratorStack<T>{
     Stack<IEnumerator> stack = new();
     public EnumeratorStack(IEnumerator e){

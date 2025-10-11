@@ -77,21 +77,6 @@ public class UpdateHook:Component{
   }
   internal static int framenum;
   public static Player cachedPlayer;
-  static public Entity getFollowEnt(){
-    if(cachedPlayer==null) return null;
-    Player p=cachedPlayer;
-    switch(cachedPlayer.StateMachine.state){
-      case Player.StBoost:
-        if(p.CurrentBooster is IBooster.SentinalBooster sb){
-          return null;
-        } else return p.CurrentBooster;
-      case Player.StDreamDash:
-        if(p.dreamBlock is TemplateDreamblockModifier.SentinalDb sdb){
-          return sdb.lastEntity;
-        } else return null;
-      default: return null; 
-    }
-  }
   internal static void updateHook(On.Celeste.Level.orig_Update update, Level self){
     updateListFlags.Clear();
     cachedPlayer = self.Tracker.GetEntity<Player>();

@@ -150,10 +150,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
         childRelposTo(virtLoc,Vector2.Zero);
         setVisCol(true,true);
         if(layer!=null)foreach(var c in comps)c.SetStealUse(layer,false,false);
-        if(string.IsNullOrWhiteSpace(channel)){
-          remake();
-          AddNewEnts(GetChildren<Entity>());
-        }
+        if(string.IsNullOrWhiteSpace(channel))remake();
         this.ownShakeVec = Vector2.Zero;
         cachedCol = true;
       },

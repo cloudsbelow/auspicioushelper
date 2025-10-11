@@ -310,4 +310,12 @@ public static partial class Util{
     }
     return res+"]";
   }
+  public static string TrimSt(Player p, int idx){
+    string s = p.StateMachine.GetStateName(idx).ToLower();
+    if(s.StartsWith("st"))s=s.Substring(2);
+    return s;
+  }
+  public static string CurrentSt(Player p){
+    return TrimSt(p,p.StateMachine.state);
+  }
 }
