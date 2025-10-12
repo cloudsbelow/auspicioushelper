@@ -118,7 +118,7 @@
   
   <Tileset id="1" copy="z" path="dirt" ignores="g"/>
   <Tileset id="3" copy="z" path="snow"/>
-  <Tileset id="4" copy="z" path="girder"/>
+  <Tileset id="4" copy="z" path="girder" ausp_recolor="(000,fff)->(444,f88),fff->fff"/>
   <Tileset id="5" copy="z" path="tower"/>
   <Tileset id="6" copy="z" path="stone"/>
   <Tileset id="7" copy="z" path="cement"/>
@@ -168,7 +168,7 @@
   <Tileset id="b" copy="z" path="cliffside"/>
   <Tileset id="c" copy="9" path="poolEdges"/>
 
-  <Tileset id="d" copy="z" path="templeA"/>
+  <Tileset id="d" copy="z" path="templeA" ausp_recolor="(000,fff)->(444,f88),fff->fff"/>
   <Tileset id="e" copy="z" path="templeB"/>
   <Tileset id="f" copy="z" path="cliffsideAlt"/>
 

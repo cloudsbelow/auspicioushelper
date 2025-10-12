@@ -29,16 +29,20 @@ public static partial class Util{
       (float)((rgba>>shift)&mask)*mult, 
       (float)(rgba&mask)*mult);
   }
-  public struct PreciseColor{
-    float r;
-    float g;
-    float b;
-    float a;
-    public PreciseColor(float r, float g, float b, float a){
-      this.r=r;this.g=g;this.b=b;this.a=a;
+  public static Vector4 hexToColorVec(string hex){
+    hex = hex.TrimStart('#');
+    uint rgba = uint.Parse(hex, NumberStyles.HexNumber);
+    int shift = hex.Length>4?8:4;
+    uint mask = hex.Length>4?0xffu:0xfu;
+    float mult = hex.Length>4?1f/255f:1f/15f;
+    if(hex.Length %4 != 0){
+      rgba= (rgba<<shift)+mask;
     }
-    public static implicit operator Color(PreciseColor o)=>new Color(o.r,o.g,o.b,o.a);
-    //public static PreciseColor operator +(PreciseColor o)=>new PreciseColor(r+o.r,b+o.b,g+o)
+    return new Vector4(
+      (float)((rgba>>(shift*3))&mask)*mult, 
+      (float)((rgba>>(shift*2))&mask)*mult, 
+      (float)((rgba>>shift)&mask)*mult, 
+      (float)(rgba&mask)*mult);
   }
   public static bool tryGetStr(this EntityData d, string key, out string str){
     str = d.Attr(key,"");
@@ -80,6 +84,16 @@ public static partial class Util{
     }
     return left;
   }
+  public static int bsearchLast(double[] arr, double val){
+    int left = 0; 
+    int right = arr.Length;
+    while(right-left>1){
+      int middle = (left+right)/2;
+      if(arr[middle]>val) right = middle;
+      else left = middle;
+    }
+    return left;
+  }
   public static int bsearchFirst(float[] arr, float val){
     int left = -1; 
     int right = arr.Length-1;
@@ -94,6 +108,11 @@ public static partial class Util{
     return right;
   }
   public static float remap(float t, float low, float high){
+    t=t-low;
+    high = high-low;
+    return t/high;
+  }
+  public static double remap(double t, double low, double high){
     t=t-low;
     high = high-low;
     return t/high;

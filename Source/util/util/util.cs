@@ -133,6 +133,8 @@ public static partial class Util{
     if(v>max) return max;
     return v;
   }
+  public static float Saturate(float v)=>Math.Clamp(v,0,1);
+  public static double Saturate(double v)=>Math.Clamp(v,0,1);
 
   public class HybridSet<T>:ISet<T>{
     const int threshold = 8;

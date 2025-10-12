@@ -1,6 +1,10 @@
 
 
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml;
 using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
@@ -14,21 +18,11 @@ public static class RecolorTiles{
   static MTexture RecolorDelegate(MTexture tex,XmlElement elem){
     //DebugConsole.Write("here", elem, tex);
     if(!elem.HasAttribute("ausp_recolor")) return tex;
-    var recolorCode = Util.listparseflat(elem.Attr("ausp_recolor"));
-    if(recolorCode.Count<=2){
-      recolorCode.Add(recolorCode[^1]);
-      recolorCode.Add(recolorCode[^1]);
-    }
-    int w = tex.ClipRect.Width;
-    int h = tex.ClipRect.Height;
-    Color[] data = new Color[w*h];
-    if(tex.Texture.Texture.Format != Microsoft.Xna.Framework.Graphics.SurfaceFormat.Color){
-      throw new  System.Exception("Texture does not have the right format (color)."+
-        " The fix for these cases has not been implemented. Ask cloudsbelow to fix;"+ 
-        "it's not hard. they don't feel like coding it today and also doubt that it can happen.");
-    }
-    tex.Texture.Texture.GetData(0,tex.ClipRect,data,0,data.Length);
-    return tex;
+    DebugConsole.Write("Got a texture to recolor with from ",elem.Attr("path"), elem.Attr("ausp_recolor"));
+    Util.ColorRemap remap = new(elem.Attr("ausp_recolor"));
+    var dat = Util.TexData(tex, out var w, out var h).Map(col=>remap.remapRgb(col).toColor());
+    string ident = $"tileRecolor {elem.Attr("path")}: "+elem.Attr("ausp_recolor");
+    return Atlasifyer.PushToAtlas(dat,w,h,ident).MakeLike(tex);
   }
   static void CtorHook(ILContext ctx){
     ILCursor c = new(ctx);
