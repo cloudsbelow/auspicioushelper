@@ -12,7 +12,7 @@ public static partial class Util{
       public abstract double WeightAndCol(Double4 i, out Double4 o);
       public virtual string DebugString()=>"NotImplement"; 
     }
-    const double epsilon = 0.0000000000001f;
+    const double epsilon = 0.000000000001f;
     class Line{
       Double4 p1;
       Double4 del;
@@ -84,7 +84,7 @@ public static partial class Util{
         LineGroup i_;
         LineGroup o_;
         static public Regex  pattern = new Regex(
-          @"^(\([^\),]+[^\)]+\))->(\([^\),]+[^\)]+\))(?::(\{\w+\})|())$",
+          @"^(\([^\),]+[^\)]+\))->(\([^\),]+[^\)]+\))(?::(\{.+\})|())$",
           RegexOptions.Compiled
         );
         public P(Match ingest){
@@ -112,7 +112,7 @@ public static partial class Util{
       Double4 inCol;
       Double4 outCol;
       static public Regex pattern = new Regex(
-        @"^(#?[\da-f]+)->(#?[\da-f]+)(?::(\{\w+\})|())$",
+        @"^(#?[\da-f]+)->(#?[\da-f]+)(?::(\{.+\})|())$",
         RegexOptions.Compiled
       );
       public PointRemap(Match ingest){
@@ -128,6 +128,8 @@ public static partial class Util{
       }
     }
     List<ColorWeightable> things=new();
+    List<Func<double,double>> weightMap=new();
+    double ln2 = 0.69314718056;
     public ColorRemap(string inp){
       foreach(var v in listparseflat(inp)){
         if(string.IsNullOrWhiteSpace(v)) continue;
@@ -135,17 +137,32 @@ public static partial class Util{
         if((m=PointRemap.pattern.Match(v)).Success) things.Add(new PointRemap(m));
         else if((m=LineGroup.P.pattern.Match(v)).Success) things.Add(new LineGroup.P(m));
         else DebugConsole.WriteFailure("Bad pattern: "+v);
+        if(m.Success){
+          Func<double,double> fn = static(double d)=>d;
+          var dict = new DictWrapper(kvparseflat(m.Groups[3].Value,true));
+          if(dict.TryFloat(["radius","rad","r","size","s"],out var rad)){
+            DebugConsole.Write("Adding exp radius filter");
+            float pow = dict.Float(["pow","p","strength","str"],4);
+            weightMap.Add((d)=>{
+              return 1/(double.Exp2M1(1/Math.Pow(d*rad,pow))+epsilon);
+            });
+          } else if(dict.TryFloat(["falloff","f"],out var falloff)){
+            DebugConsole.Write("Adding Falloff filter");
+            weightMap.Add((d)=>d/falloff);
+          }
+          weightMap.Add(fn);
+        }
       }
     }
-    public Double4 remapRgb(Double4 i){
+    public Double4 remapRgb(Double4 loc){
       Double4 f=Double4.Zero;
       double tw=0;
-      foreach(var t in things){
-        var w = t.WeightAndCol(i, out Double4 v);
+      for(int i=0; i<things.Count; i++){
+        var w = weightMap[i](things[i].WeightAndCol(loc, out Double4 v));
         tw+=w;
         f+=v*w;
       }
-      return (tw>0?f/tw:Double4.Zero)*i.W;
+      return (tw>0?f/tw:Double4.Zero)*loc.W;
     }
     public void DebugPrint(){
       foreach(var t in things)DebugConsole.Write(t.DebugString());

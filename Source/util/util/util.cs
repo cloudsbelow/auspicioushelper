@@ -259,4 +259,40 @@ public static partial class Util{
     IEnumerator IEnumerable.GetEnumerator()=>list.GetEnumerator();
     public int Count=>list.Count;
   }
+  public static int HigherPow2(int v){
+    v|=v>>1;
+    v|=v>>2;
+    v|=v>>4;
+    v|=v>>8;
+    v|=v>>16;
+    return v+1;
+  }
+  public ref struct RingDeque<T>{
+    int head=0;
+    int tail;
+    int mask;
+    Span<T> data;
+    public RingDeque(Span<T> span){
+      data = span;
+      tail = mask = span.Length-1;
+      if((mask & span.Length)!=0) throw new Exception("Ring deque buffer size must be power of 2");
+    }
+    public T Head()=>data[head];
+    public T Tail()=>data[tail];
+    public int Count=>(tail+1-head)&mask;
+    public T Dequeue(){
+      T ret = data[head];
+      head=(head+1)&mask;
+      return ret;
+    }
+    public void Push(T val){
+      tail = (tail+1)&mask;
+      data[tail]=val;
+    }
+    public T Pop(){
+      T ret = data[tail];
+      tail = (tail-1)&mask;
+      return ret;
+    }
+  }
 }

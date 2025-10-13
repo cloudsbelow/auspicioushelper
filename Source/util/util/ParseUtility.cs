@@ -337,4 +337,38 @@ public static partial class Util{
   public static string CurrentSt(Player p){
     return TrimSt(p,p.StateMachine.state);
   }
+  public class DictWrapper{
+    Dictionary<string,string> w;
+    public DictWrapper(Dictionary<string,string> wrapped){
+      w=wrapped;
+    }
+    public float Float(string key, float fallback)=>w.TryGetValue(key, out var str) && float.TryParse(str, out var f)? f:fallback;
+    public int Int(string key, int fallback)=>w.TryGetValue(key, out var str) && int.TryParse(str, out var f)? f:fallback;
+    public float Float(IEnumerable<string> key, float fallback){
+      foreach(var k in key){
+        if(w.TryGetValue(k, out var str) && float.TryParse(str, out var f)) return f;
+      }
+      return fallback;
+    }
+    public bool TryFloat(IEnumerable<string> key, out float result){
+      foreach(var k in key){
+        if(w.TryGetValue(k, out var str) && float.TryParse(str, out result)) return true;
+      }
+      result=default;
+      return false;
+    }
+    public int Int(IEnumerable<string> key, int fallback){
+      foreach(var k in key){
+        if(w.TryGetValue(k, out var str) && int.TryParse(str, out var i)) return i;
+      }
+      return fallback;
+    }
+    public bool TryInt(IEnumerable<string> key, out int result){
+      foreach(var k in key){
+        if(w.TryGetValue(k, out var str) && int.TryParse(str, out result)) return true;
+      }
+      result=default;
+      return false;
+    }
+  }
 }

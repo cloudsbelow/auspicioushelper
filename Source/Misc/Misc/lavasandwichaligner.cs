@@ -18,6 +18,11 @@ public class lavasandwichAligner:Entity{
     ncentery = d.Position.Y;
     usedinscene = null;
     hooks.enable();
+    Depth=1;
+  }
+  public override void Render(){
+    base.Render();
+    Atlasifyer.DebugRenderAt(Position);
   }
   private static Hook centerYhook;
   static float centerYdetour(Func<SandwichLava,float> orig, SandwichLava self){

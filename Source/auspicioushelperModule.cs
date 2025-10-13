@@ -86,6 +86,7 @@ public class auspicioushelperModule : EverestModule {
 
             if(session?.MapData!=null){
                 //DebugConsole.Write($"Mapdata: {(session.MapData==null?"null":session.MapData.ToString())}");
+                MapenterEv.Run(session.MapData);
                 MarkedRoomParser.parseMapdata(session.MapData);
                 DebugConsole.Write("Entered Level");
             } else {
