@@ -371,4 +371,9 @@ public static partial class Util{
       return false;
     }
   }
+  public static string AsClean(this string instr){
+    string str = "";
+    foreach(char c in instr) if(!char.IsWhiteSpace(c))str+=c;
+    return str.ToLower();
+  }
 }

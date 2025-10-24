@@ -8,6 +8,15 @@ namespace Celeste.Mod.auspicioushelper;
 
 public static partial class Util{
   public class ColorRemap{
+    [ResetEvents.ClearOn(ResetEvents.RunTimes.OnEnter)]
+    static Dictionary<string, ColorRemap> remaps = new();
+    public static ColorRemap Get(string id){
+      id = id.AsClean();
+      if(!remaps.TryGetValue(id, out var ret)){
+        remaps.Add(id,ret=new ColorRemap(id));
+      }
+      return ret;
+    }
     public abstract class ColorWeightable{
       public abstract double WeightAndCol(Double4 i, out Double4 o);
       public virtual string DebugString()=>"NotImplement"; 

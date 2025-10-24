@@ -35,10 +35,10 @@ public class MapenterEv:Attribute{
           pair.Item1?.Invoke(null,[d]);
           if(pair.Item2 is {} fn && !run.Contains(fn)){
             run.Add(fn);
-            fn.Invoke(null,[]);
           }
         }
       }
     }
+    foreach(var m in run) m.Invoke(null,[]);
   }
 }

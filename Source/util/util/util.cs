@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -108,6 +109,67 @@ public static partial class Util{
       } while(cur.Test(s[idx++],ref cur));
       return cur?.isSuperEnding??false;
     }
+  }
+  public class Trie<T>{
+    class TrieNode{
+      Dictionary<char, TrieNode> n;
+      List<(Regex, T, string)> res;
+      public T containedItem;
+      public bool hasItem = false;
+      public bool Get(string s, int idx, out T item){
+        if(idx==s.Length){
+          item=hasItem?containedItem:default;
+          return hasItem;
+        }
+        if(n?.TryGetValue(s[idx], out var a)??false) if(a.Get(s,idx+1,out item)) return true;
+        if(res!=null){
+          string trunc = s.Substring(idx);
+          foreach(var (r,i,orig) in res) if(r.Match(trunc).Success){
+            item = i;
+            return true;
+          }
+        } 
+        item = default;
+        return false;
+      }
+      public void Add(string s, int idx, T item, bool alwaysOverride){
+        if(idx<s.Length){
+          if(s[idx] == '*'){
+            if(res==null) res=new();
+            for(int i=0; i<res.Count; i++) if(res[i].Item3==s){
+              if(alwaysOverride){
+                res[i] = new(res[i].Item1,item,s);
+              } else throw new Exception("Key already present in trie");
+            }
+            string re = "^";
+            for(int i=idx; i<s.Length; i++){
+              char c=s[idx];
+              if(char.IsAsciiLetterOrDigit(s[idx])||c=='-'||c=='_'||c=='\\')re+=c;
+              else if(c=='/')re+=@"\/";
+              else if(c=='*')re+=".*";
+              else throw new Exception("unhandled character in sequence");
+            }
+            re+="\\w*$";
+            res.Add(new(new(re,RegexOptions.Compiled),item,s));
+            return;
+          }
+          if(n==null) n=new();
+          if(!n.TryGetValue(s[idx], out var next)){
+            n.Add(s[idx],next = new TrieNode());
+          }
+          next.Add(s,idx+1,item, alwaysOverride);
+        } else if(hasItem==false || alwaysOverride){
+          hasItem=true;
+          containedItem=item;
+        } else throw new Exception("Key already present in trie");
+      }
+    }
+    TrieNode root = new TrieNode();
+    public void Add(string s, T value)=>root.Add(s,0,value,false);
+    public void Set(string s, T value)=>root.Add(s,0,value,true);
+    public T GetOrDefault(string s) =>root.Get(s,0,out var item)?item:default;
+    public bool TryGet(string s, out T o)=>root.Get(s,0,out o);
+    public void Clear()=>root=new();
   }
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static CollisionDirection getCollisionDir(Vector2 move){
@@ -293,6 +355,32 @@ public static partial class Util{
       T ret = data[tail];
       tail = (tail-1)&mask;
       return ret;
+    }
+  }
+  public class SetStack<T>{
+    public struct Handle{
+      public readonly LinkedListNode<T> val;
+      public Handle(LinkedListNode<T> v){
+        val=v;
+      }
+    }
+    LinkedList<T> things;
+    public int Count=>things.Count;
+    public Handle Push(T item){
+      return new(things.AddLast(item));
+    }
+    public T Pop(){
+      if(things.Count==0) throw new Exception("Popping from empty stack");
+      var n = things.Last();
+      things.RemoveLast();
+      return n;
+    }
+    public T Peek(){
+      if(things.Count==0) throw new Exception("Peaking into empty stack");
+      return things.Last();
+    }
+    public void Remove(Handle h){
+      things.Remove(h.val);
     }
   }
 }
