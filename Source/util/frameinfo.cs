@@ -16,6 +16,7 @@ public class UpdateHook:Component{
       lockctr--;
     }
     public static bool locked=>lockctr>0;
+    [ResetEvents.ClearOn(ResetEvents.RunTimes.OnExit)]
     public static List<Action> afterUpd = new();
     static bool updateBefore = false;
     static bool updateAfter = false;
@@ -101,12 +102,9 @@ public class UpdateHook:Component{
     AfterUpdateLock.ExtraUpdate(self,true);
   }
 
-  static PersistantAction clear;
   internal static HookManager hooks = new HookManager(()=>{
     On.Celeste.Level.Update+=updateHook;
-    auspicioushelperModule.OnExitMap.enroll(clear=new PersistantAction(AfterUpdateLock.afterUpd.Clear));
   }, void ()=>{
     On.Celeste.Level.Update-=updateHook;
-    clear.remove();
   });
 }

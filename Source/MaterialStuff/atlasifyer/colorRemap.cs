@@ -201,8 +201,7 @@ public static partial class Util{
         var dat = Util.TexData(tex, out var w, out var h).Map(col=>remapRgb(col).toColor());
         te =  Atlasifyer.PushToAtlas(dat,w,h,ident+tex.AtlasPath).MakeLike(tex);
         remappedTexs.Add(tex.AtlasPath,te);
-        DebugConsole.Write("Cache miss", tex.AtlasPath, remappedTexs.Count);
-      } else DebugConsole.Write("Cache hit", tex.AtlasPath);
+      }
       return te;
     }
   }

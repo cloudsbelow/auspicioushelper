@@ -16,6 +16,7 @@ using MonoMod.RuntimeDetour;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/EntityMarkingFlag")]
+[MapenterEv(nameof(Search))]
 public class EntityMarkingFlag:Entity{
   static FoundEntity finding = null;
   static Entity last = null;
@@ -26,6 +27,7 @@ public class EntityMarkingFlag:Entity{
   public override void Added(Scene s){base.Added(s);RemoveSelf();}
 
   public static Dictionary<string, string> flagged = new();
+  [ResetEvents.RunOn(ResetEvents.RunTimes.OnReload)]
   public static void clear(){
     flagged.Clear();
     FoundEntity.clear();
@@ -49,6 +51,10 @@ public class EntityMarkingFlag:Entity{
       DebugConsole.WriteFailure($"Your ID path could not be parsed: {sig} causes error \n{ex}\n"+
       "Please remember to format your path to match: \\d+(/\\d+)*");
     }
+  }
+  static void Search(EntityData d){
+    hooks.enable();
+    watch(d.Attr("path"),d.Attr("identifier"));
   }
   public static void StartingLoad(EntityData d){
     //DebugConsole.Write($"Start Ld {d.ID} {d.Name}");

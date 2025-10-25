@@ -11,11 +11,8 @@ using CKey = (string, float, byte, bool, bool);
 namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/ArbitrarySolid")]
 public class ArbitraryShapeSolid:Solid{
-  
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
   static Dictionary<CKey, (Vector2, MipGrid)> cache = new();
-  static ArbitraryShapeSolid(){
-    auspicioushelperModule.OnEnterMap.enroll(new PersistantAction(cache.Clear));
-  }
   MTexture imag;
   float rot;
   Vector2 scale;

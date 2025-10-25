@@ -58,10 +58,6 @@ internal static class MarkedRoomParser{
         //DebugConsole.Write(id);
         t.setTiles(l.Solids,l.Bg);
       }
-      if(d.Name == "auspicioushelper/EntityMarkingFlag"){
-        EntityMarkingFlag.hooks.enable();
-        EntityMarkingFlag.watch(d.Attr("path"),d.Attr("identifier"));
-      }
     }
     foreach(EntityData d in l.Entities){
       if(d.Name == "auspicioushelper/templateFiller") continue;
@@ -137,17 +133,18 @@ internal static class MarkedRoomParser{
         pair.Value.initStatic(fgt,bgt);
       }
     }
+    if(templates.Count==0) return null;
     return room.setTemplates(templates);
   }
+  static Regex re = new(@"^\s*zz\w*(?:[^a-zA-Z0-9](.+)|())\s*$",RegexOptions.Compiled);
   internal static void parseMapdata(MapData m){
     staticRooms.Clear();
     dynamicRooms.Clear();
-    EntityMarkingFlag.clear();
     foreach(LevelData l in m.Levels){
-      if(l.Name.StartsWith(sigstr+"-")||l.Name == sigstr){
-        DebugConsole.Write("Parsing "+l.Name);
-        string prefix = l.Name == sigstr?"":l.Name.Substring(sigstr.Length+1);
-        staticRooms.Add(prefix,parseLeveldata(l));
+      var g = re.Match(l.Name);
+      if(g.Success){
+        var room = parseLeveldata(l);
+        if(room!=null) staticRooms.Add(g.Groups[1].Success?g.Groups[1].Value:"",parseLeveldata(l));
       }
     }
   }

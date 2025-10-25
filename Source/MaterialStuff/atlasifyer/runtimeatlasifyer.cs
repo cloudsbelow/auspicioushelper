@@ -13,17 +13,14 @@ namespace Celeste.Mod.auspicioushelper;
 public static class Atlasifyer{
   static Dictionary<string, MTexture> contains=new();
   static List<MTexture> texs=new();
-  [Command("auspdebug_resetAtlases","Reset the runtime atlases")]
-  static void Reset(){
-    DebugConsole.Write("Clearing atlases");
+  [ResetEvents.RunOn(ResetEvents.RunTimes.OnEnter)]
+  public static void Reset(){
+    DebugConsole.Write("\n\nClearing atlases\n\n");
     contains.Clear();
     foreach(var tex in texs) tex.Texture.Dispose();
     texs.Clear();
     ShelfAllocator.Reset();
     SkylineAllocator.Reset();
-  }
-  static Atlasifyer(){
-    auspicioushelperModule.OnEnterMap.enroll(new PersistantAction(Reset));
   }
   const int tw=4096;
   const int th=1024;

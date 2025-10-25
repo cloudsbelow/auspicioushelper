@@ -14,9 +14,9 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateBehaviorChain")]
 public class TemplateBehaviorChain:Entity{
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReset)]
   public static Dictionary<Vector2,EntityData> mainRoom=new();
   public static void setup(){
-    auspicioushelperModule.OnReset.enroll(new PersistantAction(()=>{mainRoom.Clear();}));
     EntityParser.clarify("auspicioushelper/TemplateBehaviorChain",EntityParser.Types.unwrapped,(l,d,o,e)=>{
       string templateStr = e.Attr("template","");
       if(!MarkedRoomParser.getTemplate(templateStr, EntityParser.currentParent, l, out var t)){

@@ -56,11 +56,9 @@ public interface CachedUserMaterial:IMaterialLayer{
 [CustomEntity("auspicioushelper/MaterialController")]
 [Tracked]
 internal class MaterialController:Entity, IDeclareLayers{
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
   static Dictionary<string, CachedUserMaterial> loadedMats = new();
   public static IMaterialLayer getLayer(string ident)=>loadedMats.TryGetValue(ident, out var layer)?layer:null;
-  static MaterialController(){
-    auspicioushelperModule.OnEnterMap.enroll(new PersistantAction(loadedMats.Clear, "clear material cache"));
-  }
   EntityData e;
   internal string identifier;
   public CachedUserMaterial load(EntityData e){

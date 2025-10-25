@@ -34,7 +34,7 @@ public class DecalRecolor:Entity{
     if(d.Enum<Scopes>("WholeMap",Scopes.wholeMap)==Scopes.wholeMap)Apply(d);
   }
   static void Apply(string tex, string val){
-    DebugConsole.Write($"Applying recolor {val} to {tex}");
+    //DebugConsole.Write($"Applying recolor {val} to {tex}");
     if(!Recolors.TryGet(tex, out var st)) Recolors.Add(tex, st=new());
     st.Push(Util.ColorRemap.Get(val));
   }
@@ -68,12 +68,12 @@ public class DecalRecolor:Entity{
   }
   static Hook ctorhook;
   public static HookManager hooks = new(()=>{
-    On.Celeste.Decal.Added+=DecalAdded;
-    On.Celeste.Decal.Awake+=DecalAwake;
+    // On.Celeste.Decal.Added+=DecalAdded;
+    // On.Celeste.Decal.Awake+=DecalAwake;
     ctorhook = new Hook(typeof(Decal).GetMethod(nameof(Decal.orig_ctor)), DecalCtor);
   },()=>{
-    On.Celeste.Decal.Added-=DecalAdded;
-    On.Celeste.Decal.Awake-=DecalAwake;
+    // On.Celeste.Decal.Added-=DecalAdded;
+    // On.Celeste.Decal.Awake-=DecalAwake;
     ctorhook.Dispose();
   });
 }

@@ -36,6 +36,7 @@ public class BackdropCapturer{
       this.b=b;
     }
   }
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
   static ConditionalWeakTable<Backdrop,BackdropRef> back = new();
   public class CapturedBackdrops:IMaterialLayerSimple{
     public MaterialLayerInfo info {get;set;} = new(true, int.MaxValue/2);
@@ -122,6 +123,7 @@ public class BackdropCapturer{
     }
     public override string ToString()=>base.ToString()+":"+selector;
   }
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
   public static Dictionary<string, CapturedBackdrops> groups = new();
   public static CapturedBackdrops Get(string s){
     if(groups.TryGetValue(s, out var c)) return c;
@@ -168,17 +170,12 @@ public class BackdropCapturer{
       c.EmitBrfalse(target);
     } else DebugConsole.WriteFailure("Failed to add skip hook");
   }
-  static PersistantAction clear =new(static ()=>{
-    groups.Clear(); back.Clear();
-  }); 
   public static HookManager hooks = new(()=>{
     IL.Celeste.MapData.ParseLevelsList+=RoomParseHook;
     IL.Celeste.BackdropRenderer.Render+=SkipHook;
-    auspicioushelperModule.OnEnterMap.enroll(clear);
   }, ()=>{
     IL.Celeste.MapData.ParseLevelsList-=RoomParseHook;
     IL.Celeste.BackdropRenderer.Render-=SkipHook;
-    clear.remove();
   });
   public static HookManager expensiveHooks = new(()=>{
     On.Celeste.Backdrop.IsVisible+=Hook;
