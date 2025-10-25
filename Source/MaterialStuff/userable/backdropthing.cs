@@ -71,13 +71,13 @@ public class BackdropCapturer{
       captured.Clear();
       if(l == null) return;
       last = l;
-      foreach(var b in l.Background.Backdrops) if(b.OnlyIn.Contains(selector)){
+      foreach(var b in l.Background.Backdrops) if(b.OnlyIn?.Contains(selector)??false){
         DebugConsole.Write($"Captured backdrop layer {b} with {selector}");
         captured.Add(b);
         if(!back.TryGetValue(b, out var br))back.Add(b, br=new BackdropRef(b));
         br.Use();
       }
-      foreach(var b in l.Foreground.Backdrops) if(b.OnlyIn.Contains(selector)){
+      foreach(var b in l.Foreground.Backdrops) if(b.OnlyIn?.Contains(selector)??false){
         DebugConsole.Write($"Captured backdrop layer {b} with {selector}");
         captured.Add(b);
         if(!back.TryGetValue(b, out var br))back.Add(b, br=new BackdropRef(b));
@@ -173,16 +173,16 @@ public class BackdropCapturer{
   }); 
   public static HookManager hooks = new(()=>{
     IL.Celeste.MapData.ParseLevelsList+=RoomParseHook;
+    IL.Celeste.BackdropRenderer.Render+=SkipHook;
     auspicioushelperModule.OnEnterMap.enroll(clear);
   }, ()=>{
     IL.Celeste.MapData.ParseLevelsList-=RoomParseHook;
+    IL.Celeste.BackdropRenderer.Render-=SkipHook;
     clear.remove();
   });
   public static HookManager expensiveHooks = new(()=>{
-    IL.Celeste.BackdropRenderer.Render+=SkipHook;
     On.Celeste.Backdrop.IsVisible+=Hook;
   },()=>{
-    IL.Celeste.BackdropRenderer.Render-=SkipHook;
     On.Celeste.Backdrop.IsVisible-=Hook;
   },auspicioushelperModule.OnEnterMap);
 }

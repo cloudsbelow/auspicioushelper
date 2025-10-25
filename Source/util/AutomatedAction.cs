@@ -62,6 +62,7 @@ public class ActionList{
         s.run();
       } catch(Exception ex) {
         DebugConsole.Write("Error occured in scheduled action "+s+": \n"+ex.ToString());
+        if(ex is DebugConsole.PassingException p) throw p;
       }
     }
     foreach(var s in toRemove) funcs.Remove(s);

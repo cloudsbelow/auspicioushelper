@@ -20,8 +20,8 @@ public class MapenterEv:Attribute{
       if(t.IsDefined(typeof(MapenterEv))){
         var attr = (MapenterEv)Attribute.GetCustomAttribute(t, typeof(MapenterEv));
         var ce = (CustomEntityAttribute)Attribute.GetCustomAttribute(t,typeof(CustomEntityAttribute));
-        var load1 = t.GetMethod(attr.fnName,BindingFlags.Static,[typeof(EntityData)]);
-        var load2 = t.GetMethod(attr.fnName,BindingFlags.Static,[]);
+        var load1 = t.GetMethod(attr.fnName,BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic,[typeof(EntityData)]);
+        var load2 = t.GetMethod(attr.fnName,BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic,[]);
         if(ce == null || (load1??load2) == null) DebugConsole.WriteFailure("bad attribute. Either not custom entity or load method unfound.",true);
         foreach(var s in ce.IDs) found.Add(s,(load1,load2));
       }

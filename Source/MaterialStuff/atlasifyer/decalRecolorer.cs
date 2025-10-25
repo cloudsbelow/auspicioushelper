@@ -12,21 +12,29 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/DecalRecolor")]
 [MapenterEv(nameof(Preload))]
 public class DecalRecolor:Entity{
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnEnter)]
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
   [Import.SpeedrunToolIop.Static]
   static Util.Trie<Util.SetStack<Util.ColorRemap>> Recolors=new();
   public class DecalRerouter:IDisposable{
-    static Stack<Util.ColorRemap> remaps;
+    static Stack<Util.ColorRemap> remaps = new();
     public static Util.ColorRemap Current=>remaps.Count>0?remaps.Peek():null;
+    Util.ColorRemap mine;
     public DecalRerouter(Util.ColorRemap r){
-      remaps.Push(r);
+      remaps.Push(mine=r);
     }
-    void IDisposable.Dispose()=>remaps.Pop();
+    void IDisposable.Dispose(){
+      if(remaps.Pop()!=mine) DebugConsole.WriteFailure("non stack ordered application of recolor wrapper",true);
+    }
+  }
+  enum Scopes{
+    invalid, wholeMap, wholeRoom, areaOnly
   }
   static void Preload(EntityData d){
-    if(d.Bool("WholeMap",true))Apply(d);
+    hooks.enable();
+    if(d.Enum<Scopes>("WholeMap",Scopes.wholeMap)==Scopes.wholeMap)Apply(d);
   }
   static void Apply(string tex, string val){
+    DebugConsole.Write($"Applying recolor {val} to {tex}");
     if(!Recolors.TryGet(tex, out var st)) Recolors.Add(tex, st=new());
     st.Push(Util.ColorRemap.Get(val));
   }
@@ -36,10 +44,13 @@ public class DecalRecolor:Entity{
       foreach(var v in manytexstr.Split(';')) if(!string.IsNullOrWhiteSpace(v)) continue;
     }
   }
-  static Decal DecalCtor(Func<string, Vector2, Vector2, int, Decal> ctor, string tex, Vector2 pos, Vector2 scale, int depth, Decal self){
+  static void DecalCtor(Action<Decal,string,Vector2,Vector2,int> orig, Decal self, string tex, Vector2 pos, Vector2 scale, int depth){
     if(Recolors.TryGet(tex, out var st) && st.Count>0) { 
-      using(new DecalRerouter(st.Peek())) return ctor(tex,pos,scale,depth); 
-    } else return ctor(tex,pos,scale,depth);
+      Util.ColorRemap remap=st.Peek();
+      using(new DecalRerouter(remap)) orig(self,tex,pos,scale,depth); 
+      DebugConsole.Write(tex);
+      self.textures = self.textures.Map(remap.RemapTex);
+    } else orig(self,tex,pos,scale,depth);
   }
   static void DecalAwake(On.Celeste.Decal.orig_Awake orig, Decal d, Scene s){
     if(d.Get<DecalMarker>() is {} dm && Recolors.TryGet(dm.texstr, out var st) && st.Count>0){ 
@@ -50,6 +61,10 @@ public class DecalRecolor:Entity{
     if(d.Get<DecalMarker>() is {} dm && Recolors.TryGet(dm.texstr, out var st) && st.Count>0){ 
       using(new DecalRerouter(st.Peek())) orig(d,s); 
     } else orig(d,s);
+  }
+  public override void Added(Scene scene) {
+    base.Added(scene);
+    RemoveSelf();
   }
   static Hook ctorhook;
   public static HookManager hooks = new(()=>{

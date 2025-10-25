@@ -119,6 +119,10 @@ public static partial class Util{
       public bool Get(string s, int idx, out T item){
         if(idx==s.Length){
           item=hasItem?containedItem:default;
+          if(res!=null)foreach(var (r,i,orig) in res) if(r.Match("").Success){
+            item=i;
+            return true;
+          }
           return hasItem;
         }
         if(n?.TryGetValue(s[idx], out var a)??false) if(a.Get(s,idx+1,out item)) return true;
@@ -143,13 +147,13 @@ public static partial class Util{
             }
             string re = "^";
             for(int i=idx; i<s.Length; i++){
-              char c=s[idx];
-              if(char.IsAsciiLetterOrDigit(s[idx])||c=='-'||c=='_'||c=='\\')re+=c;
+              char c=s[i];
+              if(char.IsAsciiLetterOrDigit(c)||c=='-'||c=='_'||c=='\\'||c==' '||c=='\n')re+=c;
               else if(c=='/')re+=@"\/";
               else if(c=='*')re+=".*";
               else throw new Exception("unhandled character in sequence");
             }
-            re+="\\w*$";
+            re+="$";
             res.Add(new(new(re,RegexOptions.Compiled),item,s));
             return;
           }
@@ -165,10 +169,14 @@ public static partial class Util{
       }
     }
     TrieNode root = new TrieNode();
-    public void Add(string s, T value)=>root.Add(s,0,value,false);
-    public void Set(string s, T value)=>root.Add(s,0,value,true);
-    public T GetOrDefault(string s) =>root.Get(s,0,out var item)?item:default;
-    public bool TryGet(string s, out T o)=>root.Get(s,0,out o);
+    bool alwaysClean;
+    public Trie(bool asClean=false){
+      alwaysClean=asClean;
+    }
+    public void Add(string s, T value)=>   root.Add(alwaysClean?s.AsClean():s, 0, value,false);
+    public void Set(string s, T value)=>   root.Add(alwaysClean?s.AsClean():s, 0, value,true);
+    public T GetOrDefault(string s) =>     root.Get(alwaysClean?s.AsClean():s, 0, out var item)? item:default;
+    public bool TryGet(string s, out T o)=>root.Get(alwaysClean?s.AsClean():s, 0, out o);
     public void Clear()=>root=new();
   }
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -364,7 +372,7 @@ public static partial class Util{
         val=v;
       }
     }
-    LinkedList<T> things;
+    LinkedList<T> things = new();
     public int Count=>things.Count;
     public Handle Push(T item){
       return new(things.AddLast(item));
@@ -379,6 +387,7 @@ public static partial class Util{
       if(things.Count==0) throw new Exception("Peaking into empty stack");
       return things.Last();
     }
+    public T PeekOrDefault()=>things.Count()==0?default:things.Last();
     public void Remove(Handle h){
       things.Remove(h.val);
     }

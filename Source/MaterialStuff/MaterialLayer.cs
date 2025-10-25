@@ -134,7 +134,11 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
   public BasicMaterialLayer(VirtualShaderList passes, float depth):this(passes,new LayerFormat{depth=depth}){}
   public virtual void onEnable(){
     foreach(var h in handles)h.Claim();
-    DebugConsole.Write($"enabled layer {this}. there are {RenderTargetPool.InUse} rendertargets active.");
+    DebugConsole.Write($"enabled layer {NiceName()}. {RenderTargetPool.InUse} total rt's.");
+  }
+  string NiceName(){
+    string s= ToString().TrimStart();
+    return s.StartsWith("Celeste.Mod.auspicioushelper")? s["Celeste.Mod.auspicioushelper".Length..]:s;
   }
   public virtual void onRemove(){
     foreach(var h in handles)h.Free();

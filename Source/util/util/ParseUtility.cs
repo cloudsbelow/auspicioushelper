@@ -44,6 +44,7 @@ public static partial class Util{
       (float)((rgba>>shift)&mask)*mult, 
       (float)(rgba&mask)*mult);
   }
+  public static Vector4 hexToOklabVec(string hex)=>hexToColorVec(hex).SrgbToOklab();
   public static bool tryGetStr(this EntityData d, string key, out string str){
     str = d.Attr(key,"");
     return !string.IsNullOrWhiteSpace(str);

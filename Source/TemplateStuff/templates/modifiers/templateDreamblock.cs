@@ -259,24 +259,36 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
       i=>i.MatchStfld<Player>(nameof(Player.Speed)),
       i=>i.MatchLdarg0(),
       i=>i.MatchLdcI4(1),
-      i=>i.MatchStfld<Actor>(nameof(Player.TreatNaive))
+      i=>i.MatchStfld<Actor>(nameof(Actor.TreatNaive))
     )){
       c.EmitLdarg0();
       c.EmitDelegate(speedReplaceHook);
-    } else DebugConsole.WriteFailure("Failed to add hook",true);
+    } else DebugConsole.WriteFailure("Failed to add hook (dreamdash begin)",true);
   }
   static void DashDowndiag(ILContext ctx){
     ILCursor c = new (ctx);
     ILLabel target=null;
     if(c.TryGotoNextBestFit(MoveType.After,
       itr=>itr.MatchCallvirt<Entity>(nameof(CollideCheck)) &&
-        itr.Operand is GenericInstanceMethod g && g.GenericArguments.Count==1 && g.GenericArguments[0].FullName==typeof(DreamBlock).FullName,
+        itr.Operand is GenericInstanceMethod g && 
+        g.GenericArguments.Count==1 && 
+        g.GenericArguments[0].FullName==typeof(DreamBlock).FullName,
       itr=>itr.MatchBrtrue(out target)
     )){
       c.EmitLdloc1();
       c.EmitDelegate(DreamMarkerComponent.CheckDDiag);
       c.EmitBrtrue(target);
-    } else DebugConsole.WriteFailure("Failed to add hook");
+    } else if((c=new(ctx)).TryGotoNextBestFit(MoveType.After,
+      itr=>itr.MatchLdfld<PlayerInventory>(nameof(PlayerInventory.DreamDash))
+    ) && c.TryGotoNextBestFit(MoveType.Before,
+      itr=>itr.MatchBrtrue(out target),
+      itr=>itr.MatchLdloc1(),
+      itr=>itr.MatchLdflda<Player>(nameof(Player.DashDir))
+    )) {
+      c.EmitBrtrue(target);
+      c.EmitLdloc1();
+      c.EmitDelegate(DreamMarkerComponent.CheckDDiag);
+    } else DebugConsole.WriteFailure("Failed to add hook (dreamdash downdiag)",true);
   }
   static void Hook(On.Celeste.DreamBlock.orig_OnPlayerExit orig, DreamBlock self, Player p){
     if(self is SentinalDb b){

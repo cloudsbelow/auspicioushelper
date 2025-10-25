@@ -26,7 +26,7 @@ public static class Atlasifyer{
     auspicioushelperModule.OnEnterMap.enroll(new PersistantAction(Reset));
   }
   const int tw=4096;
-  const int th=256;
+  const int th=1024;
   static int texCounter=0;
   public static void addTex(){
     texs.Add(new(new VirtualTexture($"ausp_atlas_{texCounter++}", tw, th, Color.Transparent)));
@@ -53,13 +53,13 @@ public static class Atlasifyer{
     public static void Reset(){cy=th+1;}
   }
   static class SkylineAllocator{
-    const int blocksize = 1;
+    const int blocksize = 4;
     static short[] heights = new short[tw/blocksize];
     public static void Reset(){
       for(int i=0; i<heights.Length; i++) heights[i]=0;
     }
     public static int CalcScore(int s, int running, int max){
-      return max*s*3-running*2;
+      return max*s+Math.Clamp(max*s-running,0,s);
     }
     public static Rectangle GetRect(int w, int h){
       int s = (w+blocksize-1)/blocksize;

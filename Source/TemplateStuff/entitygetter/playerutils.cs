@@ -81,4 +81,10 @@ public static class PlayerHelper{
       if(onExit) parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new PlayerInfo(player, parent));
     }
   }
+  [Command("ausp_worldpos", "Print worldpos of player")]
+  public static void Worldpos(){
+    if(Engine.Instance.scene is Level l && l.Tracker.GetEntity<Player>() is {} p){
+      Engine.Commands.Log($"Player is at {p.Position}");
+    } else Engine.Commands.Log("Player not found");
+  }
 }

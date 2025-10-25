@@ -117,6 +117,7 @@ anyways i want to praise it more it is wonderful
       } catch(Exception ex){
         DebugConsole.Write($"Entityloader generation for {d.Name} failed: \n{ex}");
         etype = parseMap[d.Name] = l!=null?Types.unable:Types.initiallyerrors;
+        if(ex is DebugConsole.PassingException p) throw p;
       }
     }
     return etype;

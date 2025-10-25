@@ -9,12 +9,13 @@ namespace Celeste.Mod.auspicioushelper;
 
 public static class ResetEvents{
   public enum RunTimes{
-    OnEnter, OnExit, OnReset, OnNewScreen
+    OnEnter, OnExit, OnReload, OnReset, OnNewScreen
   }
   static ActionList getList(this RunTimes r){
     return r switch{
       RunTimes.OnEnter=>auspicioushelperModule.OnEnterMap,
       RunTimes.OnExit=>auspicioushelperModule.OnExitMap,
+      RunTimes.OnReload=>auspicioushelperModule.OnReloadMap,
       RunTimes.OnNewScreen=>auspicioushelperModule.OnNewScreen,
       RunTimes.OnReset=>auspicioushelperModule.OnReset,
       _=>null
@@ -35,7 +36,8 @@ public static class ResetEvents{
     }
   }
   
-  static ResetEvents(){
+  public static void Load(){
+    DebugConsole.Write("Setting up reset");
     foreach(var t in typeof(auspicioushelperModule).Assembly.GetTypesSafe()){
       foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)){
         if(f.IsDefined(typeof(ClearOn))){
@@ -43,6 +45,7 @@ public static class ResetEvents{
           ClearOn c = (ClearOn)f.GetCustomAttribute(typeof(ClearOn));
           MethodInfo clearInfo = f.FieldType.GetMethod("Clear");
           if(clearInfo==null) DebugConsole.WriteFailure("Autoclear field is not clearable",true);
+          DebugConsole.Write("Add autoclear to", t, f, clearInfo);
           PersistantAction p = new(()=>{
             clearInfo.Invoke(f.GetValue(null),[]);
           });

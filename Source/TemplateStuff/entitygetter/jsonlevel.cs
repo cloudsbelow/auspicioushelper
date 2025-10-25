@@ -58,6 +58,7 @@ public class EvilPackedTemplateRoom:Entity{
     } catch(Exception ex){
       DebugConsole.WriteFailure("Could not load your packed template room: \n"+ex.ToString());
       Logger.Warn("auspicioushelper",$"Could not load your packed template room with key {key}: \n"+ex.ToString());
+      if(ex is DebugConsole.PassingException p) throw p;
     }
   }
   public static void PackTemplatesEvil(){

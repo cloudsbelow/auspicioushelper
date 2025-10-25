@@ -104,11 +104,14 @@ public static class DebugConsole {
     consoleThread = null;
     open = false;
   }
+  public class PassingException:Exception{
+    public PassingException(string s):base(s){}
+  }
   public static void WriteFailure(string s, bool alwayserror=false){
     Write(s);
     Logger.Error("auspicioushelper",s);
     if(alwayserror||(auspicioushelperModule.Settings?.CrashOnFail??false)){
-      throw new Exception(s);
+      throw new PassingException(s);
     }
   }
   public static void LogFullStackTrace(){

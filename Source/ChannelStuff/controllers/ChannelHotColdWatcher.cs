@@ -23,11 +23,7 @@ public class ChannelCoreWatcher:Entity {
   }
   public override void Added(Scene scene){
     base.Added(scene);
-    try{
-      OnChangeMode(SceneAs<Level>().coreMode);
-    } catch(Exception ex){
-      DebugConsole.Write($"Failed with {ex}");
-    }
+    OnChangeMode(SceneAs<Level>().coreMode);
   }
 
   public void OnChangeMode(Session.CoreModes mode){

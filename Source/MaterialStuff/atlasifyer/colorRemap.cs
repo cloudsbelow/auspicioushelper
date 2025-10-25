@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -66,7 +67,7 @@ public static partial class Util{
             lidx = i;
             lt = f;
           }
-          Double4 parsed = hexToColorVec(d[0]);
+          Double4 parsed = hexToOklabVec(d[0]);
           if(i>0) lines[i-1] = new(last, parsed);
           last = parsed;
         }
@@ -93,7 +94,7 @@ public static partial class Util{
         LineGroup i_;
         LineGroup o_;
         static public Regex  pattern = new Regex(
-          @"^(\([^\),]+[^\)]+\))->(\([^\),]+[^\)]+\))(?::(\{.+\})|())$",
+          @"^(\([^\),]+[^\)]+\))->?(\([^\),]+[^\)]+\))(?::(\{.+\})|())$",
           RegexOptions.Compiled
         );
         public P(Match ingest){
@@ -121,12 +122,12 @@ public static partial class Util{
       Double4 inCol;
       Double4 outCol;
       static public Regex pattern = new Regex(
-        @"^(#?[\da-f]+)->(#?[\da-f]+)(?::(\{.+\})|())$",
+        @"^(#?[\da-f]+)->?(#?[\da-f]+)(?::(\{.+\})|())$",
         RegexOptions.Compiled
       );
       public PointRemap(Match ingest){
-        inCol = hexToColorVec(ingest.Groups[1].Value);
-        outCol = hexToColorVec(ingest.Groups[2].Value);
+        inCol = hexToOklabVec(ingest.Groups[1].Value);
+        outCol = hexToOklabVec(ingest.Groups[2].Value);
       }
       public override double WeightAndCol(Double4 i, out Double4 o) {
         o=outCol;
@@ -136,10 +137,25 @@ public static partial class Util{
         return $"point remap {inCol}->{outCol}\n";
       }
     }
+    public class PlaneRemap:ColorWeightable{
+      //@"^(\([^\),]+[^\)]+\))->?(\([^\),]+[^\)]+\))(?::(\{.+\})|())$",
+      //@"^(#?[\da-f]+)->?(#?[\da-f]+)(?::(\{.+\})|())$"
+      Double4[] inbasis;
+      Double4[] outbasis;
+      static public Regex pattern = new Regex(
+        @"^(\(#?[\da-f]+,#?[\da-f]+\)\(#?[\da-f]+\))->(\(#?[\da-f]+,#?[\da-f]+\)\(#?[\da-f]+\))?(?::(\{.+\})|())$",
+        RegexOptions.Compiled
+      );
+      public override double WeightAndCol(Double4 i, out Double4 o) {
+        
+        throw new NotImplementedException("");
+      }
+    }
     List<ColorWeightable> things=new();
     List<Func<double,double>> weightMap=new();
-    double ln2 = 0.69314718056;
-    public ColorRemap(string inp){
+    public string ident;
+    ColorRemap(string inp){
+      ident = inp.AsClean();
       foreach(var v in listparseflat(inp)){
         if(string.IsNullOrWhiteSpace(v)) continue;
         Match m;
@@ -150,20 +166,19 @@ public static partial class Util{
           Func<double,double> fn = static(double d)=>d;
           var dict = new DictWrapper(kvparseflat(m.Groups[3].Value,true));
           if(dict.TryFloat(["radius","rad","r","size","s"],out var rad)){
-            DebugConsole.Write("Adding exp radius filter");
             float pow = dict.Float(["pow","p","strength","str"],4);
             weightMap.Add((d)=>{
               return 1/(double.Exp2M1(1/Math.Pow(d*rad,pow))+epsilon);
             });
           } else if(dict.TryFloat(["falloff","f"],out var falloff)){
-            DebugConsole.Write("Adding Falloff filter");
             weightMap.Add((d)=>d/falloff);
           }
           weightMap.Add(fn);
         }
       }
     }
-    public Double4 remapRgb(Double4 loc){
+    public Double4 remapRgb(Double4 srgbIn){
+      Double4 loc = srgbIn.SrgbToOklab();
       Double4 f=Double4.Zero;
       double tw=0;
       for(int i=0; i<things.Count; i++){
@@ -171,10 +186,24 @@ public static partial class Util{
         tw+=w;
         f+=v*w;
       }
-      return (tw>0?f/tw:Double4.Zero)*loc.W;
+      return ((tw>0?f/tw:Double4.Zero)*loc.W).OklabToSrgb();
     }
     public void DebugPrint(){
       foreach(var t in things)DebugConsole.Write(t.DebugString());
+    }
+    Dictionary<string,MTexture> remappedTexs = new();
+    public MTexture RemapTex(MTexture tex){
+      if(string.IsNullOrWhiteSpace(tex.AtlasPath)){
+        DebugConsole.WriteFailure("Empty atlas path for target remapping texture");
+        return tex;
+      }
+      if(!remappedTexs.TryGetValue(tex.AtlasPath, out var te)){
+        var dat = Util.TexData(tex, out var w, out var h).Map(col=>remapRgb(col).toColor());
+        te =  Atlasifyer.PushToAtlas(dat,w,h,ident+tex.AtlasPath).MakeLike(tex);
+        remappedTexs.Add(tex.AtlasPath,te);
+        DebugConsole.Write("Cache miss", tex.AtlasPath, remappedTexs.Count);
+      } else DebugConsole.Write("Cache hit", tex.AtlasPath);
+      return te;
     }
   }
   public static Color toColor(this Vector4 v)=>new Color(v.X,v.Y,v.Z,v.W);

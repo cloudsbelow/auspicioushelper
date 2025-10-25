@@ -96,21 +96,13 @@ internal static class SpeedrunToolIop{
       SetupStaticAttr();
     }
     if(SpeedrunToolImport.RegisterSaveLoadAction!=null){
-      try{
-        toDeregister.Add(SpeedrunToolImport.RegisterSaveLoadAction(null,loadState,null,null,null,null));
-      }catch(Exception ex){
-        DebugConsole.Write($"Failed to register action: {ex}");
-      }
+      toDeregister.Add(SpeedrunToolImport.RegisterSaveLoadAction(null,loadState,null,null,null,null));
     }
   }
   internal static HookManager hooks = new HookManager(srtloaduseapi, void()=>{
     DebugConsole.Write("Unloading SRT interop");
-    try{
-      foreach(object o in toDeregister){
-        SpeedrunToolImport.Unregister(o);
-      }
-    } catch(Exception ex){
-      DebugConsole.Write($"Deregistration failed with {ex}");
+    foreach(object o in toDeregister){
+      SpeedrunToolImport.Unregister(o);
     }
     toDeregister.Clear();
   });

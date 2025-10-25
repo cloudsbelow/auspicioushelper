@@ -61,6 +61,11 @@ public static partial class Util{
     for(int i=0; i<data.Length; i++)res[i] = pred(data[i]);
     return res;
   }
+  public static List<T2> Map<T1,T2>(this List<T1> data, Func<T1,T2> pred){
+    List<T2> res = new(data.Count);
+    for(int i=0; i<data.Count; i++) res.Add(pred(data[i]));
+    return res;
+  } 
 
   public struct Double4{
     public double X;

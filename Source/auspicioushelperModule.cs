@@ -32,6 +32,7 @@ public class auspicioushelperModule : EverestModule {
     }
     public static ActionList OnEnterMap = new ActionList();
     public static ActionList OnExitMap = new ActionList();
+    public static ActionList OnReloadMap = new ActionList();
     public static ActionList OnNewScreen = new ActionList();
     public static ActionList OnReset = new ActionList();
 
@@ -49,12 +50,11 @@ public class auspicioushelperModule : EverestModule {
         OnNewScreen.run();
     } 
     static void ChangerespawnHandler(On.Celeste.ChangeRespawnTrigger.orig_OnEnter orig, ChangeRespawnTrigger self, Player player){
+        Session s = (self.Scene as Level).Session;
+        Vector2? origPoint = s.RespawnPoint;
         orig(self, player);
         //if ((!session.RespawnPoint.HasValue || session.RespawnPoint.Value != Target))
-        Session session = (self.Scene as Level).Session;
-        if(!session.RespawnPoint.HasValue || session.RespawnPoint.Value != self.Target){
-            Session.save();
-        }
+        if(origPoint!=s.RespawnPoint)Session.save();
     }
     static void OnDie(Player player){
         ConditionalStrawb.handleDie(player);
@@ -73,14 +73,14 @@ public class auspicioushelperModule : EverestModule {
     }
     static void OnEnter(Session session, bool fromSave){
         UpdateHook.TimeSinceTransMs=0;
-        try{
-            OnExitMap.run();
-            ChannelState.unwatchAll();
+        OnExitMap.run();
+        ChannelState.unwatchAll();
 
-            OnReset.run();
-            OnNewScreen.run();
-            OnEnterMap.run();
-            
+        OnReset.run();
+        OnNewScreen.run();
+        OnReloadMap.run();
+        OnEnterMap.run();
+        try{
             Session?.load(!fromSave);
             //ChannelState.writeAll();
 
@@ -93,7 +93,8 @@ public class auspicioushelperModule : EverestModule {
                 DebugConsole.Write("Session or mapdata null");
             }
         }catch(Exception ex){
-            DebugConsole.Write(ex.ToString());
+            if(ex is DebugConsole.PassingException p) throw p;
+            else DebugConsole.Write(ex.ToString());
         }
     }
     static void OnExit(Level l, LevelExit e, LevelExit.Mode m, Session s, HiresSnow h)=>OnExitMap.run();
@@ -105,19 +106,17 @@ public class auspicioushelperModule : EverestModule {
         try {
             ChannelState.unwatchAll();
             if(Engine.Instance.scene is LevelLoader l){
+                OnReloadMap.run();
+                MapenterEv.Run(l.Level.Session.MapData);
                 MarkedRoomParser.parseMapdata(l.Level.Session.MapData);
             }
             DebugConsole.Write(Engine.Scene?.ToString()??"null scene");
-        } catch (Exception){
+        } catch (Exception ex){
+            if(ex is DebugConsole.PassingException p) throw p;
+            else DebugConsole.Write($"reloading error: {ex}");
             Logger.Warn("auspicioushelper","Invalid state. Ausp prevented some potential errors but other mods may not.\n");
         }
-        if(Session != null){
-            try{
-                Session.load(false);
-            } catch(Exception ex){
-                DebugConsole.Write($"reloading error: {ex}");
-            }
-        }
+        Session?.load(false);
     }
 
     public override void LoadContent(bool firstLoad)
@@ -155,6 +154,8 @@ public class auspicioushelperModule : EverestModule {
         TemplateBehaviorChain.setup();
         DecalMarker.hooks.enable();
         MapHider.uncache();
+        ResetEvents.Load();
+
         
         typeof(Anti0fIopExp).ModInterop();
         typeof(TemplateIopExp).ModInterop();
