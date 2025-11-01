@@ -94,16 +94,22 @@ public class HookManager{
     if(autoclean != null) s=new ScheduledAction(simpleDisable, "Hook Manager "+label);
     allhooks.Add(this);
   }
+  public HookManager(Action setup, Action unsetup, ResetEvents.RunTimes autoclean, string label=""):
+    this(setup, unsetup, ResetEvents.getList(autoclean), label){}
   public HookManager(Action setup, Func<bool> unsetup, ActionList autoclean =null, string label=""){
     this.setup = setup; this.condunsetup = unsetup; this.autoclean=autoclean;
     if(autoclean != null) s=new ScheduledAction(condDisable, "Hook Manager "+label);
     allhooks.Add(this);
   }
+  public HookManager(Action setup, Func<bool> unsetup, ResetEvents.RunTimes autoclean, string label=""):
+    this(setup, unsetup, ResetEvents.getList(autoclean), label){}
   public HookManager(Action setup, ActionList autoclean = null, string label=""){
     this.setup=setup; this.autoclean=autoclean;
     if(autoclean!=null) s=new ScheduledAction(trivialDisable, "Hook Manager"+label);
     allhooks.Add(this);
   }
+  public HookManager(Action setup,  ResetEvents.RunTimes autoclean, string label=""):
+    this(setup, ResetEvents.getList(autoclean), label){}
   public HookManager enable(){
     if(active) return this;
     active = true;

@@ -15,6 +15,7 @@ public class SpringTracker:Component{
     orig(self, pos, o, b);
     self.Add(new SpringTracker());
   }
+  [OnLoad]
   public static HookManager hooks = new HookManager(()=>{
     On.Celeste.Spring.ctor_Vector2_Orientations_bool+=SpringCtorHook;
   },()=>{

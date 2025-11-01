@@ -211,23 +211,22 @@ public static class MaterialPipe {
     foreach(var v in layers) removeLayer(v);
     orig(l);
   }
-  static PersistantAction cleanup;
+  [ResetEvents.RunOn(ResetEvents.RunTimes.OnExit)]
+  public static void Cleanup(){
+    foreach(var l in layers) removeLayer(l);
+    toRemove.Clear();
+    layers.Clear();
+  }
   static HookManager hooks = new HookManager(()=>{
     On.Celeste.GameplayRenderer.Render += GameplayRender;
     On.Celeste.Level.TransitionTo += ontrans;
     On.Celeste.Player.ctor += playerCtorHook;
     On.Celeste.Level.End+=SceneEnd;
-    auspicioushelperModule.OnExitMap.enroll(cleanup = new PersistantAction(()=>{
-      foreach(var l in layers) removeLayer(l);
-      toRemove.Clear();
-      layers.Clear();
-    }));
   }, void ()=>{
     On.Celeste.GameplayRenderer.Render-= GameplayRender;
     On.Celeste.Level.TransitionTo -= ontrans;
     On.Celeste.Player.ctor -= playerCtorHook;
     On.Celeste.Level.End-=SceneEnd;
-    cleanup.remove();
   });
 
   public static bool backdropReorderDetour(){

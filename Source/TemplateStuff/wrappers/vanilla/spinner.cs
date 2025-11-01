@@ -19,7 +19,9 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   static int uidctr = 0;
   int id;
   public static CrystalColor GetColor(EntityData d){
-    if(!string.IsNullOrWhiteSpace(d.Attr("customColor"))) return CrystalColor.Rainbow;
+    if(!string.IsNullOrWhiteSpace(d.Attr("customColor"))){
+      return Enum.TryParse<CrystalColor>(d.Attr("color"), ignoreCase: true, out var r)?r:CrystalColor.Rainbow;
+    }
     if(Enum.TryParse<CrystalColor>(d.Attr("color"), ignoreCase: true, out var res)) return res;
     return CrystalColor.Blue;
   }
@@ -28,10 +30,12 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     DebugConsole.Write(res.ToString());
     return res;
   }
+  string fancyRecolor;
   public Spinner(EntityData d, Vector2 offset):base(d.Position+offset, false, GetColor(d)){
     id = uidctr++;
     hooks.enable();
     makeFiller = d.Bool("makeFiller",true);
+    fancyRecolor = d.StringOrNull("fancy");
     if(!string.IsNullOrWhiteSpace(d.Attr("customColor"))){
       hasCustomCOlor = true;
       customColor = Util.hexToColor(d.Attr("customColor"));
@@ -119,6 +123,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     Calc.PushRandom(randomSeed);
     List<MTexture> atlasSubtextures = GFX.Game.GetAtlasSubtextures(fgTextureLookup[this.color]);
     MTexture mTexture = Calc.Random.Choose(atlasSubtextures);
+    if(fancyRecolor != null) mTexture = Util.ColorRemap.Get(fancyRecolor).RemapTex(mTexture);
     Color color = Color.White;
     if(hasCustomCOlor) color = customColor;
     else if (this.color == CrystalColor.Rainbow) color = GetHue(Position);
@@ -145,7 +150,14 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
             base.Scene.Add(filler = new SpinnerFiller(Position));
             filler.Depth = base.Depth + 1;
           }
-          AddSprite((Position + entity.Position) / 2f - Position);
+          MTexture ftex = Calc.Random.Choose(GFX.Game.GetAtlasSubtextures(bgTextureLookup[this.color]));
+          if(fancyRecolor!=null) ftex=Util.ColorRemap.Get(fancyRecolor).RemapTex(ftex);
+          Image image = new Image(ftex);
+          image.Position = (Position + entity.Position) / 2f - Position;
+          image.Rotation = (float)Calc.Random.Choose(0, 1, 2, 3) * (MathF.PI / 2f);
+          image.CenterOrigin();
+          image.Color=color;
+          filler.Add(image);
         }
       }
     }

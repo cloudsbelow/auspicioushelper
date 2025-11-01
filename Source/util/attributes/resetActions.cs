@@ -11,7 +11,7 @@ public static class ResetEvents{
   public enum RunTimes{
     OnEnter, OnExit, OnReload, OnReset, OnNewScreen
   }
-  static ActionList getList(this RunTimes r){
+  public static ActionList getList(this RunTimes r){
     return r switch{
       RunTimes.OnEnter=>auspicioushelperModule.OnEnterMap,
       RunTimes.OnExit=>auspicioushelperModule.OnExitMap,
@@ -24,8 +24,14 @@ public static class ResetEvents{
   [AttributeUsage(AttributeTargets.Field, Inherited = false, AllowMultiple = false)]
   public class ClearOn:Attribute{
     public RunTimes[] m;
+    public bool toNull;
     public ClearOn(params RunTimes[] moments){
       m=moments;
+      toNull=false;
+    }
+    public ClearOn(bool toNull, params RunTimes[] moments){
+      m=moments;
+      this.toNull=toNull;
     }
   }
   [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
@@ -37,18 +43,24 @@ public static class ResetEvents{
   }
   
   public static void Load(){
-    DebugConsole.Write("Setting up reset");
     foreach(var t in typeof(auspicioushelperModule).Assembly.GetTypesSafe()){
       foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)){
         if(f.IsDefined(typeof(ClearOn))){
           if(!f.IsStatic) DebugConsole.WriteFailure("Bad",true);
           ClearOn c = (ClearOn)f.GetCustomAttribute(typeof(ClearOn));
-          MethodInfo clearInfo = f.FieldType.GetMethod("Clear");
-          if(clearInfo==null) DebugConsole.WriteFailure("Autoclear field is not clearable",true);
-          DebugConsole.Write("Add autoclear to", t, f, clearInfo);
-          PersistantAction p = new(()=>{
-            clearInfo.Invoke(f.GetValue(null),[]);
-          });
+          PersistantAction p;
+          if(c.toNull){
+            Type ty = f.GetType();
+            object setTo = ty.IsValueType? Activator.CreateInstance(ty) : null;
+            p = new(()=>f.SetValue(null, setTo));
+          } else{ 
+            MethodInfo clearInfo = f.FieldType.GetMethod("Clear");
+            if(clearInfo==null) DebugConsole.WriteFailure("Autoclear field is not clearable",true);
+            p = new(()=>{
+              clearInfo.Invoke(f.GetValue(null),[]);
+            });
+          }
+          
           foreach(var r in c.m)r.getList().enroll(p);
         }
       }

@@ -49,6 +49,9 @@ public static partial class Util{
     str = d.Attr(key,"");
     return !string.IsNullOrWhiteSpace(str);
   }
+  public static string StringOrNull(this EntityData d, string key){
+    return d.tryGetStr(key, out var res)?res:null;
+  }
   static public EntityData cloneWithForcepos(this EntityData a, Vector2? forcepos){
     if(forcepos is not Vector2 v) return a;
     EntityData e = Util.shallowCopy(a);

@@ -194,6 +194,7 @@ internal class PartialTiles{
   public static void ausp_usingPartialtiles(){
     Engine.Commands.Log($"Partial tiles: {(usingPartialtiles?"on":"off")}");
   }
+  [OnLoad]
   public static HookManager hooks = new(()=>{
     IL.Celeste.Autotiler.ctor += ParseHook;
     IL.Celeste.Autotiler.Generate += GenerateHook;

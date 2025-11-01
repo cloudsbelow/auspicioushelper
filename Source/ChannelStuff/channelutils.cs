@@ -362,7 +362,8 @@ public static class ChannelState{
     foreach(var c in s.Counters) if(c.Key==f) return c.Value;
     return readChannel(f.Substring(1));
   }
-  internal static HookManager hooks = new HookManager(()=>{
+  [OnLoad]
+  public static HookManager hooks = new HookManager(()=>{
     On.Celeste.Session.GetFlag+=Hook;
     On.Celeste.Session.GetCounter+=Hook;
     On.Celeste.Session.SetFlag+=Hook;

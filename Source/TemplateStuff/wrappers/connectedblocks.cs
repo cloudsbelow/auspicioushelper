@@ -24,8 +24,8 @@ public class ConnectedBlocks:Entity{
   bool used;
   char tid;
   Vector2 levelOffset;
-  HashSet<string> permittedEnts = null;
-  HashSet<string> permittedDecals = null;
+  Util.Trie<bool> permittedEnts = null;
+  Util.Trie<bool> permittedDecals = null;
   bool allEnts;
   bool allDecals;
   bool excludeSolids;
@@ -33,10 +33,10 @@ public class ConnectedBlocks:Entity{
   bool permits(Entity e){
     if(e is ConnectedBlocks or TemplateHoldable || e is Template t && t.t==null) return false;
     if(e is Decal d){
-      return d.Get<DecalMarker>() is DecalMarker dm && allDecals!=permittedDecals?.Contains(dm.texstr);
+      return d.Get<DecalMarker>() is DecalMarker dm && allDecals!=permittedDecals?.GetOrDefault(dm.texstr);
     } else if((excludeSolids && e is Solid) || (excludeTriggers && e is Trigger)){
-      return e.SourceData?.Name is {} sn && (permittedEnts?.Contains(sn)??false);
-    } else return e.SourceData?.Name is {} s && (permittedEnts?.Contains(s)??false)!=allEnts;
+      return e.SourceData?.Name is {} sn && (permittedEnts?.GetOrDefault(sn)??false);
+    } else return e.SourceData?.Name is {} s && (permittedEnts?.GetOrDefault(s)??false)!=allEnts;
   }
   enum Category {
     fgt, bgt, ent
@@ -50,9 +50,9 @@ public class ConnectedBlocks:Entity{
     else c=Category.fgt;
     if(c == Category.ent){
       var v = Util.listparseflat(d.Attr("filterEntities", ""));
-      if(v.Count>0) permittedEnts = [..v];
+      if(v.Count>0) (permittedEnts = new()).SetAll(v,true);
       v = Util.listparseflat(d.Attr("filterDecals",""));
-      if(v.Count>0) permittedDecals = [..v];
+      if(v.Count>0) (permittedDecals = new()).SetAll(v,true);
       allEnts = d.Bool("getEntities",true);
       allDecals = d.Bool("getDecals",false);
       excludeSolids = d.Bool("excludeSolids",false);
@@ -311,6 +311,7 @@ class DecalMarker:Component{
     bad: DebugConsole.WriteFailure("Could not add decal marking hook");
   }
   static ILHook loadLevelHook;
+  [OnLoad]
   public static HookManager hooks = new(()=>{
     MethodInfo oll = typeof(Level).GetMethod("orig_LoadLevel",BindingFlags.Public |BindingFlags.Instance);
     loadLevelHook = new(oll, Manip);

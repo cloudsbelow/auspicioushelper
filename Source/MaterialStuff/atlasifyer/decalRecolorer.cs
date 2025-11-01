@@ -6,6 +6,7 @@ using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.RuntimeDetour;
+using Handle = Celeste.Mod.auspicioushelper.Util.SetStack<Celeste.Mod.auspicioushelper.Util.ColorRemap>.Handle;
 
 namespace Celeste.Mod.auspicioushelper;
 [Tracked]
@@ -29,26 +30,47 @@ public class DecalRecolor:Entity{
   enum Scopes{
     invalid, wholeMap, wholeRoom, areaOnly
   }
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReset)]
+  [Import.SpeedrunToolIop.Static]
+  static List<(FloatRect,DecalRecolor)> zones = new();
   static void Preload(EntityData d){
     hooks.enable();
-    if(d.Enum<Scopes>("WholeMap",Scopes.wholeMap)==Scopes.wholeMap)Apply(d);
+    if(d.Enum<Scopes>("scope",Scopes.wholeMap)==Scopes.wholeMap)Apply(d);
   }
-  static void Apply(string tex, string val){
-    //DebugConsole.Write($"Applying recolor {val} to {tex}");
+  static Handle Apply(string tex, string val){
+    DebugConsole.Write($"Applying recolor {val} to {tex}");
     if(!Recolors.TryGet(tex, out var st)) Recolors.Add(tex, st=new());
-    st.Push(Util.ColorRemap.Get(val));
+    return st.Push(Util.ColorRemap.Get(val));
   }
-  static void Apply(EntityData d){
-    if(d.tryGetStr("texture", out string texstr))Apply(texstr,d.Attr("recolor"));
+  static List<Handle> Apply(EntityData d){
+    List<Handle> ret = new();
+    if(d.tryGetStr("texture", out string texstr))ret.Add(Apply(texstr,d.Attr("recolor")));
     if(d.tryGetStr("extraList", out string manytexstr)){
-      foreach(var v in manytexstr.Split(';')) if(!string.IsNullOrWhiteSpace(v)) continue;
+      foreach(var (k,v) in Util.kvparseflat(manytexstr,false,true)) if(!string.IsNullOrWhiteSpace(k)) ret.Add(Apply(k,v));
     }
+    return ret;
+  }
+  static void Unapply(List<Handle> handles){
+    foreach(var h in handles) h.Remove();
+  }
+  Scopes scope;
+  List<Handle> hs;
+  public DecalRecolor(EntityData d, Vector2 o):base(d.Position+o){
+    scope = d.Enum<Scopes>("scope",Scopes.wholeMap);
+    if(scope==Scopes.wholeMap) return;
+    if(scope==Scopes.wholeRoom) hs = Apply(d);
+    if(scope==Scopes.areaOnly){
+      zones.Add(new (new FloatRect(Position.X,Position.Y,d.Width,d.Height),this));
+    }
+  }
+  public override void Removed(Scene scene) {
+    base.Removed(scene);
+    if(scope==Scopes.wholeRoom)Unapply(hs);
   }
   static void DecalCtor(Action<Decal,string,Vector2,Vector2,int> orig, Decal self, string tex, Vector2 pos, Vector2 scale, int depth){
     if(Recolors.TryGet(tex, out var st) && st.Count>0) { 
       Util.ColorRemap remap=st.Peek();
       using(new DecalRerouter(remap)) orig(self,tex,pos,scale,depth); 
-      DebugConsole.Write(tex);
       self.textures = self.textures.Map(remap.RemapTex);
     } else orig(self,tex,pos,scale,depth);
   }

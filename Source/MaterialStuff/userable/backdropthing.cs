@@ -73,17 +73,16 @@ public class BackdropCapturer{
       if(l == null) return;
       last = l;
       foreach(var b in l.Background.Backdrops) if(b.OnlyIn?.Contains(selector)??false){
-        DebugConsole.Write($"Captured backdrop layer {b} with {selector}");
         captured.Add(b);
         if(!back.TryGetValue(b, out var br))back.Add(b, br=new BackdropRef(b));
         br.Use();
       }
       foreach(var b in l.Foreground.Backdrops) if(b.OnlyIn?.Contains(selector)??false){
-        DebugConsole.Write($"Captured backdrop layer {b} with {selector}");
         captured.Add(b);
         if(!back.TryGetValue(b, out var br))back.Add(b, br=new BackdropRef(b));
         br.Use();
       }
+      DebugConsole.Write($"Backdrop layer {selector} captured {captured.Count} layers");
     }
     public void render(SpriteBatch sb, Camera c){
       MaterialPipe.gd.SetRenderTarget(tex);
@@ -170,6 +169,7 @@ public class BackdropCapturer{
       c.EmitBrfalse(target);
     } else DebugConsole.WriteFailure("Failed to add skip hook");
   }
+  [OnLoad]
   public static HookManager hooks = new(()=>{
     IL.Celeste.MapData.ParseLevelsList+=RoomParseHook;
     IL.Celeste.BackdropRenderer.Render+=SkipHook;

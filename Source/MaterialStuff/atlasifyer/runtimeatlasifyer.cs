@@ -15,7 +15,7 @@ public static class Atlasifyer{
   static List<MTexture> texs=new();
   [ResetEvents.RunOn(ResetEvents.RunTimes.OnEnter)]
   public static void Reset(){
-    DebugConsole.Write("\n\nClearing atlases\n\n");
+    if(texs.Count>0)DebugConsole.Write("Clearing atlases");
     contains.Clear();
     foreach(var tex in texs) tex.Texture.Dispose();
     texs.Clear();

@@ -20,6 +20,9 @@ public class FoundEntity:Component{
   public FoundEntity(EntityData d, string identifier):base(false,false){
     id=d.ID; this.d=d; ident = identifier;
   }
+  public FoundEntity(string ident):base(false,false){
+    id=-1; d=null; this.ident=ident;
+  }
   public void finalize(Entity e){
     if(e==null){
       DebugConsole.Write($"Failed to find the entity {d.Name} with id {id} - (maybe this entity adds itself non-standardly?)");
@@ -110,6 +113,15 @@ public class FoundEntity:Component{
     return null;
   }
   public static FoundEntity find(string ident){
+    if(ident=="player"){
+      if(Engine.Instance.scene is Level l && l.Tracker.GetEntity<Player>() is {} p){
+        if(!(p.Get<FoundEntity>() is {} fent)){
+          p.Add(fent = new FoundEntity("player")); 
+        }
+        return fent;
+      }
+      return null;
+    }
     return found.TryGetValue(ident, out var f)?f:null;
   }
 }

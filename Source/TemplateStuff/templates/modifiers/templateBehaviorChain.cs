@@ -16,6 +16,7 @@ namespace Celeste.Mod.auspicioushelper;
 public class TemplateBehaviorChain:Entity{
   [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReset)]
   public static Dictionary<Vector2,EntityData> mainRoom=new();
+  [OnLoad]
   public static void setup(){
     EntityParser.clarify("auspicioushelper/TemplateBehaviorChain",EntityParser.Types.unwrapped,(l,d,o,e)=>{
       string templateStr = e.Attr("template","");
@@ -75,14 +76,12 @@ public class TemplateBehaviorChain:Entity{
   }
   string templateStr;
   EntityData dat;
-  bool forcePos;
   public TemplateBehaviorChain(EntityData d, Vector2 o):base(d.Position+o){
     dat=d;
     templateStr = d.Attr("template","");
     if(string.IsNullOrWhiteSpace(templateStr)){
       AddEmptyTemplate(d);
     }
-    forcePos = d.Bool("forceOwnPosition",false);
   }
   static Template startChain(templateFiller final, EntityData dat, Vector2 pos, Level l, Template scope=null){
     Vector2? fp = dat.Bool("forceOwnPosition",false)?dat.Position:null; 

@@ -175,6 +175,9 @@ public static partial class Util{
     }
     public void Add(string s, T value)=>   root.Add(alwaysClean?s.AsClean():s, 0, value,false);
     public void Set(string s, T value)=>   root.Add(alwaysClean?s.AsClean():s, 0, value,true);
+    public void SetAll(IEnumerable<string> strings, T value){
+      foreach(var s in strings) root.Add(alwaysClean?s.AsClean():s, 0, value, true);
+    }
     public T GetOrDefault(string s) =>     root.Get(alwaysClean?s.AsClean():s, 0, out var item)? item:default;
     public bool TryGet(string s, out T o)=>root.Get(alwaysClean?s.AsClean():s, 0, out o);
     public void Clear()=>root=new();
@@ -368,14 +371,16 @@ public static partial class Util{
   public class SetStack<T>{
     public struct Handle{
       public readonly LinkedListNode<T> val;
-      public Handle(LinkedListNode<T> v){
-        val=v;
+      public readonly SetStack<T> origin;
+      public Handle(LinkedListNode<T> v, SetStack<T> o){
+        val=v; origin=o;
       }
+      public void Remove()=>origin.Remove(this);
     }
     LinkedList<T> things = new();
     public int Count=>things.Count;
     public Handle Push(T item){
-      return new(things.AddLast(item));
+      return new(things.AddLast(item),this);
     }
     public T Pop(){
       if(things.Count==0) throw new Exception("Popping from empty stack");

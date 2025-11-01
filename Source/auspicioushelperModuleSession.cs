@@ -21,9 +21,10 @@ public class auspicioushelperModuleSession : EverestModuleSession {
   public HashSet<string> collectedTrackedCassettes = new HashSet<string>();
   public HashSet<int> openedGates = new HashSet<int>();
   public HashSet<string> brokenTempaltes = new();
+  public CampfireThing.RespawnData respDat;
 
   public void save(){
-    channelData = ChannelState.save();
+    if(respDat==null) channelData = ChannelState.save();
   }
   public void load(bool initialize){
     if(initialize){

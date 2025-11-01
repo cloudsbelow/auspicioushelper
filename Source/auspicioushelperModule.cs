@@ -53,7 +53,8 @@ public class auspicioushelperModule : EverestModule {
         Session s = (self.Scene as Level).Session;
         Vector2? origPoint = s.RespawnPoint;
         orig(self, player);
-        //if ((!session.RespawnPoint.HasValue || session.RespawnPoint.Value != Target))
+        if(Session.respDat!=null) origPoint=null;
+        Session.respDat=null;
         if(origPoint!=s.RespawnPoint)Session.save();
     }
     static void OnDie(Player player){
@@ -80,6 +81,7 @@ public class auspicioushelperModule : EverestModule {
         OnNewScreen.run();
         OnReloadMap.run();
         OnEnterMap.run();
+        DebugConsole.Write("\n\nEntering Map!");
         try{
             Session?.load(!fromSave);
             //ChannelState.writeAll();
@@ -107,6 +109,7 @@ public class auspicioushelperModule : EverestModule {
             ChannelState.unwatchAll();
             if(Engine.Instance.scene is LevelLoader l){
                 OnReloadMap.run();
+                DebugConsole.Write("\n\nReloading Map!");
                 MapenterEv.Run(l.Level.Session.MapData);
                 MarkedRoomParser.parseMapdata(l.Level.Session.MapData);
             }
@@ -142,17 +145,10 @@ public class auspicioushelperModule : EverestModule {
         Everest.Events.AssetReload.OnAfterReload += OnReload;
         On.Celeste.Level.GiveUp += GiveUp;
         On.Celeste.Level.LoadLevel += LoadLevlHook;
-
         On.Celeste.ChangeRespawnTrigger.OnEnter += ChangerespawnHandler;
+        
         DebugConsole.Write("Loading");
-        ConditionalStrawb.hooks.enable();
-        SpringTracker.hooks.enable();
-        ChannelState.hooks.enable();
-        PartialTiles.hooks.enable();
-        RecolorTiles.hooks.enable();
-        BackdropCapturer.hooks.enable();
-        TemplateBehaviorChain.setup();
-        DecalMarker.hooks.enable();
+        OnLoad.Run();
         MapHider.uncache();
         ResetEvents.Load();
 

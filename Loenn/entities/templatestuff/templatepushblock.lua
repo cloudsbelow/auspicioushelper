@@ -12,7 +12,7 @@ entity.placements = {
     name = "Template Pushblock",
     data = {
       template = "",
-      depthoffset=5,
+      depthoffset=0,
 
       NoPhysicsTime = "0.3",
       speedFromDash = 100,

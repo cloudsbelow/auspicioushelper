@@ -226,6 +226,12 @@ public class ConditionalStrawb:Entity, IStrawberry{
       }
     }
   }
+  [Command("auspdebug_Numfollowers","Print all followers")]
+  public static void Numfollowers(){
+    if(!(Engine.Instance.scene.Tracker.GetEntity<Player>() is Player p)) return;
+    Engine.Commands.Log($"Player has {p.Leader.Followers.Count} followers");
+    foreach(Follower f in p.Leader.Followers) Engine.Commands.Log(f.Entity==null?"NULL":f.Entity.ToString());
+  }
   public static void restoreFollowerLikeJesus(Player p, auspicioushelperModuleSession.EntityDataId e){
       var ent = new ConditionalStrawb(e.data, new Vector2(0,0), e.id);
       p.Leader.GainFollower(ent.follower);
@@ -240,6 +246,7 @@ public class ConditionalStrawb:Entity, IStrawberry{
       if(e.data.Name == "auspicioushelper/ConditionalStrawb") restoreFollowerLikeJesus(p,e);
     }
   }
+  [OnLoad]
   public static HookManager hooks = new HookManager(()=>{
     On.Celeste.Player.ctor += playerCtorHook;
   }, void ()=>{

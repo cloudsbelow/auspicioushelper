@@ -68,7 +68,7 @@ internal static class SpeedrunToolIop{
         }
       }
       if(st.Count==0) continue;
-      DebugConsole.Write($"(SRT) Type {t.FullName}: adding static fields [{string.Join(", ",st)}]");
+      //DebugConsole.Write($"(SRT) Type {t.FullName}: adding static fields [{string.Join(", ",st)}]");
       toDeregister.Add(SpeedrunToolImport.RegisterStaticTypes(t, st.ToArray()));
     }
   }

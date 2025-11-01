@@ -47,6 +47,7 @@ public static class RecolorTiles{
       c.EmitDelegate(RecolorDelegate);
     } else DebugConsole.WriteFailure("Could not make recoloring hook");
   }
+  [OnLoad]
   public static HookManager hooks = new(()=>{
     IL.Celeste.Autotiler.ctor+=CtorHook;
   }, ()=>{
