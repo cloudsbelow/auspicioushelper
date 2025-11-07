@@ -16,7 +16,7 @@ public class TemplateInstanceable:Template{
   public Template addInstance(Vector2 offset, templateFiller template=null){
     template = template??t;
     Template res;
-    addEnt(res=useDisappearer?new TemplateDisappearer(offset+virtLoc){
+    using(new Template.ChainLock())addEnt(res=useDisappearer?new TemplateDisappearer(offset+virtLoc){
       t=template, ownidpath=numInstances++.ToString()
     }:new Template(offset+virtLoc){
       t=template, ownidpath=numInstances++.ToString()

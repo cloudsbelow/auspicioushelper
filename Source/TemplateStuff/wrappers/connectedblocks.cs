@@ -105,6 +105,7 @@ public class ConnectedBlocks:Entity{
       SolidTiles s=null;
       BackgroundTiles b=null;
       InplaceFiller f = new(Int2.Zero+Int2.One*8*padding,maximum-minimum);
+      f.setRoomdat((scene as Level).Session.LevelData);
       f.setTiles(fgd);
       f.setTiles(bgd,false);
       if(f.fgt!=null)using(new PaddingLock()) s=new(Vector2.Zero, fgd);
@@ -135,7 +136,8 @@ public class ConnectedBlocks:Entity{
           if(first == null) throw new Exception("idk shouldn't be possible");
           if(Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
             Level lv = scene as Level;
-            Entity e = loader(lv,lv.Session.LevelData,pos-first.Position,first);
+            Entity e;
+            using(new Template.ChainLock()) e = loader(lv,lv.Session.LevelData,pos-first.Position,first);
             if(e is Template te){
               te.t = chain.NextFiller();
               lv.Add(e);
@@ -164,12 +166,17 @@ public class ConnectedBlocks:Entity{
     end:
       RemoveSelf();
   }
+  public static Dictionary<Type, Action<Entity>> ExtraRemovalSteps = new(){
+    {typeof(FireBarrier),(Entity e)=>(e as FireBarrier).solid.RemoveSelf()},
+    {typeof(IceBlock),(Entity e)=>(e as IceBlock).solid.RemoveSelf()},
+  };
   void RemChildren(Util.OrderedSet<Entity> all, Vector2 minimum, templateFiller f){
     HashSet<Entity> donot = new();
     foreach(var e in all) if(e is Template t) foreach(Entity en in t.GetChildren<Entity>()){
       if(en!=t || t.parent!=null)donot.Add(en);
     }
     foreach(var e in all){
+      if(ExtraRemovalSteps.TryGetValue(e.GetType(),out var er))er(e);
       e.RemoveSelf();
       if(donot.Contains(e)) continue;
       Vector2 fpos = e.Position-minimum+padding*8*Vector2.One;

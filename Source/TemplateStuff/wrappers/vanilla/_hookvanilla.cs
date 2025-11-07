@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -25,7 +26,81 @@ public static class HookVanilla{
     return hg;
   }
 
-  public static HookManager hooks = new(()=>{
-  },()=>{
-  });
+  public class FireIcePatch:Component, ISimpleWrapper{
+    public Entity wrapped {get;set;}
+    public Template parent {get;set;}
+    public Vector2 toffset {get;set;}
+    Solid solid=>new DynamicData(wrapped).Get<Solid>("solid");
+    bool getOwnCol(Level l){
+      if(wrapped.GetType()==typeof(IceBlock)) return l.coreMode==Session.CoreModes.Cold;
+      if(wrapped.GetType()==typeof(FireBarrier)) return l.coreMode==Session.CoreModes.Hot;
+      return true;
+    }
+    public FireIcePatch(Entity wrapped):base(false,false){
+      this.wrapped=wrapped;
+      var comp = wrapped.Get<CoreModeListener>();
+      var orig = comp.OnChange;
+      comp.OnChange = (Session.CoreModes mode)=>{
+        if(vca.Visible)orig(mode);
+        ownCol = getOwnCol(wrapped.Scene as Level);
+        setCol(vca.Collidable && ownCol);
+      };
+      wrapped.Add(this);
+    }
+    bool ownCol;
+    TemplateDisappearer.vcaTracker vca = new();
+    void setCol(bool n){
+      wrapped.Collidable = n;
+      if(solid is {} s) s.Collidable=n;
+    }
+    
+    void ITemplateChild.parentChangeStat(int vis, int col, int act){
+      vca.Align(vis,col,act);
+      if(vis!=0) wrapped.Visible = vis>0;
+      if(col!=0) setCol(vca.Collidable && ownCol);
+      if(act!=0) wrapped.Active = col>0;
+    }
+    public override void EntityAdded(Scene scene) {
+      base.EntityAdded(scene);
+      setCol(vca.Collidable && (ownCol = getOwnCol(scene as Level)));
+    }
+    void ITemplateChild.destroy(bool particles){
+      solid?.RemoveSelf();
+      wrapped.RemoveSelf();
+      if(particles && vca.Visible && ownCol){
+        Level level = Scene as Level;
+        Vector2 center = wrapped.Center;
+        ParticleType p = null;
+        if(wrapped.GetType()==typeof(IceBlock)) p=IceBlock.P_Deactivate;
+        if(wrapped.GetType()==typeof(FireBarrier)) p=FireBarrier.P_Deactivate;
+        if(p!=null) for (int i = 0; (float)i < wrapped.Width; i += 4){
+          for (int j = 0; (float)j < wrapped.Height; j += 4){
+            Vector2 vector = wrapped.Position + new Vector2(i + 2, j + 2) + Calc.Random.Range(-Vector2.One * 2f, Vector2.One * 2f);
+            level.Particles.Emit(p, vector, (vector - center).Angle());
+          }
+        }
+      }
+    }
+    void ITemplateChild.relposTo(Vector2 loc, Vector2 liftspeed) {
+      wrapped.Position = (loc+toffset).Round();
+      if(solid is {} s) solid.MoveTo(wrapped.Position+new Vector2(2f, 3f), liftspeed);
+    }
+    void ITemplateChild.AddAllChildren(List<Entity> list){
+      list.Add(wrapped);
+      if(solid is {} s) list.Add(s);
+    }
+    void UghRender(){
+      wrapped.Collidable = ownCol;
+      wrapped.Render();
+      wrapped.Collidable = ownCol && vca.Collidable;
+    }
+    static FireIcePatch(){
+      OverrideVisualComponent.custom.AddMultiple([typeof(IceBlock),typeof(FireBarrier)],static (Entity e)=>{
+        var c= e.Get<FireIcePatch>();
+        return new OverrideVisualComponent.PatchedRenderComp(){
+          render = c.UghRender
+        };
+      });
+    }
+  }
 }

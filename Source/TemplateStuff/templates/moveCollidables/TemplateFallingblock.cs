@@ -58,6 +58,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     disconnect();
     //emancipate();
     parent?.GetFromTree<IRemovableContainer>()?.RemoveChild(this);
+    DebugConsole.Write("Delay", delays[0]);
     shake(delays[0]);
     Audio.Play(ShakeSfx,Position);
     yield return delays[0];

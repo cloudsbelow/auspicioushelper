@@ -41,6 +41,7 @@ public class TemplateMoonblock:Template{
     }
     return DashCollisionResults.NormalOverride;
   } 
+  const float dashReturn = 1.5f;
   public override void Update() {
     base.Update();
     if(hasRiders<Player>()){
@@ -50,7 +51,7 @@ public class TemplateMoonblock:Template{
     }
     ylerp = Util.Approach(ylerp,sinkTimer>0?1:0,Engine.DeltaTime*sinkSpeed, out var sign);
     sinephase += Engine.DeltaTime;
-    dashease = Calc.Approach(dashease, 0f, Engine.DeltaTime * 1.5f);
+    dashease = Calc.Approach(dashease, 0f, Engine.DeltaTime * dashReturn);
 
     ownLiftspeed = Vector2.Zero;
     offset = Vector2.Zero;
@@ -59,7 +60,7 @@ public class TemplateMoonblock:Template{
     offset += Util.SineInOut(ylerp, out var dyl)*Vector2.UnitY*sinkamount;
     ownLiftspeed += Vector2.UnitY*sinkSpeed*sign*dyl*sinkamount;
     offset += dashdir*dashmagn*Util.Spike(Util.QuadIn(dashease,out var d2), out var d1);
-    ownLiftspeed += dashdir*dashmagn*d1*d2;
+    ownLiftspeed += -dashdir*dashmagn*d1*d2*dashReturn;
     childRelposSafe();
   }
 }

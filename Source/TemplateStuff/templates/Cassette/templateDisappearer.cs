@@ -36,6 +36,7 @@ public class TemplateDisappearer:Template{
       if(col!=0) Collidable=col>0;
       if(act!=0) Active=act>0; 
     }
+    public override string ToString()=>$"VCA:{{vis:{Visible},col:{Collidable},act:{Active}}}";
   }
   public TemplateDisappearer(EntityData data, Vector2 pos, int depthoffset):base(data,pos,depthoffset){
   }

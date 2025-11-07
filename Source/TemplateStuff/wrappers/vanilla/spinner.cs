@@ -86,6 +86,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     if(vis!=0){
       hvisible = vis>0;
       Visible = vis>0;
+      if(filler!=null) filler.Visible=Visible;
     }
     if(col!=0){
       hcollidable = col>0;

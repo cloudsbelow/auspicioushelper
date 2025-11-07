@@ -4,6 +4,7 @@ local aelperLib = require("mods").requireFromPlugin("libraries.aelper_lib")
 
 local entity = {}
 local splineTypes = {"simpleLinear","compoundLinear","centripetalNormalized","centripetalDenormalized","uniformNormalized","uniformDenormalized"}
+local easings = {"Linear","SineIn","SineOut","SineInOut","QuadIn","QuadOut","CubeIn","CubeOut","Smoothstep","QuartIn","QuartOut","QuintIn","QuintOut"}
 
 entity.name = aelperLib.register_template_name("auspicioushelper/TemplateBelt")
 entity.depth = -13000
@@ -21,6 +22,7 @@ entity.placements = {
       initialOffset=0,
       loop=false,
       spline = "uniformNormalized",
+      easing = "Linear",
       lastNodeIsKnot = true,
       channel = "",
       
@@ -33,7 +35,8 @@ entity.fieldInformation = function(entity)
         template = {
             options = aelperLib.get_template_options(entity)
         },
-        spline = {options = splineTypes, editable=true}
+        spline = {options = splineTypes, editable=true},
+        easing = {options = easings, editable=false}
     }
 end
 

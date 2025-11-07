@@ -245,6 +245,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     foreach(Entity p in l) p.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(t);
   }
   static void Hook(On.Celeste.Player.orig_Jump orig, Player p, bool a, bool b){
+    DebugConsole.Write("Jump ",p.LiftBoost,p.Speed);
     bool useCoyote = p.jumpGraceTimer>0 && p.jumpGraceTimer<0.1;
     orig(p,a,b);
     if(a && b)triggerFromArr(p.temp,new TouchInfo(p,TouchInfo.Type.jump));
@@ -254,6 +255,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   }
   static void Hook(On.Celeste.Player.orig_SuperJump orig, Player p){
     orig(p);
+    DebugConsole.Write("SUper ",p.LiftBoost,p.Speed);
     triggerFromArr(p.temp, new TouchInfo(p,TouchInfo.Type.super));
     p.Get<CoyotePlatformMarker>()?.p?.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new TouchInfo(p,TouchInfo.Type.super));
   }

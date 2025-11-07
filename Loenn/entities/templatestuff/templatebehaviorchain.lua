@@ -7,7 +7,7 @@ local entity = {}
 
 entity.name = aelperLib.register_template_name("auspicioushelper/TemplateBehaviorChain")
 entity.depth = -13000
-entity.nodeLimits = {1,-1}
+entity.nodeLimits = {0,-1}
 entity.nodeLineRenderType = "line"
 entity.nodeVisibility = "always"
 
@@ -20,7 +20,6 @@ entity.placements = {
       template = "",
       forceOwnPosition=true,
       _loenn_display_template = true,
-      nodes = {{x = 0, y = 0}}
     }
   }
 }

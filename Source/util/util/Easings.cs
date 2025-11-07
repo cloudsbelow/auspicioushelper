@@ -161,6 +161,11 @@ public static partial class Util{
       _ => throw new ArgumentOutOfRangeException(nameof(easing), easing, "Unsupported easing type")
     };
   }
+  public static float ApplyEasingFrac(Easings easing, float val, out float derivative){
+    float whole = MathF.Truncate(val);
+    float frac = val-whole;
+    return ApplyEasing(easing, frac, out derivative)+whole;
+  }
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float ApplyEasingClamped(Easings easing, float val){
     if(val<0) return 0;

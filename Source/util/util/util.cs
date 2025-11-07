@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -396,5 +397,8 @@ public static partial class Util{
     public void Remove(Handle h){
       things.Remove(h.val);
     }
+  }
+  public static void AddMultiple<T1,T2>(this Dictionary<T1,T2> dict, IEnumerable<T1> k, T2 v){
+    foreach(var key in k) dict.Add(key,v);
   }
 }

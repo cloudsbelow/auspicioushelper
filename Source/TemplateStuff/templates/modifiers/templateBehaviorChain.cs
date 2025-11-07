@@ -88,7 +88,7 @@ public class TemplateBehaviorChain:Entity{
     var chain = new Chain(final,dat.Nodes,scope,fp);
     var first = chain.NextEnt();
     if(first == null){
-      return new Template(dat, pos, 0);
+      using (new Template.ChainLock())return new Template(dat, pos, 0);
     } else {
       if(!Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
         DebugConsole.WriteFailure("Unknown template type");

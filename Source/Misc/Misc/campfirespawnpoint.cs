@@ -12,9 +12,8 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/CampfireRespawn")] 
 public class CampfireThing:Entity{
-  public class RespawnData{
-    public string level;
-    public Vector2 loc;
+  public class CampfireData:auspicioushelperModuleSession.RespawnData{
+    public CampfireData():base(RespawnType.CampfireRespawn){}
     public Vector2 floc;
   }
   class AppearCutscene:CutsceneEntity{
@@ -42,7 +41,7 @@ public class CampfireThing:Entity{
       if(!fromRespawn){
         c.playingCutscene=false;
         level.Session.RespawnPoint=p.Position;
-        auspicioushelperModule.Session.respDat = new(){
+        auspicioushelperModule.Session.respDat = new CampfireData(){
           level=level.Session.Level, loc=p.Position, floc=Position
         };
         auspicioushelperModule.Session.save();
@@ -101,7 +100,7 @@ public class CampfireThing:Entity{
       Session s = (scene as Level).Session;
       Vector2 orig = s.LevelData.Spawns.ClosestTo(scene.Tracker.GetEntity<Player>().Position);
       DebugConsole.Write("session lev",s.Level,s.LevelData.Name);
-      auspicioushelperModule.Session.respDat = new(){
+      auspicioushelperModule.Session.respDat = new CampfireData(){
         loc = orig, floc = orig+8*Vector2.UnitX, level = s.Level
       };
     }
@@ -117,20 +116,10 @@ public class CampfireThing:Entity{
       timer+=Engine.DeltaTime;
     } else timer=0;
   }
-  static void Hook(On.Celeste.Level.orig_Reload orig, Level s){
-    if(auspicioushelperModule.Session?.respDat is {} r){
-      s.Session.Level=r.level; 
-      s.Session.RespawnPoint=r.loc;
-      orig(s);
-      var ev = Audio.Play("event:/char/badeline/appear",r.floc);
-      ev.setVolume(0.5f);
-      s.Add(new AppearCutscene(r.floc));
-    } else orig(s);
+  public static void Callback(Level s, auspicioushelperModuleSession.RespawnData r){
+    Vector2 floc = (r is CampfireData d)? d.floc:r.loc;
+    var ev = Audio.Play("event:/char/badeline/appear",floc);
+    ev.setVolume(0.5f);
+    s.Add(new AppearCutscene(floc));
   }
-  [OnLoad]
-  public static HookManager hooks = new(()=>{
-    On.Celeste.Level.Reload+=Hook;
-  },()=>{
-    On.Celeste.Level.Reload-=Hook;
-  });
 }

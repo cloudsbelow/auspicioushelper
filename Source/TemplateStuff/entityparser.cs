@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -282,7 +283,12 @@ anyways i want to praise it more it is wonderful
       return new ConnectedBlocks.InplaceTemplateWrapper(e.Position+o);
     },true);
     defaultModdedSetup();
-    HookVanilla.hooks.enable();
+    foreach(string s in new string[]{"iceBlock","fireBarrier"}){
+      clarify(s, Types.unwrapped, static (l,d,o,e)=>{
+        currentParent.addEnt(new HookVanilla.FireIcePatch(origLoader(e.Name)(l,d,o,e)));
+        return null;
+      });
+    }
   }
   public static Level.EntityLoader getLoader(string name){
     if(!loaders.TryGetValue(name, out var loader)){
@@ -291,6 +297,10 @@ anyways i want to praise it more it is wonderful
       }
     }
     return loader;
+  }
+  public static Level.EntityLoader origLoader(string name){
+    if(Level.EntityLoaders.TryGetValue(name,out var loader)) return loader;
+    return skitzoGuess(name);
   }
 
   static Level.EntityLoader skitzoGuess(string name){

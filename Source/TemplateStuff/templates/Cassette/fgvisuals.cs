@@ -10,7 +10,7 @@ using Monocle;
 
 public class FgCassetteVisuals:BasicMaterialLayer{
   CassetteMaterialLayer.CassetteMaterialFormat f;
-  public FgCassetteVisuals(CassetteMaterialLayer.CassetteMaterialFormat format):base([Shader],format.fgdepth){
+  public FgCassetteVisuals(CassetteMaterialLayer.CassetteMaterialFormat format):base([null,shader],format.fgdepth){
     f=format;
   }
   public override bool autoManageRemoval=>false;
@@ -21,12 +21,5 @@ public class FgCassetteVisuals:BasicMaterialLayer{
     base.render(sb,c);
   }
   //why am I so obtuse
-  static VirtualShader shader;
-  static VirtualShader Shader {get{
-    resources.enable();
-    return shader;
-  }}
-  static HookManager resources = new HookManager(()=>{
-    shader = auspicioushelperGFX.LoadShader("cassette/fgtint");
-  },()=>{});
+  static VirtualShader shader = auspicioushelperGFX.LoadShader("cassette/fgtint");
 }

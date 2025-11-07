@@ -30,6 +30,7 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
   float timer;
   float maxtimer;
   string channel;
+  Util.Easings easing;
   public ConveyerTemplate(EntityData d, Vector2 o):this(d,o,d.Int("depthoffset",0)){}
   public ConveyerTemplate(EntityData d, Vector2 o, int depthoffset)
   :base(d,o+d.Position,depthoffset){
@@ -39,6 +40,7 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
     initialOffset = (maxtimer*d.Float("initialOffset",0))%maxtimer;
     loop = d.Bool("loop",false);
     channel = d.Attr("channel","");
+    easing = d.Enum("easing",Util.Easings.Linear);
     if(!string.IsNullOrWhiteSpace(channel)) timer = 1000000000;
   }
   public override void makeInitialInstances() {
@@ -47,7 +49,7 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
     List<BeltItem> l= new();
     for(float i=initialOffset*speed; i<spline.segments-(loop?0:1); i+=speed*maxtimer){
       SplineAccessor spos = new(spline, Vector2.Zero, true, loop);
-      spos.set(i);
+      spos.set(Util.ApplyEasingFrac(easing,i,out var _));
       Template nte = addInstance(spos.pos);
       l.Add(new(){te=nte, extent = i, sp=spos});
     }
@@ -87,15 +89,15 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
     foreach(var desc in belt){
       desc.extent+=Engine.DeltaTime*speed;
       if(!desc.active) continue;
-      desc.sp.set(desc.extent);
-      desc.te.ownLiftspeed = desc.sp.tangent*speed;
+      desc.sp.set(Util.ApplyEasingFrac(easing,desc.extent,out float deriv));
+      desc.te.ownLiftspeed = desc.sp.tangent*speed*deriv;
       desc.te.toffset = desc.sp.pos;
     }
     childRelposSafe();
     if(!loop && timer<=0){
       SplineAccessor spos = new(spline, Vector2.Zero, true, loop);
       float extent = -timer*speed;
-      spos.setPos(extent);
+      spos.setPos(Util.ApplyEasingFrac(easing,extent, out var _));
       timer+=maxtimer;
       Template nte = addInstance(spos.pos);
       belt.Enqueue(new(){te=nte,sp=spos,extent = extent});
