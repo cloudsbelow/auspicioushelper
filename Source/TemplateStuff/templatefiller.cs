@@ -14,6 +14,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/templateFiller")]
+[CustomloadEntity]
 public class templateFiller:Entity{
   
   internal string name;

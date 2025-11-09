@@ -265,4 +265,5 @@ public static partial class Util{
   }
   static Func<object,object> cloneFunc = instanceFunc<object>(typeof(object),"MemberwiseClone");
   public static T shallowCopy<T>(T thing)=>(T)cloneFunc(thing);
+  public static BindingFlags GoodBindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
 }

@@ -17,6 +17,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/EntityMarkingFlag")]
 [MapenterEv(nameof(Search))]
+[CustomloadEntity]
 public class EntityMarkingFlag:Entity{
   static FoundEntity finding = null;
   static Entity last = null;
