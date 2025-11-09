@@ -39,10 +39,11 @@ function entity.selection(room, entity)
     end
     return utils.rectangle(entity.x-6,entity.y-6,12,12), nodeRects
 end
-function entity.nodeSprite(room, entity, node)
+function entity.nodeSprite(room, entity, node, nodeIndex, viewport)
     if entity._loenn_preset_initializerType ~= nil then
         initPreset(entity)
     end
+    if viewport == nil then return {} end--bad. bad bad bad
     
     local existsValidTemplate = false
     local reason = "Template not found"
