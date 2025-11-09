@@ -16,6 +16,7 @@ entity.placements = {
       dontNormalRender=true,
       identifier="",
       collidable=true,
+      channel="",
       
       _loenn_display_template = true,
     }

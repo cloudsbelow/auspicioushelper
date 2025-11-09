@@ -140,10 +140,10 @@ public static partial class Util{
     public class PlaneRemap:ColorWeightable{
       //@"^(\([^\),]+[^\)]+\))->?(\([^\),]+[^\)]+\))(?::(\{.+\})|())$",
       //@"^(#?[\da-f]+)->?(#?[\da-f]+)(?::(\{.+\})|())$"
-      Double4[] inbasis;
-      Double4[] outbasis;
+      // Double4[] inbasis;
+      // Double4[] outbasis;
       static public Regex pattern = new Regex(
-        @"^(\(#?[\da-f]+,#?[\da-f]+\)\(#?[\da-f]+\))->(\(#?[\da-f]+,#?[\da-f]+\)\(#?[\da-f]+\))?(?::(\{.+\})|())$",
+        @"^(\(#?[\da-f]+,#?[\da-f]+\)\(#?[\da-f]+\))->?(\(#?[\da-f]+,#?[\da-f]+\)\(#?[\da-f]+\))?(?::(\{.+\})|())$",
         RegexOptions.Compiled
       );
       public override double WeightAndCol(Double4 i, out Double4 o) {

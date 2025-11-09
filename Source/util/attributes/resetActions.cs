@@ -50,7 +50,7 @@ public static class ResetEvents{
           ClearOn c = (ClearOn)f.GetCustomAttribute(typeof(ClearOn));
           PersistantAction p;
           if(c.toNull){
-            Type ty = f.GetType();
+            Type ty = f.FieldType;
             object setTo = ty.IsValueType? Activator.CreateInstance(ty) : null;
             p = new(()=>f.SetValue(null, setTo));
           } else{ 

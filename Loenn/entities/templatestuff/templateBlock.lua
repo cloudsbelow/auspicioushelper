@@ -16,7 +16,22 @@ local sfxs = {
 
 entity.placements = {
   {
-    name = "Template Block",
+    name = "Template Dashblock",
+    data = {
+      template = "",
+      depthoffset=0,
+      only_redbubble_or_summit_launch = false,
+      persistent = false,
+      canbreak = true,
+      breaksfx = "event:/game/general/wall_break_stone",
+      triggerable = false,
+      triggerOnBreak = true,
+      breakableByBlocks = true,
+      
+      _loenn_display_template = true,
+    }
+  }, {
+    name = "Template Block (Triggerable)",
     data = {
       template = "",
       depthoffset=0,
@@ -25,12 +40,12 @@ entity.placements = {
       active = true,
       only_redbubble_or_summit_launch = false,
       persistent = false,
-      canbreak = true,
+      canbreak = false,
       propagateRiding = true,
       propagateShaking = true,
       breaksfx = "event:/game/general/wall_break_stone",
       exitBlockBehavior = false,
-      triggerable = false,
+      triggerable = true,
       triggerOnBreak = false,
       breakableByBlocks = true,
       

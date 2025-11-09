@@ -25,11 +25,7 @@ def makecg(cg_fn, filename="colorgrade.png"):
 def dred(r, g, b):
     lum = 0.3*r + 0.6*g + 0.1*b
     
-    boosted = lum**2  # <1 gamma brightens
-    orig = np.array([r,g,b])
-    n = np.array([boosted, 0.3 * boosted * g, 0.3 * boosted * b])
-
-    return orig*0.15+n*0.6+0.1
+    return np.array([lum,lum,lum])
 
 
 if __name__ == "__main__":

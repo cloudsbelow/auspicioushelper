@@ -207,6 +207,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   }
   public bool replaceNormalRelease {get;}=false;
   void OnRelease(Vector2 force){
+    if(resetting) return;
     Player p = Hold.Holder??ICustomHoldableRelease.releasing;
     if(replaceNormalRelease){
       FloatRect bounds;
@@ -327,10 +328,9 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     }
   }
   bool resetting;
-  IEnumerator resetRoutine(bool particles = true){
+  void Reset(bool particles = true){
     if(resetting){
       DebugConsole.Write("Called multiple times to reset routine (bad)");
-      yield break;
     }
     resetting = true;
     Collidable = false;
@@ -339,10 +339,10 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     te.destroy(particles);
     Mysolids.Clear();
     te = null;
-    if(!respawning){
-      RemoveSelf();
-      yield break;
-    }
+    if(!respawning) RemoveSelf();
+    else Add(new Coroutine(respawnRoutine()));
+  }
+  IEnumerator respawnRoutine(){
     yield return respawndelay;
     hasBeenTouched=false;
     if(Scene!=null)make(Scene);
@@ -352,7 +352,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   public void OnSquish2(CollisionData data){
     if(inRelpos || Mysolids.Contains(data.Hit)) return;
     DebugConsole.Write($"squished: {data.Pusher} {data.Hit}");
-    Add(new Coroutine(resetRoutine()));
+    Reset();
   }
   public override void Update(){
     base.Update();
@@ -407,12 +407,12 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
           Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
         }
         Audio.Play("event:/new_content/game/10_farewell/glider_emancipate", Position);
-        Add(new Coroutine(resetRoutine()));
+        Reset();
         break;
       }
     }
     if(Position.Y>SceneAs<Level>().Bounds.Bottom+voidDieOffset){
-      Add(new Coroutine(resetRoutine(false)));
+      Reset();
     }
 
     jumpthruMoving = 0;

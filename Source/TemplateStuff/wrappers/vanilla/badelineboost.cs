@@ -1,16 +1,19 @@
-namespace Celeste.Mod.auspicioushelper.Wrappers;
-
 
 using System;
 using System.Collections;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Celeste.Mod.Entities;
 using CelesteMod.Publicizer;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod;
+
+
+namespace Celeste.Mod.auspicioushelper.Wrappers;
+
 
 
 public class BadelineBoostW : Entity, ISimpleEnt
@@ -71,6 +74,7 @@ public class BadelineBoostW : Entity, ISimpleEnt
   public SoundSource relocateSfx;
 
   public EventInstance Ch9FinalBoostSfx;
+  TimeRateModifier trm;
 
   [MethodImpl(MethodImplOptions.NoInlining)]
   public BadelineBoostW(Vector2[] nodes, bool lockCamera, bool canSkip = false, bool finalCh9Boost = false, bool finalCh9GoldenBoost = false, bool finalCh9Dialog = false)
@@ -98,7 +102,7 @@ public class BadelineBoostW : Entity, ISimpleEnt
     {
       Add(new CameraLocker(Level.CameraLockModes.BoostSequence, 0f, 160f));
     }
-
+    Add(trm = new(0.5f,false));
     Add(relocateSfx = new SoundSource());
   }
 
@@ -226,7 +230,7 @@ public class BadelineBoostW : Entity, ISimpleEnt
     {
       Vector2 screenSpaceFocusPoint = new Vector2(Calc.Clamp(player.X - level.Camera.X, 120f, 200f), Calc.Clamp(player.Y - level.Camera.Y, 60f, 120f));
       Add(new Coroutine(level.ZoomTo(screenSpaceFocusPoint, 1.5f, 0.18f)));
-      Engine.TimeRate = 0.5f;
+      trm.Enabled=true;
     }
     else
     {
@@ -331,7 +335,7 @@ public class BadelineBoostW : Entity, ISimpleEnt
       level.Displacement.AddBurst(Center, 0.6f, 8f, 64f, 0.5f);
       level.ResetZoom();
       player.SummitLaunch(X);
-      Engine.TimeRate = 1f;
+      trm.Enabled=false;
       Finish();
     }
   }

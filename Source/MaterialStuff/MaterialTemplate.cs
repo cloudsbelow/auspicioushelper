@@ -28,20 +28,32 @@ public class MaterialTemplate:TemplateDisappearer, IOverrideVisualsEasy{
     List<Entity> l = new();
     AddAllChildren(l);
     var mlayer = MaterialController.getLayer(lident);
+    if(!string.IsNullOrWhiteSpace(channel)){
+      Add(new ChannelTracker(channel, (int nval)=>{
+        if(active!=(nval!=0)){
+          active = nval!=0;
+          if(layer!=null) foreach(var c in comps) c.SetStealUse(layer,active && invis, active);
+        }
+      },true));
+    }
     if(mlayer is IOverrideVisuals qlay){
       layer = qlay;
-      int tdepth = -TemplateDepth(); 
-      foreach(var e in l) if(!(e is Template)){
-        OverrideVisualComponent.Get(e).AddToOverride(new(layer,tdepth,invis));
-      }
+      SetupEnts(l);
     } else {
       DebugConsole.Write($"Layer {lident} not found");
     }
     if(!collidable)setCollidability(false);
   }
-  public override void OnNewEnts(List<Entity> l) {
+  void SetupEnts(List<Entity> l){
+    if(layer==null) return;
     int tdepth = -TemplateDepth(); 
-    if(layer!=null)foreach(var e in l)OverrideVisualComponent.Get(e).AddToOverride(new(layer,tdepth,invis));
+    foreach(var e in l) if(!(e is Template)){
+      var comp = OverrideVisualComponent.Get(e);
+      comp.AddToOverride(new(this,-30000,false,true));
+      comp.AddToOverride(new(layer,tdepth,invis&&active, active));
+    }
+  }
+  public override void OnNewEnts(List<Entity> l) {
     base.OnNewEnts(l);
   }
 }

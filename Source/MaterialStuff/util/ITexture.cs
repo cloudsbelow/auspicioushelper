@@ -60,6 +60,7 @@ public abstract class ITexture{
     }
     public override Texture2D tex {get;}
     public ImageWrapper(ModAsset asset){
+      if(asset==null) return;
       if(!cached.TryGetValue(asset,out var texture)){
         using (Stream stream = asset.Stream) {
           cached.Add(asset, tex = Texture2D.FromStream(auspicioushelperGFX.gd, stream));
@@ -68,7 +69,12 @@ public abstract class ITexture{
       DebugConsole.Write("Texture:", tex, tex?.Width, tex?.Height);
     }
     public ImageWrapper(string pathToAsset)
-      :this(Everest.Content.Get(Util.concatPaths("Graphics",pathToAsset))){}
+      :this(GetAsset(pathToAsset)){}
+    static ModAsset GetAsset(string asset){
+      if(Everest.Content.Get(Util.concatPaths("Graphics",asset)) is { } a) return a;
+      DebugConsole.WriteFailure($"Could not find image at {asset}",true);
+      return null;
+    }
   }
   public class BgWrapper:ITexture{
     public override Texture2D tex{get{

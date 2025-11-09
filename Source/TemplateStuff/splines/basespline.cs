@@ -160,7 +160,6 @@ public class SplineEntity:Entity{
     uniformNormalized,
     uniformDenormalized,
   }
-  Types type;
   public static Vector2[] entityInfoToNodes(Vector2 pos, Vector2[] enodes, Vector2 offset, bool lnn){
     Vector2[] nodes = new Vector2[enodes.Length+1+(lnn?1:0)];
     nodes[0]=pos+offset;

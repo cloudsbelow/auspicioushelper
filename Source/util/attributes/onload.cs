@@ -17,12 +17,14 @@ public class OnLoad:Attribute{
     foreach(var t in typeof(auspicioushelperModule).Assembly.GetTypesSafe()){
       foreach(FieldInfo f in t.GetFields(Util.GoodBindingFlags)){
         if(!f.IsDefined(typeof(OnLoad))) continue;
-        if(!f.IsStatic || f.GetType()!=typeof(HookManager)) DebugConsole.WriteFailure("OnLoad applied to non-static or non-hookmanager field",true);
+        if(!f.IsStatic || f.FieldType!=typeof(HookManager)){
+          DebugConsole.WriteFailure($"OnLoad applied to non-static or non-hookmanager: {t} {f}",true);
+        }
         else hookm.Invoke(f.GetValue(null),null);
       }
       foreach(MethodInfo m in t.GetMethods(Util.GoodBindingFlags)){
         if(!m.IsDefined(typeof(OnLoad))) continue;
-        if(!m.IsStatic || m.GetParameters().Length!=0) DebugConsole.WriteFailure("OnLoad applied to non-static or non-parameterless method",true);
+        if(!m.IsStatic || m.GetParameters().Length!=0) DebugConsole.WriteFailure($"OnLoad applied to non-static or non-parameterless method {t} {m}",true);
         else m.Invoke(null,null);
       }
     }

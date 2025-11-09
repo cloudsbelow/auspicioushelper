@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using Celeste.Editor;
 using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 
@@ -56,11 +57,17 @@ public class auspicioushelperModuleSession : EverestModuleSession {
         }
       } else orig(s);
     }
+    static void Hook(On.Celeste.Editor.MapEditor.orig_LoadLevel orig, MapEditor self, LevelTemplate level, Vector2 at){
+      if(auspicioushelperModule.Session is {} s)s.respDat = null;
+      orig(self,level,at);
+    }
     [OnLoad]
     public static HookManager hooks = new(()=>{
       On.Celeste.Level.Reload+=Hook;
+      On.Celeste.Editor.MapEditor.LoadLevel+=Hook;
     },()=>{
       On.Celeste.Level.Reload-=Hook;
+      On.Celeste.Editor.MapEditor.LoadLevel-=Hook;
     });
   }
   public RespawnData respDat;
