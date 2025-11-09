@@ -295,7 +295,7 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                             table.insert(toDraw, {
                                 func={
                                     draw=function()
-                                        love.graphics.draw(atlases.gameplay[texture].image, 
+                                        love.graphics.drawLayer(atlases.gameplay[texture].image, atlases.gameplay[texture].layer or 1,
                                             celesteRender.getOrCacheTileSpriteQuad(celesteRender.tilesSpriteMetaCache, 
                                                 tile, texture, randQuad, true),  --true is if this tileset is fg tiles
                                                 math.floor(tx-1+offset[1]/8)*8+x+0.5, math.floor(ty-1+offset[2]/8)*8+y+0.5)
@@ -333,7 +333,7 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                             table.insert(toDraw, {
                                 func={
                                     draw=function()
-                                        love.graphics.draw(atlases.gameplay[texture].image, 
+                                        love.graphics.drawLayer(atlases.gameplay[texture].image, atlases.gameplay[texture].layer or 1,
                                             celesteRender.getOrCacheTileSpriteQuad(celesteRender.tilesSpriteMetaCache, 
                                                 tile, texture, randQuad, false),  --true is if this tileset is fg tiles
                                                 math.floor(tx-1+offset[1]/8)*8+x+0.5, math.floor(ty-1+offset[2]/8)*8+y+0.5)
