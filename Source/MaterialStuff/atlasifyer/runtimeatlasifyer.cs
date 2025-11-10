@@ -118,6 +118,16 @@ public static class Atlasifyer{
     change.SetUtil();
     return change;
   }
+  public static MTexture GetAtlased(this Atlas atlas, string path){
+    string fullpath = atlas.DataPath+path;
+    if(contains.TryGetValue(fullpath, out var tex)) return tex;
+    var m = atlas[path];
+    var dat = Util.TexData(m, out var w, out var h);
+    return PushToAtlas(dat,w,h,fullpath).MakeLike(m);
+  }
+
+
+
   static int deubgCount=0;
   static Color Darken(this Color c)=>new(c.R/2,c.G/2,c.B/2,c.A);
   static Color[] DarkenBorderInplace(this Color[] dat, int w, int h){

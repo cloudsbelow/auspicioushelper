@@ -5,6 +5,7 @@ using System;
 using System.Reflection;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -77,22 +78,8 @@ public class PortalIntersectInfoH{
     } else if(a is Glider g){
       g.Speed = calcspeed(g.Speed,ce);
     } else {
-      //lifted striaght from chatgpt 先生 himself.
-      Type type = a.GetType();
-      FieldInfo field = type.GetField("Speed", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-      if (field != null && field.FieldType == typeof(Vector2)){
-        DebugConsole.Write("Dynamically setting speed field");
-          Vector2 speed = (Vector2)field.GetValue(a);
-          field.SetValue(a, calcspeed(speed, ce));
-          return;
-      }
-      PropertyInfo property = type.GetProperty("Speed", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-      if (property != null && property.CanWrite && property.PropertyType == typeof(Vector2)){
-          DebugConsole.Write("Dynamically setting speed property");
-          Vector2 speed = (Vector2)property.GetValue(a);
-          property.SetValue(a, calcspeed(speed, ce));
-          return;
-      }
+      var d = new DynamicData(a);
+      if(d.TryGet<Vector2>("Speed", out var val)) d.Set("Speed",calcspeed(val,ce));
     }
   }
   public bool finish(){

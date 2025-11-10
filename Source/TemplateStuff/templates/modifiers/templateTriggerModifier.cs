@@ -137,14 +137,15 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   ITemplateTriggerable triggerParent;
   TemplateTriggerModifier modifierParent;
   UpdateHook upd;
+  ChannelTracker triggerCh;
   public override void addTo(Scene scene) {
     if(delay>=0) Add(upd = new UpdateHook());
     triggerParent = parent?.GetFromTree<ITemplateTriggerable>();
     modifierParent = parent?.GetFromTree<TemplateTriggerModifier>();
     if(!string.IsNullOrWhiteSpace(channel)){
-      Add(new ChannelTracker(channel, (int val)=>{
+      Add(triggerCh = new ChannelTracker(channel, (int val)=>{
         if(val!=0) OnTrigger(new ChannelInfo(channel));
-      },true));
+      }));
     }
     if(!string.IsNullOrWhiteSpace(skipCh)){
       Add(new ChannelTracker(skipCh, (int val)=>{
@@ -152,6 +153,14 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       }, true));
     }
     base.addTo(scene);
+  }
+  public override void Awake(Scene scene) {
+    base.Awake(scene);
+    if(triggerCh.value!=0){
+      UpdateHook.AddAfterUpdate(()=>{
+        if(triggerCh.value!=0) OnTrigger(new ChannelInfo(channel));
+      });
+    }
   }
 
   Queue<Tuple<float, TriggerInfo>> delayed;
@@ -245,7 +254,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     foreach(Entity p in l) p.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(t);
   }
   static void Hook(On.Celeste.Player.orig_Jump orig, Player p, bool a, bool b){
-    DebugConsole.Write("Jump ",p.LiftBoost,p.Speed);
     bool useCoyote = p.jumpGraceTimer>0 && p.jumpGraceTimer<0.1;
     orig(p,a,b);
     if(a && b)triggerFromArr(p.temp,new TouchInfo(p,TouchInfo.Type.jump));
@@ -255,7 +263,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   }
   static void Hook(On.Celeste.Player.orig_SuperJump orig, Player p){
     orig(p);
-    DebugConsole.Write("SUper ",p.LiftBoost,p.Speed);
     triggerFromArr(p.temp, new TouchInfo(p,TouchInfo.Type.super));
     p.Get<CoyotePlatformMarker>()?.p?.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new TouchInfo(p,TouchInfo.Type.super));
   }

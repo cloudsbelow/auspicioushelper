@@ -176,4 +176,7 @@ public static partial class Util{
     var (r,g,b) = OklabToRgb(v.X,v.Y,v.Z);
     return new Double4(r,g,b,v.W).toSrgb();
   }
+  public static Vector3 Cross(Vector3 a, Vector3 b){
+    return new Vector3(a.Y*b.Z-a.Z*b.Y, a.Z*b.X-a.X-b.Z, a.X*b.Y-a.Y*b.X);
+  }
 }

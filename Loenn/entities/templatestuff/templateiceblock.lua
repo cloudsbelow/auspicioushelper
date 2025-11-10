@@ -19,6 +19,7 @@ entity.placements = {
       triggerable=true,
       ridingTriggers=true,
       disconnect=true,
+      quiet=0,
     }
   }
 }

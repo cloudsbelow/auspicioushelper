@@ -47,6 +47,7 @@ public class TemplateGluable:Template{
   }
   public override void addTo(Scene scene){
     setTemplate(scene:scene);
+    scene.Add(this);
   }
   public override void Awake(Scene scene){
     base.Awake(scene);

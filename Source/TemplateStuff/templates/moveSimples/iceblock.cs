@@ -26,6 +26,7 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
   bool ridingTriggers;
   bool disconnect=false;
   bool disconnected=false;
+  int quiet=0;
   public TemplateIceblock(EntityData d, Vector2 o):this(d,o,d.Int("depthoffset",0)){}
   public TemplateIceblock(EntityData d, Vector2 o, int depthoffset)
   :base(d,o+d.Position,depthoffset){
@@ -35,12 +36,13 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
     triggerable = d.Bool("triggerable",true);
     ridingTriggers = d.Bool("ridingTriggers",true);
     disconnect = d.Bool("disconnect", false);
+    quiet = d.Int("quiet",0);
   }
   Coroutine routine;
   IEnumerator iceRoutine(){
     float time = 0;
     shake(0.1f);
-    Add(new AudioMangler(Audio.Play("event:/game/09_core/iceblock_touch", Position), 0.3f));
+    if((quiet%4)<2)Add(new AudioMangler(Audio.Play("event:/game/09_core/iceblock_touch", Position), 0.3f));
     ownLiftspeed = Vector2.UnitY*sinkDist/sinkTime;
     while(time<sinkTime-0.20){
       time = time+Engine.DeltaTime;
@@ -49,7 +51,7 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
       yield return null;
     }
     shake(0.20f);
-    Add(new AudioMangler(Audio.Play("event:/game/09_core/iceblock_touch", Position), 1f,1000));
+    if(quiet%2==0)Add(new AudioMangler(Audio.Play("event:/game/09_core/iceblock_touch", Position), 1f,1000));
 
     while(time<sinkTime){
       time = time+Engine.DeltaTime;
@@ -84,14 +86,13 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
     if(reforming && !(UpdateHook.cachedPlayer is {} player && hasInside(player))){
       reforming = false;
       setVisCol(true,true);
-      Audio.Play("event:/game/09_core/iceblock_reappear",Position);
+      if(quiet<4)Audio.Play("event:/game/09_core/iceblock_reappear",Position);
     }
     if(respawnTimer>0){
       respawnTimer-=Engine.DeltaTime;
       if(respawnTimer<=0){
         if(disconnected){
           disconnected = false;
-          DebugConsole.Write("time",Scene.TimeActive);
           if(parent?.GetFromTree<IRemovableContainer>() is {} cont){
             if(!cont.RestoreChild(this)){
               destroy(false);
@@ -104,7 +105,7 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
           if(PlayerIsInside()){
             reforming = true;
             setVisCol(false,false);
-          } else Audio.Play("event:/game/09_core/iceblock_reappear",Position);
+          } else if(quiet<4) Audio.Play("event:/game/09_core/iceblock_reappear",Position);
         });
       }
     } else if(ridingTriggers && routine == null && hasRiders<Player>()) trigger();

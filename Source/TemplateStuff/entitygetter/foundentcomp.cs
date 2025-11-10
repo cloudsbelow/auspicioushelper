@@ -7,37 +7,22 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using Celeste.Mod.Entities;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
 [Tracked]
-public class FoundEntity:Component{
-  int id;
-  EntityData d;
+public class FoundEntity:OnAnyRemoveComp{
   public string ident;
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
   static Dictionary<string, FoundEntity> found = new();
-  public FoundEntity(EntityData d, string identifier):base(false,false){
-    id=d.ID; this.d=d; ident = identifier;
-  }
-  public FoundEntity(string ident):base(false,false){
-    id=-1; d=null; this.ident=ident;
-  }
-  public void finalize(Entity e){
-    if(e==null){
-      DebugConsole.Write($"Failed to find the entity {d.Name} with id {id} - (maybe this entity adds itself non-standardly?)");
-      return;
-    }
-    DebugConsole.Write($"Found the entity {d.Name} (identifier {ident}) with id {id} - position {e.Position}");
+  public FoundEntity(string identifier, Entity e):base(false,false){
+    ident = identifier;
     found[ident] = this;
     e.Add(this);
   }
-  public override void EntityRemoved(Scene scene){
-    base.EntityRemoved(scene);
-    found.Remove(ident);
-  }
-  public override void Removed(Entity entity){
-    base.Removed(entity);
+  public override void OnRemove() {
     found.Remove(ident);
   }
   public static object reflectGet(Entity e, List<string> path, List<int> args, int startidx = 2){
@@ -115,13 +100,22 @@ public class FoundEntity:Component{
   public static FoundEntity find(string ident){
     if(ident=="player"){
       if(Engine.Instance.scene is Level l && l.Tracker.GetEntity<Player>() is {} p){
-        if(!(p.Get<FoundEntity>() is {} fent)){
-          p.Add(fent = new FoundEntity("player")); 
-        }
+        if(!(p.Get<FoundEntity>() is {} fent)) fent = new FoundEntity("player",p); 
         return fent;
       }
       return null;
     }
     return found.TryGetValue(ident, out var f)?f:null;
+  }
+
+
+  [CustomEntity("auspicioushelper/EntityMarkingFlag")]
+  [MapenterEv(nameof(Search))]
+  [CustomloadEntity]
+  public class MarkingFlag:Entity{
+    static void Search(EntityData d){
+      //Finder.watch(d.Attr("path"),d.Attr("identifier"));
+      Finder.watch(d.Attr("path"),(e)=>new FoundEntity(d.Attr("identifier"),e));
+    }
   }
 }

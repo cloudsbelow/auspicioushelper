@@ -14,14 +14,27 @@ entity.nodeVisibility = "always"
 
 entity.placements = {
   {
-    name = "Template Behavior Chain",
+    name = "Template Behavior Chaain",
     placementType = "point",
     data = {
       template = "",
       forceOwnPosition=true,
       _loenn_display_template = true,
     }
-  }
+  },
+--   {
+--     name = "Template Chain (nodes)",
+--     placementType = "point",
+--     data = {
+--       template = "",
+--       forceOwnPosition=true,
+--       _loenn_display_template = true,
+--       nodes = {
+--             {x = 0, y = 0},
+--             {x = 0, y = 0}
+--         }
+--     }
+--   }
 }
 entity.fieldInformation = function(entity)
     return {
@@ -31,8 +44,21 @@ entity.fieldInformation = function(entity)
     }
 end
     
+-- function entity.nodeLimits(room, entity)
+--     local nodes = entity.nodes or {}
+
+--     if #nodes > 0 then
+--         return 1, -1
+
+--     else
+--         return 0, 0
+--     end
+-- end
 
 function entity.selection(room, entity)
+    if #entity.nodes == 0 then
+        return utils.rectangle(entity.x-8, entity.y-8, 16, 16)
+    end
     local nodeRects = {}    
     for _, node in ipairs(entity.nodes) do
         table.insert(nodeRects, utils.rectangle(node.x-4,node.y-16,8,8))

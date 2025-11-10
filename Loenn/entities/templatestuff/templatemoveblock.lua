@@ -63,14 +63,18 @@ entity.fieldInformation = function(entity)
 end
 
 entity.selection = aelperLib.template_selection
-function entity.nodeTexture(room, entity, node)
-  local base = "objects/auspicioushelper/templates/movearrows/"
-  local addr = entity.arrow_texture
-  return "objects/auspicioushelper/templates/movearrows/small00"
-end
+
 entity.draw = aelperLib.get_entity_draw("tmovr")
 function entity.nodeTexture(room, entity)
-    return "objects/auspicioushelper/templates/movearrows/"..entity.arrow_texture.."00"
+    return "objects/auspicioushelper/templates/movearrows/"
+        .. entity.arrow_texture
+        .. ({
+            ["left"] = "04",
+            ["right"] = "00",
+            ["up"] = "02",
+            ["down"] = "06"
+        })[entity.direction]
 end
+entity.nodeDepth = -100000
 
 return entity

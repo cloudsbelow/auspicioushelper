@@ -139,11 +139,24 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
     }
     if(act!=0) Active = act>0;
   }
+  int reuseFull;
+  int reuse;
+  float angle = 0;
+  float precession = 0;
+  MTexture[] texs;
+
   public RefillW2(EntityData d, Vector2 o):this(d.Position + o, d.Bool("twoDash"), d.Bool("oneUse")){
     respawnTime = d.Float("respawnTimer",2.5f);
     triggering = d.Bool("triggering",false);
     useOnPickup = d.Bool("useOnPickup",false);
     useOnRelase = d.Bool("useOnRelease",false);
+    reuseFull = reuse = Math.Min(d.Int("numRefresh",-1),6);
+    if(reuse>=0) texs = [
+      GFX.Game.GetAtlased("objects/auspicioushelper/refill/full_b1"),
+      GFX.Game.GetAtlased("objects/auspicioushelper/refill/empty_b1")
+    ];
+    precession = Calc.Random.Range(0,MathF.PI*2);
+
   }
   public override void Added(Scene scene){
     base.Added(scene);
@@ -151,6 +164,16 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
   }
   public override void Update(){
     base.Update();
+    if(reuseFull>=0){
+      angle+=Engine.DeltaTime*3;
+      precession+=Engine.DeltaTime*MathF.PI*2/20;
+      Vector3 p = new Vector3(0,1,0);
+      Vector3 v = new Vector3(0,1,0.3f);
+      Vector3 res = v*MathF.Cos(precession) + 
+        Util.Cross(p,v)*MathF.Sin(precession) + 
+        p*Vector3.Dot(p,v)*(1-MathF.Cos(precession));
+      UpdatePrecession(res);
+    }
     if (respawnTimer > 0f){
       respawnTimer -= Engine.DeltaTime;
       if (respawnTimer <= 0f) Respawn();
@@ -167,7 +190,9 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
     }
   }
   public void Respawn(){
+    if(reuseFull>=0 && reuse==0) return;
     if (!selfCol){
+      reuse--;
       selfCol = true;
       sprite.Visible = true;
       outline.Visible = false;
@@ -186,10 +211,60 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
     float y = (obj2.Y = num);
     obj.Y = y;
   }
-
+  float orbitrad = 10;
+  Vector2 cosComp;
+  Vector2 sinComp;
+  Vector2 angleToOrbit(float angle){
+    Vector2 dir = cosComp*MathF.Cos(angle)+sinComp*MathF.Sin(angle);
+    return (dir*orbitrad + Vector2.UnitY*sprite.Y/2 - Vector2.One*2.5f).Round();
+  }
+  void UpdatePrecession(Vector3 v = default){
+    if(v==default) v = new Vector3(1,1,0);
+    v=v/v.Length();
+    float r = MathF.Sqrt(v.X*v.X+v.Y*v.Y);
+    cosComp = new(-v.X*v.Z/r, v.Y*v.Z/r);
+    sinComp = new(v.Y/r, -v.X/r);
+  }
   public override void Render(){
-    if (sprite.Visible)sprite.DrawOutline();
-    base.Render();
+    if(!MaterialPipe.clipBounds.CollidePointExpand(Int2.Round(Position),10+(int)orbitrad)) return;
+    if(reuseFull>0){
+      angle = angle%(MathF.PI*2);
+      float incr = MathF.PI/reuseFull;
+      float frac = angle%incr;
+      int whole = (int) Math.Round((angle-frac)/incr);
+      Vector2 rpos = Position.Round();
+      int i=0;
+      bool cvis = sprite.Visible;
+      for(;i<(reuseFull+1)/2; i++){
+        int idx1 = (i+whole)%reuseFull;
+        int idx2 = (whole-i+reuseFull)%reuseFull;
+        float angle1 = frac-incr*i;
+        float angle2 = frac+incr*i;
+        if(cvis)texs[reuse<=idx1?1:0].DrawOutline(rpos+angleToOrbit(angle1));
+        texs[reuse<=idx1?1:0].Draw(rpos+angleToOrbit(angle1));
+        if(i!=0){
+          if(cvis)texs[reuse<=idx2?1:0].DrawOutline(rpos+angleToOrbit(angle2));
+          texs[reuse<=idx2?1:0].Draw(rpos+angleToOrbit(angle2));
+        }
+      }
+      if (sprite.Visible)sprite.DrawOutline();
+      base.Render();
+      for(; i<reuseFull+1; i++){
+        int idx1 = (i+whole)%reuseFull;
+        int idx2 = (whole-i+reuseFull)%reuseFull;
+        float angle1 = frac-incr*i;
+        float angle2 = frac+incr*i;
+        if(cvis)texs[reuse<=idx1?1:0].DrawOutline(rpos+angleToOrbit(angle1));
+        texs[reuse<=idx1?1:0].Draw(rpos+angleToOrbit(angle1));
+        if(i!=reuseFull){
+          if(cvis)texs[reuse<=idx2?1:0].DrawOutline(rpos+angleToOrbit(angle2));
+          texs[reuse<=idx2?1:0].Draw(rpos+angleToOrbit(angle2));
+        }
+      }
+    } else {
+      if (sprite.Visible)sprite.DrawOutline();
+      base.Render();
+    }
   }
   public void OnPlayer(Player player)
   {

@@ -154,8 +154,8 @@ anyways i want to praise it more it is wonderful
     Entity e = null; 
     using (new Template.ChainLock()) e = loader(l,ld,simoffset,d);
     if(e==null) goto done;
-    if(path!=null && EntityMarkingFlag.flagged.TryGetValue(path+$"/{d.ID}",out var ident)){
-      new FoundEntity(d,ident).finalize(e);
+    if(path!=null && Finder.flagged.TryGetValue(path+$"/{d.ID}",out var ident)){
+      foreach(var a in ident) a(e);
     }
     switch(etype){
       case Types.platformbasic: case Types.platformdisobedient:
