@@ -32,7 +32,6 @@ internal static class SpeedrunToolIop{
           if(info!=null) info.addOthersider();
         }
       }
-      FoundEntity.clear(Engine.Instance.scene);
       BackdropCapturer.CapturedBackdrops.FixFromSrt(level);
     }catch(Exception ex){
       DebugConsole.WriteFailure($"Auspicioushelper speedruntool failed: \n {ex}");

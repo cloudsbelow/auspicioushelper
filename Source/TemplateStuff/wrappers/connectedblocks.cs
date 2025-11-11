@@ -42,6 +42,7 @@ public class ConnectedBlocks:Entity{
     fgt, bgt, ent
   }
   Category c;
+  Vector2 leveloffset;
   public ConnectedBlocks(EntityData d, Vector2 offset):base(offset+d.Position){
     Collider = new Hitbox(d.Width,d.Height);
     tid = d.Attr("tiletype","0").FirstOrDefault();
@@ -60,6 +61,7 @@ public class ConnectedBlocks:Entity{
     }
     levelOffset = offset;
     Depth = -10000000; //low depth type entity
+    leveloffset=offset;
   }
   static void FillRect(VirtualMap<char> m, Int2 tlc, Int2 brc, char v){
     for(int i=tlc.x; i<brc.x; i++) for(int j=tlc.y; j<brc.y; j++) m.orig_set_Item(i,j,v);
@@ -180,8 +182,12 @@ public class ConnectedBlocks:Entity{
       e.RemoveSelf();
       if(donot.Contains(e)) continue;
       Vector2 fpos = e.Position-minimum+padding*8*Vector2.One;
-      if(e is Decal d) f.decals.Add(d.Get<DecalMarker>().withDepthAndForcepos(fpos));
-      else if(e.SourceData is EntityData dat)f.ChildEntities.Add(Util.cloneWithForceposOffset(dat,fpos));
+      if(e is Decal d){
+        f.decals.Add(d.Get<DecalMarker>().withDepthAndForcepos(fpos));
+      } else if(e.SourceData is EntityData dat){
+        fpos = dat.Position+leveloffset - minimum+padding*8*Vector2.One;
+        f.ChildEntities.Add(Util.cloneWithForceposOffset(dat,fpos));
+      }
       UpdateHook.EnsureUpdateAny();
     }
   }

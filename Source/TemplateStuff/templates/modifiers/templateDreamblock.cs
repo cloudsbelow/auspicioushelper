@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
@@ -45,8 +46,8 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
   }
   [Tracked]
   public class DreamMarkerComponent:Component,IFreeableComp{
-    Collider Collider;
-    TemplateDreamblockModifier dbm;
+    public Collider Collider;
+    public TemplateDreamblockModifier dbm;
     public DreamMarkerComponent(TemplateDreamblockModifier t, Collider c = null):base(false,false){
       Collider = c; dbm = t;
     }
@@ -94,6 +95,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
   }
   SentinalDb fake;
   string channel;
+  bool allowTransition;
   public TemplateDreamblockModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateDreamblockModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
@@ -104,6 +106,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     useVisuals = d.Bool("useVisuals",true);
     reverse = d.Bool("reverse",false);
     conserve = d.Bool("conserve",false);
+    allowTransition = d.Bool("allowTransition",false);
   }
   public override void addTo(Scene scene) {
     fake = (SentinalDb)RuntimeHelpers.GetUninitializedObject(typeof(SentinalDb));
@@ -223,6 +226,49 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
   public override void destroy(bool particles) {
     base.destroy(particles);
   }
+  static void LevelTransThing(Player p){
+    if(p.dreamBlock is SentinalDb d && d.parent.allowTransition){
+      goto yes;
+    } else {
+      foreach(DreamMarkerComponent c in p.Scene.Tracker.GetComponents<DreamMarkerComponent>()){
+        if(c.dbm.dreaming && !c.dbm.allowTransition && c.Entity.Collidable){
+          bool flag;
+          if(c.Collider!=null) flag = p.CollideCheck(c.Entity);
+          else{
+            Collider orig = c.Entity.Collider;
+            c.Entity.Collider=c.Collider;
+            flag = p.CollideCheck(c.Entity);
+            c.Entity.Collider=orig;
+          }
+          if(flag) goto yes;
+        }
+      }
+    }
+    foreach(DreamTrans t in p.Scene.Tracker.GetEntities<DreamTrans>()) if(p.CollideCheck(t)) goto yes;
+    return;
+    yes:
+      var l = p.level;
+      var b = p.level.Bounds;
+      if(p.Right>b.Right && l.Session.MapData.GetAt(new Vector2(p.Right,p.CenterY)) is LevelData){
+        p.Left=b.Right+1;
+        l.NextLevel(p.Position,Vector2.One);
+      }else if(p.Left<b.Left && l.Session.MapData.GetAt(new Vector2(p.Left,p.CenterY)) is LevelData){
+        p.Right=b.Left-1;
+        l.NextLevel(p.Position,Vector2.One);      
+      }else if(p.Bottom>b.Bottom && l.Session.MapData.GetAt(new Vector2(p.CenterX,p.Bottom)) is LevelData){
+        p.Top=b.Bottom+1;
+        l.NextLevel(p.Position,Vector2.One);      
+      }else if(p.Top<b.Top && l.Session.MapData.GetAt(new Vector2(p.CenterX,p.Top)) is LevelData){
+        p.Bottom=b.Top-1;
+        l.NextLevel(p.Position,Vector2.One);      
+      }
+  }
+  [CustomEntity("auspicioushelper/DreamTransitionEnabler")]
+  [Tracked]
+  public class DreamTrans:Trigger{
+    public DreamTrans(EntityData d, Vector2 o):base(d,o){}
+  }
+
   static void Hook(On.Celeste.Player.orig_OnCollideH orig, Player p, CollisionData d){
     if(!DDsh(p)){
       TemplateDreamblockModifier t = d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateDreamblockModifier>();
@@ -243,6 +289,13 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     }
     orig(p,d);
   }
+  static void Hook(On.Celeste.DreamBlock.orig_OnPlayerExit orig, DreamBlock self, Player p){
+    if(self is SentinalDb b){
+      b.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new DreamInfo(true, b.parent.triggerOnLeave, p.DashDir));
+      return;
+    }
+    orig(self,p);
+  } 
   static void DDashIL(ILContext ctx){
     ILCursor c = new(ctx);
     if(c.TryGotoNextBestFit(MoveType.After,
@@ -290,14 +343,32 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
       c.EmitDelegate(DreamMarkerComponent.CheckDDiag);
     } else DebugConsole.WriteFailure("Failed to add hook (dreamdash downdiag)",true);
   }
-  static void Hook(On.Celeste.DreamBlock.orig_OnPlayerExit orig, DreamBlock self, Player p){
-    if(self is SentinalDb b){
-      b.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new DreamInfo(true, b.parent.triggerOnLeave, p.DashDir));
-      return;
-    }
-    orig(self,p);
-  } 
   static ILHook ddhook;
+  static void TransitionHook(ILContext ctx){    
+    ILCursor c = new(ctx);
+    ILLabel otarg = null;
+
+    if(!c.TryGotoNextBestFit(MoveType.After,
+      itr=>itr.MatchCallvirt<Level>(nameof(Level.EnforceBounds))
+    )) goto bad;
+    var d = c.Clone();
+    if(!d.TryGotoPrevBestFit(MoveType.After,
+      itr=>itr.MatchLdcI4(Player.StDreamDash),
+      itr=>itr.MatchBeq(out otarg)
+    )) goto bad;
+
+    d.Index--;
+    var itr = d.Instrs[d.Index];
+    c.EmitBr(otarg);
+    c.EmitLdarg0();
+    c.EmitDelegate(LevelTransThing);
+    itr.Operand = c.Instrs[c.Index-2];
+
+    return;
+    bad:
+      DebugConsole.WriteFailure("Could not add room transition enabling hook",true);
+  }
+  static ILHook transhook;
   public static HookManager hooks = new HookManager(()=>{
     On.Celeste.Player.OnCollideH+=Hook;
     On.Celeste.Player.OnCollideV+=Hook;
@@ -307,6 +378,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     MethodInfo dc = typeof(Player).GetMethod("DashCoroutine",BindingFlags.Instance | BindingFlags.NonPublic);
     MethodInfo dc2 = dc.GetStateMachineTarget();
     ddhook = new ILHook(dc2,DashDowndiag);
+    transhook = new ILHook(typeof(Player).GetMethod(nameof(Player.orig_Update)),TransitionHook);
   },()=>{
     On.Celeste.Player.OnCollideH-=Hook;
     On.Celeste.Player.OnCollideV-=Hook;
@@ -314,5 +386,6 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     IL.Celeste.Player.DreamDashUpdate-=DDashIL;
     IL.Celeste.Player.DreamDashBegin-=DDashBeginIL;
     ddhook?.Dispose();
+    transhook?.Dispose();
   },auspicioushelperModule.OnEnterMap);
 }

@@ -295,7 +295,8 @@ anyways i want to praise it more it is wonderful
         "rotateSpinner"=>HookVanilla.AnchorLocMod._RotateSp,
         _=>[]
       };
-      currentParent.addEnt(new HookVanilla.AnchorLocMod(origLoader(e.Name)(l,d,o,e),fields));
+      Entity ent = origLoader(e.Name)(l,d,o,e);
+      currentParent.addEnt(new HookVanilla.AnchorLocMod(ent,fields));
       return null;
     });
   }
@@ -461,6 +462,16 @@ anyways i want to praise it more it is wonderful
       case "rumbleTrigger": return static (l,d,o,e)=>new RumbleTrigger(e,o,new EntityID(d.Name,e.ID+10000000));
       case "minitextboxTrigger": return static (l,d,o,e)=>new MiniTextboxTrigger(e,o,new EntityID(d.Name,e.ID+10000000));
 
+      case "rotateSpinner": return static (l,d,o,e)=>{
+        if(e.Bool("star",false)) return new StarRotateSpinner(e,o);
+        if(e.Bool("dust",false)) return new DustRotateSpinner(e,o);
+        return new BladeRotateSpinner(e,o);
+      };
+      case "trackSpinner": return static (l,d,o,e)=>{
+        if(e.Bool("star",false)) return new StarTrackSpinner(e,o);
+        if(e.Bool("dust",false)) return new DustTrackSpinner(e,o);
+        return new BladeTrackSpinner(e,o);
+      };
     }
     return null;
   }

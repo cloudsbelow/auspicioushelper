@@ -156,7 +156,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   }
   public override void Awake(Scene scene) {
     base.Awake(scene);
-    if(triggerCh.value!=0){
+    if(triggerCh!=null && triggerCh.value!=0){
       UpdateHook.AddAfterUpdate(()=>{
         if(triggerCh.value!=0) OnTrigger(new ChannelInfo(channel));
       });

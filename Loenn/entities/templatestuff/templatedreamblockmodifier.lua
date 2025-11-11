@@ -19,6 +19,7 @@ entity.placements = {
       reverse=false,
       conserve=false,
       useVisuals=true,
+      allowTransition=false,
     }
   }
 }

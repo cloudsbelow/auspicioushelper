@@ -76,6 +76,11 @@ public static class DebugConsole {
     }
     Write(res);
   }
+  public static void Write<T>(T[] things, string label=""){
+    string str = label+": ";
+    foreach(var t in things) str+=(t==null)?"NULL, ": t.ToString()+", "; 
+    Write(str);
+  }
   public static T Pass<T>(string s, T inf){
     Write($"{s} {inf}");
     return inf;

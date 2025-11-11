@@ -15,6 +15,7 @@ entity.placements = {
       depthoffset=0,
       channel = "",
       glue_to_identifier ="",
+      can_be_ID_path = true,
       liftspeed_smear = 4,
       smear_average = false,
       

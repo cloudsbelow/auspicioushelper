@@ -127,8 +127,8 @@ public static class HookVanilla{
     void ITemplateChild.relposTo(Vector2 loc, Vector2 parentLiftspeed){
       for(int i=0; i<fields.Length; i++)dd.Set(fields[i],loc+toffsets[i]);
       toffset = toffset+(wrapped.Position-lpos);
-      lpos = wrapped.Position;
       wrapped.Position = loc+toffset;
+      lpos = wrapped.Position;
     }
   }
 }

@@ -14,16 +14,19 @@ namespace Celeste.Mod.auspicioushelper;
 
 [Tracked]
 public class FoundEntity:OnAnyRemoveComp{
-  public string ident;
+  Util.HybridSet<string> idents = new();
   [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [Import.SpeedrunToolIop.Static]
   static Dictionary<string, FoundEntity> found = new();
-  public FoundEntity(string identifier, Entity e):base(false,false){
-    ident = identifier;
-    found[ident] = this;
-    e.Add(this);
+  public FoundEntity():base(false,false){}
+  public static FoundEntity addIdent(Entity e, string ident){
+    if(e.Get<FoundEntity>() is not { } f) e.Add(f=new());
+    if(!f.idents.Contains(ident)) f.idents.Add(ident);
+    found[ident]=f;
+    return f;
   }
   public override void OnRemove() {
-    found.Remove(ident);
+    foreach(var i in idents) if(found.GetValueOrDefault(i)==this)found.Remove(i);
   }
   public static object reflectGet(Entity e, List<string> path, List<int> args, int startidx = 2){
     object o = e;
@@ -67,14 +70,6 @@ public class FoundEntity:OnAnyRemoveComp{
   public object reflectGet(List<string> path, List<int> args){
     return reflectGet(Entity,path,args);
   }
-  public static void clear(Scene refill = null){
-    found.Clear();
-    if(refill!=null){
-      foreach(FoundEntity f in refill.Tracker.GetComponents<FoundEntity>()){
-        found[f.ident] = f;
-      }
-    }
-  }
   public static object sreflectGet(List<string> path, List<int> args){
     if(!found.TryGetValue(path[1], out var f)){
       DebugConsole.Write($"Entity with attached identifier {path[1]} not found");
@@ -98,14 +93,11 @@ public class FoundEntity:OnAnyRemoveComp{
     return null;
   }
   public static FoundEntity find(string ident){
-    if(ident=="player"){
-      if(Engine.Instance.scene is Level l && l.Tracker.GetEntity<Player>() is {} p){
-        if(!(p.Get<FoundEntity>() is {} fent)) fent = new FoundEntity("player",p); 
-        return fent;
-      }
-      return null;
+    if(found.TryGetValue(ident, out var f)) return f;
+    if(ident=="player" && Engine.Instance.scene is Level l && l.Tracker.GetEntity<Player>() is {} p){
+      return addIdent(p,"player");
     }
-    return found.TryGetValue(ident, out var f)?f:null;
+    return null;
   }
 
 
@@ -115,7 +107,7 @@ public class FoundEntity:OnAnyRemoveComp{
   public class MarkingFlag:Entity{
     static void Search(EntityData d){
       //Finder.watch(d.Attr("path"),d.Attr("identifier"));
-      Finder.watch(d.Attr("path"),(e)=>new FoundEntity(d.Attr("identifier"),e));
+      Finder.watch(d.Attr("path"),(e)=>addIdent(e,d.Attr("identifier")));
     }
   }
 }

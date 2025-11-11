@@ -165,9 +165,10 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
   public override void Update(){
     base.Update();
     if(reuseFull>=0){
-      angle+=Engine.DeltaTime*3;
+      angle+=Engine.DeltaTime*2.2f;
       precession+=Engine.DeltaTime*MathF.PI*2/20;
-      Vector3 p = new Vector3(0,1,0);
+      Vector3 p = new Vector3(0.05f,1,-0.1f);
+      p=p/p.Length();
       Vector3 v = new Vector3(0,1,0.3f);
       Vector3 res = v*MathF.Cos(precession) + 
         Util.Cross(p,v)*MathF.Sin(precession) + 
@@ -211,7 +212,7 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
     float y = (obj2.Y = num);
     obj.Y = y;
   }
-  float orbitrad = 10;
+  float orbitrad = 9;
   Vector2 cosComp;
   Vector2 sinComp;
   Vector2 angleToOrbit(float angle){
@@ -233,30 +234,22 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
       float frac = angle%incr;
       int whole = (int) Math.Round((angle-frac)/incr);
       Vector2 rpos = Position.Round();
-      int i=0;
+      
       bool cvis = sprite.Visible;
-      for(;i<(reuseFull+1)/2; i++){
+      int v = (reuseFull+1)/2;
+      for(int i=0; i<reuseFull+1; i++){
         int idx1 = (i+whole)%reuseFull;
         int idx2 = (whole-i+reuseFull)%reuseFull;
         float angle1 = frac-incr*i;
         float angle2 = frac+incr*i;
+        
         if(cvis)texs[reuse<=idx1?1:0].DrawOutline(rpos+angleToOrbit(angle1));
         texs[reuse<=idx1?1:0].Draw(rpos+angleToOrbit(angle1));
-        if(i!=0){
-          if(cvis)texs[reuse<=idx2?1:0].DrawOutline(rpos+angleToOrbit(angle2));
-          texs[reuse<=idx2?1:0].Draw(rpos+angleToOrbit(angle2));
+        if(i==v){
+          if (cvis)sprite.DrawOutline();
+          base.Render();
         }
-      }
-      if (sprite.Visible)sprite.DrawOutline();
-      base.Render();
-      for(; i<reuseFull+1; i++){
-        int idx1 = (i+whole)%reuseFull;
-        int idx2 = (whole-i+reuseFull)%reuseFull;
-        float angle1 = frac-incr*i;
-        float angle2 = frac+incr*i;
-        if(cvis)texs[reuse<=idx1?1:0].DrawOutline(rpos+angleToOrbit(angle1));
-        texs[reuse<=idx1?1:0].Draw(rpos+angleToOrbit(angle1));
-        if(i!=reuseFull){
+        if(i!=reuseFull && i!=0){
           if(cvis)texs[reuse<=idx2?1:0].DrawOutline(rpos+angleToOrbit(angle2));
           texs[reuse<=idx2?1:0].Draw(rpos+angleToOrbit(angle2));
         }

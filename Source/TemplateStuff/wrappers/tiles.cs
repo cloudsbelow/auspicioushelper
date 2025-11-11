@@ -136,10 +136,8 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
 
   public override void MoveHExact(int move){
     GetRiders();
-    Player player = null;
-    player = base.Scene.Tracker.GetEntity<Player>();
-    //What the heck does this do?
-    if (player != null && Input.MoveX.Value == Math.Sign(move) && Math.Sign(player.Speed.X) == Math.Sign(move) && 
+    Player player = Scene.Tracker.GetEntity<Player>();
+    if (Collidable && player != null && Input.MoveX.Value == Math.Sign(move) && Math.Sign(player.Speed.X) == Math.Sign(move) && 
     !riders.Contains(player) && CollideCheck(player, Position + Vector2.UnitX * move - Vector2.UnitY)){
       player.MoveV(1f);
     }

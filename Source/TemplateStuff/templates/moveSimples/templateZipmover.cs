@@ -64,9 +64,10 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
     inEasing = d.Enum<Util.Easings>("returnEasing",Util.Easings.SineIn);
   }
   UpdateHook upd;
+  ChannelTracker ct;
   public override void Added(Scene scene) {
     base.Added(scene);
-    if(channel!=null) Add(new ChannelTracker(channel, setChVal));
+    if(channel!=null) Add(ct=new ChannelTracker(channel, setChVal));
     
   }
   public void setChVal(int val){
@@ -107,6 +108,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
       triggered = false;
       yield return null;
       if(triggered) goto going;
+      if(ct!=null && ct.value!=0) OnTrigger(null);
       if(atype == ActivationType.ride || atype==ActivationType.rideAutomatic){
         if(hasRiders<Player>()) OnTrigger(null);
       } else if(atype == ActivationType.dash || atype==ActivationType.dashAutomatic){
@@ -167,6 +169,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
 
       ownLiftspeed = Vector2.Zero;
       if(currentSegment>0) goto returning;
+      if(channel!=null)ChannelState.SetChannel(channel,0);
       yield return 0.5f;
       goto waiting;
   }

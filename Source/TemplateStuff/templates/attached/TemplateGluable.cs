@@ -1,12 +1,14 @@
 
 
 using System;
+using System.Text.RegularExpressions;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/TemplateGluable")]
+[MapenterEv(nameof(Search))]
 public class TemplateGluable:Template{
   string lookingFor;
   Entity gluedto;
@@ -37,6 +39,14 @@ public class TemplateGluable:Template{
     smearamount = d.Int("liftspeed_smear",4);
     pastLiftspeed = new Vector2[smearamount];
     averageSmear = d.Bool("smear_average",false);
+  }
+  static Regex matchReg = new(@"^\s*\d+\s*(?:[\/,]\s*\d+\s*)*$",RegexOptions.Compiled);
+  static void Search(EntityData d){
+    DebugConsole.Write("HERE",d.Name);
+    if(d.Bool("can_be_ID_path",false)){
+      string str = d.Attr("glue_to_identifier");
+      if(matchReg.Match(str).Success) Finder.watch(str,(e)=>FoundEntity.addIdent(e,str));
+    }
   }
   bool added = false;
   public void make(Entity e){

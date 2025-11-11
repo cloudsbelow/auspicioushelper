@@ -517,6 +517,9 @@ public class MovementLock:IDisposable{
     }
     orig(self,move);
   }
+  static void Print(int n){
+    DebugConsole.Write("Testthing", n);
+  }
   static void SolidIL(ILContext ctx){
     ILCursor c = new(ctx);
     ILLabel targ=null;
@@ -530,11 +533,11 @@ public class MovementLock:IDisposable{
       c.EmitBrfalse(targ);
       c.EmitLdarg0();
       c.EmitLdfld(typeof(Entity).GetField(nameof(Entity.Collidable)));
-      c.EmitLdsfld(typeof(MovementLock).GetField(nameof(MovementLock.instances)));
+      c.EmitLdsfld(typeof(MovementLock).GetField(nameof(instances),Util.GoodBindingFlags));
       c.EmitLdcI4(0);
       c.EmitCeq();
       c.EmitOr();
-    }
+    } else DebugConsole.WriteFailure("Failed to add movedown fix hook", true);
   }
   public static bool movedX(Actor a)=>alreadyX.Contains(a);
   public static bool movedY(Actor a)=>alreadyY.Contains(a);
