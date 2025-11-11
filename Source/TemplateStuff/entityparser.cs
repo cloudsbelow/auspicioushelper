@@ -289,6 +289,15 @@ anyways i want to praise it more it is wonderful
         return null;
       });
     }
+    clarify(["trackSpinner","rotateSpinner"],Types.unwrapped, static(l,d,o,e)=>{
+      string[] fields = e.Name switch {
+        "trackSpinner"=>HookVanilla.AnchorLocMod._TrackSp,
+        "rotateSpinner"=>HookVanilla.AnchorLocMod._RotateSp,
+        _=>[]
+      };
+      currentParent.addEnt(new HookVanilla.AnchorLocMod(origLoader(e.Name)(l,d,o,e),fields));
+      return null;
+    });
   }
   public static Level.EntityLoader getLoader(string name){
     if(!loaders.TryGetValue(name, out var loader)){

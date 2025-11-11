@@ -13,6 +13,8 @@ using Celeste.Mod.Registry;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
+using Celeste.Mod.Helpers;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -122,10 +124,14 @@ public class Template:Entity, ITemplateChild{
     Position = loc+toffset;
     childRelposTo(virtLoc, parentLiftspeed+ownLiftspeed);
   }
+  Vector2 lastRoundloc;
   public void childRelposTo(Vector2 loc, Vector2 liftspeed){
     Vector2 rounded = loc.Round();
+    bool doNontemplate = rounded!=lastRoundloc;
+    lastRoundloc=rounded;
     foreach(ITemplateChild c in children){
-      c.relposTo(c is Template?loc:rounded, liftspeed);
+      if(c is Template) c.relposTo(loc,liftspeed);
+      else if(doNontemplate)c.relposTo(rounded, liftspeed);
     }
   }
 
@@ -139,10 +145,13 @@ public class Template:Entity, ITemplateChild{
     }
   }
   public void relposOne(ITemplateChild c){
+    Vector2 orig = lastRoundloc;
+    lastRoundloc = roundLoc+Vector2.One;
     var tc = children;
     children = new List<ITemplateChild>(){c};
     childRelposSafe();
     children = tc;
+    lastRoundloc=orig;
   }
   public bool PropagateEither(Template other,Propagation req){
     Template c=other;
@@ -185,11 +194,10 @@ public class Template:Entity, ITemplateChild{
   public void makeChildren(Scene scene, bool recursive = false){
     if(t==null || expanded) return;
     expanded = true;
-    //if(t.bgt!=null) addEnt(new Wrappers.BgTiles(t,virtLoc,depthoffset));
-    //if(t.fgt!=null) addEnt(fgt=new Wrappers.FgTiles(t, virtLoc, depthoffset));
+    lastRoundloc = roundLoc;
     t.AddTilesTo(this, scene);
     Level l = scene as Level;
-    Vector2 simoffset = this.virtLoc.Round()-t.origin;
+    Vector2 simoffset = lastRoundloc-t.origin;
     string fp = fullpath;
     foreach(EntityData w in t.ChildEntities){
       Entity e = EntityParser.create(w,l,t.roomdat,simoffset,this,fp);
@@ -202,7 +210,7 @@ public class Template:Entity, ITemplateChild{
       Decal e = new Decal(d.Texture, simoffset+d.Position, d.Scale, d.Depth??0, d.Rotation, d.ColorHex){
         DepthSetByPlacement = true
       };
-      AddBasicEnt(e, simoffset+d.Position-virtLoc.Round());
+      AddBasicEnt(e, simoffset+d.Position-lastRoundloc);
     }
     if(!recursive) templateAwake();
   }
@@ -463,6 +471,7 @@ public class MovementLock:IDisposable{
   static int instances = 0;
   static int csinstances = 0;
   static bool canSkip=>instances>0;
+  static bool cantSkip=>instances==0;
   bool always;
   public MovementLock(bool always=true){
     this.always=always;
@@ -508,15 +517,36 @@ public class MovementLock:IDisposable{
     }
     orig(self,move);
   }
+  static void SolidIL(ILContext ctx){
+    ILCursor c = new(ctx);
+    ILLabel targ=null;
+    if(c.TryGotoNextBestFit(MoveType.Before,
+      itr=>itr.MatchBrfalse(out targ),
+      itr=>itr.MatchLdsfld(typeof(Input),nameof(Input.MoveX)),
+      itr=>itr.MatchLdfld<VirtualIntegerAxis>(nameof(VirtualIntegerAxis.Value)),
+      itr=>itr.MatchLdarg1(),
+      itr=>itr.MatchCall(typeof(Math),nameof(Math.Sign))
+    )){
+      c.EmitBrfalse(targ);
+      c.EmitLdarg0();
+      c.EmitLdfld(typeof(Entity).GetField(nameof(Entity.Collidable)));
+      c.EmitLdsfld(typeof(MovementLock).GetField(nameof(MovementLock.instances)));
+      c.EmitLdcI4(0);
+      c.EmitCeq();
+      c.EmitOr();
+    }
+  }
   public static bool movedX(Actor a)=>alreadyX.Contains(a);
   public static bool movedY(Actor a)=>alreadyY.Contains(a);
   public static HookManager skiphooks = new HookManager(()=>{
     On.Celeste.Actor.MoveHExact+=moveHHook;
     On.Celeste.Actor.MoveVExact+=moveVHook;
     On.Celeste.Actor.NaiveMove+=naiveMoveHook;
+    IL.Celeste.Solid.MoveHExact+=SolidIL;
   },void ()=>{
     On.Celeste.Actor.MoveHExact-=moveHHook;
     On.Celeste.Actor.MoveVExact-=moveVHook;
     On.Celeste.Actor.NaiveMove-=naiveMoveHook;
+    IL.Celeste.Solid.MoveHExact-=SolidIL;
   }, auspicioushelperModule.OnEnterMap);
 }

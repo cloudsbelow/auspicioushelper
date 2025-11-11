@@ -103,4 +103,32 @@ public static class HookVanilla{
       });
     }
   }
+
+  public class AnchorLocMod:ISimpleWrapper{
+    public Entity wrapped {get;set;}
+    public Template parent {get;set;}
+    public Vector2 toffset {get;set;}
+    public static readonly string[] _RotateSp = [nameof(RotateSpinner.center)];
+    public static readonly string[] _TrackSp = [nameof(TrackSpinner.Start),nameof(TrackSpinner.End)];
+    Vector2[] toffsets;
+    string[] fields;
+    DynamicData dd;
+    public AnchorLocMod(Entity w, string[] fields){
+      wrapped = w;
+      dd = new DynamicData(w);
+      this.fields=fields;
+    }
+    Vector2 lpos;
+    void ITemplateChild.setOffset(Vector2 ppos){
+      toffsets = fields.Map(s=>dd.Get<Vector2>(s)-ppos);
+      toffset = wrapped.Position-ppos;
+      lpos = wrapped.Position;
+    }
+    void ITemplateChild.relposTo(Vector2 loc, Vector2 parentLiftspeed){
+      for(int i=0; i<fields.Length; i++)dd.Set(fields[i],loc+toffsets[i]);
+      toffset = toffset+(wrapped.Position-lpos);
+      lpos = wrapped.Position;
+      wrapped.Position = loc+toffset;
+    }
+  }
 }
