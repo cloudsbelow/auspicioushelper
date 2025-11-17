@@ -23,7 +23,6 @@ public static class EntityParser{
   public enum Types{
     unable,
     platformbasic,
-    platformdisobedient,
     unwrapped,
     template,
     basic,
@@ -158,10 +157,8 @@ anyways i want to praise it more it is wonderful
       foreach(var a in ident) a(e);
     }
     switch(etype){
-      case Types.platformbasic: case Types.platformdisobedient:
+      case Types.platformbasic:
         if(e is Platform p){
-          if(etype == Types.platformdisobedient)
-            t.addEnt(new Wrappers.BasicPlatformDisobedient(p,t,simoffset+d.Position-t.roundLoc));
           t.addEnt(new Wrappers.BasicPlatform(p,t,simoffset+d.Position-t.roundLoc));
           goto done;
         }else{

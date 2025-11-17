@@ -332,3 +332,7 @@ class DecalMarker:Component{
     loadLevelHook.Dispose();
   });
 }
+
+public interface IFreeableComp{
+  void Free()=>((Component)this).Entity?.Remove((Component)this);
+}
