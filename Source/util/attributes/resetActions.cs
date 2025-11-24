@@ -34,6 +34,9 @@ public static class ResetEvents{
       this.toNull=toNull;
     }
   }
+  public class NullOn:ClearOn{
+    public NullOn(params RunTimes[] moments):base(true,moments){}
+  }
   [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
   public class RunOn:Attribute{
     public RunTimes[] m;

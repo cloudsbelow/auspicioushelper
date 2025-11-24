@@ -11,15 +11,6 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 public class TemplateDisappearer:Template{
-  class RestoreAct:IDisposable{
-    bool to;
-    TemplateDisappearer ent;
-    public RestoreAct(TemplateDisappearer d){
-      to = d.Active;
-      ent=d;
-    }
-    void IDisposable.Dispose()=>ent.Active=to;
-  }
   bool selfVis = true;
   bool selfCol = true;
   bool selfAct = true;
@@ -79,7 +70,7 @@ public class TemplateDisappearer:Template{
   public virtual void setAct(bool n){
     if(n == selfAct) return;
     int nact = permute(n, ref selfAct, parentAct);
-    if(nact != 0) using(new RestoreAct(this)) base.parentChangeStat(0,0,nact);
+    if(nact != 0) using(new Util.AutoRestore<bool>(ref Active)) base.parentChangeStat(0,0,nact);
   }
   public virtual void setVisCol(bool vis, bool col){
     int nvis = 0;
@@ -96,7 +87,7 @@ public class TemplateDisappearer:Template{
     int nact = 0;
     if(act != selfAct) nact = permute(act, ref selfAct, parentAct);
     //DebugConsole.Write($" set {vis} {col} {selfVis}");
-    if(nvis!=0 || ncol!=0 || nact!=0) using(new RestoreAct(this)) base.parentChangeStat(nvis,ncol,nact);
+    if(nvis!=0 || ncol!=0 || nact!=0) using(new Util.AutoRestore<bool>(ref Active)) base.parentChangeStat(nvis,ncol,nact);
   }
   public bool getParentCol(){
     return parentCol;
@@ -111,7 +102,7 @@ public class TemplateDisappearer:Template{
     bool Col = selfCol&&parentCol; 
     bool Act = selfAct&&parentAct;
     if(Vis && Col && Act) return;
-    using(new RestoreAct(this))parentChangeStatBypass(Vis?0:-1,Col?0:-1,Act?0:-1);
+    using(new Util.AutoRestore<bool>(ref Active))parentChangeStatBypass(Vis?0:-1,Col?0:-1,Act?0:-1);
   }
 }
 

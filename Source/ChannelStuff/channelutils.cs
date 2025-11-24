@@ -248,6 +248,7 @@ public static class ChannelState{
     foreach(var s in toRemove) channelStates.Remove(s);
     deps.Clear();
   }
+  [ResetEvents.RunOn(ResetEvents.RunTimes.OnExit,ResetEvents.RunTimes.OnReload)]
   public static void unwatchAll(){
     watching.Clear();
     clearModifiers();

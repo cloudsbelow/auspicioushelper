@@ -60,6 +60,7 @@ public class UpdateHook:Component{
   public Action beforeAction=null;
   public Action afterAction=null;
   public bool updatedThisFrame = false;
+  [ResetEvents.NullOn(ResetEvents.RunTimes.OnNewScreen)]
   public static float TimeSinceTransMs=0;
   public static HashSet<string> updateListFlags = new();
   static bool updating = false;
@@ -102,6 +103,7 @@ public class UpdateHook:Component{
     AfterUpdateLock.ExtraUpdate(self,true);
   }
 
+  [OnLoad]
   internal static HookManager hooks = new HookManager(()=>{
     On.Celeste.Level.Update+=updateHook;
   }, void ()=>{

@@ -198,6 +198,7 @@ public static class MaterialPipe {
     bad:
     DebugConsole.WriteFailure($"Failed to add background reordering hook");
   }
+  [OnLoad]
   public static void setup(){
     dirty=true;
     hooks.enable();

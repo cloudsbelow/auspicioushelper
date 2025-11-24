@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 
+namespace Celeste.Mod.auspicioushelper;
 public class FgCassetteVisuals:BasicMaterialLayer{
   CassetteMaterialLayer.CassetteMaterialFormat f;
   public FgCassetteVisuals(CassetteMaterialLayer.CassetteMaterialFormat format):base([null,shader],format.fgdepth){

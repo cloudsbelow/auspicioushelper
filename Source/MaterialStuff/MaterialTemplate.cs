@@ -55,5 +55,6 @@ public class MaterialTemplate:TemplateDisappearer, IOverrideVisualsEasy{
   }
   public override void OnNewEnts(List<Entity> l) {
     base.OnNewEnts(l);
+    SetupEnts(l);
   }
 }

@@ -1,0 +1,176 @@
+
+
+
+
+// using System;
+// using System.Collections;
+// using System.Collections.Generic;
+// using Celeste.Mod.Entities;
+// using Microsoft.Xna.Framework;
+// using Microsoft.Xna.Framework.Graphics;
+// using Monocle;
+
+// namespace Celeste.Mod.auspicioushelper;
+// [CustomEntity("auspicioushelper/TemplateMoveblock")]
+// public class TemplateMovePushable:TemplateMoveCollidable{
+//   public Vector2 movedir;
+//   public float maxspeed;
+//   public float acceleration;
+//   bool respawning;
+//   float maxrespawntimer;
+//   float maxStuckTime;
+//   bool cansteer;
+//   int maxleniency;
+//   Vector2 origpos;
+//   string moveevent = "event:/game/04_cliffside/arrowblock_move";
+//   List<Vector2> decalOffset = new();
+//   List<MTexture> arrows;
+//   Color c1 = Util.hexToColor("#50cf50ff");
+//   Color c2 = Util.hexToColor("#ffff");
+//   bool triggerFromRiding = true;
+//   public TemplateMovePushable(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
+//   public TemplateMovePushable(EntityData d, Vector2 offset, int depthoffset)
+//   :base(d,offset+d.Position,depthoffset){
+//     movedir = d.Attr("direction") switch{
+//       "down"=> Vector2.UnitY,
+//       "up"=>-Vector2.UnitY,
+//       "left"=>-Vector2.UnitX,
+//       "right"=>Vector2.UnitX,
+//       _=>Vector2.UnitX
+//     };
+//     lastmovevec = movedir;
+//     useOwnUncollidable = d.Bool("uncollidable_blocks",false);
+//     maxspeed = d.Float("speed",75);
+//     acceleration = d.Float("acceleration", 300);
+//     respawning = d.Bool("respawning",true);
+//     maxrespawntimer = d.Float("respawn_timer",2f);
+//     maxStuckTime = d.Float("Max_stuck",0.15f);
+//     cansteer = d.Bool("cansteer", false);
+//     maxleniency = d.Int("max_leniency",4);
+//     moveevent = d.Attr("movesfx","event:/game/04_cliffside/arrowblock_move");
+//     triggerFromRiding = d.Bool("triggerFromRiding",true);
+//     if(d.Nodes!=null) foreach(Vector2 node in d.Nodes){
+//       decalOffset.Add(node-d.Position);
+//     }
+//     origpos = Position;
+//     prop &= ~Propagation.Riding;
+//     Depth = d.Int("decal_depth",-10001)+depthoffset;
+//     if(decalOffset.Count>0) {
+//       arrows = GFX.Game.GetAtlasSubtextures("objects/auspicioushelper/templates/movearrows/"+d.Attr("arrow_texture","small"));
+//       Visible = true;
+//     }
+//     var l = Util.listparseflat(d.Attr("decal_colors"));
+//     if(l.Count>=1)c1 = Util.hexToColor(l[0]);
+//     if(l.Count>=2)c2 = Util.hexToColor(l[1]);
+//   }
+//   public override void Awake(Scene scene) {
+//     base.Awake(scene);
+//     Add(movesfx = new SoundSource());
+//     Add(new Coroutine(MoveSequence()));
+//   }
+
+//   SoundSource movesfx;
+//   Vector2 lastmovevec;
+//   IEnumerator MoveSequence(){
+//     float stuckTimer;
+//     float speed;
+//     waiting:
+//       stuckTimer = maxStuckTime;
+//       while(!triggered && !(triggerFromRiding && hasRiders<Player>())) yield return null;
+//       disconnect();
+//       parent?.GetFromTree<IRemovableContainer>()?.RemoveChild(this);
+//       triggered=true;
+//       speed = 0;
+//       Audio.Play("event:/game/04_cliffside/arrowblock_activate", Position);
+//       shake(0.2f);
+//       yield return 0.2f;
+//       movesfx.Play(moveevent);
+//       movesfx.Param("arrow_stop", 0f);
+//     moving:
+//       yield return null;
+//       speed = Calc.Approach(speed,maxspeed,acceleration*Engine.DeltaTime);
+//       Query qs = getq(new Vector2(speed*Engine.DeltaTime+maxleniency,speed*Engine.DeltaTime+maxleniency).Ceiling());
+//       bool collideflag;
+//       Player p = Scene.Tracker.GetEntity<Player>();
+//       if(movedir.Y==0){
+//         ownLiftspeed.X = movedir.X*speed;
+//         collideflag = MoveHCollide(qs,speed*movedir.X*Engine.DeltaTime,maxleniency);
+//         if(collideflag) ownLiftspeed.X=0;
+//       } else {
+//         ownLiftspeed.Y = movedir.Y*speed;
+//         collideflag = MoveVCollide(qs,speed*movedir.Y*Engine.DeltaTime,maxleniency);
+//         if(collideflag) ownLiftspeed.Y=0;
+//         if(MoveHCollide(qs,speed*movedir.X*Engine.DeltaTime,0)) ownLiftspeed.X=0;
+//       }
+//       if(collideflag){
+//         movesfx.Param("arrow_stop", 1f);
+//         if(stuckTimer>0) stuckTimer-=Engine.DeltaTime;
+//         else goto blocked;
+//       } else {
+//         movesfx.Param("arrow_stop", 0f);
+//         stuckTimer = maxStuckTime;
+//       }
+//       // float tau = MathF.PI * 2f;
+//       // int num = (int)Math.Floor((0f - (movevec * new Vector2(-1f, 1f)).Angle() + tau) % tau / tau * 8f + 0.5f);
+//       // movesfx.Param("arrow_influence", num + 1);
+//       goto moving;
+//     blocked:
+//       movesfx.Stop();
+//       shake(0.2f);
+//       Audio.Play("event:/game/04_cliffside/arrowblock_break", Position);
+//       yield return 0.2f;
+//       gone=true;
+//       if(!respawning){
+//         destroy(true);
+//         yield break;
+//       } 
+//       destroyChildren();
+//       triggered=false;
+//       fgt = null;
+//       yield return maxrespawntimer;
+//       reconnect(origpos);
+//       if(parent?.GetFromTree<IRemovableContainer>() is {} cont){
+//         if(!cont.RestoreChild(this)){
+//           destroy(false);
+//           yield break;
+//         }
+//       }
+//       gone=false;
+//       remake(()=>{
+//         if(PlayerIsInside()){
+//           gone=true;
+//           setVisCol(false,false);
+//         }
+//       });
+//       yield return null;
+//       if(gone){
+//         while(PlayerIsInside()) yield return null;
+//         setVisCol(true,true);
+//         gone=false;
+//       }
+//       Audio.Play("event:/game/04_cliffside/arrowblock_reappear", Position);
+//       goto waiting;
+//   }
+//   IEnumerator pushSequence(Vector2 dir){
+
+//   }
+//   bool gone;
+//   public override void Update() {
+//     lastmovevec = movedir;
+//     base.Update();
+//   }
+//   public override void Render() {
+//     base.Render();
+//     if(gone) return;
+//     float tau = MathF.PI * 2f;
+//     int dir = (int)Math.Floor((0f - lastmovevec.Angle() + tau) % tau / tau * 8f + 0.5f);
+//     Vector2 vec = (virtLoc+gatheredShakeVec).Round();
+//     foreach(Vector2 o in decalOffset){
+//       arrows[Calc.Clamp(dir, 0, 7)].DrawCentered(o+vec, detatched?c1:c2);
+//     }
+//   }
+//   public override void Removed(Scene scene) {
+//     base.Removed(scene);
+//     movesfx?.Stop();
+//   }
+// }

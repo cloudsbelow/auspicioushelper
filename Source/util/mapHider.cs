@@ -6,81 +6,77 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Celeste.Mod.Helpers;
+using MonoMod.Cil;
 
 namespace Celeste.Mod.auspicioushelper;
 
 public static class MapHider{
-  
-  // public static void ADLoadHook(On.Celeste.AreaData.orig_Load orig){
-  //   DebugConsole.Write("Loading maps for whatever reason");
-  //   orig();
-  // }
-
-  // public static HookManager hooks = new HookManager(()=>{
-  //   On.Celeste.AreaData.Load+=ADLoadHook;
-  // },void ()=>{
-  //   On.Celeste.AreaData.Load-=ADLoadHook;
-  // }).enable();
-  static Dictionary<string,ModAsset> hidden = new Dictionary<string, ModAsset>();
+  static Dictionary<string,bool> cache = new();
   public static bool isHiding = false;
-  static HashSet<string> whitelisted = new HashSet<string>();
   static List<Tuple<string,Regex>> rules=null;
   static bool check(string assetstr){
-    foreach(var rule in rules){
+    if(!isHiding) return false;
+    assetstr=assetstr.ToLower();
+    if(cache.TryGetValue(assetstr, out var val)) return val;
+    bool flag = false;
+    if(rules!=null) foreach(var rule in rules){
       if(rule.Item2.Match(assetstr).Success){
         DebugConsole.Write($"Hiding {assetstr} due to rule {rule.Item1}");
-        return true;
+        flag=true;
+        break;
       }
     }
-    return false;
+    cache[assetstr] = flag;
+    return flag;
   }
-  public static void hideListed(){
-    //DebugConsole.Write("here");
-    if(auspicioushelperModule.Settings.hideRulesList == null) return;
-    if(rules == null){
-      rules = new List<Tuple<string,Regex>>();
-      int i=-1;
-      foreach(var rule in auspicioushelperModule.Settings.hideRulesList){
-        i++;
-        if(rule == "") continue;
-        try{
-          rules.Add(new Tuple<string, Regex>(i.ToString(),new Regex(rule, RegexOptions.IgnoreCase)));
-          DebugConsole.Write($"Registered hiding rule {i.ToString()} as {rule}");
-        }catch(Exception ex){
-          DebugConsole.Write($"your rule {i} was bad - error message {ex}");
-        }
+  public static void setHide(){
+    isHiding = true;
+    cache.Clear();
+    if(auspicioushelperModule.Settings.userHideRules == null) return;
+    rules = new List<Tuple<string,Regex>>();
+    int i=-1;
+    foreach(var rule in auspicioushelperModule.Settings.userHideRules){
+      i++;
+      if(rule == "") continue;
+      try{
+        rules.Add(new Tuple<string, Regex>(i.ToString(),new Regex(rule, RegexOptions.IgnoreCase)));
+        DebugConsole.Write($"Registered hiding rule {i.ToString()} as {rule}");
+      }catch(Exception ex){
+        DebugConsole.Write($"your rule {i} was bad - error message {ex}");
       }
     }
-    List<string> toremove = new List<string>();
-    foreach(var pair in Everest.Content.Map){
-      if(pair.Value.Type == typeof(AssetTypeMap)){
-        if(whitelisted.Contains(pair.Key)) continue;
-        if(check(pair.Key)){
-          toremove.Add(pair.Key);
-        } else whitelisted.Add(pair.Key);
-      }
-    }
-    foreach(var x in toremove){
-      if(Everest.Content.Map.TryGetValue(x,out var y))hidden[x]=y;
-      //DebugConsole.Write($"hiding {x}");
-      Everest.Content.Map.Remove(x);
-    }
-    if (toremove.Count != 0) {
-      AssetReloadHelper.ReloadAllMaps();
-      isHiding = true;
-    }
-  }
-  public static void revealListed(){
-    if(!isHiding || hidden == null || hidden.Count==0)return;
-    foreach(var pair in hidden){
-      Everest.Content.Map[pair.Key] = pair.Value;
-    }
-    hidden.Clear();
-    isHiding = false;
     AssetReloadHelper.ReloadAllMaps();
   }
-  public static void uncache(){
-    whitelisted.Clear();
-    rules = null;
+  public static void setUnhide(){
+    if(!isHiding) return;
+    isHiding=false;
+    cache.Clear();
+    AssetReloadHelper.ReloadAllMaps();
+  }
+  public static bool hasReloaded=false;
+  public static void handleReload(){
+    bool doHide = !hasReloaded;
+    hasReloaded = true;
+    if(doHide && auspicioushelperModule.Settings.HideHelperMaps)setHide();
+  }
+
+  [OnLoad.ILHook(typeof(AreaData),nameof(AreaData.Load))]
+  static void LoadHook(ILContext ctx){
+    ILCursor c = new(ctx);
+    ILLabel targ = null;
+    if(c.TryGotoNextBestFit(MoveType.After,
+      itr=>itr.MatchBr(out targ),
+      itr=>itr.MatchLdloc(9),
+      itr=>itr.MatchCallvirt(typeof(IEnumerator<ModAsset>),"get_Current"),
+      itr=>itr.MatchStloc(10), itr=>itr.MatchLdloc(10),
+      itr=>itr.MatchLdfld<ModAsset>(nameof(ModAsset.PathVirtual)),
+      itr=>itr.MatchLdcI4(5), itr=>itr.MatchCallvirt<string>(nameof(string.Substring)),
+      itr=>itr.MatchStloc(11)
+    )){
+      c.EmitLdloc(11);
+      c.EmitDelegate(check);
+      c.EmitBrtrue(targ);
+    } else DebugConsole.Write("Failed to apply map hiding hook");
   }
 }

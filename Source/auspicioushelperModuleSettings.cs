@@ -10,21 +10,25 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 public class auspicioushelperModuleSettings : EverestModuleSettings {
-  private bool _usingDebugConsole = false;
-  [SettingSubText("(Windows Only) Open a console window with auspicious debugging information")]
-  public bool UseDebugConsole {
-    get=>_usingDebugConsole;
-    set{
-      if(value) DebugConsole.Open();
-      else DebugConsole.Close();
-      _usingDebugConsole = value;
-    }}
   private bool _tryQuietShader = false;
   [SettingSubText("Use compression-friendly shaders when available (not reccomended or intended)")]
   public bool UseQuietShader{
     get=>_tryQuietShader;
     set{
       _tryQuietShader = value;
+    }
+  }
+  public enum DebugMode{
+    None, WindowsConsole, CommandLog, LogTxtPollute
+  }
+  private DebugMode _DebugConsoleMode = DebugMode.None;
+  [SettingSubText("Where debug information should be sent to")]
+  public DebugMode DebugConsoleMode {
+    get=>_DebugConsoleMode;
+    set{
+      if(value == DebugMode.WindowsConsole) DebugConsole.Open();
+      else if(DebugConsole.open) DebugConsole.Close();
+      _DebugConsoleMode = value;
     }
   }
 
@@ -46,20 +50,21 @@ public class auspicioushelperModuleSettings : EverestModuleSettings {
     set=>_crashOnFail=value;
   }
 
-  /*private bool _hideHelperMaps = false;
+  private bool _hideHelperMaps = true;
   [SettingSubText("Choose rules for hiding maps below")]
   public bool HideHelperMaps {
     get=>_hideHelperMaps;
     set{
       _hideHelperMaps = value;
+      if(!MapHider.hasReloaded) return;
       if(value){
-        if(hideRulesList.Count>0) MapHider.hideListed();
+        if(userHideRules.Count>0 && !MapHider.isHiding) MapHider.setHide();
       }
-      else if(MapHider.isHiding) MapHider.revealListed();
+      else if(MapHider.isHiding) MapHider.setUnhide();
     }
-  }*/
-  public List<string> hideRulesList {get; set;} = new(["/t$"]);
-  /*[SettingIgnore]
+  }
+  public List<string> userHideRules {get; set;} = new(["auspicioushelper/t(es)?"]);
+  [SettingIgnore]
   [SettingSubText("Regex rules to match maps to hide")]
   public HideruleMenu HideRules {get;set;} = new();
   [SettingSubMenu]
@@ -72,16 +77,10 @@ public class auspicioushelperModuleSettings : EverestModuleSettings {
       TextMenu.Item entry = new TextMenu.Button(i.ToString()+": "+s).Pressed(()=>{
         Audio.Play(SFX.ui_main_savefile_rename_start);
         (Engine.Instance.scene as Overworld)?.Goto<OuiModOptionString>().Init<OuiModOptions>(
-          s, (string value)=>{
-            val = value;
-          },(bool confirm)=>{
+          s, (string value)=> val=value, (bool confirm)=>{
             if(confirm){
               rules[i] = val;
-              MapHider.uncache();
-              if(auspicioushelperModule.Settings._hideHelperMaps){
-                MapHider.revealListed();
-                MapHider.hideListed();
-              }
+              if(auspicioushelperModule.Settings._hideHelperMaps)MapHider.setHide();
             }
             else val = rules[i];
           }, 100, 0
@@ -90,7 +89,7 @@ public class auspicioushelperModuleSettings : EverestModuleSettings {
       return entry;
     }
     public void CreateDummyEntry(TextMenuExt.SubMenu menu, bool ingame){
-      rules = auspicioushelperModule.Settings.hideRulesList;
+      rules = auspicioushelperModule.Settings.userHideRules;
       rules.RemoveAll(string.IsNullOrEmpty);
       int i = 0;
       foreach(string s in rules){
@@ -99,5 +98,5 @@ public class auspicioushelperModuleSettings : EverestModuleSettings {
       rules.Add("");
       menu.Add(makePressHandler("",i));
     }
-  }*/
+  }
 }

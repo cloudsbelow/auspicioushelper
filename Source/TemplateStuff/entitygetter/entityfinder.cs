@@ -82,16 +82,14 @@ public static class Finder{
     }
     orig(self, e);
   } 
+  [OnLoad]
   public static HookManager hooks = new HookManager(()=>{
-    MethodInfo oll = typeof(Level).GetMethod("orig_LoadLevel",BindingFlags.Public |BindingFlags.Instance);
-    llhook = new ILHook(oll, LLILHook);
+    llhook = new ILHook(typeof(Level).GetMethod("orig_LoadLevel",Util.GoodBindingFlags), LLILHook);
     On.Monocle.Scene.Add_Entity+=AddHook;
-    DebugConsole.Write("enabling");
   },void ()=>{
     llhook?.Dispose();
     On.Monocle.Scene.Add_Entity-=AddHook;
-    DebugConsole.Write("disabling");
-  }, auspicioushelperModule.OnEnterMap);
+  });
 
 
 

@@ -17,6 +17,7 @@ namespace Celeste.Mod.auspicioushelper;
 public class PortalGateH:Entity{
   private MTexture texture = GFX.Game["util/lightbeam"];
   public NoiseSamplerOS2_2DLoop ogen = new NoiseSamplerOS2_2DLoop(20, 70, 100);
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReset)]
   public static Dictionary<Entity, PortalIntersectInfoH> intersections = new Dictionary<Entity, PortalIntersectInfoH>();
   //public static Dictionary<Entity, Vector2> collideLim = new Dictionary<Entity, Vector2>();
   public class SurroundingInfoH {

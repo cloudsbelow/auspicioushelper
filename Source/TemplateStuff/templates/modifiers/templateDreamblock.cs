@@ -266,7 +266,9 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
   [CustomEntity("auspicioushelper/DreamTransitionEnabler")]
   [Tracked]
   public class DreamTrans:Trigger{
-    public DreamTrans(EntityData d, Vector2 o):base(d,o){}
+    public DreamTrans(EntityData d, Vector2 o):base(d,o){
+      hooks.enable();
+    }
   }
 
   static void Hook(On.Celeste.Player.orig_OnCollideH orig, Player p, CollisionData d){

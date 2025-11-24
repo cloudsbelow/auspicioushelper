@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Monocle;
 using MonoMod.Cil;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -45,12 +46,20 @@ public static class DebugConsole {
   }
 
   public static void Write(string message) {
-    if(!open) return;
-    if (consoleThread == null) throw new InvalidOperationException("Debug console not open.");
-    try{
-      messageQueue.Add(message);
-    }catch(Exception){
-
+    switch(auspicioushelperModule.Settings.DebugConsoleMode){
+      case auspicioushelperModuleSettings.DebugMode.WindowsConsole:
+        if(!open) return;
+        if (consoleThread == null) throw new InvalidOperationException("Debug console not open.");
+        try{
+          messageQueue.Add(message);
+        }catch(Exception){}
+        break;
+      case auspicioushelperModuleSettings.DebugMode.CommandLog:
+        Engine.Commands.Log(message);
+        break;
+      case auspicioushelperModuleSettings.DebugMode.LogTxtPollute:
+        if(!dontWrite) Logger.Info("AuspiciousDebug",message);
+        break;
     }
   }
   public static void Write(string message, object o){
@@ -97,7 +106,14 @@ public static class DebugConsole {
         if(i==0) DebugConsole.Write("===========");
         DebugConsole.Write(c.Instrs[c.Index+i].ToString());
       }catch(Exception){
-        DebugConsole.Write("cannot");
+        try{
+          var instr = c.Instrs[c.Index+i];
+          var op = "";
+          try {op=instr.Operand.ToString();} catch(Exception){op="Unreadable";}
+          Write($"{instr.OpCode} {instr.Operand}");
+        } catch(Exception){
+          DebugConsole.Write("Cannot");
+        }
       }
     }
   }
@@ -112,8 +128,9 @@ public static class DebugConsole {
   public class PassingException:Exception{
     public PassingException(string s):base(s){}
   }
+  static bool dontWrite=false;
   public static void WriteFailure(string s, bool alwayserror=false){
-    Write(s);
+    using(new Util.AutoRestore<bool>(ref dontWrite, true))Write(s);
     Logger.Error("auspicioushelper",s);
     if(alwayserror||(auspicioushelperModule.Settings?.CrashOnFail??false)){
       throw new PassingException(s);

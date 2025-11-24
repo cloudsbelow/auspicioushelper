@@ -26,12 +26,8 @@ public class auspicioushelperModuleSession : EverestModuleSession {
   public void save(){
     if(respDat==null) channelData = ChannelState.save();
   }
-  public void load(bool initialize){
-    if(initialize){
-      channelData.Clear();
-    }
+  public void load(){
     ChannelState.load(channelData);
-    if(initialize) save();
   } 
 
   public class RespawnData {

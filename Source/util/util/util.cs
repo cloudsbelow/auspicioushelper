@@ -401,4 +401,19 @@ public static partial class Util{
   public static void AddMultiple<T1,T2>(this Dictionary<T1,T2> dict, IEnumerable<T1> k, T2 v){
     foreach(var key in k) dict.Add(key,v);
   }
+
+  public ref struct AutoRestore<T>:IDisposable{
+    ref T reference;
+    T oldValue;
+    public AutoRestore(ref T toRestore){
+      reference = ref toRestore;
+      oldValue = reference;
+    }
+    public AutoRestore(ref T toRestore, T nval):this(ref toRestore){
+      reference = nval;
+    }
+    void IDisposable.Dispose() {
+      reference=oldValue;
+    }
+  }
 }

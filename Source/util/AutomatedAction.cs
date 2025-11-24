@@ -23,6 +23,10 @@ public class ScheduledAction{
     this.func=func;
     this.label=label;
   }
+  public ScheduledAction(Action func, string label=""):this(()=>{
+    func();
+    return true;
+  },label){}
   public bool run(){
     bool b = func();
     if(b) remove();
@@ -137,9 +141,11 @@ public class HookManager{
     else if(unsetup!=null) return simpleDisable();
     else return trivialDisable();
   }
+  public static ActionList cleanupActions = new();
   public static void disableAll(){
     foreach(var h in allhooks){
       h.disable();
     }
+    cleanupActions.run();
   }
 }
