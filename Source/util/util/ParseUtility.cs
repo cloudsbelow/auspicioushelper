@@ -380,4 +380,6 @@ public static partial class Util{
     foreach(char c in instr) if(!char.IsWhiteSpace(c))str+=c;
     return str.ToLower();
   }
+  public static string RemovePrefix(this string s, string prefix) =>
+    s.StartsWith(prefix) ? s[prefix.Length..] : s;
 }

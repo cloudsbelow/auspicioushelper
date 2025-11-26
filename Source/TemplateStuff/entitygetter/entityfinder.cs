@@ -117,7 +117,7 @@ public static class Finder{
       }
       void OnChange(int nval){
         if(nval!=0) e.Collider = replace;
-        else if(restorable) e.Collider = orig; 
+        else if(restorable && e.Collider.Equals(replace)) e.Collider = orig; 
       }
     }
     static void Search(EntityData d){

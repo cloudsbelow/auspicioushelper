@@ -50,7 +50,7 @@ public class auspicioushelperModuleSettings : EverestModuleSettings {
     set=>_crashOnFail=value;
   }
 
-  private bool _hideHelperMaps = true;
+  private bool _hideHelperMaps = false;
   [SettingSubText("Choose rules for hiding maps below")]
   public bool HideHelperMaps {
     get=>_hideHelperMaps;

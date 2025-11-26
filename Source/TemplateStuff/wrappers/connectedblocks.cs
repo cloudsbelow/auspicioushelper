@@ -11,6 +11,7 @@ using System.Reflection;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
+using FMOD;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Cil;
@@ -127,27 +128,36 @@ public class ConnectedBlocks:Entity{
         }
       }
       MiptileCollider checker = new(l, Vector2.One*8, minimum, true);
+      List<KeyValuePair<Vector2, EntityData>> holds = new();
       foreach(var pair in TemplateBehaviorChain.mainRoom){
-        if(checker.collideFr(FloatRect.fromRadius(pair.Key+levelOffset,Vector2.One))){
-          RemChildren(all,minimum,f);
-          Vector2 pos = pair.Key+levelOffset;
-          f.offset = minimum-pos;
-          Vector2? forcepos = pair.Value.Name=="auspicioushelper/TemplateBehaviorChain"&&pair.Value.Bool("forceOwnPosition",false)?pair.Key:null;
-          TemplateBehaviorChain.Chain chain = new(f, new List<EntityData>(){pair.Value,InplaceTemplateWrapper.creationDat}, null, forcepos); 
-          var first = chain.NextEnt();
-          if(first == null) throw new Exception("idk shouldn't be possible");
-          if(Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
-            Level lv = scene as Level;
-            Entity e;
-            using(new Template.ChainLock()) e = loader(lv,lv.Session.LevelData,pos-first.Position,first);
-            if(e is Template te){
-              te.t = chain.NextFiller();
-              lv.Add(e);
-              UpdateHook.EnsureUpdateAny();
-              goto end;
-            }
-            throw new Exception($"your chained entity is not a template? how did u do this? {e}");
+        if(checker.collideFr(FloatRect.fromRadius(pair.Key+levelOffset,Vector2.One))) holds.Add(pair);
+      }
+      if(holds.Count>1 && auspicioushelperModule.InFolderMod){
+        string erroring = "Connected tiles covered with more than one template entity. Cannot decide which to use! " +
+          "For multiple behaviors, use chains.";
+        foreach(var pair in holds) erroring+=$"{{n}}({pair.Key.X}, {pair.Key.Y}): {pair.Value.Name.RemovePrefix("auspicioushelper/")}";
+        DebugConsole.MakePostcard(erroring);
+      }
+      if(holds.Count!=0){
+        var pair = holds[0];
+        RemChildren(all,minimum,f);
+        Vector2 pos = pair.Key+levelOffset;
+        f.offset = minimum-pos;
+        Vector2? forcepos = pair.Value.Name=="auspicioushelper/TemplateBehaviorChain"&&pair.Value.Bool("forceOwnPosition",false)?pair.Key:null;
+        TemplateBehaviorChain.Chain chain = new(f, new List<EntityData>(){pair.Value,InplaceTemplateWrapper.creationDat}, null, forcepos); 
+        var first = chain.NextEnt();
+        if(first == null) throw new Exception("idk shouldn't be possible");
+        if(Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
+          Level lv = scene as Level;
+          Entity e;
+          using(new Template.ChainLock()) e = loader(lv,lv.Session.LevelData,pos-first.Position,first);
+          if(e is Template te){
+            te.t = chain.NextFiller();
+            lv.Add(e);
+            UpdateHook.EnsureUpdateAny();
+            goto end;
           }
+          throw new Exception($"your chained entity is not a template? how did u do this? {e}");
         }
       }
       foreach(TemplateHoldable hold in scene.Tracker.GetEntities<TemplateHoldable>()){

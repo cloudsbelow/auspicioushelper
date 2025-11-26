@@ -142,4 +142,13 @@ public static class DebugConsole {
     Write(trace.ToString());
     nl(2);
   }
+
+
+
+  [Command("auspdebug_postcard", "make a postcard")]
+  public static void MakePostcard(string str){
+    if(string.IsNullOrEmpty(str)) str="Postcard!";
+    LevelEnter.ErrorMessage = $"{str}";
+    Engine.Scene = new LevelEnter((Engine.Scene as Level)?.Session,false);
+  }
 }

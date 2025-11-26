@@ -11,8 +11,10 @@ public class DultraHelper:Trigger{
   public override void OnStay(Player p) {
     base.OnStay(p);
     if(p.DashDir.Y>0 && p.StateMachine.State == Player.StNormal){
+      float old = p.Speed.X;
       p.MoveV(1,p.OnCollideV);
-      if(p.DashDir.Y==0) DebugConsole.Write("Dultra given");
+      if(p.DashDir.Y==0) DebugConsole.Write($"Dultra given: {old} to {p.Speed.X}");
+      else DebugConsole.Write("Dultra suck");
     }
   }
 }

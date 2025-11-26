@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using Celeste.Mod.auspicioushelper;
 using Celeste.Mod.auspicioushelper.Import;
 using Celeste.Mod.auspicioushelper.iop;
@@ -68,11 +69,11 @@ public class auspicioushelperModule : EverestModule {
     OnNewScreen.run();
     OnReloadMap.run();
     OnEnterMap.run();
-    // InFolderMod = session.MapData.Filepath is {} fpath && 
-    //   Everest.Content.Get(fpath)?.Source?.Mod is {} Mod && 
-    //   !string.IsNullOrWhiteSpace(Mod.PathDirectory);
+    InFolderMod = Path.Combine("Maps",session.MapData.Filename) is {} fpath && 
+      Everest.Content.Get(fpath)?.Source?.Mod is {} Mod && 
+      !string.IsNullOrWhiteSpace(Mod.PathDirectory);
 
-    // DebugConsole.Write($"\n\nEntering Map! Folder mod: {InFolderMod}", session.MapData.Filepath, Everest.Content.Get(session.MapData.Filepath)?.Source.Mod.PathDirectory);
+    DebugConsole.Write($"\n\nEntering Map! Folder mod: {InFolderMod}");
     try{
       Session?.load();
       if(session?.MapData!=null){

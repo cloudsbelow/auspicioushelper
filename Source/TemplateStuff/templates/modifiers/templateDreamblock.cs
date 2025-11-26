@@ -3,6 +3,7 @@
 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
@@ -154,7 +155,18 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
         }
       }
       if(e.Collider == null && e is not Wrappers.Spinner.SpinnerFiller) continue;
-      if(e is Trigger t) continue;
+      if(e is Trigger t){
+        if(t is DreamTrans dt && dt.assistSmuggle){
+          dt.Add(new PlayerCollider((Player p)=>{
+            if(p.StateMachine.State == Player.StNormal && p.Holding!=null && DreamCheckStart(p,Vector2.Zero)){
+              fake.lastEntity = dt;
+              dt.ManifestTemp();
+            }
+          }));
+          dt.Add(dt.comp = new DreamMarkerComponent(this,dt.invalidHitbox));
+        }
+        continue;
+      }
       e.Add(new PlayerCollider((Player p)=>{
         if(DreamCheckStart(p,Vector2.Zero)){
           //DebugConsole.Write($"{e} {e.Collidable} {e.Scene}", e.Scene);
@@ -266,8 +278,20 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
   [CustomEntity("auspicioushelper/DreamTransitionEnabler")]
   [Tracked]
   public class DreamTrans:Trigger{
+    public bool assistSmuggle;
+    public Hitbox invalidHitbox = new Hitbox(-100,-100,-10000,0);
+    public DreamMarkerComponent comp;
     public DreamTrans(EntityData d, Vector2 o):base(d,o){
       hooks.enable();
+      assistSmuggle = d.Bool("assistSmuggle",false);
+    }
+    public void ManifestTemp(){
+      comp.Collider = Collider;
+      Add(new Coroutine(ManifestRoutine()));
+    }
+    IEnumerator ManifestRoutine(){
+      yield return 0.2f;
+      comp.Collider = invalidHitbox;
     }
   }
 
