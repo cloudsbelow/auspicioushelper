@@ -10,6 +10,7 @@ using Monocle;
 using CKey = (string, float, byte, bool, bool);
 namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/ArbitrarySolid")]
+[MapenterEv(nameof(precache))]
 public class ArbitraryShapeSolid:Solid{
   [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
   static Dictionary<CKey, (Vector2, MipGrid)> cache = new();
@@ -18,16 +19,9 @@ public class ArbitraryShapeSolid:Solid{
   Vector2 scale;
   Color col;
   public ArbitraryShapeSolid(EntityData d, Vector2 o):base(d.Position+o,0,0,d.Bool("safe")){
-    string path = d.Attr("CustomColliderPath","");
-    if(string.IsNullOrWhiteSpace(path)) path = d.Attr("image");
-    CKey k = new(
-      path, d.Float("rotation",0), 
-      (byte)Math.Clamp((int)(d.Float("alphaCutoff",0.5f)*255),0,255), 
-      d.Bool("flipH",false), d.Bool("flipV",false)
-    );
     scale = new Vector2(d.Bool("flipH",false)?-1:1,d.Bool("flipV",false)?-1:1);
     rot = Calc.DegToRad*d.Float("rotation",0);
-    Collider = MakeCollider(k);
+    Collider = MakeCollider(makeKey(d));
     Depth  = (int)d.Float("depth",-100);
     if(d.tryGetStr("image", out var str)){
       imag = GetTextureAtPath(str);
@@ -37,6 +31,16 @@ public class ArbitraryShapeSolid:Solid{
   static MTexture GetTextureAtPath(string path){
     if(GFX.Game.textures.ContainsKey(path)) return GFX.Game[path];
     else return GFX.Game.GetAtlasSubtextureFromAtlasAt(path, 0);
+  }
+  static Collider precache(EntityData d)=>MakeCollider(makeKey(d));
+  static CKey makeKey(EntityData d){
+    string path = d.Attr("CustomColliderPath","");
+    if(string.IsNullOrWhiteSpace(path)) path = d.Attr("image");
+    return new(
+      path, d.Float("rotation",0), 
+      (byte)Math.Clamp((int)(d.Float("alphaCutoff",0.5f)*255),0,255), 
+      d.Bool("flipH",false), d.Bool("flipV",false)
+    );
   }
   static Collider MakeCollider(CKey path){
     if(cache.TryGetValue(path,out var cmg)){
@@ -70,22 +74,17 @@ public class ArbitraryShapeSolid:Solid{
     }
   }
   [CustomEntity("auspicioushelper/ArbitraryDie")]
+  [MapenterEv(nameof(precache))]
   public class ArbitraryShapeKillbox:Entity{
     MTexture imag;
     float rot;
     Vector2 scale;
     Color col;
+    static Collider precache(EntityData d)=>MakeCollider(makeKey(d));
     public ArbitraryShapeKillbox(EntityData d, Vector2 o):base(d.Position+o){
-      string path = d.Attr("CustomColliderPath","");
-      if(string.IsNullOrWhiteSpace(path)) path = d.Attr("image");
-      CKey k = new(
-        path, d.Float("rotation",0), 
-        (byte)Math.Clamp((int)(d.Float("alphaCutoff",0.5f)*255),0,255), 
-        d.Bool("flipH",false), d.Bool("flipV",false)
-      );
       scale = new Vector2(d.Bool("flipH",false)?-1:1,d.Bool("flipV",false)?-1:1);
       rot = Calc.DegToRad*d.Float("rotation",0);
-      Collider = MakeCollider(k);
+      Collider = MakeCollider(makeKey(d));
       Depth  = (int)d.Float("depth",-100);
       if(d.tryGetStr("image", out var str)){
         imag = GetTextureAtPath(str);

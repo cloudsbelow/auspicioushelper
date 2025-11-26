@@ -60,14 +60,19 @@ public class auspicioushelperModule : EverestModule {
     }
     orig(l,playerIntro,isFromLoader);
   }
+  [ResetEvents.NullOn(ResetEvents.RunTimes.OnExit)]
+  public static bool InFolderMod;
   static void OnEnter(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session, Vector2? position){
     OnExitMap.run();
     OnReset.run();
     OnNewScreen.run();
     OnReloadMap.run();
     OnEnterMap.run();
+    // InFolderMod = session.MapData.Filepath is {} fpath && 
+    //   Everest.Content.Get(fpath)?.Source?.Mod is {} Mod && 
+    //   !string.IsNullOrWhiteSpace(Mod.PathDirectory);
 
-    DebugConsole.Write("\n\nEntering Map!");
+    // DebugConsole.Write($"\n\nEntering Map! Folder mod: {InFolderMod}", session.MapData.Filepath, Everest.Content.Get(session.MapData.Filepath)?.Source.Mod.PathDirectory);
     try{
       Session?.load();
       if(session?.MapData!=null){

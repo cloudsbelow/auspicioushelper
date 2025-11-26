@@ -18,6 +18,10 @@ public class ChannelTracker : OnAnyRemoveComp{
     if(immediateInvoke) onChannelChange(value);
   }
   public ChannelTracker(string channel):this(channel, static (_)=>{}, false){}
+  public void SetOnchange(Action<int> onChannelChange, bool immediateInvoke = false){
+    this.onChannelChange=onChannelChange;
+    if(immediateInvoke) onChannelChange(value);
+  }
   public void setChVal(int val){
     value = val;
     onChannelChange(val);

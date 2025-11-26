@@ -363,9 +363,10 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     }
     orig(p,sm);
   }
+  [OnLoad]
   public static HookManager triggerHooks = new HookManager(()=>{
     On.Celeste.Platform.OnStaticMoverTrigger+=smtHook;
   },()=>{
     On.Celeste.Platform.OnStaticMoverTrigger-=smtHook;
-  },auspicioushelperModule.OnEnterMap); 
+  }); 
 }

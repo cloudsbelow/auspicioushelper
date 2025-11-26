@@ -3,12 +3,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Text.RegularExpressions;
 using Celeste.Mod.Entities;
-using Iced.Intel;
-using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
@@ -100,6 +96,60 @@ public static class Finder{
   public class MarkingFlag:Entity{
     static void Search(EntityData d){
       Finder.watch(d.Attr("path"),(e)=>e.Depth = d.Int("depth",e.Depth));
+    }
+  }
+
+  [CustomEntity("auspicioushelper/FinderCollider")]
+  [MapenterEv(nameof(Search))]
+  [CustomloadEntity]
+  public class ColliderModifier:Entity{
+    class CMod:ChannelTracker{
+      Collider orig;
+      Collider replace;
+      bool restorable;
+      Entity e;
+      public CMod(EntityData d, Entity e, string c):base(c){
+        orig = e.Collider;
+        replace = buildCollider(d);
+        this.e=e;
+        SetOnchange(OnChange,true);
+        restorable = d.Bool("restorable",true);
+      }
+      void OnChange(int nval){
+        if(nval!=0) e.Collider = replace;
+        else if(restorable) e.Collider = orig; 
+      }
+    }
+    static void Search(EntityData d){
+      Finder.watch(d.Attr("path"),(e)=>{
+        if(d.tryGetStr("channel", out var str)){
+          e.Add(new CMod(d,e,str));
+        } else e.Collider = buildCollider(d);
+      });
+    }
+
+    static Regex pattern = new Regex(@"(\w+):(.+)",RegexOptions.Compiled);
+    static Collider buildCollider(EntityData d){
+      List<string> things = Util.listparseflat(d.String("collider","rect:[-8,-8,16,16]"));
+      var c = things.Map(Collider (s)=>{
+        var M = pattern.Match(s);
+        if(!M.Success) DebugConsole.WriteFailure("Failed to parse collider "+s);
+        var u = Util.stripEnclosure(M.Groups[2].Value);
+        switch(M.Groups[1].Value.ToLower()){
+          case "circle": case "c":
+            float[] vals = Util.csparseflat(u,8,0,0);
+            return new Circle(vals[0],vals[1],vals[2]);
+          case "hitbox": case "hb": case "h":
+            vals = Util.csparseflat(u,8,8,0,0);
+            return new Hitbox(vals[0],vals[1],vals[2],vals[3]);
+          case "rectangle": case "rect": case "r":
+            vals = Util.csparseflat(u,0,0,8,8);
+            return new Hitbox(vals[2],vals[3],vals[0],vals[1]);
+        }
+        throw new Exception("Failed to parse collider "+s);
+      });
+      if(c.Count==1) return c[0];
+      return new ColliderList(c.ToArray());
     }
   }
 }
