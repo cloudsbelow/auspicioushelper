@@ -167,7 +167,7 @@ public class TemplateEntityModifier:TemplateDisappearer{
       Add(new ChannelTracker(shakeCh,(int n)=>{
         if(n!=0) shake(100000);
         else EndShake();
-      }));
+      },true));
     }
   }
 }

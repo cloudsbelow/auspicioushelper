@@ -151,6 +151,19 @@ public static partial class Util{
         throw new NotImplementedException("");
       }
     }
+    public class TintRemap:ColorWeightable{
+      static public Regex pattern = new Regex(@"^(#[\da-f]+)()(?::(\{.+\})|())$",RegexOptions.Compiled);
+      Double4 tint;
+      float weight=1;
+      public TintRemap(Match ingest){
+        tint = hexToColor(ingest.Groups[1].Value);
+        if(new DictWrapper(kvparseflat(ingest.Groups[3].Value,true)).TryFloat(["w","weight"], out var we)) weight=we;
+      }
+      public override double WeightAndCol(Double4 i, out Double4 o) {
+        o = (tint*i.OklabToSrgb()).SrgbToOklab();
+        return weight;
+      }
+    }
     List<ColorWeightable> things=new();
     List<Func<double,double>> weightMap=new();
     public string ident;
@@ -161,6 +174,7 @@ public static partial class Util{
         Match m;
         if((m=PointRemap.pattern.Match(v)).Success) things.Add(new PointRemap(m));
         else if((m=LineGroup.P.pattern.Match(v)).Success) things.Add(new LineGroup.P(m));
+        else if((m=TintRemap.pattern.Match(v)).Success) things.Add(new TintRemap(m));
         else DebugConsole.WriteFailure("Bad pattern: "+v);
         if(m.Success){
           Func<double,double> fn = static(double d)=>d;

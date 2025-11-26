@@ -76,6 +76,7 @@ public static partial class Util{
       X=X_; Y=Y_; Z=Z_; W=W_;
     }
     public static Double4 operator *(Double4 v, double o)=>new Double4(v.X*o, v.Y*o, v.Z*o, v.W*o);
+    public static Double4 operator *(Double4 v, Double4 o)=>new Double4(v.X*o.X, v.Y*o.Y, v.Z*o.Z, v.W*o.W);
     public static Double4 operator /(Double4 v, double o)=>new Double4(v.X/o, v.Y/o, v.Z/o, v.W/o);
     public static Double4 operator *(double o, Double4 v)=>new Double4(v.X*o, v.Y*o, v.Z*o, v.W*o);
     public static Double4 operator /(double o, Double4 v)=>new Double4(v.X/o, v.Y/o, v.Z/o, v.W/o);
