@@ -95,7 +95,7 @@ public class UpdateHook:Component{
     framenum+=1; //doesn't matter if this overflows or anything <3
     update(self);
   
-    FastDebris.UpdateDebris(self);
+    FastDebris.UpdateDebris(self); 
     if(TimeSinceTransMs<1000000)TimeSinceTransMs+=Engine.DeltaTime*1000;
     foreach(UpdateHook u in self.Tracker.GetComponents<UpdateHook>()){
       if(u.afterAction!=null)u.afterAction();

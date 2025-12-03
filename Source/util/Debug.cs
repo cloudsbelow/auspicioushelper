@@ -59,9 +59,6 @@ public static class DebugConsole {
       case auspicioushelperModuleSettings.DebugMode.LogTxtPollute:
         if(!dontWrite) Logger.Info("AuspiciousDebug",message);
         break;
-      case auspicioushelperModuleSettings.DebugMode.None:
-        Logger.Info("AuspiciousDebug",message);
-        break;
     }
   }
   public static void Write(string message, object o){
