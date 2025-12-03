@@ -44,7 +44,6 @@ public static class DebugConsole {
     consoleThread.Start();
     open = true;
   }
-
   public static void Write(string message) {
     switch(auspicioushelperModule.Settings.DebugConsoleMode){
       case auspicioushelperModuleSettings.DebugMode.WindowsConsole:
@@ -55,10 +54,13 @@ public static class DebugConsole {
         }catch(Exception){}
         break;
       case auspicioushelperModuleSettings.DebugMode.CommandLog:
-        Engine.Commands.Log(message);
+        Engine.Commands?.Log(message);
         break;
       case auspicioushelperModuleSettings.DebugMode.LogTxtPollute:
         if(!dontWrite) Logger.Info("AuspiciousDebug",message);
+        break;
+      case auspicioushelperModuleSettings.DebugMode.None:
+        Logger.Info("AuspiciousDebug",message);
         break;
     }
   }

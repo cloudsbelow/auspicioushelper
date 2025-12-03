@@ -233,7 +233,10 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     return flag;
   }
   bool dreaming=true;
-  static bool Eligible(Player p)=>p.StateMachine.state == Player.StDash || p.StateMachine.state == Player.StDreamDash || p.dashAttackTimer>0;
+  static bool Eligible(Player p){
+    int s = p.StateMachine.state;
+    return s==Player.StDash || s==Player.StRedDash || s==Player.StDreamDash || s==Player.StStarFly || p.dashAttackTimer>0;
+  }
   static bool DDsh(Player p)=>p.StateMachine.state == Player.StDreamDash;
   public override void destroy(bool particles) {
     base.destroy(particles);

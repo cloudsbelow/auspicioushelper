@@ -12,7 +12,9 @@ using MonoMod.RuntimeDetour;
 namespace Celeste.Mod.auspicioushelper;
 
 public static class Finder{
+  [ResetEvents.NullOn(ResetEvents.RunTimes.OnReload)]
   static List<Action<Entity>> finding = null;
+  [ResetEvents.NullOn(ResetEvents.RunTimes.OnReload)]
   static Entity last = null;
   [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
   public static Dictionary<string, List<Action<Entity>>> flagged = new();
@@ -22,7 +24,6 @@ public static class Finder{
       if(string.IsNullOrWhiteSpace(sig)) continue;
       string cl = Regex.Replace(sig,@"\s+","");
       if(!flagged.TryGetValue(cl, out var li)){
-        DebugConsole.Write($"Registered looker for {sig}");
         flagged.Add(cl,li = new());
       }
       li.Add(thing);
@@ -32,7 +33,6 @@ public static class Finder{
     }
   }
   public static void StartingLoad(EntityData d){
-    //DebugConsole.Write($"Start Ld {d.ID} {d.Name}");
     last = null; finding = null;
     if(flagged.TryGetValue(d.ID.ToString(), out var ident)){
       finding=ident;
@@ -44,10 +44,10 @@ public static class Finder{
     if(finding!=null){
       if(last==null){
         DebugConsole.Write($"Failed to find the entity {d.Name} with id {d.ID} - (maybe this entity adds itself non-standardly?)");
-        return;
+      } else {
+        DebugConsole.Write($"Found the entity {d.Name} with id {d.ID} - position {last.Position}");
+        foreach(var a in finding) a(last);
       }
-      DebugConsole.Write($"Found the entity {d.Name} with id {d.ID} - position {last.Position}");
-      foreach(var a in finding) a(last);
     } 
     finding = null;
     last = null;

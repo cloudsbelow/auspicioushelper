@@ -42,7 +42,6 @@ public class TemplateGluable:Template{
   }
   static Regex matchReg = new(@"^\s*\d+\s*(?:[\/,]\s*\d+\s*)*$",RegexOptions.Compiled);
   static void Search(EntityData d){
-    DebugConsole.Write("HERE",d.Name);
     if(d.Bool("can_be_ID_path",false)){
       string str = d.Attr("glue_to_identifier");
       if(matchReg.Match(str).Success) Finder.watch(str,(e)=>FoundEntity.addIdent(e,str));

@@ -91,14 +91,20 @@ public class auspicioushelperModule : EverestModule {
   }
   static void OnExit(Level l, LevelExit e, LevelExit.Mode m, Session s, HiresSnow h)=>OnExitMap.run();
   static void OnReload(bool silent){
+    Logger.Info(nameof(auspicioushelperModule),"start reload");
     MapHider.handleReload();
+    Logger.Info(nameof(auspicioushelperModule),"pass hider");
     try {
       ChannelState.unwatchAll();
+      Logger.Info(nameof(auspicioushelperModule),"pass channel");
       if(Engine.Instance.scene is LevelLoader l){
         OnReloadMap.run();
+        Logger.Info(nameof(auspicioushelperModule),"pass OnReload");
         DebugConsole.Write("\n\nReloading Map!");
         MapenterEv.Run(l.Level.Session.MapData);
+        Logger.Info(nameof(auspicioushelperModule),"pass MapenterEv");
         MarkedRoomParser.parseMapdata(l.Level.Session.MapData);
+        Logger.Info(nameof(auspicioushelperModule),"pass Parse");
       }
       DebugConsole.Write(Engine.Scene?.ToString()??"null scene");
     } catch (Exception ex){
@@ -107,6 +113,7 @@ public class auspicioushelperModule : EverestModule {
       Logger.Warn("auspicioushelper","Invalid state. Ausp prevented some potential errors but other mods may not.\n");
     }
     Session?.load();
+    Logger.Info(nameof(auspicioushelperModule),"pass Session");
   }
 
   public override void LoadContent(bool firstLoad) {

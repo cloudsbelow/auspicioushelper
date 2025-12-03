@@ -427,6 +427,7 @@ public class ChannelMathController:Entity{
     registerInterop("killPlayer",(List<string> strs, List<int> ints)=>{
       Player p = Engine.Scene.Tracker.GetEntity<Player>();
       Vector2 dir = ints.Count>=3?new Vector2(0.1f*(float)ints[1],0.1f*(float)ints[2]):Vector2.Zero;
+      DebugConsole.Write("Death direction",dir);
       if(ints[0]!=0) p.Die(dir);
       return (p!=null && ints[0]!=0)?1:0;
     });

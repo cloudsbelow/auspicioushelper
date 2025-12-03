@@ -117,7 +117,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
     int tdepth = TemplateDepth();
     bool ghost = there!=State.there;
     if(layer!=null) foreach(Entity e in l){
-      DebugConsole.Write("Adding entity to cassette", e);
+      //DebugConsole.Write("Adding entity to cassette", e);
       var c = OverrideVisualComponent.Get(e);
       c.AddToOverride(new(this, -30000, false, true));
       c.AddToOverride(new(layer, -10000+tdepth, ghost,ghost));
