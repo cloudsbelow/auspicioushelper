@@ -5,8 +5,10 @@ using System.IO;
 using Celeste.Mod.auspicioushelper;
 using Celeste.Mod.auspicioushelper.Import;
 using Celeste.Mod.auspicioushelper.iop;
+using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Cil;
 using MonoMod.ModInterop;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -63,13 +65,14 @@ public class auspicioushelperModule : EverestModule {
   }
   [ResetEvents.NullOn(ResetEvents.RunTimes.OnExit)]
   public static bool InFolderMod;
-  static void OnEnter(On.Celeste.LevelLoader.orig_ctor orig, LevelLoader self, Session session, Vector2? position){
+  static void OnEnter(Session session){
     OnExitMap.run();
     OnReset.run();
     OnNewScreen.run();
     OnReloadMap.run();
     OnEnterMap.run();
-    InFolderMod = Path.Combine("Maps",session.MapData.Filename) is {} fpath && 
+    InFolderMod = session.MapData.Filename!=null && 
+      Path.Combine("Maps",session.MapData.Filename) is {} fpath && 
       Everest.Content.Get(fpath)?.Source?.Mod is {} Mod && 
       !string.IsNullOrWhiteSpace(Mod.PathDirectory);
 
@@ -87,14 +90,12 @@ public class auspicioushelperModule : EverestModule {
       if(ex is DebugConsole.PassingException p) throw p;
       else DebugConsole.Write(ex.ToString());
     }
-    orig(self,session,position);
   }
   static void OnExit(Level l, LevelExit e, LevelExit.Mode m, Session s, HiresSnow h)=>OnExitMap.run();
   static void OnReload(bool silent){
     MapHider.handleReload(); 
     try {
       ChannelState.unwatchAll();
-      Logger.Info(nameof(auspicioushelperModule),"pass channel");
       if(Engine.Instance.scene is LevelLoader l){
         OnReloadMap.run();
         DebugConsole.Write("\n\nReloading Map!");
@@ -122,10 +123,22 @@ public class auspicioushelperModule : EverestModule {
     orig(l,returnIndex,restartArea,minimal,showHint);
   }
   
+  static void OnEnterEvent(Session session, bool fromsave)=>OnEnter(session);
+  [OnLoad.ILHook(typeof(Commands),"LoadIdLevel")]
+  static void OtherOnenter(ILContext ctx){
+    ILCursor c = new(ctx);
+    if(c.TryGotoNextBestFit(MoveType.Before,
+      itr=>itr.MatchNewobj<LevelLoader>(),
+      itr=>itr.MatchCall<Engine>("set_Scene")
+    )){
+      c.EmitLdloc1();
+      c.EmitDelegate(OnEnter);
+    } else DebugConsole.WriteFailure("Could not add command onenter hook",false);
+  }
   public override void Load() {
     Everest.Events.Level.OnTransitionTo += OnTransition;
     Everest.Events.Player.OnDie += OnDie;
-    On.Celeste.LevelLoader.ctor += OnEnter;
+    Everest.Events.Level.OnEnter += OnEnterEvent;
     Everest.Events.Level.OnExit += OnExit;
     Everest.Events.AssetReload.OnAfterReload += OnReload;
     On.Celeste.Level.GiveUp += GiveUp;
@@ -150,7 +163,7 @@ public class auspicioushelperModule : EverestModule {
   public override void Unload() {
     Everest.Events.Level.OnTransitionTo -= OnTransition;
     Everest.Events.Player.OnDie -= OnDie;
-    On.Celeste.LevelLoader.ctor -= OnEnter;
+    Everest.Events.Level.OnEnter -= OnEnterEvent;
     Everest.Events.Level.OnExit -= OnExit;
     Everest.Events.AssetReload.OnAfterReload -= OnReload;
     On.Celeste.Level.GiveUp -= GiveUp;
