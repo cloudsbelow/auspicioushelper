@@ -31,6 +31,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     return res;
   }
   string fancyRecolor;
+  bool dontStun;
   public Spinner(EntityData d, Vector2 offset):base(d.Position+offset, false, GetColor(d)){
     id = uidctr++;
     hooks.enable();
@@ -45,6 +46,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     neverClip = d.Bool("neverClip",false);
     Get<PlayerCollider>().OnCollide = OtherOnPlayer;
     Depth = d.Int("depth", -8500);
+    dontStun = d.Name!="spinner";
   }
   void OtherOnPlayer(Player p){
     if(dreamThru && p.StateMachine.state == Player.StDreamDash) return;
@@ -73,7 +75,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
       if (base.Scene.OnInterval(0.25f, offset) && !InView()){
         inView = false; Visible = false; Collidable = false;
       }
-      if (base.Scene.OnInterval(0.05f, offset)){
+      if (dontStun||base.Scene.OnInterval(0.05f, offset)){
         Player entity = UpdateHook.cachedPlayer;
         if(entity != null) scollidable = Math.Abs(entity.X - base.X) < 128f && Math.Abs(entity.Y - base.Y) < 128f;
       }

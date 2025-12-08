@@ -47,7 +47,7 @@ public static class PlayerHelper{
     if(movewith is ITemplateChild itc)parent=itc.parent;
     if(movewith.Get<ChildMarker>() is ChildMarker cm)parent=cm.parent;
     if(parent!=null) p.LiftSpeed = parent.gatheredLiftspeed;
-    else p.LiftSpeed = del/MathF.Max(0.001f,Engine.DeltaTime);  
+    else p.LiftSpeed = del/MathF.Max(0.001f,Engine.DeltaTime); 
   }
 
   [CustomEntity("auspicioushelper/triggerparenttrigger")]

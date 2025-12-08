@@ -55,13 +55,13 @@ public static class ResetEvents{
           if(c.toNull){
             Type ty = f.FieldType;
             object setTo = ty.IsValueType? Activator.CreateInstance(ty) : null;
-            p = new(()=>f.SetValue(null, setTo));
+            p = new(()=>f.SetValue(null, setTo),$"ResetEvents.NullOn: {t.Name}.{f.Name}");
           } else{ 
             MethodInfo clearInfo = f.FieldType.GetMethod("Clear");
             if(clearInfo==null) DebugConsole.WriteFailure("Autoclear field is not clearable",true);
             p = new(()=>{
               clearInfo.Invoke(f.GetValue(null),[]);
-            });
+            },$"ResetEvents.ClearOn: {t.Name}.{f.Name}");
           }
           
           foreach(var r in c.m)r.getList().enroll(p);
@@ -73,7 +73,7 @@ public static class ResetEvents{
           RunOn c = (RunOn)m.GetCustomAttribute(typeof(RunOn));
           PersistantAction p = new(()=>{
             m.Invoke(null,[]);
-          });
+          },$"ResetEvents.RunOn: {t.Name}.{m.Name}()");
           foreach(var r in c.m)r.getList().enroll(p);
         }
       }

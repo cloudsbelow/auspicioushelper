@@ -429,6 +429,7 @@ anyways i want to praise it more it is wonderful
       case "kevins_pc": return static (l,d,o,e)=>new KevinsPC(e, o);
       case "templeGate": return static (l,d,o,e)=>new TempleGate(e,o, d.Name);
       case "payphone": return static (l,d,o,e)=>new Payphone(e.Position+o);
+      case "templeCrackedBlock": return static (l,d,o,e)=>new TempleCrackedBlock(new EntityID(d.Name,e.ID),e,o);
 
       case "eventTrigger": return static (l,d,o,e)=>new EventTrigger(e, o);
       case "musicFadeTrigger": return static (l,d,o,e)=>new MusicFadeTrigger(e, o);

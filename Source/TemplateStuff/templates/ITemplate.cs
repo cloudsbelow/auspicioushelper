@@ -15,6 +15,7 @@ using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
 using Celeste.Mod.Helpers;
+using System.Diagnostics;
 
 namespace Celeste.Mod.auspicioushelper;
 
