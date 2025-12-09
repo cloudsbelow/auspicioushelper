@@ -471,7 +471,7 @@ public class MovementLock:IDisposable{
   static HashSet<Actor> alreadyY = new();
   static int instances = 0;
   static int csinstances = 0;
-  static bool canSkip=>instances>0;
+  public static bool canSkip=>instances>0;
   static bool cantSkip=>instances==0;
   bool always;
   public MovementLock(bool always=true){
@@ -491,7 +491,7 @@ public class MovementLock:IDisposable{
     if(pusher == null && cb == null && canSkip){
       if(alreadyX.Contains(self))return false;
       bool flag = orig(self, move, cb, pusher);
-      if(!flag) alreadyX.Add(self);
+      if(!flag && move!=0) alreadyX.Add(self);
       return flag;
     }
     return orig(self, move, cb, pusher);
@@ -501,8 +501,8 @@ public class MovementLock:IDisposable{
       if(alreadyY.Contains(self)){
         return false;
       }
-      bool flag = !orig(self, move, cb, pusher);
-      if(flag || move<0){
+      bool flag = orig(self, move, cb, pusher);
+      if((!flag || move<0) && move!=0){
         alreadyY.Add(self);
       }
       return flag;

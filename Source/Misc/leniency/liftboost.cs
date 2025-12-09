@@ -18,7 +18,12 @@ public class LiftspeedThing:Trigger{
   [Import.SpeedrunToolIop.Static]
   static LinkedList<Settings> overRules = new();
   [Import.SpeedrunToolIop.Static]
-  static Settings appliedRules;
+  static Settings appliedRules = new();
+  [ResetEvents.RunOn(ResetEvents.RunTimes.OnReset)]
+  static void fix(){
+    appliedRules = new();
+    overRules.Clear();
+  }
   static readonly Settings defaultRules = new();
   struct Settings{
     public bool disable = false;
@@ -26,6 +31,9 @@ public class LiftspeedThing:Trigger{
     public float gracetimeMultiplier = 1;
     public float speedMultiplier = 1;
     public Settings(){}
+    public override string ToString() {
+      return $"ls_rules:{{nols:{disable},nomulti:{disableMulti},grace:{gracetimeMultiplier},speed:{speedMultiplier}}}";
+    }
   }
 
   LinkedListNode<Settings> ownNode;
@@ -58,7 +66,9 @@ public class LiftspeedThing:Trigger{
   static Hook lsh;
   static void SetHook(Action<Actor,Vector2> orig, Actor a, Vector2 ls){
     if(a is Player p){
-      if(appliedRules.disable) return;
+      if(appliedRules.disable) {
+        return;
+      }
       ls*=appliedRules.speedMultiplier;
       orig(a,ls);
       a.liftSpeedTimer*=appliedRules.gracetimeMultiplier;
@@ -94,6 +104,7 @@ public class LiftspeedThing:Trigger{
     lsh = new Hook(typeof(Actor).GetProperty(nameof(Actor.LiftSpeed)).SetMethod,SetHook);
   },()=>{
     lsh.Dispose();
+    FixRules();
   }, auspicioushelperModule.OnEnterMap);
 }
 

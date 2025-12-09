@@ -116,6 +116,7 @@ public class auspicioushelperModule : EverestModule {
     SpeedrunToolIop.hooks.enable();
     CommunalHelperIop.load();
     ExtendedCameraIop.load();
+    ImGui.load();
     DebugConsole.Write("Loading content");
   }
   public static void GiveUp(On.Celeste.Level.orig_GiveUp orig, Level l,int returnIndex, bool restartArea, bool minimal, bool showHint){

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Celeste.Mod.auspicioushelper;
+using Celeste.Mod.auspicioushelper.Import;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -415,5 +416,35 @@ public static class ChannelState{
       Engine.Commands.Log($"{pair.Key} {pair.Value.Count}");
     }
     Engine.Commands.Log("===================");
+  }
+
+  static bool onlyClean=false;
+  static string setChannelTextfield="";
+  static int setChannelValuefield = 1;
+  public static void RenderChannelTab(){
+    ImGui.checkbox("only clean", ref onlyClean);
+    ImGui.begintable("channels",2);
+    ImGui.makecolumn("channel");
+    ImGui.makecolumn("value");
+    ImGui.tableheader();
+    foreach(var pair in channelStates){
+      if(onlyClean && !checkClean(pair.Key)) continue;
+      ImGui.tablenextrow();
+      ImGui.tablesetcol(0);
+      ImGui.text(pair.Key);
+      ImGui.tablesetcol(1);
+      ImGui.text(pair.Value.ToString());
+    }
+    ImGui.endtable();
+    ImGui.inputText("channel to modify", ref setChannelTextfield, 512);
+    ImGui.inputint("value", ref setChannelValuefield);
+    ImGui.sameline();
+    if(ImGui.button("set")){
+      SetChannel(setChannelTextfield, setChannelValuefield);
+    }
+    ImGui.sameline();
+    if(ImGui.button("watch")){
+      readChannel(setChannelTextfield);
+    }
   }
 }

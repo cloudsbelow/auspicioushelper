@@ -52,6 +52,7 @@ internal class BgTiles:BackgroundTiles, ISimpleEnt, IBoundsHaver{
     toffset = t.offset;
     Depth+=depthoffset;
     TileHooks.hooks.enable();
+    RemoveTag(Tags.Global);
   }
   public void setOffset(Vector2 ppos){}
   public void relposTo(Vector2 loc, Vector2 liftspeed){
@@ -145,16 +146,17 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
     base.X += move;
     MoveStaticMovers(Vector2.UnitX * move);
     if(!Collidable) return;
+    int dir=Math.Sign(move);
     foreach (Actor entity in base.Scene.Tracker.GetEntities<Actor>()){
       if (!entity.AllowPushing) continue;
       bool collidable = entity.Collidable;
       entity.Collidable = true;
       if (!entity.TreatNaive && CollideCheck(entity, Position)){
-        Collidable = false;
-        for(int i=0; i<Math.Abs(move); i++){
-          if(!CollideCheck(entity, Position) || entity.MoveHExact(Math.Sign(move), entity.SquishCallback, this)) break;
-        }
+        int i=0;
+        for(; i<Math.Abs(move) && entity.CollideCheck(this, entity.Position+new Vector2(dir*i,0)); i++){}
         entity.LiftSpeed = LiftSpeed;
+        Collidable = false;
+        entity.MoveHExact(i*dir, entity.SquishCallback, this);
         Collidable = true;
       } else if (riders.Contains(entity)) {
         Collidable = false;
@@ -172,16 +174,17 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
     base.Y += move;
     MoveStaticMovers(Vector2.UnitY * move);
     if(!Collidable) return;
+    int dir = Math.Sign(move);
     foreach (Actor entity in base.Scene.Tracker.GetEntities<Actor>()){
       if (!entity.AllowPushing) continue;
       bool collidable = entity.Collidable;
       entity.Collidable = true;
       if (!entity.TreatNaive && CollideCheck(entity, Position)){
-          Collidable = false;
-          for(int i=0; i<Math.Abs(move); i++){
-            if(!CollideCheck(entity, Position) || entity.MoveVExact(Math.Sign(move), entity.SquishCallback, this)) break;
-          }
+          int i=0;
+          for(; i<Math.Abs(move) && entity.CollideCheck(this,entity.Position+new Vector2(0,i*dir)); i++){}
           entity.LiftSpeed = LiftSpeed;
+          Collidable = false;
+          entity.MoveVExact(i*dir,entity.SquishCallback,this);
           Collidable = true;
       } else if (riders.Contains(entity)){
           Collidable = false;

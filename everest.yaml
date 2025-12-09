@@ -1,5 +1,5 @@
 - Name: auspicioushelper
-  Version: 0.3.8
+  Version: 0.3.9
   DLL: bin/auspicioushelper.dll
   Dependencies:
     - Name: EverestCore
@@ -11,3 +11,5 @@
       Version: 1.21.1
     - Name: ExtendedCameraDynamics
       Version: 1.0.8
+    - Name: MappingUtils
+      Version: 1.10.1

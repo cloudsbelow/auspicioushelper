@@ -229,7 +229,7 @@ public class ConnectedBlocks:Entity{
     }
     public override void addTo(Scene scene) {
       if(t is not InplaceFiller tf) throw new Exception("how");
-      if(useKeep){
+      /*if(useKeep){
         if(tf.saved is {} z){
           base.addTo(scene);
           restoreEnt(z);
@@ -241,9 +241,9 @@ public class ConnectedBlocks:Entity{
           tf.fgt = null;
           tf.Fgt = null;
         }
-      } else {
+      } else {*/
         base.addTo(scene);
-      }
+      //}
     }
     TemplateDisappearer.vcaTracker vca = new();
     public override void parentChangeStat(int vis, int col, int act) {
@@ -251,7 +251,7 @@ public class ConnectedBlocks:Entity{
       vca.Align(vis,col,act);
     }
     public override void destroy(bool particles) {
-      if(useKeep && fgt is {} z){
+      /*if(useKeep && fgt is {} z){
         fgt.parentChangeStat(vca.Visible?-1:0,vca.Collidable?-1:0,vca.Active?-1:0);
         z.fakeDestroy();
         ((IChildShaker) z).OnShakeFrame(Vector2.Zero);
@@ -261,7 +261,7 @@ public class ConnectedBlocks:Entity{
         List<IFreeableComp> l = new();
         foreach(var v in z.Components) if(v is IFreeableComp fc) l.Add(fc); 
         foreach(var v in l) v.Free();
-      }
+      }*/
       base.destroy(particles);
     }
     public static EntityData creationDat=>new EntityData(){

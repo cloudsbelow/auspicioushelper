@@ -9,6 +9,7 @@ using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -120,6 +121,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   void make(Scene s, templateFiller use = null){
     created = true;
     using(new Template.ChainLock())te = new TemplateDisappearer(d,Position+hoffset,d.Int("depthoffset",0));
+    new DynamicData(te).Set("ausp_holdable",this);
     if(use!=null) te.setTemplate(use);
     te.addTo(s);
     Mysolids = new (te.GetChildren<Solid>());
@@ -211,6 +213,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   }
   public bool replaceNormalRelease {get;}=false;
   void OnRelease(Vector2 force){
+    Position = Position.Round();
     if(Depth!=-1) Depth=-1;
     AllowPushing=true;
     IgnoreJumpThrus=false;
@@ -287,6 +290,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       done:
         Hold.cannotHoldTimer=Hold.cannotHoldDelay;
         Hold.Holder = null;
+        Position=Position.Round();
     }
     RemoveTag(Tags.Persistent);
     if(!keepCollidableAlways) te.setCollidability(true);
@@ -348,6 +352,12 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   public void OnSquish2(CollisionData data){
     if(inRelpos || Mysolids.Contains(data.Hit) || Mysolids.Contains(data.Pusher)) return;
     DebugConsole.Write($"squished: {data.Pusher} {data.Hit}");
+    DebugConsole.Write("colliders", new FloatRect(this), new FloatRect(data.Pusher));
+    // if(data.Pusher.Get<ChildMarker>()?.parent is Template t && new DynamicData(t).TryGet<TemplateHoldable>("ausp_holdable", out var th)){
+    //   DebugConsole.Write($"Other",th, th.Position, new FloatRect(th));
+    //   DebugConsole.Write("collide this st->other",te.fgt.CollideCheck(th));
+    //   DebugConsole.Write("collide this->other st",t.fgt.CollideCheck(this));
+    // }
     Reset();
   }
   CollisionExtensions.CachedCollision colLeft = new();
@@ -356,12 +366,13 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   public override void Update(){
     base.Update();
     if(resetting) return;
-
+    te.ownLiftspeed = Hold.IsHeld? Hold.Holder.Speed:Speed;
     if (Hold.IsHeld){
       prevLiftspeed = Vector2.Zero;
-      te.ownLiftspeed = Hold.Holder?.Speed??Vector2.Zero;
       if(actualDepth>=Hold.Holder.actualDepth)Depth = Hold.Holder.Depth-1;
     } else {
+      //Position not being a whole number causes very annoying errors elsewhere
+      Position = Position.Round();
       te.setCollidability(false);
       //DebugConsole.Write($"out update: {Position}");
       if(this.OnGroundCached(ref colCenter)){
@@ -391,9 +402,10 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
         if (noGravityTimer > 0f)noGravityTimer-=Engine.DeltaTime;
         else Speed.Y = Calc.Approach(Speed.Y, terminalvel, num * Engine.DeltaTime);
       }
+      inRelpos = true;
       MoveH(Speed.X * Engine.DeltaTime, OnCollideH);
       MoveV(Speed.Y * Engine.DeltaTime, OnCollideV);
-      te.ownLiftspeed = Speed;
+      inRelpos = false;
       te.setCollidability(true);
     }
     if(dietobarrier) foreach (SeekerBarrier entity in base.Scene.Tracker.GetEntities<SeekerBarrier>()){
@@ -423,7 +435,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   void fixPosition(){
     if(lpos==Position) return;
     bool flag = keepCollidableAlways && !te.getSelfCol();
-    if(flag) te.setCollidability(true);
+    //if(flag) te.setCollidability(true);
     touched();
     lpos = Position;
     if(inRelpos) throw new Exception("yell at me on discord please (this shouldn't ever happen but im paranoid)");
@@ -431,7 +443,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     bool origAllowPushing = AllowPushing; bool origIngorejt = IgnoreJumpThrus;
     inRelpos = true; AllowPushing = false; IgnoreJumpThrus = true;
     bool origHolderAllowPushing = false; bool orignaiiveinv = false; bool origHolderIgnorejtinv=false;
-    if(keepCollidableAlways && Hold.Holder!=null){
+    if(keepCollidableAlways && Hold.IsHeld && Hold.Holder!=null){
       origHolderAllowPushing = Hold.Holder.AllowPushing;
       orignaiiveinv = !Hold.Holder.TreatNaive;
       origHolderIgnorejtinv = !Hold.Holder.IgnoreJumpThrus;
@@ -440,6 +452,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       Hold.Holder.AllowPushing = false;
     }
     te.Position = Position+hoffset;
+    te.ownLiftspeed = Hold.IsHeld? Hold.Holder.Speed:(Speed+prevLiftspeed);
     te.childRelposSafe();
 
     if(origHolderAllowPushing && Hold.Holder!=null) Hold.Holder.AllowPushing = true;
@@ -497,17 +510,6 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       flag.te?.setCollidability(true);
     }
   }
-  // static void JumpthruMoveHHook(On.Celeste.JumpThru.orig_MoveHExact orig, JumpThru j, int amount){
-  //   //DebugConsole.Write("HERHERHE");
-  //   jumpthruMoving++;
-  //   orig(j,amount);
-  //   jumpthruMoving--;
-  // }
-  // static void JumpThruMoveVHook(On.Celeste.JumpThru.orig_MoveVExact orig, JumpThru j, int amount){
-  //   jumpthruMoving++;
-  //   orig(j,amount);
-  //   jumpthruMoving--;
-  // }
   static HookManager hooks = new HookManager(()=>{
     On.Celeste.Player.Pickup += PickupHook;
     On.Celeste.Actor.MoveHExact+=MoveHHook;
@@ -520,4 +522,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     On.Celeste.Actor.MoveVExact-=MoveVHook;
     On.Celeste.Player.Update-=PlayerUpdateHook;
   },auspicioushelperModule.OnEnterMap);
+  public override string ToString() {
+    return base.ToString()+this.GetHashCode();
+  }
 }
