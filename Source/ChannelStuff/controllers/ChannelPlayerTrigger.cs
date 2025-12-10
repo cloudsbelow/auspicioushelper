@@ -22,6 +22,7 @@ public class ChannelPlayerTrigger:Trigger{
   bool activateOnEnter=false;
   bool activateOnleave=false;
   bool activateOnStay=false;
+  bool restore=false;
   bool onlyOnce;
   ChannelState.AdvancedSetter adv=null;
 
@@ -52,6 +53,10 @@ public class ChannelPlayerTrigger:Trigger{
         activateOnleave=true; break;
       case "stay":
         activateOnStay=true; break;
+      case "enter (reset on leave)":
+        activateOnEnter=true;
+        restore=true;
+        break;
 
       default: DebugConsole.Write("Unknown action"+data.Attr("action")); break;
     }
@@ -65,8 +70,10 @@ public class ChannelPlayerTrigger:Trigger{
       _=>Op.set
     };
   }
+  int? restoreTo = null;
   public void activate(){
     int oldval = ChannelState.readChannel(channel);
+    if(restoreTo == null) restoreTo = oldval;
     //DebugConsole.Write(op.ToString());
     ChannelState.SetChannel(channel, op switch {
       Op.set => value,
@@ -88,6 +95,18 @@ public class ChannelPlayerTrigger:Trigger{
   public override void OnLeave(Player player){
     base.OnLeave(player);
     if(activateOnleave) activate();
+    if(restore && restoreTo is {} oldval)ChannelState.SetChannel(channel,oldval);
+    restoreTo = null;
+  }
+  public override void Removed(Scene scene) {
+    base.Removed(scene);
+    if(restore && restoreTo is {} oldval)ChannelState.SetChannel(channel,oldval);
+    restoreTo = null;
+  }
+  public override void SceneEnd(Scene scene) {
+    base.SceneEnd(scene);
+    if(restore && restoreTo is {} oldval)ChannelState.SetChannel(channel,oldval);
+    restoreTo = null;
   }
   public override void OnStay(Player player) {
     base.OnStay(player);

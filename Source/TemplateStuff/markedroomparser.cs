@@ -44,9 +44,8 @@ internal static class MarkedRoomParser{
     var room = new TemplateRoom(l);
     foreach(EntityData d in l.Entities){
       if(d.Name == "auspicioushelper/templateFiller"){
-        templateFiller t = new templateFiller(d, l.Position){
-          roomdat = l
-        }; //we are in frame of room <3
+        templateFiller t = new templateFiller(d, l.Position);
+        t.data.roomdat = l;
         string id = t.name;
         if(templates.ContainsKey(id)){
           DebugConsole.WriteFailure("Multiple templates with the same identifier "+id);
@@ -56,7 +55,7 @@ internal static class MarkedRoomParser{
         handleDict.Add(handle, id);
         templates.Add(id,t);
         //DebugConsole.Write(id);
-        t.setTiles(l.Solids,l.Bg);
+        t.tiledata.setTiles(l.Solids,l.Bg);
       }
     }
     foreach(EntityData d in l.Entities){
@@ -76,7 +75,7 @@ internal static class MarkedRoomParser{
         string tid = handleDict[handle];
         templates.TryGetValue(tid, out var temp);
         if(temp == null) continue;
-        temp.ChildEntities.Add(d);
+        temp.data.ChildEntities.Add(d);
       }
     }
     foreach(EntityData d in l.Triggers){
@@ -88,7 +87,7 @@ internal static class MarkedRoomParser{
         string tid = handleDict[handle];
         templates.TryGetValue(tid, out var temp);
         if(temp == null) continue;
-        temp.ChildEntities.Add(d);
+        temp.data.ChildEntities.Add(d);
       }
     }
     foreach(DecalData d in l.FgDecals){
@@ -97,7 +96,7 @@ internal static class MarkedRoomParser{
         string tid = handleDict[handle];
         templates.TryGetValue(tid, out var temp);
         if(temp == null) continue;
-        temp.decals.Add(new DecalData(){
+        temp.data.decals.Add(new DecalData(){
           Texture = d.Texture,
           Position = d.Position,
           Scale = d.Scale,
@@ -113,7 +112,7 @@ internal static class MarkedRoomParser{
         string tid = handleDict[handle];
         templates.TryGetValue(tid, out var temp);
         if(temp == null) continue;
-        temp.decals.Add(new DecalData(){
+        temp.data.decals.Add(new DecalData(){
           Texture = d.Texture,
           Position = d.Position,
           Scale = d.Scale,
@@ -130,7 +129,7 @@ internal static class MarkedRoomParser{
       var fgt = new SolidTiles(-Vector2.One*tilepadding*8,fgtd);
       var bgt = new BackgroundTiles(-Vector2.One*tilepadding*8,bgtd);
       foreach(var pair in templates){
-        pair.Value.initStatic(fgt,bgt);
+        pair.Value.tiledata.initStatic(fgt,bgt);
       }
     }
     if(templates.Count==0) return null;
@@ -148,7 +147,13 @@ internal static class MarkedRoomParser{
       }
     }
   }
+  static readonly HashSet<char> delimiters=new(){'$','#','@','%',':',';'};
   public static bool getTemplate(string templatestr, Template parent, Scene scene, out templateFiller filler){
+    if(true){
+      int i=0;
+      for(;i<templatestr.Length && !delimiters.Contains(templatestr[i]);i++){}
+      if(i!=templatestr.Length) templatestr = templatestr.Substring(i);
+    }
     string[] ts = templatestr.Split('/');
     for(int idx = ts.Length-1; idx>=0; idx--){
       string b = "";

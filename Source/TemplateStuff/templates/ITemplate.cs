@@ -196,18 +196,19 @@ public class Template:Entity, ITemplateChild{
     if(t==null || expanded) return;
     expanded = true;
     lastRoundloc = roundLoc;
+    t.Use(this);
     t.AddTilesTo(this, scene);
     Level l = scene as Level;
     Vector2 simoffset = lastRoundloc-t.origin;
     string fp = fullpath;
-    foreach(EntityData w in t.ChildEntities){
-      Entity e = EntityParser.create(w,l,t.roomdat,simoffset,this,fp);
+    foreach(EntityData w in t.data.ChildEntities){
+      Entity e = EntityParser.create(w,l,t.data.roomdat,simoffset,this,fp);
       if(e is ITemplateChild c){
         addEnt(c);
       }
       else if(e!=null)scene.Add(e);
     }
-    foreach(DecalData d in t.decals){
+    foreach(DecalData d in t.data.decals){
       Decal e = new Decal(d.Texture, simoffset+d.Position, d.Scale, d.Depth??0, d.Rotation, d.ColorHex){
         DepthSetByPlacement = true
       };

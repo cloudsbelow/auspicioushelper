@@ -5,7 +5,7 @@ local entity = {}
 
 entity.name = "auspicioushelper/ConditionalStrawbTracked"
 entity.depth = 2000
-entity.nodeLimits = {0,1}
+entity.nodeLimits = {0,-1}
 entity.nodeLineRenderType = "line"
 
 entity.placements = {
@@ -13,31 +13,21 @@ entity.placements = {
     name = "Conditional Strawberry (Tracked)",
     data = {
       strawberry_id = "",
-      appear_on_ch=false,
-      appear_roomenter_only=true,
-      appear_channel= "",
-      appear_chvalue= 0,
+      appear_channel = "",
+      appear_roomenter_only = true,
 
-      fly_on_ch = false,
       fly_channel="",
-      fly_value=1,
+      nodeSelectorCh = "",
 
       deathless=false,
-      winged=false,
-      wingedfollower=false,
+      flyOnDashNormal=false,
+      flyOnDashFollower=false,
       persist_on_death=false,
       sprites="auspicioushelper_conditionalstrawb"
     }
   }
 }
-entity.fieldInformation = {
-  fly_value = {
-    fieldType="integer"
-  },
-  appear_chvalue = {
-    fieldType="integer"
-  }
-}
+
 entity.texture = "objects/auspicioushelper/conditionalstrawb/silverwinged/wings00"
 
 function entity.rectangle(room, entity)

@@ -49,10 +49,7 @@ public class auspicioushelperModule : EverestModule {
     Session.respDat=null;
     if(origPoint!=s.RespawnPoint)Session.save();
   }
-  static void OnDie(Player player){
-    ConditionalStrawb.handleDie(player);
-    MaterialPipe.onDie();
-  }
+  static void OnDie(Player player)=>MaterialPipe.onDie();
   static void LoadLevlHook(On.Celeste.Level.orig_LoadLevel orig, Level l, Player.IntroTypes playerIntro, bool isFromLoader = false){
     DebugConsole.Write($"{playerIntro}");
     if(playerIntro == Player.IntroTypes.Respawn){

@@ -109,11 +109,11 @@ public class ConnectedBlocks:Entity{
       BackgroundTiles b=null;
       InplaceFiller f = new(Int2.Zero+Int2.One*8*padding,maximum-minimum);
       f.setRoomdat((scene as Level).Session.LevelData);
-      f.setTiles(fgd);
-      f.setTiles(bgd,false);
-      if(f.fgt!=null)using(new PaddingLock()) s=new(Vector2.Zero, fgd);
-      if(f.bgt!=null)using(new PaddingLock()) b=new(Vector2.Zero, bgd);
-      f.initStatic(s,b);
+      f.tiledata.setTiles(fgd);
+      f.tiledata.setTiles(bgd,false);
+      if(f.tiledata.fgt!=null)using(new PaddingLock()) s=new(Vector2.Zero, fgd);
+      if(f.tiledata.bgt!=null)using(new PaddingLock()) b=new(Vector2.Zero, bgd);
+      f.tiledata.initStatic(s,b);
       Util.OrderedSet<Entity> all = new();
       foreach(Entity e in scene){
         foreach(var t in qcl.Test(new(e))) if(t.permits(e)){
@@ -193,10 +193,10 @@ public class ConnectedBlocks:Entity{
       if(donot.Contains(e)) continue;
       Vector2 fpos = e.Position-minimum+padding*8*Vector2.One;
       if(e is Decal d){
-        f.decals.Add(d.Get<DecalMarker>().withDepthAndForcepos(fpos));
+        f.data.decals.Add(d.Get<DecalMarker>().withDepthAndForcepos(fpos));
       } else if(e.SourceData is EntityData dat){
         fpos = dat.Position+leveloffset - minimum+padding*8*Vector2.One;
-        f.ChildEntities.Add(Util.cloneWithForceposOffset(dat,fpos));
+        f.data.ChildEntities.Add(Util.cloneWithForceposOffset(dat,fpos));
       }
       UpdateHook.EnsureUpdateAny();
     }
@@ -224,7 +224,6 @@ public class ConnectedBlocks:Entity{
     public InplaceFiller(Int2 tlc, Int2 size):base(tlc,size){}
   }
   public class InplaceTemplateWrapper:Template{
-    bool useKeep = false;
     public InplaceTemplateWrapper(Vector2 position):base(position, 0){
     }
     public override void addTo(Scene scene) {

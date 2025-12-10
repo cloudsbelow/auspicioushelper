@@ -7,7 +7,8 @@ trigger.triggerText = function(room, self) return "force collect cond berry \"".
 trigger.placements = {
     name = "main",
     data = {
-        strawberry_id=""
+        strawberry_id="",
+        playerOnSafeGround=false,
     }
 }
 

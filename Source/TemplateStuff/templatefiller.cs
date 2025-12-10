@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
@@ -18,81 +19,32 @@ namespace Celeste.Mod.auspicioushelper;
 public class templateFiller:Entity{
   
   internal string name;
-  internal LevelData roomdat;
-  Rectangle tr;
-  // char[,] fgtiles;
-  // char[,] bgtiles;
-  internal VirtualMap<char> fgt;
-  internal VirtualMap<char> bgt;
   internal Vector2 offset;
   internal Vector2 origin=>-offset+Position;
-  internal List<DecalData> decals = new List<DecalData>();
-  internal List<EntityData> ChildEntities = new();
-  Vector2 leveloffset;
-  Vector2 tiletlc => leveloffset+Position;
   internal MarkedRoomParser.TemplateRoom room;
-  internal templateFiller(EntityData d, Vector2 offset):base(d.Position){
+  internal TemplateData data = new();
+  internal TileData tiledata;
+
+
+
+
+  internal class TemplateData{
+    public LevelData roomdat;
+    internal List<DecalData> decals = new();
+    internal List<EntityData> ChildEntities = new(); 
+  }
+
+  internal templateFiller(EntityData d, Vector2 leveloffset):base(d.Position){
     this.Collider = new Hitbox(d.Width, d.Height);
     name = d.Attr("template_name","");
-    tr = new Rectangle((int)d.Position.X/8, (int)d.Position.Y/8, d.Width/8,d.Height/8);
+    tiledata = new(leveloffset+Position, new Rectangle((int)d.Position.X/8, (int)d.Position.Y/8, d.Width/8,d.Height/8));
     this.offset = d.Nodes?.Length>0?d.Position-d.Nodes[0]:Vector2.Zero;
-    leveloffset = offset;
   }
   internal templateFiller(Int2 pos, Int2 size):base(pos){
-    tr = new Rectangle(pos.x/8,pos.y/8,size.x/8,size.y/8);
+    tiledata = new(Position, new Rectangle(pos.x/8,pos.y/8,size.x/8,size.y/8));
   }
   internal templateFiller(){}
-  public override void Awake(Scene scene){
-    RemoveSelf();  
-  }
-
-  internal void setTiles(string fg, string bg){
-    Regex regex = new Regex("\\r\\n|\\n\\r|\\n|\\r");
-    char[,] fgtiles = new char[tr.Width,tr.Height];
-    char[,] bgtiles = new char[tr.Width,tr.Height];
-    bool keepfg = false;
-    bool keepbg = false;
-    string[] fglines= regex.Split(fg);
-    string[] bglines= regex.Split(bg);
-    for(int i=0; i<tr.Height; i++){
-      for(int j=0; j<tr.Width; j++){
-        int r = i+tr.Top;
-        int c = j+tr.Left;
-        if(r>=0 && c>=0 && r<fglines.Length && c<fglines[r].Length){
-          fgtiles[j,i]=fglines[r][c];
-          keepfg |= fglines[r][c]!='0';
-        } else {
-          fgtiles[j,i]='0';
-        }
-        if(r>=0 && c>=0 && r<bglines.Length && c<bglines[r].Length){
-          bgtiles[j,i]=bglines[r][c];
-          keepbg |= bglines[r][c]!='0';
-        } else {
-          bgtiles[j,i]='0';
-        }
-      }
-    }
-
-    // Autotiler.Behaviour b = new Autotiler.Behaviour{
-    //   EdgesIgnoreOutOfLevel = true,
-    //   PaddingIgnoreOutOfLevel = true,
-    //   EdgesExtend = false,
-    // };
-    fgt = keepfg? new VirtualMap<char>(fgtiles):null;
-    bgt = keepbg? new VirtualMap<char>(bgtiles):null;
-  }
-  internal void setTiles(VirtualMap<char> tiles, bool foreground = true){
-    char[,] fill = new char[tr.Width,tr.Height];
-    bool has = false;
-    for(int i=0; i<tr.Width; i++) for(int j=0; j<tr.Height; j++){
-      char c = tiles[i+tr.Left,j+tr.Top];
-      fill[i,j]=c;
-      has |= c!='0';
-    }  
-    if(foreground) fgt = has?new VirtualMap<char>(fill):null;
-    else bgt = has?new VirtualMap<char>(fill):null;
-  }
-
+  public override void Awake(Scene scene)=>RemoveSelf();
   public class TileView{
     VirtualMap<MTexture> tiles;
     VirtualMap<List<AnimatedTiles.Tile>> anims;
@@ -158,75 +110,157 @@ public class templateFiller:Entity{
       intercept = this;
     }
   } 
-  public bool created = false;
-  public TileView Fgt = null;
-  public MipGrid FgMipgrid;
-  public TileView Bgt = null;
-  void SetMipgrid(SolidTiles solid, Int2 tiletlc, Int2 size){
-    if(solid.Collider is not MiptileCollider col){
-      throw new Exception($"Using partialtiles but solidtile collider {solid.Collider.GetType()}, not MiptileCollider");
+  internal class TileData {
+    public Rectangle tr;
+    public VirtualMap<char> fgt;
+    public VirtualMap<char> bgt;
+    public bool created = false;
+    public TileView Fgt = null;
+    public MipGrid FgMipgrid;
+    public TileView Bgt = null;
+    public Vector2 tiletlc;
+    public TileData(Vector2 tileoffset, Rectangle tilerect){
+      this.tr = tilerect;
+      tiletlc = tileoffset;
     }
-    FgMipgrid = new(col.mg.layers[0].GetSublayer(tiletlc.x*8, tiletlc.y*8, size.x*8,size.y*8));
-  }
-  public void initDynamic(Level l){
-    if(created) return;
-    created = true;
-    if(fgt!=null){
-      SolidTiles st = l.SolidTiles;
-      Int2 sto = Int2.Round((tiletlc-st.Position)/8);
-      if(PartialTiles.usingPartialtiles) SetMipgrid(st, sto, new(tr.Width,tr.Height));
-      Fgt = new(); 
-      Fgt.Fill(st.Tiles, st.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);
+    public void initDynamic(Level l){
+      if(created) return;
+      created = true;
+      if(fgt!=null){
+        SolidTiles st = l.SolidTiles;
+        Int2 sto = Int2.Round((tiletlc-st.Position)/8);
+        if(PartialTiles.usingPartialtiles) SetMipgrid(st, sto, new(tr.Width,tr.Height));
+        Fgt = new(); 
+        Fgt.Fill(st.Tiles, st.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);
+      }
+      if(bgt!=null){
+        BackgroundTiles st = l.BgTiles;
+        Int2 sto = Int2.Round((tiletlc-st.Position)/8);
+        Bgt = new();
+        Bgt.Fill(st.Tiles, st.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);
+      }
     }
-    if(bgt!=null){
-      BackgroundTiles st = l.BgTiles;
-      Int2 sto = Int2.Round((tiletlc-st.Position)/8);
-      Bgt = new();
-      Bgt.Fill(st.Tiles, st.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);
+    public void initStatic(SolidTiles solid, BackgroundTiles back){
+      if(created) return;
+      created = true;
+      if(fgt!=null){
+        Int2 sto = Int2.Round((tiletlc-solid.Position)/8);
+        if(PartialTiles.usingPartialtiles) SetMipgrid(solid, sto, new(tr.Width,tr.Height));
+        Fgt = new(); 
+        Fgt.Fill(solid.Tiles, solid.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);
+      }
+      if(bgt!=null){
+        Int2 sto = Int2.Round((tiletlc-back.Position)/8);
+        Bgt = new(); 
+        Bgt.Fill(back.Tiles, back.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);
+      }
     }
-  }
-  public void initStatic(SolidTiles solid, BackgroundTiles back){
-    if(created) return;
-    created = true;
-    if(fgt!=null){
-      Int2 sto = Int2.Round((tiletlc-solid.Position)/8);
-      if(PartialTiles.usingPartialtiles) SetMipgrid(solid, sto, new(tr.Width,tr.Height));
-      Fgt = new(); 
-      Fgt.Fill(solid.Tiles, solid.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);
+    void SetMipgrid(SolidTiles solid, Int2 tiletlc, Int2 size){
+      if(solid.Collider is not MiptileCollider col){
+        throw new Exception($"Using partialtiles but solidtile collider {solid.Collider.GetType()}, not MiptileCollider");
+      }
+      FgMipgrid = new(col.mg.layers[0].GetSublayer(tiletlc.x*8, tiletlc.y*8, size.x*8,size.y*8));
     }
-    if(bgt!=null){
-      Int2 sto = Int2.Round((tiletlc-back.Position)/8);
-      Bgt = new(); 
-      Bgt.Fill(back.Tiles, back.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);
+    internal void setTiles(string fg, string bg){
+      Regex regex = new Regex("\\r\\n|\\n\\r|\\n|\\r");
+      char[,] fgtiles = new char[tr.Width,tr.Height];
+      char[,] bgtiles = new char[tr.Width,tr.Height];
+      bool keepfg = false;
+      bool keepbg = false;
+      string[] fglines= regex.Split(fg);
+      string[] bglines= regex.Split(bg);
+      for(int i=0; i<tr.Height; i++){
+        for(int j=0; j<tr.Width; j++){
+          int r = i+tr.Top;
+          int c = j+tr.Left;
+          if(r>=0 && c>=0 && r<fglines.Length && c<fglines[r].Length){
+            fgtiles[j,i]=fglines[r][c];
+            keepfg |= fglines[r][c]!='0';
+          } else {
+            fgtiles[j,i]='0';
+          }
+          if(r>=0 && c>=0 && r<bglines.Length && c<bglines[r].Length){
+            bgtiles[j,i]=bglines[r][c];
+            keepbg |= bglines[r][c]!='0';
+          } else {
+            bgtiles[j,i]='0';
+          }
+        }
+      }
+      fgt = keepfg? new VirtualMap<char>(fgtiles):null;
+      bgt = keepbg? new VirtualMap<char>(bgtiles):null;
+    }
+    internal void setTiles(VirtualMap<char> tiles, bool foreground = true){
+      char[,] fill = new char[tr.Width,tr.Height];
+      bool has = false;
+      for(int i=0; i<tr.Width; i++) for(int j=0; j<tr.Height; j++){
+        char c = tiles[i+tr.Left,j+tr.Top];
+        fill[i,j]=c;
+        has |= c!='0';
+      }  
+      if(foreground) fgt = has?new VirtualMap<char>(fill):null;
+      else bgt = has?new VirtualMap<char>(fill):null;
     }
   }
   public void AddTilesTo(Template tem, Scene s){
-    initDynamic(s as Level);
-    if(Fgt != null){
-      Fgt.InterceptNext();
+    if(tiledata == null) return;
+    tiledata.initDynamic(s as Level);
+    if(tiledata.Fgt != null){
+      tiledata.Fgt.InterceptNext();
       tem.addEnt(tem.fgt = new FgTiles(this, tem.roundLoc, tem.depthoffset));
     }
-    if(Bgt != null){
-      Bgt.InterceptNext();
+    if(tiledata.Bgt != null){
+      tiledata.Bgt.InterceptNext();
       tem.addEnt(new BgTiles(this, tem.roundLoc, tem.depthoffset));
     }
   }
+  public virtual void Use(Template user){}
   
 
   internal TemplateBehaviorChain.Chain chain=null;
-  
   public static templateFiller MkNestingFiller(EntityData internalTemplate,TemplateBehaviorChain.Chain chain = null){
     var f=new templateFiller();
-    f.created = true;
-    f.Fgt = null;
-    f.Bgt = null;
-    f.ChildEntities.Add(internalTemplate);
+    f.data.ChildEntities.Add(internalTemplate);
     f.Position = internalTemplate.Position;
     f.chain = chain;
     return f;
   }
   public templateFiller setRoomdat(LevelData ld){
-    roomdat = ld;
+    data.roomdat = ld;
     return this;
   }
+
+  [CustomEntity("auspicioushelper/TemplateFillerSwitcher")]
+  public class FillerSwitcher:templateFiller{
+    HashSet<FillerSwitcher> used = new();
+    List<string> list = new();
+    int idx=-1;
+    enum ChooseMode{
+      Loop, Pseudo, True
+    }
+    ChooseMode mode;
+    bool inUsing=false;
+    public override void Use(Template user){
+      if(inUsing){
+        DebugConsole.MakePostcard("Infinite loop in templates detected. Bad");
+      }
+      using(new Util.AutoRestore<bool>(ref inUsing, true)){
+        switch(mode){
+          case ChooseMode.Loop: idx=(idx+1)%list.Count; break;
+          case ChooseMode.Pseudo: Calc.Random.Next(list.Count); break;
+          case ChooseMode.True: RandomNumberGenerator.GetInt32(list.Count); break;
+        }
+        if(!MarkedRoomParser.getTemplate(list[idx], user, user.Scene??user.addingScene, out var t)){
+          DebugConsole.MakePostcard($"Could not find the template \"{list[idx]}\"");
+        }
+        t.Use(user);
+        data = t.data;
+        tiledata = t.tiledata;
+        offset = t.offset;
+      }
+    }
+    public FillerSwitcher(EntityData d, Vector2 o):base(){
+      list = Util.listparseflat(d.Attr("templates"),stripout:true);
+    }
+  } 
 }

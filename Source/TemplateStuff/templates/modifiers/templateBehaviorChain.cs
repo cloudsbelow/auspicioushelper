@@ -66,7 +66,7 @@ public class TemplateBehaviorChain:Entity{
       EntityData e = c.NextEnt();
       if(e==null) return final;
       EntityData n = Util.cloneWithForcepos(e,forcePos);
-      return templateFiller.MkNestingFiller(n,c).setRoomdat(final.roomdat);
+      return templateFiller.MkNestingFiller(n,c).setRoomdat(final.data.roomdat);
     }
     public EntityData NextEnt(){
       if(idx<sequence.Count){
