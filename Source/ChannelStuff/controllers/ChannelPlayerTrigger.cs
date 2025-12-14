@@ -18,7 +18,7 @@ public class ChannelPlayerTrigger:Trigger{
     add,
   }
   public Op op;
-  public int value;
+  public double value;
   bool activateOnEnter=false;
   bool activateOnleave=false;
   bool activateOnStay=false;
@@ -29,7 +29,7 @@ public class ChannelPlayerTrigger:Trigger{
   public ChannelPlayerTrigger(EntityData data, Vector2 offset):base(data, offset){
     onlyOnce = data.Bool("only_once",false);
     channel = data.Attr("channel","");
-    value = data.Int("value",1);
+    value = data.Float("value",1);
     if(!string.IsNullOrWhiteSpace(data.Attr("advanced"))){
       adv = new(data.Attr("advanced"));
     }
@@ -70,16 +70,16 @@ public class ChannelPlayerTrigger:Trigger{
       _=>Op.set
     };
   }
-  int? restoreTo = null;
+  double? restoreTo = null;
   public void activate(){
-    int oldval = ChannelState.readChannel(channel);
+    double oldval = ChannelState.readChannel(channel);
     if(restoreTo == null) restoreTo = oldval;
     //DebugConsole.Write(op.ToString());
     ChannelState.SetChannel(channel, op switch {
       Op.set => value,
-      Op.xor => oldval ^ value,
-      Op.and => value & oldval,
-      Op.or => value | oldval,
+      Op.xor => (int)oldval ^ (int)value,
+      Op.and => (int)value & (int)oldval,
+      Op.or => (int)value | (int)oldval,
       Op.add => oldval+value,
       Op.max => Math.Max(oldval,value),
       Op.min => Math.Min(value, oldval),

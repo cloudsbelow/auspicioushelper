@@ -129,7 +129,7 @@ public class TemplateCassetteManager:Entity, IDeclareLayers{
   public void declareLayers(){
     inimaterials();
   }
-  public void setChVal(int val){
+  public void setChVal(double val){
     if(!useChannel) return;
     bool nactive = val!=0;
     if(nactive != active){

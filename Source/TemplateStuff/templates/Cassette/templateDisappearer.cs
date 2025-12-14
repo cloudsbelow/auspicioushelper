@@ -129,7 +129,7 @@ public class TemplateEntityModifier:TemplateDisappearer{
   }
   void AddChwatcher(string s, bool vis, bool col, bool act){
     if(string.IsNullOrWhiteSpace(s)) return;
-    Add(new ChannelTracker(s, (int nval)=>{
+    Add(new ChannelTracker(s, (double nval)=>{
       bool num = nval!=0;
       if(ents==null) setVisColAct(vis?num:getSelfVis(), col?num:getSelfCol(), act?num:getSelfAct());
       else foreach(Entity e in ents){
@@ -164,7 +164,7 @@ public class TemplateEntityModifier:TemplateDisappearer{
       AddChwatcher(s, s==visCh, s==colCh, s==actCh);
     }
     if(!string.IsNullOrWhiteSpace(shakeCh)){
-      Add(new ChannelTracker(shakeCh,(int n)=>{
+      Add(new ChannelTracker(shakeCh,(double n)=>{
         if(n!=0) shake(100000);
         else EndShake();
       },true));

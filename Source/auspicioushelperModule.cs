@@ -152,6 +152,7 @@ public class auspicioushelperModule : EverestModule {
     typeof(Anti0fIopExp).ModInterop();
     typeof(TemplateIopExp).ModInterop();
     typeof(ChannelIopExp).ModInterop();
+    typeof(ChannelIop2).ModInterop();
     typeof(TemplateIop).ModInterop(); //for examples;
     
     TemplateIop.customClarify("auspicioushelper/ChannelMover",(l,d,o,e)=>{

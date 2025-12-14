@@ -50,8 +50,8 @@ public class ChannelTheo:TheoCrystal{
     base.Added(scene);
     Add(new ChannelTracker(channel, setChVal, true));
   }
-  public void setChVal(int val){
-    active = (val&1)==1;
+  public void setChVal(double val){
+    active = val!=0;
   }
   public static void PlayerThrowHook(On.Celeste.Player.orig_Throw orig, Player self){
     Holdable held = self.Holding;

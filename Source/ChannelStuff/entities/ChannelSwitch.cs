@@ -13,8 +13,8 @@ namespace Celeste.Mod.auspicioushelper;
 public class ChannelSwitch:Entity {
   public bool onOnly;
   public bool offOnly;
-  public int onVal;
-  public int offVal;
+  public double onVal;
+  public double offVal;
   public bool on;
   public float cooldown;
   public float maxcd;
@@ -47,8 +47,8 @@ public class ChannelSwitch:Entity {
     channel = data.Attr("channel","");
     onOnly = data.Bool("on_only",false);
     offOnly = data.Bool("off_only",false);
-    onVal = data.Int("on_value",1);
-    offVal = data.Int("off_value",0);
+    onVal = data.Float("on_value",1);
+    offVal = data.Float("off_value",0);
     maxcd = data.Float("cooldown",1f);
     onsfx = data.Attr("onSfx","event:/game/09_core/switch_to_cold");
     offsfx = data.Attr("offSfx","event:/game/09_core/switch_to_hot");
@@ -65,14 +65,14 @@ public class ChannelSwitch:Entity {
       sprite.Play(on? "iceOffLoop":"hotOffLoop");
     }
   }
-  bool getVal(int val){
+  bool getVal(double val){
     if(val == onVal) return true;
     else if(val == offVal) return false;
     else if(offOnly) return false;
     else if(onOnly) return true;
     else return val!=0;
   }
-  public void setChVal(int val){
+  public void setChVal(double val){
     bool nval = getVal(val);
     if(nval == on) return;
     on=nval;

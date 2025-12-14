@@ -43,7 +43,7 @@ public static class FmodIop{
     }
   }
   public static void Register(){
-    ChannelMathController.registerInterop("fmodP", (List<string> strs, List<int> ints)=>{
+    ChannelMathController.registerInterop("fmodP", (List<string> strs)=>{
       Vector2 cpos = ChannelMathController.callingController.Position;
       Vector2 pos = strs.Count>2?FoundEntity.find(strs[2])?.Entity.Position??cpos:cpos;
       return GetPlayHandle(strs[1], pos);
@@ -59,25 +59,25 @@ public static class FmodIop{
       if(has) Audio.Stop(ev);
       return has?1:0;
     });
-    ChannelMathController.registerInterop("fmodPS",(List<string> strs, List<int> ints)=>{
+    ChannelMathController.registerInterop("fmodPS",(List<string> strs, List<double> ints)=>{
       clean();
-      bool has = evs.TryGetValue(ints[0], out var ev);
+      bool has = evs.TryGetValue((int)ints[0], out var ev);
       if(has){
-        ev.setParameterValue(strs[1], ints[1]);
+        ev.setParameterValue(strs[1], (float)ints[1]);
       }
       return has?1:0;
     });
-    ChannelMathController.registerInterop("fmodPG",(List<string> strs, List<int> ints)=>{
+    ChannelMathController.registerInterop("fmodPG",(List<string> strs, List<double> ints)=>{
       clean();
-      var ev = evs.GetValueOrDefault(ints[0]);
+      var ev = evs.GetValueOrDefault((int)ints[0]);
       ev.getParameterValue(strs[1], out var v, out var vf);
-      return (int)Math.Round(v);
+      return v;
     });
-    ChannelMathController.registerInterop("fmodPF",(List<string> strs, List<int> ints)=>{
+    ChannelMathController.registerInterop("fmodPF",(List<string> strs, List<double> ints)=>{
       clean();
-      var ev = evs.GetValueOrDefault(ints[0]);
+      var ev = evs.GetValueOrDefault((int)ints[0]);
       ev.getParameterValue(strs[1], out var v, out var vf);
-      return (int)Math.Round(vf);
+      return vf;
     });
     ChannelMathController.registerInterop("fmodA",(List<string> strs, List<int> ints)=>{
       clean();

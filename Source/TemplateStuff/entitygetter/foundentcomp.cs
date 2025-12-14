@@ -53,7 +53,6 @@ public class FoundEntity:OnAnyRemoveComp{
       }
       PropertyInfo prop = type.GetProperty(path[i], BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
       if(prop != null){
-        //DebugConsole.Write($"Getting prop {path[i]} {o.ToString()}")
         o = prop.GetValue(o); continue;
       }
       MethodInfo method = type.GetMethod(path[i], BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);

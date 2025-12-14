@@ -39,7 +39,8 @@ public class ChannelSprite:Entity{
   private bool checkSolid(Solid solid){
     return Collide.CheckPoint(solid, Position);
   }
-  public void setChVal(int val){
+  public void setChVal(double got){
+    int val = (int) Math.Floor(got);
     if(val<0 || val>=num){
       switch(ty){
         case edgeTypes.loop: val=(val%num+num)%num; break;

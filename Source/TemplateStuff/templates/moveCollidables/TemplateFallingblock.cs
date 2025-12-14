@@ -107,13 +107,13 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     base.Awake(scene);
     if(!string.IsNullOrWhiteSpace(tch)){
       if(ChannelState.readChannel(tch)!=0) triggered = true;
-      else Add(new ChannelTracker(tch,(int val)=>{
+      else Add(new ChannelTracker(tch,(double val)=>{
         if(val!=0) OnTrigger(null);
       }));
     }
     if(!string.IsNullOrWhiteSpace(rch)){
       if(ChannelState.readChannel(rch)!=0) falldir=-basefalldir;
-      Add(new ChannelTracker(rch, (int val)=>{
+      Add(new ChannelTracker(rch, (double val)=>{
         falldir = val==0?basefalldir:-basefalldir;
       }));
     }

@@ -39,7 +39,7 @@ public class ChannelBlock:Entity, ICustomMatRender {
     scene.Add(solid = new Solid(Position, width, height, safe));
     new ChannelTracker(channel, setChVal, true).AddTo(this);
   }
-  void setChVal(int val){
+  void setChVal(double val){
     curstate = (val!=0) != inverted?SolidState.there:SolidState.gone;
     solid.Collidable = curstate == SolidState.there;
   }

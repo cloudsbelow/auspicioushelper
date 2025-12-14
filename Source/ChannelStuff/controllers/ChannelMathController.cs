@@ -19,16 +19,16 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/ChannelMathController")]
 public class ChannelMathController:Entity{
   byte[] op = null;
-  int[] basereg;
-  HashSet<int[]> toUpdate = null;
+  double[] basereg;
+  HashSet<double[]> toUpdate = null;
   enum Op:byte{
     noop, loadZero, loadI, loadImmediateInt, loadChannel, storeChannel, copy,
     startAccInit0, startAccInit1, startAccInitImm, startAccInitReg, startAcc, finishAcc,
-    mult, div, mod, add, sub, lshift, rshift, and, or, xor, land, lor, max, min, take,
-    multI, divI, modI, addI, subI, lshiftI, rshiftI, andI, orI, xorI, landI, lorI, maxI, minI, takeI,
+    mult, intdiv, mod, add, sub, lshift, rshift, and, or, xor, land, lor, max, min, take,
+    multI, intdivI, modI, addI, subI, lshiftI, rshiftI, andI, orI, xorI, landI, lorI, maxI, minI, takeI,
     eq,ne,le,ge,less,greater, eqI,neI,leI,geI,lessI,greaterI, not, lnot,
     jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, yield, yieldI, exit, yieldMs,
-    triggerTrigger, triggerTriggerI
+    triggerTrigger, triggerTriggerI, loadImmediateFloat, loadImmediateDouble, doublediv, doubledivI
   }
   List<string> usedChannels = new List<string>();
   bool runImmediately;
@@ -49,7 +49,7 @@ public class ChannelMathController:Entity{
   bool runWhenAwake;
   bool onlyForNonzero=false;
   Vector2[] nodes;
-  const int maxVersion=2;
+  const int maxVersion=3;
   public ChannelMathController(EntityData d, Vector2 offset):base(d.Position+offset){
     runImmediately = d.Bool("run_immediately",false);
     runWhenAwake = d.Bool("run_when_awake",true);
@@ -92,7 +92,7 @@ public class ChannelMathController:Entity{
       usedChannels.Add(Encoding.ASCII.GetString(bin,coffset,len));
       coffset+=len;
     }
-    basereg = new int[numReg];
+    basereg = new double[numReg];
     op = new byte[opsLength];
     Array.Copy(bin, opsOffset, op, 0, opsLength);
   }
@@ -139,7 +139,7 @@ public class ChannelMathController:Entity{
     }
     locked=false;
   }
-  private void changeReg(int ridx, int nval){
+  private void changeReg(int ridx, double nval){
     if(onlyForNonzero && nval==0) return;
     if(ridx!=-1){
       if(debug) DebugConsole.Write($"Mathcontroller: register {ridx} listening to {usedChannels[ridx]} changed to {nval}");
@@ -163,13 +163,13 @@ public class ChannelMathController:Entity{
     int iptr = 0;
     int ridx;
     int len;
-    int acc=0;
+    double acc=0;
     int sptr=0;
     string channel = "";
     numActive++;
-    int[] reg=basereg;
+    double[] reg=basereg;
     if(multi==MultiType.AttachedMultiple||multi==MultiType.DetatchedMultiple){
-      reg=new int[basereg.Length];
+      reg=new double[basereg.Length];
       Array.Copy(basereg,reg,basereg.Length);
       if(multi==MultiType.AttachedMultiple) toUpdate.Add(reg);
     }
@@ -179,6 +179,8 @@ public class ChannelMathController:Entity{
         case Op.loadZero: reg[op[iptr++]]=0; break;
         case Op.loadI: reg[op[iptr++]]=(sbyte)op[iptr++];break;
         case Op.loadImmediateInt: reg[op[iptr++]]=BitConverter.ToInt32(op,iptr);iptr+=4;break;
+        case Op.loadImmediateFloat: reg[op[iptr++]]=BitConverter.ToSingle(op, iptr);iptr+=4; break;
+        case Op.loadImmediateDouble: reg[op[iptr++]]=BitConverter.ToDouble(op,iptr);iptr+=8; break;
         case Op.loadChannel:
           ridx=op[iptr++];
           len=op[iptr++];
@@ -212,15 +214,16 @@ public class ChannelMathController:Entity{
           while((Op)op[iptr]!=Op.finishAcc){
             switch((Op) op[iptr++]){
               case Op.mult: acc*=reg[op[iptr]];break;
-              case Op.div: acc/=reg[op[iptr]];break;
+              case Op.intdiv: acc=(int)acc/(int)reg[op[iptr]];break;
+              case Op.doublediv: acc/=reg[op[iptr]]; break;
               case Op.mod: acc%=reg[op[iptr]];break;
               case Op.add: acc+=reg[op[iptr]];break;
               case Op.sub: acc-=reg[op[iptr]];break;
-              case Op.lshift: acc<<=reg[op[iptr]];break;
-              case Op.rshift: acc>>=reg[op[iptr]];break;
-              case Op.and: acc&=reg[op[iptr]];break;
-              case Op.or: acc|=reg[op[iptr]];break;
-              case Op.xor: acc^=reg[op[iptr]];break;
+              case Op.lshift: acc = (int)acc<<(int)reg[op[iptr]];break;
+              case Op.rshift: acc = (int)acc>>(int)reg[op[iptr]];break;
+              case Op.and: acc = (int)acc&(int)reg[op[iptr]];break;
+              case Op.or: acc = (int)acc|(int)reg[op[iptr]];break;
+              case Op.xor: acc = (int)acc^(int)reg[op[iptr]];break;
               case Op.land: acc=acc!=0?reg[op[iptr]]:0;break;
               case Op.lor: acc=acc==0?reg[op[iptr]]:acc;break;
               case Op.max: acc=Math.Max(acc, reg[op[iptr]]);break;
@@ -228,21 +231,24 @@ public class ChannelMathController:Entity{
               case Op.take: if(--sptr==0) acc=reg[op[iptr]];break;
 
               case Op.multI: acc*=(sbyte)op[iptr];break;
-              case Op.divI: acc/=(sbyte)op[iptr];break;
+              case Op.intdivI: acc=(int) acc/(sbyte)op[iptr];break;
+              case Op.doubledivI: acc/=(sbyte)op[iptr];break;
               case Op.modI: acc%=(sbyte)op[iptr];break;
               case Op.addI: acc+=(sbyte)op[iptr];break;
               case Op.subI: acc-=(sbyte)op[iptr];break;
-              case Op.lshiftI: acc<<=(sbyte)op[iptr];break;
-              case Op.rshiftI: acc>>=(sbyte)op[iptr];break;
-              case Op.andI: acc&=(int)(sbyte)op[iptr];break;
-              case Op.orI: acc|=(int)(sbyte)op[iptr];break;
-              case Op.xorI: acc^=(int)(sbyte)op[iptr];break;
+              case Op.lshiftI: acc = (int)acc<<(sbyte)op[iptr];break;
+              case Op.rshiftI: acc = (int)acc>>(sbyte)op[iptr];break;
+              case Op.andI: acc = (int)acc&(int)(sbyte)op[iptr];break;
+              case Op.orI: acc = (int)acc|(int)(sbyte)op[iptr];break;
+              case Op.xorI: acc = (int)acc^(int)(sbyte)op[iptr];break;
               case Op.landI: acc=acc!=0?(sbyte)op[iptr]:0;break;
               case Op.lorI: acc=acc==0?(sbyte)op[iptr]:acc;break;
               case Op.maxI: acc=Math.Max(acc, (sbyte)op[iptr]);break;
               case Op.minI: acc=Math.Min(acc, (sbyte)op[iptr]);break;
               case Op.takeI: if(--sptr==0) acc=(sbyte)op[iptr];break;
-              default:break;
+
+              case Op.noop: break;
+              default: DebugConsole.WriteFailure($"Mathcontroller instructions invalid: {(Op)op[iptr-1]}",true); yield break;
             }
             iptr++;
           }iptr++;
@@ -261,10 +267,10 @@ public class ChannelMathController:Entity{
         case Op.lessI:reg[op[iptr++]]= (reg[op[iptr++]]<(sbyte)op[iptr++])?1:0; break;
         case Op.greaterI:reg[op[iptr++]]= (reg[op[iptr++]]>(sbyte)op[iptr++])?1:0; break;
 
-        case Op.not: reg[op[iptr++]]=~reg[op[iptr++]]; break;
+        case Op.not: reg[op[iptr++]]=~(int)reg[op[iptr++]]; break;
         case Op.lnot: reg[op[iptr++]]=reg[op[iptr++]]!=0?0:1; break;
 
-        case Op.setsptr: sptr = reg[op[iptr++]]; break;
+        case Op.setsptr: sptr = (int)reg[op[iptr++]]; break;
         case Op.setsptrI: sptr = op[iptr++]; break;
         case Op.loadsptr: reg[op[iptr++]]=sptr; break; 
 
@@ -296,9 +302,11 @@ public class ChannelMathController:Entity{
           yield return ((float)reg[op[iptr++]])*0.001f; break;
         case Op.exit:
           goto end;
-        case Op.triggerTrigger: triggerNode(reg[op[iptr++]]); break;
+        case Op.triggerTrigger: triggerNode((int)reg[op[iptr++]]); break;
         case Op.triggerTriggerI: triggerNode((sbyte)op[iptr++]); break;
-        default: break;
+
+        case Op.noop: break;
+        default: DebugConsole.WriteFailure($"Mathcontroller instructions invalid: {(Op)op[iptr-1]}",true); yield break;
       }
     }
     end:
@@ -322,11 +330,11 @@ public class ChannelMathController:Entity{
     }
     smallestTrigger?.OnEnter(Scene.Tracker.GetEntity<Player>() ?? (Player)RuntimeHelpers.GetUninitializedObject(typeof(Player)));
   }
-  static Dictionary<string, Func<List<string>,List<int>,int>> iopFuncs = new();
+  static Dictionary<string, Func<List<string>,List<double>,double>> iopFuncs = new();
   public static ChannelMathController callingController = null;
-  public int interop(int stringCount, int intCount, ref int iptr, int[] reg){
+  public double interop(int stringCount, int intCount, ref int iptr, double[] reg){
     List<string> strs = new List<string>();
-    List<int> ints = new List<int>();
+    List<double> ints = new List<double>();
     for(int i=0; i<stringCount; i++){
       int len = op[iptr++];
       strs.Add(Encoding.ASCII.GetString(op, iptr, len));
@@ -341,7 +349,7 @@ public class ChannelMathController:Entity{
     }
     try{
       callingController = this;
-      int res = f(strs, ints);
+      double res = f(strs, ints);
       callingController = null;
       return res;
     }catch(Exception ex){
@@ -350,12 +358,12 @@ public class ChannelMathController:Entity{
       return 0;
     }
   }
-  public static void registerInterop(string identifier, Func<List<string>,List<int>,int> function){
+  public static void registerInterop(string identifier, Func<List<string>,List<double>,double> function){
     if(!iopFuncs.TryAdd(identifier,function)){
       DebugConsole.WriteFailure($"Interop registration collision at {identifier}");
     }
   }
-  public static void deregisterInterop(string identifier, Func<List<string>,List<int>,int> function){
+  public static void deregisterInterop(string identifier, Func<List<string>,List<double>,double> function){
     if(!iopFuncs.TryGetValue(identifier, out var f)){
       DebugConsole.Write($"No registered interop function at {identifier}");
       return;
@@ -366,15 +374,31 @@ public class ChannelMathController:Entity{
     }
     iopFuncs.Remove(identifier);
   }
-  public static int toInt(object o){
+  static ConditionalWeakTable<object, Func<List<string>,List<double>,double>> coerced = new();
+  static Func<List<string>,List<double>,double> getWrapper(Func<List<string>,List<int>,int> blah){
+    if(!coerced.TryGetValue(blah, out var res)) coerced.Add(blah, res = (List<string> strs, List<double> nums)=>{
+      var n2 = nums.Map(x=>(int)x);
+      return blah(strs,n2);
+    });
+    return res;
+  }
+  static Func<List<string>,List<double>,double> getWrapper(Func<List<string>,double> blah){
+    if(!coerced.TryGetValue(blah, out var res)) coerced.Add(blah, res = (List<string> strs, List<double> nums)=>blah(strs));
+    return res;
+  }
+  public static void registerInterop(string ident, Func<List<string>,List<int>,int> blah)=>registerInterop(ident, getWrapper(blah));
+  public static void deregisterInterop(string ident, Func<List<string>,List<int>,int> blah)=>deregisterInterop(ident, getWrapper(blah));
+  public static void registerInterop(string ident, Func<List<string>,double> blah)=>registerInterop(ident, getWrapper(blah));
+  public static void deregisterInterop(string ident, Func<List<string>,double> blah)=>deregisterInterop(ident, getWrapper(blah));
+  public static double toNumber(object o){
     try {
-      return Convert.ToInt32(o);
+      return Convert.ToDouble(o);
     } catch(Exception){
       return o==null?0:1;
     }
   }
   public static void setupDefaultInterop(){
-    registerInterop("print",(List<string> strs, List<int> ints)=>{
+    registerInterop("print",(List<string> strs, List<double> ints)=>{
       string str = "From mathcontroller: ";
       for(int i=0; i<strs.Count; i++) str+=strs[i]+" ";
       for(int i=0; i<ints.Count; i++) str+=ints[i].ToString()+" ";
@@ -384,23 +408,23 @@ public class ChannelMathController:Entity{
     registerInterop("hasBerry",(List<string> strs, List<int> ints)=>{
       return SaveData.Instance.CheckStrawberry(new EntityID(strs[1],ints[0]))?1:0;
     });
-    registerInterop("getFlag",(List<string> strs, List<int> ints)=>{
+    registerInterop("getFlag",(List<string> strs)=>{
       if(Engine.Scene is Level l) return l.Session.GetFlag(strs[1])?1:0;
       return 0;
     });
-    registerInterop("setFlag",(List<string> strs, List<int> ints)=>{
+    registerInterop("setFlag",(List<string> strs, List<double> ints)=>{
       if(Engine.Scene is Level l) l.Session.SetFlag(strs[1], ints[0]!=0);
       return ints[0];
     });
-    registerInterop("getCounter",(List<string> strs, List<int> ints)=>{
+    registerInterop("getCounter",(List<string> strs)=>{
       if(Engine.Scene is Level l) return l.Session.GetCounter(strs[1]);
       return 0;
     });
-    registerInterop("setCounter",(List<string> strs, List<int> ints)=>{
-      if(Engine.Scene is Level l) l.Session.SetCounter(strs[1], ints[0]);
+    registerInterop("setCounter",(List<string> strs, List<double> ints)=>{
+      if(Engine.Scene is Level l) l.Session.SetCounter(strs[1], (int)ints[0]);
       return ints[0];
     });
-    registerInterop("getCoreMode",(List<string> strs, List<int> ints)=>{
+    registerInterop("getCoreMode",(List<string> strs)=>{
       if(Engine.Scene is Level l) return l.CoreMode switch {
         Session.CoreModes.Cold=>2, Session.CoreModes.Hot=>1, _=>0
       };
@@ -413,33 +437,33 @@ public class ChannelMathController:Entity{
       };
       return 0;
     });
-    registerInterop("getPlayer",(List<string> strs, List<int> ints)=>{
+    registerInterop("getPlayer",(List<string> strs, List<double> ints)=>{
       Player p = Engine.Scene.Tracker.GetEntity<Player>();
       if(p==null) return 0;
       switch(strs[1]){
-        case "speedx": return (int)p.Speed.X;
-        case "speedy": return (int)p.Speed.Y;
-        case "posx": return (int)p.Position.X;
-        case "posy": return (int)p.Position.Y;
-        default: return toInt(FoundEntity.reflectGet(p,strs,ints,1));
+        case "speedx": return p.Speed.X;
+        case "speedy": return p.Speed.Y;
+        case "posx": return p.Position.X;
+        case "posy": return p.Position.Y;
+        default: return toNumber(FoundEntity.reflectGet(p,strs,ints.Map(x=>(int)x),1));
       }
     });
-    registerInterop("killPlayer",(List<string> strs, List<int> ints)=>{
+    registerInterop("killPlayer",(List<string> strs, List<double> ints)=>{
       Player p = Engine.Scene.Tracker.GetEntity<Player>();
-      Vector2 dir = ints.Count>=3?new Vector2(0.1f*(float)ints[1],0.1f*(float)ints[2]):Vector2.Zero;
+      Vector2 dir = ints.Count>=3?new Vector2((float)ints[1],(float)ints[2]):Vector2.Zero;
       DebugConsole.Write("Death direction",dir);
       if(ints[0]!=0) p.Die(dir);
       return (p!=null && ints[0]!=0)?1:0;
     });
-    registerInterop("reflectGet",(List<string> strs, List<int> ints)=>{
-      return toInt(FoundEntity.sreflectGet(strs, ints));
+    registerInterop("reflectGet",(List<string> strs, List<double> ints)=>{
+      return toNumber(FoundEntity.sreflectGet(strs, ints.Map(x=>(int)x)));
     });
-    registerInterop("reflectCall",(List<string> strs, List<int> ints)=>{
+    registerInterop("reflectCall",(List<string> strs, List<double> ints)=>{
       if(ints.Count>0 && ints[0]==0) return 0;
-      return toInt(FoundEntity.sreflectCall(strs,ints));
+      return toNumber(FoundEntity.sreflectCall(strs,ints.Map(x=>(int)x)));
     });
-    registerInterop("timeSinceTrans",(List<string> strs, List<int> ints)=>{
-      return (int)UpdateHook.TimeSinceTransMs;
+    registerInterop("timeSinceTrans",(List<string> strs)=>{
+      return UpdateHook.TimeSinceTransMs;
     });
     FmodIop.cbs.enable();
   }

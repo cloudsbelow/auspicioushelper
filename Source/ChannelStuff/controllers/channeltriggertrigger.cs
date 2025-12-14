@@ -27,9 +27,9 @@ public class ChannelTriggerTrigger:Entity{
     Add(upd=new());
     Add(new ChannelTracker(channel, OnChange, true));
   }
-  void OnChange(int nval){
-    if(delay<0) TriggerAt(nval);
-    else enqd.Enqueue(new(ct+delay-(upd.updatedThisFrame?0.0001f:0),nval));
+  void OnChange(double nval){
+    if(delay<0) TriggerAt((int)nval);
+    else enqd.Enqueue(new(ct+delay-(upd.updatedThisFrame?0.0001f:0),(int)nval));
   }
   public override void Update() {
     while(enqd.Count>0 && enqd.Peek().Item1<ct){

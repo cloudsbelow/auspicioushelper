@@ -43,10 +43,10 @@ public class ChannelJelly : Glider {
     Hold.OnPickup = OnPickupHook;
     Hold.OnRelease = OnReleaseHook;
   }
-  public void setChVal(int val){
-    csidx = ChannelState.readChannel(channel) & 1;
+  public void setChVal(double val){
+    csidx = (int)Math.Floor(val);
     //if(cs==state[csidx]) return;
-    cs = state[csidx];
+    cs = state[Util.SafeMod(csidx,state.Length)];
     
     //Grabability
     try{

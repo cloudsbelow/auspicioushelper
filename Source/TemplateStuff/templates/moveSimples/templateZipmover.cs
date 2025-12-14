@@ -70,7 +70,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
     if(channel!=null) Add(ct=new ChannelTracker(channel, setChVal));
     
   }
-  public void setChVal(int val){
+  public void setChVal(double val){
     if(triggered || triggerNextFrame) return;
     if(val!=0) OnTrigger(null);
   }

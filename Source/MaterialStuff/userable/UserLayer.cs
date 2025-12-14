@@ -21,9 +21,6 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
   Action getparamsetter(string key, string channel, float mult){
     return ()=>{
       float val = mult*(float)ChannelState.readChannel(channel);
-      //DebugConsole.Write($"{key} {val}");
-      //if(Calc.NextFloat(Calc.Random)<0.1f)passes.setparamvalex(key,val+0.0001f);
-      //else passes.setparamvalex(key,val);
       passes.setparamvalex(key,val);
     };
   }

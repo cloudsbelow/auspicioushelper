@@ -60,7 +60,7 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
     spline = SplineEntity.GetSpline(dat,SplineEntity.Types.centripetalNormalized);
     if(spline.segments==1 && !dat.Bool("lastNodeIsKnot")) loop = true;
     base.addTo(scene);
-    if(!string.IsNullOrWhiteSpace(channel))Add(new ChannelTracker(channel,(int val)=>{
+    if(!string.IsNullOrWhiteSpace(channel))Add(new ChannelTracker(channel,(double val)=>{
       if(val == 0) return;
       SplineAccessor spos = new(spline, Vector2.Zero, true, loop);
       Template nte = addInstance(spos.pos);

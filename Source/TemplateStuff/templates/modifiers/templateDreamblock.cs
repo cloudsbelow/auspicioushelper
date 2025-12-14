@@ -123,7 +123,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
       MaterialPipe.addLayer(renderer);
     } 
     if(!string.IsNullOrWhiteSpace(channel)){
-      ChannelTracker ct = new ChannelTracker(channel,(int val)=>{
+      ChannelTracker ct = new ChannelTracker(channel,(double val)=>{
         bool orig = dreaming;
         dreaming = val==0;
         if(dreaming==orig) return;

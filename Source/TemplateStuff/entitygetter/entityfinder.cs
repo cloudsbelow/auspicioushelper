@@ -115,7 +115,7 @@ public static class Finder{
         SetOnchange(OnChange,true);
         restorable = d.Bool("restorable",true);
       }
-      void OnChange(int nval){
+      void OnChange(double nval){
         if(nval!=0) e.Collider = replace;
         else if(restorable && e.Collider.Equals(replace)) e.Collider = orig; 
       }

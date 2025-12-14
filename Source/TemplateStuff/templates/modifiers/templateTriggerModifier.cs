@@ -143,12 +143,12 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     triggerParent = parent?.GetFromTree<ITemplateTriggerable>();
     modifierParent = parent?.GetFromTree<TemplateTriggerModifier>();
     if(!string.IsNullOrWhiteSpace(channel)){
-      Add(triggerCh = new ChannelTracker(channel, (int val)=>{
+      Add(triggerCh = new ChannelTracker(channel, (double val)=>{
         if(val!=0) OnTrigger(new ChannelInfo(channel));
       }));
     }
     if(!string.IsNullOrWhiteSpace(skipCh)){
-      Add(new ChannelTracker(skipCh, (int val)=>{
+      Add(new ChannelTracker(skipCh, (double val)=>{
         skip = val!=0;
       }, true));
     }

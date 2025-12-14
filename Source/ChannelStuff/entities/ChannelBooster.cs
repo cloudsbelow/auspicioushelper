@@ -289,7 +289,8 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
     }
     if(dirty && !BoostingPlayer) setChVal(ChannelState.readChannel(channel));
   }
-  void setChVal(int val){
+  void setChVal(double rawval){
+    int val = (int) Math.Floor(rawval);
     if(dirty = BoostingPlayer) return;
     currentState = val & 1;
     

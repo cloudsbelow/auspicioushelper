@@ -81,7 +81,7 @@ public class ConditionalStrawb:Entity, IStrawberry{
     if(e.tryGetStr("appear_channel", out var ch)){
       if(e.Bool("appear_roomenter_only",true)){
         if(ChannelState.readChannel(ch)!=0) Appear();
-      } else Add(new ChannelTracker(ch,(int val)=>{
+      } else Add(new ChannelTracker(ch,(double val)=>{
         if(val!=0 && state==Strawb.hidden) Appear();
       }));
     } else Appear();
@@ -89,7 +89,7 @@ public class ConditionalStrawb:Entity, IStrawberry{
   DashListener dashListener = null;
   ChannelTracker ct = null;
   ChannelTracker nodeSelector;
-  int curNode=>nodeSelector?.value??0;
+  int curNode=>(int)(nodeSelector?.value??0);
   Vector2 flyDest => curNode>=0 && curNode<olocs.Length? olocs[curNode]:(Position-Vector2.UnitY*1000000);
   public void Appear(){
     state=Strawb.idling;
@@ -100,7 +100,7 @@ public class ConditionalStrawb:Entity, IStrawberry{
     if(dashListener == null) Add(dashListener = new DashListener(OnDash));
     if(data.tryGetStr("fly_channel",out var ch) && ct==null){
       if(ChannelState.readChannel(ch)!=0 && Vector2.Distance(flyDest,Position)>1.0f) Fly();
-      Add(ct = new ChannelTracker(ch,(int val)=>{
+      Add(ct = new ChannelTracker(ch,(double val)=>{
         if(val == 0) return;
         if(state==Strawb.following || (state==Strawb.idling && Vector2.Distance(flyDest,Position)>1.0f)) Fly(); 
       }));

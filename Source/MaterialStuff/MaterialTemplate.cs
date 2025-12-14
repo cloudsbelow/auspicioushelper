@@ -29,7 +29,7 @@ public class MaterialTemplate:TemplateDisappearer, IOverrideVisualsEasy{
     AddAllChildren(l);
     var mlayer = MaterialController.getLayer(lident);
     if(!string.IsNullOrWhiteSpace(channel)){
-      Add(new ChannelTracker(channel, (int nval)=>{
+      Add(new ChannelTracker(channel, (double nval)=>{
         if(active!=(nval!=0)){
           active = nval!=0;
           if(layer!=null) foreach(var c in comps) c.SetStealUse(layer,active && invis, active);

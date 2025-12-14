@@ -40,11 +40,11 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
     doBoost = d.Bool("do_boost",false);
   }
   public override void addTo(Scene scene) {
-    int num = new ChannelTracker(channel, setChVal).AddTo(this).value;
-    if(num == 0 && doBoost) hoffset=2;
+    bool gone = new ChannelTracker(channel, setChVal).AddTo(this).value == 0;
+    if(gone && doBoost) hoffset=2;
     base.addTo(scene);
     CassetteMaterialLayer.layers.TryGetValue(channel,out layer);
-    if(num==0)setChVal(0);
+    if(gone)setChVal(0);
     setupEnts(GetChildren<Entity>());
   }
   const float fakeshake=0.2f;
@@ -83,7 +83,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
     prop|=Propagation.Inside;
     setVisColAct(true,true,true);
   }
-  public void setChVal(int val){
+  public void setChVal(double val){
     if(val==0){
       if(there == State.there){
         setVisColAct(layer!=null,false,!freeze);

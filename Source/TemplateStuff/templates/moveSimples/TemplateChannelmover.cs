@@ -41,8 +41,8 @@ public class TemplateChannelmover:Template{
   float cfrac=0;
   float afrac=0;
   float dir=0;
-  public void setChVal(int val){
-    target = val;
+  public void setChVal(double val){
+    target = (int)Math.Floor(val);
     if(toggle || (cfrac!=0 && Math.Sign(dir)==Math.Sign(target-cur))) return;
     dir = target>cur?1:-1*asym;
     if(cfrac == 0){
@@ -61,7 +61,7 @@ public class TemplateChannelmover:Template{
     }
   }
   public override void addTo(Scene scene){
-    target = low = new ChannelTracker(channel, setChVal).AddTo(this).value;
+    target = low = (int) Math.Floor(new ChannelTracker(channel, setChVal).AddTo(this).value);
     spos = new(SplineEntity.GetSpline(dat, SplineEntity.Types.simpleLinear), Vector2.Zero, true);
     spos.set(target);
     base.addTo(scene);

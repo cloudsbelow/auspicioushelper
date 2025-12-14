@@ -79,6 +79,6 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
   }
   public override void addTo(Scene scene) {
     base.addTo(scene);
-    if(!string.IsNullOrWhiteSpace(skipCh)) Add(new ChannelTracker(skipCh,(int val)=>skip=val!=0));
+    if(!string.IsNullOrWhiteSpace(skipCh)) Add(new ChannelTracker(skipCh,(double val)=>skip=val!=0));
   }
 }

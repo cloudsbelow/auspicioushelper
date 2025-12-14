@@ -8,21 +8,21 @@ namespace Celeste.Mod.auspicioushelper;
 
 public class ChannelTracker : OnAnyRemoveComp{
   public string channel {get; set;}
-  public int value;
-  Action<int> onChannelChange;
+  public double value;
+  Action<double> onChannelChange;
   ChannelTrackerList inList=null;
-  public ChannelTracker(string channel, Action<int> onChannelChange, bool immediateInvoke = false):base(false, false){
+  public ChannelTracker(string channel, Action<double> onChannelChange, bool immediateInvoke = false):base(false, false){
     this.channel=channel;
     this.onChannelChange=onChannelChange;
     value = ChannelState.watch(this);
     if(immediateInvoke) onChannelChange(value);
   }
   public ChannelTracker(string channel):this(channel, static (_)=>{}, false){}
-  public void SetOnchange(Action<int> onChannelChange, bool immediateInvoke = false){
+  public void SetOnchange(Action<double> onChannelChange, bool immediateInvoke = false){
     this.onChannelChange=onChannelChange;
     if(immediateInvoke) onChannelChange(value);
   }
-  public void setChVal(int val){
+  internal void setChVal(double val){
     value = val;
     onChannelChange(val);
   }
@@ -39,9 +39,9 @@ public class ChannelTracker : OnAnyRemoveComp{
     List<ChannelTracker> deferredAdd = new();
     List<ChannelTracker> deferredRemove = new();
     bool locked = false;
-    Queue<int> ToApply = new();
-    int lval = 0;
-    public void Apply(int n){
+    Queue<double> ToApply = new();
+    double lval = 0;
+    public void Apply(double n){
       if(locked){
         ToApply.Enqueue(n);
         return;
@@ -69,7 +69,7 @@ public class ChannelTracker : OnAnyRemoveComp{
       foreach(var v in deferredRemove) Remove(v);
       deferredRemove.Clear();
       while(ToApply.Count>0){
-        int n = ToApply.Dequeue();
+        double n = ToApply.Dequeue();
         if(n==lval) continue;
         Apply(n);
       }

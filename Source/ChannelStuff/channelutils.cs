@@ -15,15 +15,15 @@ namespace Celeste.Mod.auspicioushelper;
 public static class ChannelState{
   struct Modifier{
       enum Ops{
-      none, not, lnot, xor, and, or, add, sub, mult, div, mrecip, mod, safemod, 
+      none, not, lnot, xor, and, or, add, sub, mult, idiv, fdiv, mrecip, mod, safemod, 
       min, max, ge, le, gt, lt, eq, ne,rshift, lshift, shiftr, shiftl, abs
     }
-    int y;
+    double y;
     Ops op;
-    Regex prefixSuffix = new Regex("^\\s*(-|[^-\\d]+)([-\\d]*)\\s*");
+    Regex prefixSuffix = new Regex(@"^\s*(-|[^-\d]+)([-\d\.]*)\s*");
     public Modifier(string s, out bool success){
       Match m = prefixSuffix.Match(s);
-      int.TryParse(m.Groups[2].ToString(),out y);
+      double.TryParse(m.Groups[2].ToString(),out y);
       success = true;
       switch(m.Groups[1].ToString()){
         case "~":op=Ops.not; break;
@@ -34,7 +34,7 @@ public static class ChannelState{
         case "+":op=Ops.add; break;
         case "-":op=Ops.sub; break;
         case "*":op=Ops.mult; break;
-        case "/":op=Ops.div; break;
+        case "/":op=m.Groups[2].ToString().Contains('.')?Ops.fdiv:Ops.idiv; break;
         case "recip": case "d": case "x/":op=Ops.mrecip; break;
         case "%":op=Ops.mod; break;
         case "%s": case "r": op=Ops.safemod; break;
@@ -57,17 +57,18 @@ public static class ChannelState{
         DebugConsole.WriteFailure($"Improper modifier {s} - parsed as op {m} and val {y}");
       }
     }
-    public int apply(int x){
+    public double apply(double x){
       switch(op){
-        case Ops.not: return ~x;
+        case Ops.not: return ~(int)x;
         case Ops.lnot: return x==0?1:0;
-        case Ops.xor: return x^y;
-        case Ops.and: return x&y;
-        case Ops.or: return x|y;
+        case Ops.xor: return (int)x^(int)y;
+        case Ops.and: return (int)x&(int)y;
+        case Ops.or: return (int)x|(int)y;
         case Ops.add: return x+y;
         case Ops.sub: return x-y;
         case Ops.mult: return x*y;
-        case Ops.div: return x/y;
+        case Ops.fdiv: return x/y;
+        case Ops.idiv: return (int)x/(int)y;
         case Ops.mrecip: return y/x;
         case Ops.mod: return x%y;
         case Ops.safemod: return ((x%y)+y)%y;
@@ -79,10 +80,10 @@ public static class ChannelState{
         case Ops.lt: return x<y?1:0;
         case Ops.eq: return x==y?1:0;
         case Ops.ne: return x!=y?1:0;
-        case Ops.lshift: return x<<y;
-        case Ops.rshift: return x>>y;
-        case Ops.shiftl: return y<<x;
-        case Ops.shiftr: return y>>x;
+        case Ops.lshift: return (int)x<<(int)y;
+        case Ops.rshift: return (int)x>>(int)y;
+        case Ops.shiftl: return (int)y<<(int)x;
+        case Ops.shiftr: return (int)y>>(int)x;
         case Ops.abs: return Math.Abs(x);
         default: return x;
       }
@@ -91,7 +92,7 @@ public static class ChannelState{
   class ModifierDesc{
     public string outname;
     List<Modifier> ops = new List<Modifier>();
-    public int outval;
+    public double outval;
     string from;
     public ModifierDesc(string ch){
       outname = ch;
@@ -109,12 +110,12 @@ public static class ChannelState{
       }
       DebugConsole.WriteFailure($"Channel {ch} ends in ] but contains no [",true);
     }
-    public int apply(int val){
+    public double apply(double val){
       foreach(var op in ops) val = op.apply(val);
       return outval = val;
     }
-    public void Update(int nval){
-      int oldval = outval;
+    public void Update(double nval){
+      double oldval = outval;
       outval = apply(nval);
       if(oldval!=outval)SetChannelRaw(outname,outval);
     }
@@ -133,14 +134,14 @@ public static class ChannelState{
     }
     public string to;
     List<string> from = new();
-    List<int> vals = new();
-    public int outval;
-    Func<int, int, int> pred;
-    static Func<int, int, int> andPred = (a,b)=>(a!=0&&b!=0)?1:0;
-    static Func<int, int, int> sumPred = (a,b)=>a+b;
-    static Func<int, int, int> orPred = (a,b)=>(a!=0||b!=0)?1:0;
-    static Func<int, int, int> xorPred = (a,b)=>a^b;
-    static Func<int, int, int> prodPred = (a,b)=>a*b;
+    List<double> vals = new();
+    public double outval;
+    Func<double, double, double> pred;
+    static Func<double, double, double> andPred = (a,b)=>(a!=0&&b!=0)?1:0;
+    static Func<double, double, double> sumPred = (a,b)=>a+b;
+    static Func<double, double, double> orPred = (a,b)=>(a!=0||b!=0)?1:0;
+    static Func<double, double, double> xorPred = (a,b)=>(int)a^(int)b;
+    static Func<double, double, double> prodPred = (a,b)=>a*b;
     int seedval;
     static Regex termReg = new Regex(@"^[^\(]*",RegexOptions.Compiled);
     public InlineCalc(string expr){
@@ -162,9 +163,9 @@ public static class ChannelState{
       outval = vals.Aggregate(seedval,pred);
       channelStates.Add(to,outval);
     }
-    public void Update(int idx, int val){
+    public void Update(int idx, double val){
       vals[idx]=val;
-      int old = outval;
+      double old = outval;
       outval = vals.Aggregate(seedval,pred);
       if(old!=outval) SetChannelRaw(to,outval);
     }
@@ -185,7 +186,7 @@ public static class ChannelState{
   class Deps{
     public List<ModifierDesc> mods = new();
     public List<CalcAccessor> calcs = new();
-    public void Update(int nstate){
+    public void Update(double nstate){
       foreach(var mod in mods) mod.Update(nstate);
       foreach(var c in calcs) c.calc.Update(c.index,nstate);
     }
@@ -201,12 +202,12 @@ public static class ChannelState{
   [Import.SpeedrunToolIop.Static]
   private static Dictionary<string, Deps> deps = new();
   [Import.SpeedrunToolIop.Static]
-  private static Dictionary<string, int> channelStates = new Dictionary<string, int>();
+  private static Dictionary<string, double> channelStates = new ();
   [Import.SpeedrunToolIop.Static]
   private static Dictionary<string, ChannelTracker.ChannelTrackerList> watching = new();
 
-  public static int readChannel(string ch)=>_readChannel(Util.removeWhitespace(ch));
-  private static int _readChannel(string ch){
+  public static double readChannel(string ch)=>_readChannel(Util.removeWhitespace(ch));
+  private static double _readChannel(string ch){
     if(channelStates.TryGetValue(ch, out var v)) return v;
     else return addModifier(ch);
   }
@@ -216,22 +217,22 @@ public static class ChannelState{
     for(;idx<ch.Length;idx++) if(ch[idx]=='[' || ch[idx]=='(') return false;
     return true;
   }
-  static void SetChannelRaw(string ch, int state){
+  static void SetChannelRaw(string ch, double state){
     if(_readChannel(ch)==state) return;
     channelStates[ch] = state;
     if (watching.TryGetValue(ch, out var list)) list.Apply(state);
     if(deps.TryGetValue(ch, out var ms))ms.Update(state);
   }
-  public static void SetChannel(string ch, int state, bool fromInterop=false){
+  public static void SetChannel(string ch, double state, bool fromInterop=false){
     ch=Util.removeWhitespace(ch);
     if(ch.Length == 0 || !checkClean(ch)) return;
     SetChannelRaw(ch,state);
     if(!fromInterop && ch.Length>0){
       if(ch[0]=='$')(Engine.Instance.scene as Level)?.Session.SetFlag(ch.Substring(1),state!=0);
-      if(ch[0]=='#')(Engine.Instance.scene as Level)?.Session.SetCounter(ch.Substring(1),state);
+      if(ch[0]=='#')(Engine.Instance.scene as Level)?.Session.SetCounter(ch.Substring(1),(int)state);
     }
   }
-  public static int watch(ChannelTracker b){
+  public static double watch(ChannelTracker b){
     if(b.channel == null) return 0;
     string ch = Util.removeWhitespace(b.channel);
     if (!watching.TryGetValue(ch, out var list)) {
@@ -255,7 +256,7 @@ public static class ChannelState{
     clearModifiers();
   }
   [MethodImpl(MethodImplOptions.NoInlining)]
-  static int addModifier(string ch){
+  static double addModifier(string ch){
     if(!checkClean(ch)){
       if(ch[^1]==']') return new ModifierDesc(ch).outval;
       if(ch[^1]==')') return new InlineCalc(ch).outval;
@@ -312,13 +313,13 @@ public static class ChannelState{
   }
 
   public class AdvancedSetter{
-    Dictionary<string, Tuple<string, int>> toDo = new();
+    Dictionary<string, Tuple<string, double>> toDo = new();
     public AdvancedSetter(string str){
       foreach(var v in Util.kvparseflat(str)){
         if(v.Value.Length == 0) DebugConsole.WriteFailure($"No set parameter for {v.Key}",true);
-        Tuple<string,int> n=null;
+        Tuple<string,double> n=null;
         if(v.Value[0]=='@') n = new(v.Value.Substring(1),0);
-        else if(int.TryParse(v.Value, out var ival)) n=new(null,ival);
+        else if(double.TryParse(v.Value, out var ival)) n=new(null,ival);
         else DebugConsole.WriteFailure("No operation defined for thing");
         if(!toDo.TryAdd(v.Key,n)) DebugConsole.WriteFailure("Duplicate key; forbidden");
       }
@@ -329,8 +330,8 @@ public static class ChannelState{
   }
 
 
-  public static Dictionary<string,int> save(){
-    Dictionary<string,int> s=new();
+  public static Dictionary<string,double> save(){
+    Dictionary<string,double> s=new();
     foreach(var pair in channelStates){
       int idx=0;
       if(pair.Key.Length>=1 && (pair.Key[0]=='$'||pair.Key[0]=='$'))continue;
@@ -340,7 +341,7 @@ public static class ChannelState{
     }
     return s;
   }
-  public static void load(Dictionary<string,int> s){
+  public static void load(Dictionary<string,double> s){
     clearChannels();
     unwatchAll();
     foreach(var pair in s){
@@ -362,7 +363,7 @@ public static class ChannelState{
   static int Hook(On.Celeste.Session.orig_GetCounter orig, Session s, string f){
     if(string.IsNullOrEmpty(f) || f[0]!='@') return orig(s,f);
     foreach(var c in s.Counters) if(c.Key==f) return c.Value;
-    return readChannel(f.Substring(1));
+    return (int)readChannel(f.Substring(1));
   }
   [OnLoad]
   public static HookManager hooks = new HookManager(()=>{
@@ -386,7 +387,7 @@ public static class ChannelState{
   } 
   [Command("ausp_setChannel","Set a channel")]
   public static void SetChCommand(string channel, int value){
-    int oldval = readChannel(channel);
+    double oldval = readChannel(channel);
     SetChannel(channel, value);
     Engine.Commands.Log($"Set channel {channel} from {oldval} to {value}");
   }
@@ -420,7 +421,7 @@ public static class ChannelState{
 
   static bool onlyClean=false;
   static string setChannelTextfield="";
-  static int setChannelValuefield = 1;
+  static double setChannelValuefield = 1;
   public static void RenderChannelTab(){
     ImGui.checkbox("only clean", ref onlyClean);
     ImGui.begintable("channels",2);
@@ -437,7 +438,7 @@ public static class ChannelState{
     }
     ImGui.endtable();
     ImGui.inputText("channel to modify", ref setChannelTextfield, 512);
-    ImGui.inputint("value", ref setChannelValuefield);
+    ImGui.inputdouble("value", ref setChannelValuefield);
     ImGui.sameline();
     if(ImGui.button("set")){
       SetChannel(setChannelTextfield, setChannelValuefield);

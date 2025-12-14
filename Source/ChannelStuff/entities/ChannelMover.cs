@@ -29,8 +29,8 @@ public class ChannelMover:Solid, ICustomMatRender{
     relspd = 1/data.Float("move_time",1);
     asym = data.Float("asymmetry",1f);
   }
-  public void setChVal(int val){
-    dir = (val&1)==1?1:-1*asym;
+  public void setChVal(double val){
+    dir = ((int)Math.Floor(val)&1)==1?1:-1*asym;
   }
   public override void Added(Scene scene){
     base.Added(scene);
@@ -38,7 +38,7 @@ public class ChannelMover:Solid, ICustomMatRender{
       OverrideVisualComponent.Get(this).AddToOverride(new(layera,-100,true));
     }
     ChannelTracker ct = new ChannelTracker(channel, setChVal).AddTo(this);
-    dir = (ct.value &1)==1?1:-1*asym;
+    dir = ((int)Math.Floor(ct.value) &1)==1?1:-1*asym;
     Position = dir==1?p1:p0;
     prog = dir == 1?1:0;
   }
