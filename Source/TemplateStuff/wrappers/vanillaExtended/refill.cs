@@ -126,7 +126,7 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
     Add(sine = new SineWave(0.6f, 0f));
     sine.Randomize();
     UpdateY();
-    base.Depth = -100+(EntityParser.currentParent?.depthoffset??0);
+    base.Depth = -100;
   }
 
   bool selfCol = true;

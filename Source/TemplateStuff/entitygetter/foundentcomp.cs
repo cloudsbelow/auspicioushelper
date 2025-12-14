@@ -94,11 +94,17 @@ public class FoundEntity:OnAnyRemoveComp{
   }
   public static FoundEntity find(string ident){
     if(found.TryGetValue(ident, out var f)) return f;
-    if(ident=="player" && Engine.Instance.scene is Level l && l.Tracker.GetEntity<Player>() is {} p){
-      return addIdent(p,"player");
+    if(Engine.Instance.scene is not Level l) return null;
+    Entity e=null;
+    switch(ident){
+      case "player": e = l.Tracker.GetEntity<Player>(); break;
+      case "fg": case "solidTiles": case "foreground": case "foregroundTiles": e = l.SolidTiles; break;
+      case "bg": case "background": case "backgroundTiles": e = l.BgTiles; break;
     }
-    return null;
+    if(e==null) return null;
+    return addIdent(e, ident);
   }
+  public static Entity findEnt(string ident)=>find(ident)?.Entity;
 
 
   [CustomEntity("auspicioushelper/EntityMarkingFlag")]

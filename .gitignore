@@ -16,6 +16,7 @@ auspicioushelper.zip
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 Tools/img
+Tools/text
 
 # Mono auto generated files
 mono_crash.*

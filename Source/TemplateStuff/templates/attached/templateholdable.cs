@@ -324,7 +324,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       (data.Hit as DashSwitch).OnDashCollide(null, Vector2.UnitY * Math.Sign(Speed.Y));
     }
     Audio.Play(wallhitsound, Position);
-    if (Speed.Y > 140f && !(data.Hit is DashSwitch)) Speed.Y*= 0.6f;
+    if (Speed.Y > 140f && !(data.Hit is DashSwitch) && !dontFlingOff) Speed.Y*= -0.6f;
     else Speed.Y=0;
   }
   bool resetting;

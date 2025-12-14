@@ -27,11 +27,18 @@ def gaussianDs(image, fac, sigma = None):
   filtered_freq = freq * lp
   return np.fft.ifft2(np.fft.ifftshift(filtered_freq)).real[fac//2::fac,fac//2::fac]
 
-basepath = 'Tools/img/telecolla'
+basepath = 'Tools/img/rain'
 
-test = iio.imread(basepath+".png").astype(np.float32)/255
-out = test#np.clip(gaussianDs(test,2),0,1)[10:-18,14:-14]
+test = iio.imread(basepath+".png")
+out = test
+for x in range(16):
+   for y in range(16):
+      if test[x,y,0] == 37:
+         out[x,y,0:3] = np.array([65,104,142])
+      if test[x,y,0] == 51:
+         out[x,y,0:3] = np.array([100,200,255])
+print(out[8,:])
 
 print(test.shape, out.shape)
-plt.imsave(basepath+"_out2.png", test[1400:,:,:])
+plt.imsave(basepath+"_out2.png", test)
 plt.show()
