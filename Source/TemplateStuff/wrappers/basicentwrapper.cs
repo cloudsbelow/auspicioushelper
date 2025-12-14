@@ -18,6 +18,7 @@ public class BasicMultient:ITemplateChild{
     public Vector2 offset;
     public Vector2 lpos;
     public Entity e;
+    public bool detatched = false;
     public EntEnt(Entity e, Vector2 o){
       offset=o; this.e=e;
       if(e is Decal) offset = o.Round();
@@ -35,13 +36,12 @@ public class BasicMultient:ITemplateChild{
     lloc = t.roundLoc;
   }
   public void add(Entity e, Vector2 offset){
-    ents.Add(new EntEnt(e,offset));
+    EntEnt en = new EntEnt(e,offset);
+    ents.Add(en);
     e.Depth+=depthoffset;
     if(e.Scene == null && this.Scene != null) Scene.Add(e);
-    if(e is Decal d){
-      hooks.enable();
-      d.Add(new ChildMarker(parent));
-    }
+    hooks.enable();
+    ChildMarker.Get(e,parent).data = en;
   }
   public void relposTo(Vector2 loc, Vector2 liftspeed){
     Vector2 nloc = loc.Round();
@@ -51,6 +51,7 @@ public class BasicMultient:ITemplateChild{
       if(en.e is Decal){
         en.e.Position=nloc+en.offset;
       }else {
+        if(en.detatched) continue;
         if(en.e.Position != en.lpos){
           en.offset = en.e.Position-lloc;
         }
@@ -67,10 +68,11 @@ public class BasicMultient:ITemplateChild{
     }
   }
   public void AddAllChildren(List<Entity> l){
-    foreach(EntEnt ent in ents)l.Add(ent.e);
+    foreach(EntEnt ent in ents) if(!ent.detatched) l.Add(ent.e);
   }
   public void parentChangeStat(int vis, int col, int act){
     foreach(EntEnt ent in ents){
+      if(ent.detatched) continue;
       if(vis!=0) ent.e.Visible = vis>0; 
       if(col!=0){
         ent.e.Collidable = col>0; 
@@ -83,6 +85,7 @@ public class BasicMultient:ITemplateChild{
   }
   public void destroy(bool particles){
     foreach(EntEnt ent in ents){
+      if(ent.detatched) continue;
       ent.e.RemoveSelf();
     }
     ents.Clear();
@@ -95,9 +98,21 @@ public class BasicMultient:ITemplateChild{
       }
     }
   }
+  static void Hook(On.Celeste.Follower.orig_OnGainLeaderUtil orig, Follower f, Leader l){
+    orig(f,l);
+    if(f.Entity?.Get<ChildMarker>()?.data is EntEnt ent) ent.detatched = true;
+  }
+  static void Hook(On.Celeste.Follower.orig_OnLoseLeaderUtil orig, Follower f){
+    orig(f);
+    if(f.Entity?.Get<ChildMarker>()?.data is EntEnt ent) ent.detatched = false;
+  }
   static HookManager hooks = new(()=>{
     On.Celeste.Decal.Added+=Hook;
+    On.Celeste.Follower.OnGainLeaderUtil += Hook;
+    On.Celeste.Follower.OnLoseLeaderUtil += Hook;
   },()=>{
     On.Celeste.Decal.Added-=Hook;
+    On.Celeste.Follower.OnGainLeaderUtil -= Hook;
+    On.Celeste.Follower.OnLoseLeaderUtil -= Hook;
   },auspicioushelperModule.OnEnterMap);
 }

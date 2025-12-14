@@ -130,6 +130,8 @@ anyways i want to praise it more it is wonderful
   public static Template currentParent {get; private set;} = null;
   public static Entity create(EntityData d, Level l, LevelData ld, Vector2 simoffset, Template t, string path){
     ld=ld??DefaultLD;
+    EntityID eid = new(ld.Name,d.ID);
+    if(l?.Session?.DoNotLoad.Contains(eid)??false) return null;
     if(!parseMap.TryGetValue(d.Name,out var etype)){
       DebugConsole.Write($"Encountered unknown {d.Name}");
       parseMap[d.Name] = etype = Types.initiallyerrors;
@@ -153,6 +155,7 @@ anyways i want to praise it more it is wonderful
     Entity e = null; 
     using (new Template.ChainLock()) e = loader(l,ld,simoffset,d);
     if(e==null) goto done;
+    ChildMarker.Get(e,t);
     if(path!=null && Finder.flagged.TryGetValue(path+$"/{d.ID}",out var ident)){
       foreach(var a in ident) a(e);
     }
@@ -180,7 +183,6 @@ anyways i want to praise it more it is wonderful
           SMRemove.Add(sm);
           smhooks.enable();
         }
-        if(etype == Types.managedBasic) e.Add(new ChildMarker(t));
         foreach(StaticMover sm in SMRemove) e.Remove(sm);
         t.AddBasicEnt(e,simoffset+d.Position-t.roundLoc);
         goto done;
@@ -242,12 +244,6 @@ anyways i want to praise it more it is wonderful
     clarify("eyebomb", Types.basic, static (l,d,o,e)=>new Puffer(e,o));
 
     clarify("refill",Types.unwrapped,static (l,ld,offset,e)=>(Entity) new RefillW2(e,offset));
-    clarify("strawberry",Types.unwrapped,static (l,ld,offset,e)=>{
-      EntityID id = new EntityID(ld.Name,e.ID);
-      DebugConsole.Write("Trying to template berry: "+ id.ToString());
-      if(l.Session.DoNotLoad.Contains(id)) return null;
-      return (Entity) new StrawbW(e,offset,new EntityID(ld.Name,e.ID));
-    });
     clarify("cameraTargetTrigger", Types.basic, static (l,d,o,e)=>{
       string text2 = e.Attr("deleteFlag");
       if(string.IsNullOrEmpty(text2) || !l.Session.GetFlag(text2)){

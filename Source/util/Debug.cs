@@ -150,4 +150,9 @@ public static class DebugConsole {
     LevelEnter.ErrorMessage = $"{str}";
     Engine.Scene = new LevelEnter((Engine.Scene as Level)?.Session,false);
   }
+  [Command("auspdebug_playerloc","Print player world coordinates")]
+  public static void PrintPlayerloc(){
+    if(Engine.Instance.scene.Tracker.GetEntity<Player>() is {} p)
+    Engine.Commands.Log($"Player at {{x:{p.X}, y:{p.Y}}}");
+  }
 }

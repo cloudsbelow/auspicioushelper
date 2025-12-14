@@ -104,7 +104,7 @@ public static class TemplateIopExp{
     return DashCollisionResults.NormalCollision;
   }
   public static void registerPlatform(Entity template, Platform solid){
-    if(template is Template t)solid.Add(new ChildMarker(t));
+    if(template is Template t) ChildMarker.Get(solid,t);
   }
   public static Vector2 getTemplateLiftspeed(Entity template){
     if(template is Template t) return t.gatheredLiftspeed;

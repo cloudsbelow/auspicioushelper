@@ -88,7 +88,7 @@ internal class BasicPlatform:ITemplateChild{
     if(p.OnDashCollide == null && !(p is DreamBlock))
       p.OnDashCollide = (Player p, Vector2 dir)=>((ITemplateChild) this).propagateDashhit(p,dir);
     lpos = p.Position;
-    p.Add(new ChildMarker(t));
+    ChildMarker.Get(p,t);
   }
   public Vector2 lpos;
   public virtual void relposTo(Vector2 loc, Vector2 liftspeed){
@@ -137,8 +137,13 @@ internal class BasicPlatform:ITemplateChild{
 
 public class ChildMarker:Component,IFreeableComp{
   public Template parent;
-  public ChildMarker(Template parent):base(false,false){
+  public object data;
+  protected ChildMarker(Template parent):base(false,false){
     this.parent=parent;
+  }
+  public static ChildMarker Get(Entity e, Template parent){
+    if(e.Get<ChildMarker>() is not {} m) e.Add(m=new ChildMarker(parent));
+    return m;
   }
   public bool propagatesTo(Template other){
     return ((ITemplateChild) parent).propagatesTo(other)!=Template.Propagation.None;

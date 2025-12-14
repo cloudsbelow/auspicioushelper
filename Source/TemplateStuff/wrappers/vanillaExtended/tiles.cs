@@ -87,7 +87,7 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
     RemoveTag(Tags.Global);
   }
   public void setOffset(Vector2 ppos){
-    Add(new ChildMarker(parent));
+    ChildMarker.Get(this,parent);
   }
   public override void Added(Scene scene){
     base.Added(scene);

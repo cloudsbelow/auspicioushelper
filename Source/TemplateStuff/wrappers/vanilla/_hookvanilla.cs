@@ -20,10 +20,8 @@ public static class HookVanilla{
     On.Celeste.HeartGem.OnPlayer-=heartPlayerTemplateHook;
   },auspicioushelperModule.OnEnterMap);
   public static HeartGem HeartGem(Level l, LevelData d, Vector2 o, EntityData e){
-    var hg = new HeartGem(e,o);
-    if(EntityParser.currentParent!=null) hg.Add(new ChildMarker(EntityParser.currentParent));
     heartHooks.enable();
-    return hg;
+    return new HeartGem(e,o);
   }
 
   public class FireIcePatch:Component, ISimpleWrapper{

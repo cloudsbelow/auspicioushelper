@@ -295,18 +295,6 @@ public class Template:Entity, ITemplateChild{
     }
     return addTo;
   }
-  public void MarkChildrenImmediate(){
-    List<Entity> list = new();
-    foreach(ITemplateChild c in children){
-      if(c is Template temp) temp.MarkChildrenImmediate();
-      else AddAllChildren(list);
-    }
-    foreach(Entity e in list){
-      if(e.Get<ChildMarker>()==null){
-        e.Add(new ChildMarker(this));
-      }
-    }
-  }
   public DashCollisionResults dashHit(Player p, Vector2 dir){
     if(OnDashCollide!=null) return OnDashCollide(p,dir);
     else return ((ITemplateChild)this).propagateDashhit(p,dir);

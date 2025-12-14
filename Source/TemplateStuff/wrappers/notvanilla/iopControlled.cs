@@ -74,7 +74,7 @@ public class IopControlled:ITemplateChild{
     else l_.Add(e);
     foreach(Entity e in l_){
       e.Depth+=parent.depthoffset;
-      if(e is Platform) e.Add(new ChildMarker(parent));
+      ChildMarker.Get(e,parent);
       ents.Add(new(e,e.Position-lloc));
     }
     if(AddTo==null)foreach(Entity e in l_)s.Add(e);

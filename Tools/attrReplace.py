@@ -73,7 +73,7 @@ class Parser:
 
         return mapping if mapping else items
 
-def merge_single(old, new, keep_keys, mergeExtra=True, remKeys = []):
+def merge_single(old, new, keep_keys, mergeExtra=True, injective=False, remKeys = []):
     # Dict (keyed table)
     assert(isinstance(new, dict) and isinstance(old,dict))
     result = {}
@@ -86,6 +86,10 @@ def merge_single(old, new, keep_keys, mergeExtra=True, remKeys = []):
       for k in keep_keys:
           if k not in result and k in old:
               result[k] = old[k]
+    if injective:
+        for k,v in old.items():
+            if k not in result:
+                result[k] = old[k]
     for k in remKeys:
         result.pop(k)
             
@@ -114,29 +118,15 @@ def format_value(v, indent=0):
 res = Parser(tokenize("""
 {
     {
-        _editorLayer = 0,
-        _fromLayer = "entities",
-        _id = 2046,
-        _name = "auspicioushelper/spinner",
-        _type = "entity",
-        color = "Red",
-        customColor = "ffffff",
-        depth = -8500,
-        dreamThru = true,
-        fancy = "(#a80000,#ff4f4f:0.75,#ff9eb0)-(826,b497d1:0.8,d2c2e2)",
-        makeFiller = true,
-        neverClip = true,
-        numDebris = 4,
-        x = 325,
-        y = 296
+        dashThru = false,
     }
 }
 """)).parse_value()[0]
 
-keepKeys = ["x","y","width","height","makeFiller","dreamThru","depth"]
+keepKeys = ["x","y","width","height","makeFiller","depth"]
 remKeys = []
 
 with open("Tools/text/source.txt", "r") as f:
-    result = [merge_single(x,res,keepKeys,remKeys=remKeys) for x in Parser(tokenize(f.read())).parse_value()]
+    result = [merge_single(x,res,keepKeys,remKeys=remKeys,injective=True) for x in Parser(tokenize(f.read())).parse_value()]
     with open("Tools/text/out.txt","w") as w:
         w.write(format_value(result))
