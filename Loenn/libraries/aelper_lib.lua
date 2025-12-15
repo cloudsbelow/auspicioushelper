@@ -394,11 +394,12 @@ aelperLib.get_entity_draw = function(icon_name)
         end
             
         if icon_name ~= nil or shouldError then
-            drawableSprite.fromTexture(shouldError and "loenn/auspicioushelper/template/error" or "loenn/auspicioushelper/template/"..aelperLib.getIcon(icon_name), {
+            drawableSprite.fromTexture(shouldError and "loenn/auspicioushelper/template/"..aelperLib.getIcon("error") 
+                or "loenn/auspicioushelper/template/"..aelperLib.getIcon(icon_name), {
                 x=entity.x,
                 y=entity.y,
-                scaleX=aelperLib.isFrutiger(icon_name) and 0.5 or 1,
-                scaleY=aelperLib.isFrutiger(icon_name) and 0.5 or 1,
+                scaleX=aelperLib.isFrutiger(shouldError and "error" or icon_name) and 0.5 or 1,
+                scaleY=aelperLib.isFrutiger(shouldError and "error" or icon_name) and 0.5 or 1,
             }):draw()
         end
     end
@@ -424,8 +425,22 @@ local hasFrutiger = {
     tfake=true,
     tgroup=true,
     tfall=true,
+    tkevin=true,
+    tmat=true,
+    tmoon=true,
+    tmovr=true,
+    tpush=true,
+    tstat=true,
+    tswap=true,
+    ttrig=true,
+    tzip=true,
+    tcore=true,
+    tdream=true,
+    tentmod=true,
+    tglue=true,
     
     tgroupnode=true,
+    error=true,
 }
 aelperLib.isFrutiger = function(name)
     return not settings.auspicioushelper_legacyicons 

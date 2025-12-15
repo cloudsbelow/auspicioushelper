@@ -70,14 +70,20 @@ function entity.nodeSprite(room, entity, node, nodeIndex, viewport)
             }) end
     return {
         drawableText.fromText(reason, node.x-20, node.y-33, 40, 18, nil, nil, "ff4444"),
-        drawableSprite.fromTexture("loenn/auspicioushelper/template/group_error", {x=node.x, y=node.y, depth=-13001}),
+        drawableSprite.fromTexture("loenn/auspicioushelper/template/"..
+            (frutiger and "frutigeraero/" or "").."group_error", {
+                x=node.x, y=node.y, 
+                depth=-13001,
+                scaleX=frutiger and 0.5 or 1,
+                scaleY=frutiger and 0.5 or 1,
+            }),
         drawableSprite.fromTexture("loenn/auspicioushelper/template/"..
             (frutiger and "frutigeraero/" or "").."tgroupnode", {
             x=node.x, y=node.y-3, 
             color="ff4444", 
             depth=-13001,
-                scaleX=frutiger and 0.5 or 1,
-                scaleY=frutiger and 0.5 or 1,
+            scaleX=frutiger and 0.5 or 1,
+            scaleY=frutiger and 0.5 or 1,
         })
     }
 end

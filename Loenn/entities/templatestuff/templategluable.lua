@@ -32,6 +32,6 @@ entity.fieldInformation = function(entity)
 end
 
 entity.selection = aelperLib.template_selection
-entity.draw = aelperLib.get_entity_draw("tstat")
+entity.draw = aelperLib.get_entity_draw("tglue")
 
 return entity
