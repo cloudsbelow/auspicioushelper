@@ -2,6 +2,19 @@
 
 sampler2D TextureSampler : register(s0);
 
+uniform float4 color0;
+uniform float4 color1;
+uniform float4 color2;
+uniform float4 color3;
+uniform float4 color4;
+uniform float4 color5;
+
+uniform float4 edge;
+uniform float4 inside;
+
+uniform float3 density;
+uniform float thru;
+
 uniform float2 pscale;
 uniform float time;
 uniform float2 cpos;
@@ -19,12 +32,7 @@ float hash(float2 p, float o){
   return frac(sin(dot(float3(p,o), float3(12.9898, 78.233, 45.164))) * 43758.5453);
 }
 
-const float4 color0 = float4(0.95,0.4,0.4,1);
-const float4 color1 = float4(0.7,0.3,1,1);
-const float4 color2 = float4(0.2,0.8,0.3,1);
-const float4 color3 = float4(0,0.2,1,1);
-const float4 color4 = float4(0.9,0.75,0,1);
-const float4 color5 = float4(0.2,0.8,1,1);
+
 
 float4 main(float4 color : COLOR0, float2 pos : TEXCOORD0) : SV_Target {
 	float4 mask = orig(pos,0,0);
@@ -33,7 +41,7 @@ float4 main(float4 color : COLOR0, float2 pos : TEXCOORD0) : SV_Target {
     return float4(0,0,0,0);
   }
   if(orig(pos,1,0).a*orig(pos,-1,0).a*orig(pos,0,1).a*orig(pos,0,-1).a<0.5){
-    return float4(1,1,1,1);
+    return edge;
   }
   if(true){
     float2 hpos = floor(pos/pscale+cpos*0.65)/10;
@@ -44,7 +52,7 @@ float4 main(float4 color : COLOR0, float2 pos : TEXCOORD0) : SV_Target {
     float l1 = abs(del.x)+abs(del.y);
     float chash = hash(seed,2);
     float fchash = floor(chash*16);
-    if(abs(l1-sin(time*10+chash*6.283*16/3)*0.75-0.5)<1 && fchash<3){
+    if(abs(l1-sin(time*10+chash*6.283*16/3)*0.75-0.5)<1 && fchash<3*density.x){
       return saturate(1-fchash)*color0+saturate(1-abs(fchash-1))*color1+saturate(fchash-1)*color2;
     }
   }
@@ -57,18 +65,18 @@ float4 main(float4 color : COLOR0, float2 pos : TEXCOORD0) : SV_Target {
     float l1 = abs(del.x)+abs(del.y);
     float chash = hash(seed,5);
     float fchash = floor(chash*25);
-    if(l1<sin(time*10+chash*6.283*35/3)*0.75+1 && fchash<3){
+    if(l1<sin(time*10+chash*6.283*35/3)*0.75+1 && fchash<3*density.y){
       return saturate(1-fchash)*color3+saturate(1-abs(fchash-1))*color5+saturate(fchash-1)*color4;
     }
   }
   if(true){
     float2 hpos = floor(pos/pscale+cpos*0.17);
     float fchash = floor(hash(hpos,6)*3);
-    if(hash(hpos,7)>0.9965){
+    if(hash(hpos,7)<0.005*density.z){
       return saturate(1-fchash)*color0+saturate(1-abs(fchash-1))*color1+saturate(fchash-1)*color4;
     }
   }
-  return float4(mask.rgb*0.15,1);
+  return inside*(1-thru)+mask*thru;
 }
 
 technique BasicTech {

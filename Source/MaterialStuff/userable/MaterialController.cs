@@ -46,16 +46,13 @@ public interface IFadingLayer{
 public interface ISettableDepth{
   float depth {set;}
 }
-public interface IDeclareLayers{
-  void declareLayers();
-}
 public interface CachedUserMaterial:IMaterialLayer{
   string identifier {get;set;}
 }
 
 [CustomEntity("auspicioushelper/MaterialController")]
 [Tracked]
-internal class MaterialController:Entity, IDeclareLayers{
+internal class MaterialController:Entity{
   static Dictionary<string, CachedUserMaterial> loadedMats = new();
   [ResetEvents.RunOn(ResetEvents.RunTimes.OnReload)]
   static void Reload(){
@@ -76,16 +73,15 @@ internal class MaterialController:Entity, IDeclareLayers{
       if(!string.IsNullOrWhiteSpace(e.Attr("textures",""))) identifier+="###"+e.Attr("textures");
     }
     bool reload = e.Bool("reload",false);
-    if(path.Length == 0)return null;
-    CachedUserMaterial l = null;
-    if(reload && loadedMats.TryGetValue(identifier, out l)){
+    if(path.Length == 0) return null;
+    if(reload && loadedMats.TryGetValue(identifier, out var l)){
       if(l.enabled) MaterialPipe.removeLayer(l);
       loadedMats.Remove(identifier);
     }
     DebugConsole.Write($"Loading material shader from {path} as {identifier}");
     if(!loadedMats.ContainsKey(identifier)){
       if(identifier == "auspicioushelper/ChannelMatsEN###"){
-        l = loadedMats[identifier] = (ChannelMaterialsA.layerA = new ChannelMaterialsA());
+        l = loadedMats[identifier] = new ChannelMaterialsA();
       } else {
         l = UserLayer.make(e);
         if(l!=null){

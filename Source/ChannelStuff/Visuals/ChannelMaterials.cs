@@ -22,6 +22,7 @@ public class ChannelMaterialsA:BasicMaterialLayer, CachedUserMaterial{
   public override void onEnable() {
     base.onEnable();
     bgtex.Claim();
+    layerA=this;
   }
   public override void onRemove() {
     base.onRemove();

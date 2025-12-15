@@ -15,7 +15,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateCassetteManager","auspicioushelper/TemplateCassetteManagerSimple")]
 [Tracked]
-public class TemplateCassetteManager:Entity, IDeclareLayers{
+public class TemplateCassetteManager:Entity{
   Dictionary<string, string> material = null;
   static Dictionary<string,string> nameTrans = new Dictionary<string, string>{
     {"small","event:/game/general/cassette_block_switch_1"},
@@ -114,16 +114,7 @@ public class TemplateCassetteManager:Entity, IDeclareLayers{
   public void inimaterials(){
     if(material != null) foreach(var pair in material){
       var format = CassetteMaterialLayer.CassetteMaterialFormat.fromDict(Util.kvparseflat(pair.Value,true));
-      CassetteMaterialLayer other;
-      if(CassetteMaterialLayer.layers.TryGetValue(pair.Key, out other)){
-        if(other.format.gethash() != format.gethash()){
-          MaterialPipe.removeLayer(other);
-          other = null;
-        } 
-      }
-      if(other == null) other = new CassetteMaterialLayer(format, pair.Key);
-      CassetteMaterialLayer.layers[pair.Key]=other;
-      MaterialPipe.addLayer(other);
+      CassetteMaterialLayer.LoadFormat(pair.Key,format);
     }
   }
   public void declareLayers(){

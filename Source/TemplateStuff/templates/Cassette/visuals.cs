@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Celeste.Mod.auspicioushelper;
+using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
@@ -92,6 +93,7 @@ public class CassetteMaterialLayer:BasicMaterialLayer{
       ));
     }
   }
+  [Import.SpeedrunToolIop.Static]
   public static Dictionary<string, CassetteMaterialLayer> layers = new Dictionary<string,CassetteMaterialLayer>();
   public FgCassetteVisuals fg = null;
   public CassetteMaterialLayer(CassetteMaterialFormat format, string channel):base(format.passes,format.depth){
@@ -128,11 +130,61 @@ public class CassetteMaterialLayer:BasicMaterialLayer{
     }
   }
   public override bool drawMaterials => true;
-  
   static VirtualShaderList simplePasses = new VirtualShaderList{
     null,auspicioushelperGFX.LoadShader("cassette/simple")
   };
   static VirtualShaderList vanillaPasses = new VirtualShaderList{
     null, auspicioushelperGFX.LoadShader("cassette/prevanilla"), auspicioushelperGFX.LoadShader("cassette/vanilla")
   };
+
+  public static void LoadFormat(string key, CassetteMaterialFormat format){
+    CassetteMaterialLayer other;
+    if(layers.TryGetValue(key, out other)){
+      if(other.format.gethash() != format.gethash()){
+        MaterialPipe.removeLayer(other);
+        other = null;
+      } 
+    }
+    if(other == null) other = new CassetteMaterialLayer(format, key);
+    layers[key]=other;
+    MaterialPipe.addLayer(other);
+  }
+
+  [CustomEntity("auspicioushelper/TemplateCassetteColor")]
+  public class CustomCassetteLayer:Entity{
+    public CustomCassetteLayer(EntityData d, Vector2 o):base(d.Position+o){
+      CassetteMaterialFormat f = new();
+      f.hasfg = d.Bool("tintActive");
+      f.fgdepth = d.Int("activeDepth",-10);
+      var l = Util.listparseflat(d.Attr("color","ddd")).Map(Util.hexToColor);
+      f.fghigh = l[0];
+      f.fglow = l.Count>1? l[1]:l[0].colorMult(0.5f);
+      f.border = l[0];
+      f.innerhigh = l[0].colorMult(0.5f);
+      f.innerlow = l[0].colorMult(0.5f*0.7f);
+      f.fgsat = d.Float("fgSaturation",0.5f);
+
+      f.depth = d.Int("inactiveDepth",8999);
+      f.passes = d.Bool("simpleStyle",false)?simplePasses:vanillaPasses;
+      float angle = MathF.PI*d.Float("patternAngle",0)/180f;
+      float scale = MathF.PI/d.Float("patternScale",4);
+      f.patternvec.W = d.Float("patternOffset",0)+0.01f;
+      f.patternvec.X = scale*MathF.Cos(angle);
+      f.patternvec.Y = scale*MathF.Sin(angle); 
+      f.stripecutoff = MathF.Cos(MathF.PI*d.Float("patternWeight",0.5f));
+      if(d.tryGetStr("borderColor",out var bc))f.border = Util.hexToColor(bc);
+      if(d.tryGetStr("innerColor",out var ic)){
+        var c = Util.listparseflat(ic).Map(Util.hexToColor);
+        f.innerhigh = c[0];
+        f.innerlow = c.Count>1? c[1]:c[0].colorMult(0.7f);
+      }
+      
+      foreach(var ch in Util.listparseflat(d.Attr("channels"))){
+        LoadFormat(ch,f);
+      }
+    }
+    public override void Awake(Scene s){
+      base.Awake(s);
+    }
+  }
 }

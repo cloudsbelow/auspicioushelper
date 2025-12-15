@@ -21,7 +21,7 @@ channelBooster.placements = {
     }
   }
 }
-local boosterTypes = {"normal","reversed","none"}
+local boosterTypes = {"normal","reversed","red","redEvict","none"}
 channelBooster.fieldInformation = {
   state0 ={
     options = boosterTypes,
@@ -39,6 +39,8 @@ function channelBooster.sprite(room, entity)
             normal = "objects/auspicioushelper/channelbooster/blackwhole00",
             reversed = "objects/auspicioushelper/channelbooster/whitewhole00",
             none = "objects/auspicioushelper/channelbooster/booster/outline",
+            red = "objects/booster/boosterRed00",
+            redEvict = "objects/booster/boosterRed00",
         })[entity.state1],{
             x=entity.x+3,
             y=entity.y+3,
@@ -48,6 +50,8 @@ function channelBooster.sprite(room, entity)
             normal = "objects/auspicioushelper/channelbooster/blackwhole00",
             reversed = "objects/auspicioushelper/channelbooster/whitewhole00",
             none = "objects/auspicioushelper/channelbooster/booster/outline",
+            red = "objects/booster/boosterRed00",
+            redEvict = "objects/booster/boosterRed00",
         })[entity.state0],{
             x=entity.x,
             y=entity.y,

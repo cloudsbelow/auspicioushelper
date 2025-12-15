@@ -86,9 +86,9 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
   public bool BoostingPlayer { get; private set; }
 
   public enum BoosterType {
-    normal,
-    reversed,
-    none,
+    normal, reversed,
+    red, redEvict,
+    none, unmade,
   }
   public static string getSpriteString(BoosterType t, EntityData d, int i){
     string s = i==0?"state0_customsprite":"state1_customsprite";
@@ -96,6 +96,8 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
     return t switch{
       BoosterType.reversed => "auspicioushelper_whiteboosterbasic",
       BoosterType.none => "auspicioushelper_noneboosterbasic",
+      BoosterType.red => "boosterRed",
+      BoosterType.redEvict => "boosterRed",
       _=>"auspicioushelper_blackboosterbasic"
     };
   }
@@ -108,8 +110,10 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
     };
   }
   public BoosterType[] state = new BoosterType[2];
+  BoosterType current=>currentState==-1?BoosterType.unmade:state[currentState];
+  bool redType => current== BoosterType.red || current==BoosterType.redEvict;
   public Sprite[] bgsprites = new Sprite[2];
-  public int currentState;
+  public int currentState=-1;
   public bool dirty;
   public bool selfswitching;
   public int id;
@@ -129,19 +133,12 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
     Add(dashRoutine = new Coroutine(removeOnComplete: false));
     Add(dashListener = new DashListener());
     Add(new MirrorReflection());
-    dashListener.OnDash = OnPlayerDashed;
+    Add(loopingSfx = new SoundSource());
+    dashListener.OnDash = (d)=>BoostingPlayer=false;
     particleType = P_Burst;
     
-    state[0] = data.Attr("state0","normal") switch {
-      "reversed"=>BoosterType.reversed,
-      "none"=>BoosterType.none,
-      _=>BoosterType.normal
-    };
-    state[1] = data.Attr("state1","normal") switch {
-      "reversed"=>BoosterType.reversed,
-      "none"=>BoosterType.none,
-      _=>BoosterType.normal
-    };
+    state[0] = data.Enum("state0", BoosterType.normal);
+    state[1] = data.Enum("state1", BoosterType.normal);
     for(int i=0; i<2; i++){
       Add(bgsprites[i] = GFX.SpriteBank.Create(getSpriteString(state[i],data,i)));
     }
@@ -177,15 +174,21 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
     {
       insideplayer=player;
       cannotUseTimer = 0.45f;
-      IBooster.startBoostPlayer(player, this);
+      if(redType) IBooster.startRedBoostPlayer(player,this);
+      else IBooster.startBoostPlayer(player, this);
       Audio.Play("event:/game/04_cliffside/greenbooster_enter", Position);
       sprite.Play("inside");
       if(trigger) new TriggerInfo.EntInfo("ChannelBooster",this).Pass(this); 
       //sprite.FlipX = player.Facing == Facings.Left;
     }
   }
+  SoundSource loopingSfx;
   public void PlayerBoosted(Player player, Vector2 direction){
     Audio.Play("event:/game/04_cliffside/greenbooster_dash", Position);
+    if(redType){
+      loopingSfx.Play("event:/game/05_mirror_temple/redbooster_move");
+      loopingSfx.DisposeOnTransition = false;
+    }
     BoostingPlayer = true;
     base.Tag = (int)Tags.Persistent | (int)Tags.TransitionUpdate;
     sprite.Play("spin");
@@ -214,6 +217,7 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
     float angle = (-dir).Angle();
     while ((player.StateMachine.State == 2 || player.StateMachine.State == 5) && BoostingPlayer){
       sprite.RenderPosition = player.Center + playerOffset;
+      loopingSfx.Position = sprite.Position;
       if (base.Scene.OnInterval(0.02f)){
         (base.Scene as Level).ParticlesBG.Emit(particleType, 2, player.Center - dir * 3f + new Vector2(0f, -2f), new Vector2(3f, 3f), angle);
       }
@@ -228,14 +232,15 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
     }
     base.Tag = 0;
   }
-  public void OnPlayerDashed(Vector2 direction){
-    if (BoostingPlayer){
-        BoostingPlayer = false;
-    }
-  }
+  bool skipNext = false;
   public void PlayerReleased(){
+    if(skipNext){
+      skipNext = false;
+      if(!BoostingPlayer) return;
+    }
     Audio.Play("event:/game/04_cliffside/greenbooster_end", sprite.RenderPosition);
     sprite.Play("pop");
+    loopingSfx.Stop();
     cannotUseTimer = 0f;
     respawnTimer = 1f;
     BoostingPlayer = false;
@@ -250,7 +255,6 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
     insideplayer=null;
   }
   public void Respawn(bool remanifest, bool change){
-    
     sprite.Position = Vector2.Zero;
     innersprite.Position = Vector2.Zero;
     sprite.Play("loop", restart: true);
@@ -291,6 +295,15 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
   }
   void setChVal(double rawval){
     int val = (int) Math.Floor(rawval);
+    if((val&1) == currentState) return;
+    if(BoostingPlayer && current==BoosterType.redEvict && 
+      Scene.Tracker.GetEntity<Player>() is Player p && IBooster.LastBooster(p) == this
+    ){
+      p.StateMachine.State = 0;
+      PlayerReleased();
+      Audio.Play("event:/game/05_mirror_temple/redbooster_end");
+      skipNext = true;
+    }
     if(dirty = BoostingPlayer) return;
     currentState = val & 1;
     

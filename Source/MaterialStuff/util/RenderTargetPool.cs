@@ -13,6 +13,7 @@ namespace Celeste.Mod.auspicioushelper;
 public static class RenderTargetPool{
   static List<RenderTarget2D> Pool = new();
   public const int maxCanUse = 128;
+  [Import.SpeedrunToolIop.Static]
   public static Stack<int> available = new();
   static RenderTargetPool(){
     Clear();

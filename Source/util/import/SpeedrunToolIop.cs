@@ -39,27 +39,11 @@ internal static class SpeedrunToolIop{
     }
   }
 
-  static List<object[]> staticTypes = new List<object[]>{
-    new object[] {
-      typeof(RenderTargetPool), new string[] { "available"}
-    }, new object[]{
-      typeof(MaterialPipe), new string[] {"layers", "leaving", "entering", "toremove"}
-    }, new object[]{
-      typeof(CassetteMaterialLayer), new string[] {"layers"}
-    }, new object[]{
-      typeof(TemplateDreamblockModifier), new string[] {nameof(TemplateDreamblockModifier.normrenderer),nameof(TemplateDreamblockModifier.revrender)}
-    }, new object[]{
-      typeof(BackdropCapturer), new string[] {nameof(BackdropCapturer.groups)}
-    }
-  };
-
   [AttributeUsage(AttributeTargets.Field)]
   public class Static : Attribute { }
   static void SetupStaticAttr(){
-    Dictionary<Type,string[]> d = new();
-    foreach(var sr in staticTypes) d[(Type)sr[0]]=(string[])sr[1];
     foreach(var t in typeof(auspicioushelperModule).Assembly.GetTypesSafe()){
-      List<string> st = d.TryGetValue(t,out var da)?da.ToList():new();
+      List<string> st = new();
       foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)){
         if(f.IsDefined(typeof(Static))){
           if(!f.IsStatic) DebugConsole.WriteFailure("SrtIOP.Static attribute applied to non-static class",true);
@@ -67,7 +51,7 @@ internal static class SpeedrunToolIop{
         }
       }
       if(st.Count==0) continue;
-      //DebugConsole.Write($"(SRT) Type {t.FullName}: adding static fields [{string.Join(", ",st)}]");
+      DebugConsole.Write($"(SRT) Type {t.FullName}: adding static fields [{string.Join(", ",st)}]");
       toDeregister.Add(SpeedrunToolImport.RegisterStaticTypes(t, st.ToArray()));
     }
   }

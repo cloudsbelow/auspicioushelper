@@ -16,9 +16,11 @@ entity.placements = {
       triggerOnEnter=true,
       triggerOnLeave=true,
       normalChannel="",
+      customVisualGroup = "",
       reverse=false,
       conserve=false,
       useVisuals=true,
+      priority=true,
       allowTransition=false,
     }
   }

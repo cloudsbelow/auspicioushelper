@@ -18,7 +18,9 @@ namespace Celeste.Mod.auspicioushelper;
 
 
 public static class MaterialPipe {
+  [Import.SpeedrunToolIop.Static]
   static List<IMaterialLayer> layers = new List<IMaterialLayer>();
+  static public bool check(IMaterialLayer l)=>layers.Contains(l);
   static MaterialPipe(){
     auspicioushelperModule.OnEnterMap.enroll(new ScheduledAction(()=>{
       layers.Clear();
@@ -116,7 +118,9 @@ public static class MaterialPipe {
 
   static float camAt;
   static float NextTransitionDuration = 0.65f;
+  [Import.SpeedrunToolIop.Static]
   static HashSet<IMaterialLayer> entering = new();
+  [Import.SpeedrunToolIop.Static]
   static HashSet<IMaterialLayer> leaving = new();
   static Coroutine transroutine = null;
   static void ontrans(On.Celeste.Level.orig_TransitionTo orig, Level self, LevelData next, Vector2 dir){
@@ -164,6 +168,7 @@ public static class MaterialPipe {
     dirty = true;
     layers.Add(l);
   }
+  [Import.SpeedrunToolIop.Static]
   static HashSet<IMaterialLayer> toRemove = new();
   public static void removeLayer(IMaterialLayer l){
     if(l.enabled==false) return;

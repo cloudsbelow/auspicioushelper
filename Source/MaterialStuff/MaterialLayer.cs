@@ -149,7 +149,8 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
     return layerformat.quadfirst || layerformat.alwaysRender || willdraw.Count>0;
   }
   public static void StartSb(SpriteBatch sb, Effect e=null, Camera c=null){
-    sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, e, c?.Matrix??Matrix.Identity);
+    SamplerState ss = SamplerList.currentS0(SamplerState.PointClamp);
+    sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, ss, DepthStencilState.None, RasterizerState.CullNone, e, c?.Matrix??Matrix.Identity);
   }
   public void TrySortWilldraw(){
     if(dirtyWilldraw){

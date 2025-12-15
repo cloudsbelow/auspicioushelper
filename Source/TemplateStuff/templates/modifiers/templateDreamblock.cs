@@ -6,6 +6,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Net.Mime;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
@@ -97,6 +99,8 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
   SentinalDb fake;
   string channel;
   bool allowTransition;
+  string customVisualGroup;
+  bool priority;
   public TemplateDreamblockModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateDreamblockModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
@@ -108,6 +112,8 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     reverse = d.Bool("reverse",false);
     conserve = d.Bool("conserve",false);
     allowTransition = d.Bool("allowTransition",false);
+    customVisualGroup = d.Attr("customVisualGroup", "");
+    priority = d.Bool("priority",true);
   }
   public override void addTo(Scene scene) {
     fake = Util.GetUninitializedEntWithComp<SentinalDb>();
@@ -115,7 +121,9 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     fake.Position = Vector2.Zero;
     fake.Collider = new Hitbox(2000000000,2000000000,-1000000000,-1000000000);
     if(useVisuals){
-      if(reverse){
+      if(!string.IsNullOrWhiteSpace(customVisualGroup)){
+        renderer = CustomDreamRenderer.Get(customVisualGroup);
+      }else if(reverse){
         renderer = (revrender??=new DreamRenderer(true));
       } else {
         renderer = (normrenderer??=new DreamRenderer(false));
@@ -192,19 +200,24 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     static VirtualShaderList reveffect = new VirtualShaderList{
       null,auspicioushelperGFX.LoadShader("misc/revdream")
     };
+    public static VirtualShaderList cuseffect = new VirtualShaderList{
+      null,auspicioushelperGFX.LoadShader("misc/customdream")
+    };
     bool reverse;
     public DreamRenderer(bool reverse):base(reverse?reveffect:effect,-11001){
       this.reverse=reverse;
     }
     public override void onRemove() {
       base.onRemove();
-      if(reverse) revrender = null;
-      else normrenderer = null;
+      if(revrender == this) revrender = null;
+      else if(normrenderer == this) normrenderer = null;
     }
   }
-  public static DreamRenderer normrenderer;
-  public static DreamRenderer revrender;
-  DreamRenderer renderer;
+  [Import.SpeedrunToolIop.Static]
+  public static BasicMaterialLayer normrenderer;
+  [Import.SpeedrunToolIop.Static]
+  public static BasicMaterialLayer revrender;
+  BasicMaterialLayer renderer;
   public static TemplateDreamblockModifier speedSetter;
   public static Vector2 speedReplaceHook(Vector2 speed, Player p){
     if(speedSetter!=null){
@@ -417,4 +430,52 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     ddhook?.Dispose();
     transhook?.Dispose();
   },auspicioushelperModule.OnEnterMap);
+
+  [CustomEntity("auspicioushelper/CustomDreamlayer")]
+  [CustomloadEntity]
+  [MapenterEv(nameof(Setup))]
+  public class CustomDreamRenderer:BasicMaterialLayer{
+    Color[] colors = new Color[6];
+    Color border;
+    Color inside;
+    float contentAlpha;
+    float[] density;
+    [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+    [Import.SpeedrunToolIop.Static]
+    static Dictionary<string, CustomDreamRenderer> layers = new();
+    public static BasicMaterialLayer Get(string ident){
+      if(layers.TryGetValue(ident.Trim(), out var l)) return l;
+      DebugConsole.MakePostcard($"No dreamblock visual settings with identifier "+ident+" in the map");
+      return new DreamRenderer(false);
+    }
+    static void Setup(EntityData d){
+      string ident = d.Attr("identifier","ident");
+      if(layers.ContainsKey(ident)){
+        if(auspicioushelperModule.InFolderMod) DebugConsole.MakePostcard(
+          $"Found duplicate dreamblock configurator for identifier "+ident+". These are global for the map; use one per identifier.");
+      } else {
+        var l = new CustomDreamRenderer(d);
+        if(ident == "normal") normrenderer = l;
+        else if(ident == "reverse") revrender = l;
+        layers.Add(ident,l);
+      }
+    }
+    public CustomDreamRenderer(EntityData d):base(DreamRenderer.cuseffect,d.Int("depth")){
+      for(int i=0; i<colors.Length; i++) colors[i] = Util.hexToColor(d.Attr("color_"+i,"aaa"));
+      border = Util.hexToColor(d.Attr("edgeColor","#fff"));
+      inside = Util.hexToColor(d.Attr("insideColor","#000"));
+      density = Util.csparseflat(d.Attr("density"),3,-1,-1);
+      if(density[1]==-1) density[1]=density[0];
+      if(density[2]==-1) density[2]=density[0];
+      contentAlpha = d.Float("contentAlpha",0.15f);
+    }
+    public override void render(SpriteBatch sb, Camera c) {
+      for(int i=0; i<colors.Length; i++) passes.setparamvalex("color"+i, colors[i].ToVector4());
+      passes.setparamvalex("edge", border.ToVector4());
+      passes.setparamvalex("inside", inside.ToVector4());
+      passes.setparamvalex("density", density);
+      passes.setparamvalex("thru",contentAlpha);
+      base.render(sb, c);
+    }
+  }
 }

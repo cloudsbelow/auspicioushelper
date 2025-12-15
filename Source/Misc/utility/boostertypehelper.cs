@@ -18,11 +18,25 @@ public interface IBooster{
   void PlayerReleased();
   void PlayerDied();
   void PlayerBoostEnded(Player player){}
+  public static IBooster CurrentBooster(Player p){
+    if(p.CurrentBooster is SentinalBooster sb) return lastUsed;
+    else return null;
+  }
+  public static IBooster LastBooster(Player p){
+    if(p.LastBooster is SentinalBooster sb) return lastUsed;
+    else return null;
+  }
   public static void startBoostPlayer(Player p, Entity s){
     hooks.enable();
     inst.Center = s.Center;
     lastUsed = (IBooster) s;
     p.Boost(inst);
+  }
+  public static void startRedBoostPlayer(Player p, Entity s){
+    hooks.enable();
+    inst.Center = s.Center;
+    lastUsed = (IBooster) s;
+    p.RedBoost(inst);
   }
   [Import.SpeedrunToolIop.Static]
   static IBooster lastUsed;
