@@ -13,7 +13,7 @@ public interface IBooster{
     public SentinalBooster():base(new EntityData(),Vector2.Zero){
     }
   }
-  static SentinalBooster inst = (SentinalBooster)RuntimeHelpers.GetUninitializedObject(typeof(SentinalBooster));
+  static SentinalBooster inst = Util.GetUninitializedEntWithComp<SentinalBooster>();
   void PlayerBoosted(Player player, Vector2 direction);
   void PlayerReleased();
   void PlayerDied();

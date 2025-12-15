@@ -28,7 +28,8 @@ public class ChannelMathController:Entity{
     multI, intdivI, modI, addI, subI, lshiftI, rshiftI, andI, orI, xorI, landI, lorI, maxI, minI, takeI,
     eq,ne,le,ge,less,greater, eqI,neI,leI,geI,lessI,greaterI, not, lnot,
     jnz, jz, j, setsptr, setsptrI, loadsptr, iops, iopsi, iopsii, iopss, iopssi, iopssii, iopvsvi, yield, yieldI, exit, yieldMs,
-    triggerTrigger, triggerTriggerI, loadImmediateFloat, loadImmediateDouble, doublediv, doubledivI
+    triggerTrigger, triggerTriggerI, loadImmediateFloat, loadImmediateDouble, doublediv, doubledivI, 
+    Floor, Ceil, Round, Trunc,
   }
   List<string> usedChannels = new List<string>();
   bool runImmediately;
@@ -269,6 +270,10 @@ public class ChannelMathController:Entity{
 
         case Op.not: reg[op[iptr++]]=~(int)reg[op[iptr++]]; break;
         case Op.lnot: reg[op[iptr++]]=reg[op[iptr++]]!=0?0:1; break;
+        case Op.Floor: reg[op[iptr++]]=Math.Floor(reg[op[iptr++]]);break;
+        case Op.Ceil: reg[op[iptr++]]=Math.Ceiling(reg[op[iptr++]]);break;
+        case Op.Round: reg[op[iptr++]]=Math.Round(reg[op[iptr++]]);break;
+        case Op.Trunc: reg[op[iptr++]]=Math.Truncate(reg[op[iptr++]]);break;
 
         case Op.setsptr: sptr = (int)reg[op[iptr++]]; break;
         case Op.setsptrI: sptr = op[iptr++]; break;
@@ -321,14 +326,14 @@ public class ChannelMathController:Entity{
     float carea = float.PositiveInfinity;
     foreach(Trigger t in Scene.Tracker.GetEntities<Trigger>()){
       if(t.Collidable && t.CollidePoint(loc)){
-        if(all) t.OnEnter(Scene.Tracker.GetEntity<Player>() ?? (Player)RuntimeHelpers.GetUninitializedObject(typeof(Player)));
+        if(all) t.OnEnter(Scene.Tracker.GetEntity<Player>() ?? Util.GetUninitializedEntWithComp<Player>());
         else if(t.Width*t.Height<carea){
           smallestTrigger = t;
           carea = t.Width*t.Height;
         }
       }
     }
-    smallestTrigger?.OnEnter(Scene.Tracker.GetEntity<Player>() ?? (Player)RuntimeHelpers.GetUninitializedObject(typeof(Player)));
+    smallestTrigger?.OnEnter(Scene.Tracker.GetEntity<Player>() ?? Util.GetUninitializedEntWithComp<Player>());
   }
   static Dictionary<string, Func<List<string>,List<double>,double>> iopFuncs = new();
   public static ChannelMathController callingController = null;

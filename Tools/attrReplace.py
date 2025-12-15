@@ -118,12 +118,26 @@ def format_value(v, indent=0):
 res = Parser(tokenize("""
 {
     {
-        dashThru = false,
+        _editorLayer = 0,
+        _fromLayer = "entities",
+        _id = 1966,
+        _name = "auspicioushelper/spinner",
+        _type = "entity",
+        color = "Red",
+        customColor = "ffffff",
+        depth = -8099,
+        dreamThru = true,
+        fancy = "(#a80000,#ff4f4f:0.75,#ff9eb0)-(826,b497d1:0.8,d2c2e2)",
+        makeFiller = true,
+        neverClip = true,
+        numDebris = 4,
+        x = 596,
+        y = 67
     }
 }
 """)).parse_value()[0]
 
-keepKeys = ["x","y","width","height","makeFiller","depth"]
+keepKeys = ["x","y","width","height","makeFiller","depth","dreamThru"]
 remKeys = []
 
 with open("Tools/text/source.txt", "r") as f:

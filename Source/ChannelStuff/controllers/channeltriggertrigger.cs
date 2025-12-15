@@ -54,6 +54,6 @@ public class ChannelTriggerTrigger:Entity{
         carea = t.Width*t.Height;
       }
     }
-    smallestTrigger?.OnEnter(Scene.Tracker.GetEntity<Player>() ?? (Player)RuntimeHelpers.GetUninitializedObject(typeof(Player)));
+    smallestTrigger?.OnEnter(Scene.Tracker.GetEntity<Player>() ?? Util.GetUninitializedEntWithComp<Player>());
   }
 }

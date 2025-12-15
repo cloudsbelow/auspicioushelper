@@ -5,7 +5,9 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Microsoft.VisualBasic.FileIO;
+using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -266,4 +268,9 @@ public static partial class Util{
   static Func<object,object> cloneFunc = instanceFunc<object>(typeof(object),"MemberwiseClone");
   public static T shallowCopy<T>(T thing)=>(T)cloneFunc(thing);
   public const BindingFlags GoodBindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
+  public static T GetUninitializedEntWithComp<T>() where T:Entity{
+    T x = (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
+    x.Components = new(x);
+    return x;
+  }
 }

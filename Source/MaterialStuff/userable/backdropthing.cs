@@ -37,7 +37,8 @@ public class BackdropCapturer{
     }
   }
   [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
-  static ConditionalWeakTable<Backdrop,BackdropRef> back = new();
+  [Import.SpeedrunToolIop.Static]
+  public static ConditionalWeakTable<Backdrop,BackdropRef> back = new();
   public class CapturedBackdrops:IMaterialLayerSimple{
     public MaterialLayerInfo info {get;set;} = new(true, int.MaxValue/2);
     List<Backdrop> captured = new();
@@ -123,6 +124,7 @@ public class BackdropCapturer{
     public override string ToString()=>base.ToString()+":"+selector;
   }
   [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [Import.SpeedrunToolIop.Static]
   public static Dictionary<string, CapturedBackdrops> groups = new();
   public static CapturedBackdrops Get(string s){
     if(groups.TryGetValue(s, out var c)) return c;

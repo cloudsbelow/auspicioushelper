@@ -56,8 +56,15 @@ public interface CachedUserMaterial:IMaterialLayer{
 [CustomEntity("auspicioushelper/MaterialController")]
 [Tracked]
 internal class MaterialController:Entity, IDeclareLayers{
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
   static Dictionary<string, CachedUserMaterial> loadedMats = new();
+  [ResetEvents.RunOn(ResetEvents.RunTimes.OnReload)]
+  static void Reload(){
+    loadedMats.Clear();
+    if((Engine.Instance.scene as LevelLoader)?.Level is {} l){
+      foreach(Backdrop b in l.Background.Backdrops) if(b is MaterialBackdrop c) c.Readd();
+      foreach(Backdrop b in l.Foreground.Backdrops) if(b is MaterialBackdrop c) c.Readd();
+    }
+  }
   public static IMaterialLayer getLayer(string ident)=>loadedMats.TryGetValue(ident, out var layer)?layer:null;
   EntityData e;
   internal string identifier;
@@ -122,6 +129,10 @@ internal class MaterialController:Entity, IDeclareLayers{
   public class MaterialBackdrop:Backdrop{
     string identifier;
     CachedUserMaterial u;
+    public void Readd(){
+      loadedMats[identifier]=u;
+      DebugConsole.Write("Reenabling",identifier);
+    }
     public MaterialBackdrop(BinaryPacker.Element e){
       identifier=e.Attr("identifier");
       if(string.IsNullOrWhiteSpace(identifier)){
@@ -130,8 +141,7 @@ internal class MaterialController:Entity, IDeclareLayers{
       }
       bool reload = e.AttrBool("reload",false);
       if(e.Attr("passes","").Length == 0)return;
-      CachedUserMaterial l = null;
-      if(reload && loadedMats.TryGetValue(identifier, out l)){
+      if(reload && loadedMats.TryGetValue(identifier, out var l)){
         if(l.enabled) MaterialPipe.removeLayer(l);
         loadedMats.Remove(identifier);
       }
@@ -156,7 +166,9 @@ internal class MaterialController:Entity, IDeclareLayers{
     public override void Render(Scene scene) {
       if(u==null) return;
       if(Visible && !u.enabled){
-        DebugConsole.Write("Layer not yet enabled in backdrop render!");
+        if(scene.OnInterval(2))DebugConsole.Write($"Backdrop {u.identifier} not enabled! Enabling next frame.", MaterialPipe.renderingLevel);
+        if(MaterialPipe.renderingLevel == null)Update(scene);
+        else MaterialPipe.addAfterAction(()=>Update(scene));
         return;
       }
       Draw.SpriteBatch.Draw(u.outtex,Vector2.Zero,Color.White);

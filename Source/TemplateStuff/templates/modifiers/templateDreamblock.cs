@@ -110,7 +110,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     allowTransition = d.Bool("allowTransition",false);
   }
   public override void addTo(Scene scene) {
-    fake = (SentinalDb)RuntimeHelpers.GetUninitializedObject(typeof(SentinalDb));
+    fake = Util.GetUninitializedEntWithComp<SentinalDb>();
     fake.parent = this;
     fake.Position = Vector2.Zero;
     fake.Collider = new Hitbox(2000000000,2000000000,-1000000000,-1000000000);
