@@ -41,7 +41,7 @@ function entity.sprite(room, entity)
     end
     entity.oldTemplateName = aelperLib.templateID_from_entity(entity, room)
     
-    return drawableRectangle.fromRectangle("bordered", entity.x, entity.y, entity.width, entity.height, 
+    return drawableRectangle.fromRectangle("bordered", entity.x-0.5, entity.y-0.5, entity.width+1, entity.height+1, 
         {195/255, 138/255, 255/255,0.3}, {195/255*0.65, 138/255*0.65, 255/255*0.65,1}) 
 end
 
