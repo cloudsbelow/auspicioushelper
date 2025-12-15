@@ -307,8 +307,8 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                     end
                 end
                 
-                tile = data[2].tilesBg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
-                if tile ~= "0" then
+                local bgtile = data[2].tilesBg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
+                if bgtile ~= "0" then
                     local quads, sprites
                     pcall(function()
                         quads, sprites = autotiler.getQuads(tx+math.floor(data[1].x/8), math.floor(ty+data[1].y/8), data[2].tilesBg.matrix,
@@ -329,14 +329,14 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                         if quadCount > 0 then
                             local randQuad = quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesBg")
                                 :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)), quadCount)]
-                            local texture = celesteRender.tilesMetaBg[tile].path or " "
+                            local texture = celesteRender.tilesMetaBg[bgtile].path or " "
                             
                             table.insert(toDraw, {
                                 func={
                                     draw=function()
                                         love.graphics.drawLayer(atlases.gameplay[texture].image, atlases.gameplay[texture].layer or 1,
                                             celesteRender.getOrCacheTileSpriteQuad(celesteRender.tilesSpriteMetaCache, 
-                                                tile, texture, randQuad, false),  --true is if this tileset is fg tiles
+                                                bgtile, texture, randQuad, false),  --true is if this tileset is fg tiles
                                                 math.floor(tx-1+offset[1]/8)*8+x, math.floor(ty-1+offset[2]/8)*8+y)
                                     end
                                 },
