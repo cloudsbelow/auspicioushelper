@@ -471,6 +471,21 @@ entities.auspicioushelper/TemplateTriggerModifier.attributes.description.delay=D
 # template dream block
 entities.auspicioushelper/TemplateDreamblockModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
 
+# template gluable
+entities.auspicioushelper/TemplateGluable.attributes.name._loenn_display_template=[LÖNN] Display Template
+
+# template belt
+entities.auspicioushelper/TemplateBelt.attributes.name._loenn_display_template=[LÖNN] Display Template
+
+# template da shit modifier
+entities.auspicioushelper/TemplateDashhitModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
+
+# template core block
+entities.auspicioushelper/TemplateIceBlock.attributes.name._loenn_display_template=[LÖNN] Display Template
+
+# template ent modifier
+entities.auspicioushelper/TemplateEntityModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
+
 ### UI
 
 ui.menubar.auspicioushelper_legacyicons=Use Legacy Template Icons [Auspicious Helper]
