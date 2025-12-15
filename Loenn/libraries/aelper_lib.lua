@@ -28,6 +28,14 @@ if not $(viewMenu):find(item -> item[1] == "auspicioushelper_legacyicons") then
         function() return settings.auspicioushelper_legacyicons or false end
     })
 end
+if not $(viewMenu):find(item -> item[1] == "auspicioushelper_frutigericons") then
+    table.insert(viewMenu,{
+        "auspicioushelper_frutigericons",
+        function() settings.auspicioushelper_frutigericons = not settings.auspicioushelper_frutigericons end,
+        "checkbox",
+        function() return settings.auspicioushelper_frutigericons or false end
+    })
+end
 if not $(viewMenu):find(item -> item[1] == "auspicioushelper_showtemplates_global") then
     table.insert(viewMenu,{
         "auspicioushelper_showtemplates_global",
@@ -386,9 +394,11 @@ aelperLib.get_entity_draw = function(icon_name)
         end
             
         if icon_name ~= nil or shouldError then
-            drawableSprite.fromTexture(shouldError and "loenn/auspicioushelper/template/error" or aelperLib.getIcon("loenn/auspicioushelper/template/"..icon_name), {
+            drawableSprite.fromTexture(shouldError and "loenn/auspicioushelper/template/error" or "loenn/auspicioushelper/template/"..aelperLib.getIcon(icon_name), {
                 x=entity.x,
                 y=entity.y,
+                scaleX=aelperLib.isFrutiger(icon_name) and 0.5 or 1,
+                scaleY=aelperLib.isFrutiger(icon_name) and 0.5 or 1,
             }):draw()
         end
     end
@@ -403,10 +413,31 @@ local hasLegacy = {
     tmovr=true,
     tstat=true,
     tswap=true,
-    tzip=true
+    tzip=true,
 }
+local hasFrutiger = {
+    tblk=true,
+    tcass=true,
+    tchan=true,
+    tconv=true,
+    tdash=true,
+    tfake=true,
+    tgroup=true,
+    
+    tgroupnode=true,
+}
+aelperLib.isFrutiger = function(name)
+    return not settings.auspicioushelper_legacyicons 
+        and settings.auspicioushelper_frutigericons and hasFrutiger[name]
+end
 aelperLib.getIcon = function(name)
-    return (settings.auspicioushelper_legacyicons and hasLegacy[name]) and (name.."_legacy") or name
+    if settings.auspicioushelper_legacyicons and hasLegacy[name] then
+        return name.."_legacy"
+    elseif aelperLib.isFrutiger(name) then
+        return "frutigeraero/"..name
+    end
+
+    return name
 end
 
 aelperLib.log = function(...)

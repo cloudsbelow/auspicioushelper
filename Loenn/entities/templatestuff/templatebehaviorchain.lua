@@ -57,12 +57,28 @@ function entity.nodeSprite(room, entity, node, nodeIndex, viewport)
             end
         end
     end
-    if existsValidTemplate then return drawableSprite.fromTexture("loenn/auspicioushelper/template/tgroupnode", 
-        {x=node.x, y=node.y-3, depth=-13001}) end
+
+    local frutiger = aelperLib.isFrutiger("tgroupnode")
+    if existsValidTemplate then 
+        return drawableSprite.fromTexture("loenn/auspicioushelper/template/"..
+            (frutiger and "frutigeraero/" or "").."tgroupnode", 
+            {
+                x=node.x, y=node.y-3, 
+                depth=-13001,
+                scaleX=frutiger and 0.5 or 1,
+                scaleY=frutiger and 0.5 or 1,
+            }) end
     return {
         drawableText.fromText(reason, node.x-20, node.y-33, 40, 18, nil, nil, "ff4444"),
         drawableSprite.fromTexture("loenn/auspicioushelper/template/group_error", {x=node.x, y=node.y, depth=-13001}),
-        drawableSprite.fromTexture("loenn/auspicioushelper/template/tgroupnode", {x=node.x, y=node.y-3, color="ff4444", depth=-13001})
+        drawableSprite.fromTexture("loenn/auspicioushelper/template/"..
+            (frutiger and "frutigeraero/" or "").."tgroupnode", {
+            x=node.x, y=node.y-3, 
+            color="ff4444", 
+            depth=-13001,
+                scaleX=frutiger and 0.5 or 1,
+                scaleY=frutiger and 0.5 or 1,
+        })
     }
 end
 entity.draw = aelperLib.get_entity_draw("tgroup")
