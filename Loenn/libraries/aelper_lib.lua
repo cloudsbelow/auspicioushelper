@@ -298,7 +298,7 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                                         love.graphics.drawLayer(atlases.gameplay[texture].image, atlases.gameplay[texture].layer or 1,
                                             celesteRender.getOrCacheTileSpriteQuad(celesteRender.tilesSpriteMetaCache, 
                                                 tile, texture, randQuad, true),  --true is if this tileset is fg tiles
-                                                math.floor(tx-1+offset[1]/8)*8+x+0.5, math.floor(ty-1+offset[2]/8)*8+y+0.5)
+                                                math.floor(tx-1+offset[1]/8)*8+x, math.floor(ty-1+offset[2]/8)*8+y)
                                     end
                                 },
                                 depth=depths.fgTerrain
@@ -306,11 +306,12 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                         end
                     end
                 end
-                local tile = data[2].tilesBg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
+                
+                tile = data[2].tilesBg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
                 if tile ~= "0" then
                     local quads, sprites
                     pcall(function()
-                        local quads, sprites = autotiler.getQuads(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8), data[2].tilesBg.matrix,
+                        quads, sprites = autotiler.getQuads(tx+math.floor(data[1].x/8), math.floor(ty+data[1].y/8), data[2].tilesBg.matrix,
                             celesteRender.tilesMetaBg, "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
                         -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
                     end)
@@ -321,7 +322,7 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                                 math.floor(tx-1+offset[1]/8)*8+x+0.5, math.floor(ty-1+offset[2]/8)*8+y+0.5, 
                                 7,7,
                                 {0.8,0.8,0.8},{1,1,1}),
-                            depth=depths.fgTerrain})
+                            depth=depths.bgTerrain})
                     else
                         local quadCount = #quads
     
@@ -336,7 +337,7 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                                         love.graphics.drawLayer(atlases.gameplay[texture].image, atlases.gameplay[texture].layer or 1,
                                             celesteRender.getOrCacheTileSpriteQuad(celesteRender.tilesSpriteMetaCache, 
                                                 tile, texture, randQuad, false),  --true is if this tileset is fg tiles
-                                                math.floor(tx-1+offset[1]/8)*8+x+0.5, math.floor(ty-1+offset[2]/8)*8+y+0.5)
+                                                math.floor(tx-1+offset[1]/8)*8+x, math.floor(ty-1+offset[2]/8)*8+y)
                                     end
                                 },
                                 depth=depths.bgTerrain
