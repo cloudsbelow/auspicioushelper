@@ -423,6 +423,7 @@ local hasFrutiger = {
     tdash=true,
     tfake=true,
     tgroup=true,
+    tfall=true,
     
     tgroupnode=true,
 }
