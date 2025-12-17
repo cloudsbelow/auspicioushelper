@@ -163,25 +163,28 @@ internal static class MarkedRoomParser{
       TemplateRoom dr=null;
       if(idx==0){
         if(parent!=null){
-          if(parent.t.room.templates.TryGetValue(e, out filler)) return true;
+          if(parent.t.room.templates.TryGetValue(e, out filler)) goto success;
         } else {
           string ldn = (scene as Level)?.Session.LevelData.Name??"NULL";
           if(dynamicRooms.TryGetValue(ldn, out dr)){
-            if(dr.templates.TryGetValue(e, out filler)) return true;
+            if(dr.templates.TryGetValue(e, out filler)) goto success;
           }
           if(staticRooms.TryGetValue(ldn,out dr)){
-            if(dr.templates.TryGetValue(e, out filler)) return true;
+            if(dr.templates.TryGetValue(e, out filler)) goto success;
           }
         }
       }
       if(dynamicRooms.TryGetValue(b, out dr)){
-        if(dr.templates.TryGetValue(e, out filler)) return true;
+        if(dr.templates.TryGetValue(e, out filler)) goto success;
       }
       if(staticRooms.TryGetValue(b,out dr)){
-        if(dr.templates.TryGetValue(e, out filler)) return true;
+        if(dr.templates.TryGetValue(e, out filler)) goto success;
       }
     }
     filler = null;
     return false;
+    success:
+      filler = filler.GetInstance();
+      return true;
   }
 }

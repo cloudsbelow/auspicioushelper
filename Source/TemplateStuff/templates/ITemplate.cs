@@ -175,7 +175,7 @@ public class Template:Entity, ITemplateChild{
     if(c.shouldAddAsChild)children.Add(c);
     if(c is Template ct){
       ct.depthoffset+=depthoffset;
-      if(t.chain!=null){
+      if(t?.chain!=null){
         ct.t??=t.chain.NextFiller();
       }
     }

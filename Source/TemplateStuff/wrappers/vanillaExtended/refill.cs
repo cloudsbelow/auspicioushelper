@@ -228,7 +228,7 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
   }
   public override void Render(){
     if(!MaterialPipe.clipBounds.CollidePointExpand(Int2.Round(Position),10+(int)orbitrad)) return;
-    if(reuseFull>0){
+    if(reuseFull>1){
       angle = angle%(MathF.PI*2);
       float incr = MathF.PI/reuseFull;
       float frac = angle%incr;
@@ -254,6 +254,17 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
           texs[reuse<=idx2?1:0].Draw(rpos+angleToOrbit(angle2));
         }
       }
+    } else if(reuseFull==1){
+      Vector2 rpos = Position.Round();
+      angle = angle%(MathF.PI*2);
+      float a1 = angle>MathF.PI/2 && angle<3*MathF.PI/2? angle+MathF.PI:angle;
+      float a2 = a1+MathF.PI;
+      if(sprite.Visible)texs[1-reuse].DrawOutline(rpos+angleToOrbit(a1));
+      texs[1-reuse].Draw(rpos+angleToOrbit(a1));
+      if (sprite.Visible)sprite.DrawOutline();
+      base.Render();
+      if(sprite.Visible)texs[1-reuse].DrawOutline(rpos+angleToOrbit(a2));
+      texs[1-reuse].Draw(rpos+angleToOrbit(a2));
     } else {
       if (sprite.Visible)sprite.DrawOutline();
       base.Render();

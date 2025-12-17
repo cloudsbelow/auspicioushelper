@@ -118,11 +118,13 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     Depth = -1;
   }
   Util.HybridSet<Platform> Mysolids;
+  templateFiller ext = null;
   void make(Scene s, templateFiller use = null){
     created = true;
+    if(use != null) ext=use;
     using(new Template.ChainLock())te = new TemplateDisappearer(d,Position+hoffset,d.Int("depthoffset",0));
     new DynamicData(te).Set("ausp_holdable",this);
-    if(use!=null) te.setTemplate(use);
+    if(ext!=null) te.setTemplate(ext);
     te.addTo(s);
     Mysolids = new (te.GetChildren<Solid>());
   }

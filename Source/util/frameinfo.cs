@@ -100,6 +100,7 @@ public class UpdateHook:Component{
     foreach(UpdateHook u in self.Tracker.GetComponents<UpdateHook>()){
       if(u.afterAction!=null)u.afterAction();
     }
+    TileOccluder.HandleThing(self);
     AfterUpdateLock.ExtraUpdate(self,true);
   }
 

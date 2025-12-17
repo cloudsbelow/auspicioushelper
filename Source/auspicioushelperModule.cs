@@ -68,10 +68,14 @@ public class auspicioushelperModule : EverestModule {
     OnNewScreen.run();
     OnReloadMap.run();
     OnEnterMap.run();
-    InFolderMod = session.MapData.Filename!=null && 
+    try{
+    InFolderMod = session?.MapData?.Filename!=null && 
       Path.Combine("Maps",session.MapData.Filename) is {} fpath && 
       Everest.Content.Get(fpath)?.Source?.Mod is {} Mod && 
       !string.IsNullOrWhiteSpace(Mod.PathDirectory);
+    }catch(Exception){
+      DebugConsole.Write($"Entering nonexistent area");
+    }
 
     DebugConsole.Write($"\n\nEntering Map! Folder mod: {InFolderMod}");
     try{
@@ -84,8 +88,8 @@ public class auspicioushelperModule : EverestModule {
         DebugConsole.Write("Session or mapdata null");
       }
     }catch(Exception ex){
+      DebugConsole.Write("\n\n\nERROR IN MAPENTER:\n",ex.ToString());
       if(ex is DebugConsole.PassingException p) throw p;
-      else DebugConsole.Write(ex.ToString());
     }
   }
   static void OnExit(Level l, LevelExit e, LevelExit.Mode m, Session s, HiresSnow h)=>OnExitMap.run();

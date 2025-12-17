@@ -4,12 +4,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -215,6 +217,7 @@ public class templateFiller:Entity{
     }
   }
   public virtual void Use(Template user){}
+  public virtual templateFiller GetInstance()=>this;
   
 
   internal TemplateBehaviorChain.Chain chain=null;
@@ -232,17 +235,27 @@ public class templateFiller:Entity{
 
   [CustomEntity("auspicioushelper/TemplateFillerSwitcher")]
   public class FillerSwitcher:templateFiller{
-    HashSet<FillerSwitcher> used = new();
+    static HashSet<FillerSwitcher> used = new();
+    [ResetEvents.RunOn(ResetEvents.RunTimes.OnReset)]
+    static void Reset(){
+      foreach(var use in used) use.idx=-1;
+      used.Clear();
+    }
     List<string> list = new();
     int idx=-1;
     enum ChooseMode{
       Loop, Pseudo, True
     }
+    enum ResetMode{
+      Individual, Room, Never
+    }
     ChooseMode mode;
+    ResetMode reset;
     bool inUsing=false;
     public override void Use(Template user){
       if(inUsing){
         DebugConsole.MakePostcard("Infinite loop in templates detected. Bad");
+        return;
       }
       using(new Util.AutoRestore<bool>(ref inUsing, true)){
         switch(mode){
@@ -259,8 +272,193 @@ public class templateFiller:Entity{
         offset = t.offset;
       }
     }
+    public override templateFiller GetInstance() {
+      if(reset == ResetMode.Individual) return Util.shallowCopy(this);
+      if(reset == ResetMode.Room) used.Add(this);
+      return this;
+    }
     public FillerSwitcher(EntityData d, Vector2 o):base(){
       list = Util.listparseflat(d.Attr("templates"),stripout:true);
     }
   } 
+}
+
+
+
+
+
+
+
+[Tracked]
+public class TileOccluder:Component{
+  public class RowValues{
+    int[] starts;
+    int[] e1;
+    int[] e2;
+    public RowValues(int rows, int width, Func<int,int,bool> oracle){
+      starts = new int[rows+1];
+      List<int> e1 = new();
+      List<int> e2 = new();
+      for(int i=0; i<rows; i++){
+        starts[i] = e1.Count;
+        for(int j=0; j<width; j++){
+          if(oracle(i,j)){
+            e1.Add(j);
+            do j++; while(j<width && oracle(i,j));
+            e2.Add(j);
+          } 
+        }
+      }
+      starts[^1] = e1.Count;
+      this.e1 = e1.ToArray();
+      this.e2 = e2.ToArray();
+    }
+    public void IntoBounds(int rs, int re, int el, int eh, Action<int,int,int> edgeHandler){
+      int endrow = Math.Min(re,starts.Length-1);
+      for(int i = Math.Max(rs,0); i<endrow; i++){
+        int lidx = starts[i];
+        int end = starts[i+1];
+        int hidx = end;
+        while(lidx<hidx){
+          int mid = (lidx+hidx)/2;
+          if(e2[mid]<=el) lidx = mid+1;
+          else hidx = mid;
+        }
+        while(lidx<end && e1[lidx]<eh){
+          edgeHandler(i, e1[lidx], e2[lidx]);
+          lidx++;
+        }
+      }
+    }
+  }
+  RowValues topEdges;
+  RowValues bottomEdges;
+  RowValues leftEdges;
+  RowValues rightEdges;
+  public void Build(VirtualMap<char> dat){
+    topEdges = new(dat.Rows,dat.Columns,(int i, int j)=> dat[j,i]!='0' && (i==0 || dat[j,i-1]=='0'));
+    bottomEdges = new(dat.Rows,dat.Columns,(int i, int j)=> dat[j,i]!='0' && (i==dat.Rows-1 || dat[j,i+1]=='0'));
+    leftEdges = new(dat.Columns,dat.Rows,(int i, int j)=> dat[i,j]!='0' && (i==0 || dat[i-1,j]=='0'));
+    rightEdges = new(dat.Columns,dat.Rows,(int i, int j)=> dat[i,j]!='0' && (i==dat.Columns-1 || dat[i+1,j]=='0'));
+    size = new(dat.Columns*cellW,dat.Rows*cellH);
+  }
+  public TileOccluder():base(true,true){}
+  const float cellW = 8;
+  const float cellH = 8;
+  public void Occlude(LightingRenderer r, int index, Vector2 center, float rad){
+    Vector3 atlasCenter = r.GetCenter(index);
+    Color mask = r.GetMask(index, 0, 1);
+    Vector2 pos = Entity.Position;
+    Vector2 del = center-pos;
+
+    bottomEdges.IntoBounds( /// Edges that face _
+      (int)((del.Y-rad)/cellH), (int) (del.Y/cellH-float.Epsilon),
+      (int)((del.X-rad)/cellW), (int)((del.X+rad)/cellW), (y,x1,x2)=>{
+        Span<Vector2> items = stackalloc Vector2[6];
+        float ly = y*cellH-del.Y;
+        float lx1 = Math.Max(-rsize, x1*cellW-del.X);
+        float lx2 = Math.Min(rsize, x2*cellW-del.X);
+        int n = ClipPosy(new(lx1, -ly), new(lx2, -ly), ref items);
+        for(int i=0; i<n; i++) items[i].Y=items[i].Y*-1;
+        PushVerts(r, n, ref items, atlasCenter, mask, true);
+      }
+    );
+    topEdges.IntoBounds( /// Edges on the top
+      (int)Math.Ceiling(del.Y/cellH+float.Epsilon), (int) ((del.Y+rad)/cellH),
+      (int)((del.X-rad)/cellW), (int)((del.X+rad)/cellW), (y,x1,x2)=>{
+        Span<Vector2> items = stackalloc Vector2[6];
+        float ly = y*cellH-del.Y;
+        float lx1 = Math.Max(-rsize, x1*cellW-del.X);
+        float lx2 = Math.Min(rsize, x2*cellW-del.X);
+        int n = ClipPosy(new(lx1, ly), new(lx2, ly), ref items);
+        PushVerts(r, n, ref items, atlasCenter, mask, false);
+      }
+    );
+    rightEdges.IntoBounds(  ///Edges that have out normal this way ->
+      (int)((del.X-rad)/cellW), (int) (del.X/cellW-float.Epsilon),
+      (int)((del.Y-rad)/cellH), (int)((del.Y+rad)/cellH), (x,y1,y2)=>{
+        Span<Vector2> items = stackalloc Vector2[6];
+        float lx = x*cellW-del.X;
+        float ly1 = Math.Max(-rsize, y1*cellH-del.Y);
+        float ly2 = Math.Min(rsize, y2*cellH-del.Y);
+        int n = ClipPosy(new(ly1, -lx), new(ly2, -lx), ref items);
+        for(int i=0; i<n; i++) items[i]=new Vector2(-items[i].Y, items[i].X);
+        PushVerts(r, n, ref items, atlasCenter, mask, false);
+      }
+    );
+    leftEdges.IntoBounds(  ///Edges that have out normal this way <-
+      (int)Math.Ceiling(del.X/cellW+float.Epsilon), (int) ((del.X+rad)/cellW),
+      (int)((del.Y-rad)/cellH), (int)((del.Y+rad)/cellH), (x,y1,y2)=>{
+        Span<Vector2> items = stackalloc Vector2[6];
+        float lx = x*cellW-del.X;
+        float ly1 = Math.Max(-rsize, y1*cellH-del.Y);
+        float ly2 = Math.Min(rsize, y2*cellH-del.Y);
+        int n = ClipPosy(new(ly1, lx), new(ly2, lx), ref items);
+        for(int i=0; i<n; i++) items[i]=new Vector2(items[i].Y, items[i].X);
+        PushVerts(r, n, ref items, atlasCenter, mask, true);
+      }
+    );
+  }
+
+  const int rsize = 128;
+  //Y must be Strictly Positive, p1 must be on the negative side of p2 when rotating via origin
+  static int ClipPosy(Vector2 p1, Vector2 p2, ref Span<Vector2> o){
+    float x1 = Math.Abs(p1.X);
+    float x2 = Math.Abs(p2.X);
+    int type1=Math.Sign(p1.X)*(x1>p1.Y?1:0);
+    int type2=Math.Sign(p2.X)*(x2>p2.Y?1:0);
+    int n=0;
+    o[n++] = p1;
+    if(type1 !=0){
+      o[n++] = p1*(rsize/x1);
+    } else o[n++] = p1*(rsize/p1.Y);
+    if(type1++==-1 && type2>-1) o[n++] = new Vector2(-rsize,rsize);
+    if(type1==0 && type2==1) o[n++] = new Vector2(rsize, rsize);
+    if(type2 !=0){
+      o[n++] = p2*(rsize/x2);
+    } else o[n++] = p2*(rsize/p2.Y);
+    o[n++] = p2;
+    return n;
+  }
+  static void PushVerts(LightingRenderer r, int n, ref Span<Vector2> o, Vector3 center, Color mask, bool flipWinding = false){
+    int s = r.vertexCount;
+    int flip = flipWinding?1:0;
+    r.verts[s].Position = center + new Vector3(o[0],0);
+    r.verts[s].Color = mask;
+    r.verts[s+1].Position = center + new Vector3(o[1],0);
+    r.verts[s+1].Color = mask;
+    for(int i=2; i<n; i++){
+      r.verts[s+i].Position = center + new Vector3(o[i],0);
+      r.verts[s+i].Color = mask;
+      r.indices[r.indexCount++] = s;
+      r.indices[r.indexCount++] = s+i-1+flip;
+      r.indices[r.indexCount++] = s+i-flip; 
+    }
+    r.vertexCount += n;
+  }
+
+  
+  Vector2 size;
+  Vector2 lpos;
+  bool lvis;
+  public static void HandleThing(Level l){
+    foreach(TileOccluder comp in l.Tracker.GetComponents<TileOccluder>()){
+      Vector2 epos = comp.Entity.Position;
+      bool nvis = comp.Entity.Visible;
+      if(epos == comp.lpos && nvis == comp.lvis) return;
+      FloatRect rNew = new(epos.X,epos.Y, comp.size.X,comp.size.Y);
+      FloatRect rOld = new(comp.lpos.X,comp.lpos.Y, comp.size.X,comp.size.Y);
+      bool flag = false;
+      if(!comp.lvis) rOld = rNew;
+      else if(comp.lpos != epos && nvis) flag = true;
+      comp.lpos = epos;
+      comp.lvis = nvis;
+      foreach(VertexLight v in l.Tracker.GetComponents<VertexLight>()){
+        if(v.Dirty) continue;
+        if(rOld.CollideCircle(v.Center,v.EndRadius) || (flag && rNew.CollideCircle(v.Center,v.endRadius))){
+          v.Dirty = true;
+        }
+      }
+    }
+  }
 }

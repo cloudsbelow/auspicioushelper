@@ -65,7 +65,7 @@ public class ActionList{
       try {
         s.run();
       } catch(Exception ex) {
-        DebugConsole.Write("Error occured in scheduled action "+s+": \n"+ex.ToString());
+        DebugConsole.Write("Error occured in scheduled action "+s+$" with label {s.label}: \n"+ex.ToString());
         if(ex is DebugConsole.PassingException p) throw p;
       }
     }

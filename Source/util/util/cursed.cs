@@ -265,7 +265,7 @@ public static partial class Util{
     public TValue get(object o)=>getter(o);
     public void set(object o, TValue v)=>setter(o,v);
   }
-  static Func<object,object> cloneFunc = instanceFunc<object>(typeof(object),"MemberwiseClone");
+  readonly static Func<object,object> cloneFunc = instanceFunc<object>(typeof(object),"MemberwiseClone");
   public static T shallowCopy<T>(T thing)=>(T)cloneFunc(thing);
   public const BindingFlags GoodBindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
   public static T GetUninitializedEntWithComp<T>() where T:Entity{

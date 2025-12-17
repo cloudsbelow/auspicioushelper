@@ -49,7 +49,7 @@ public static class ResetEvents{
     foreach(var t in typeof(auspicioushelperModule).Assembly.GetTypesSafe()){
       foreach (var f in t.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)){
         if(f.IsDefined(typeof(ClearOn))){
-          if(!f.IsStatic) DebugConsole.WriteFailure("Bad",true);
+          if(!f.IsStatic) DebugConsole.WriteFailure($"{f} can not be autocleared as it is not static",true);
           ClearOn c = (ClearOn)f.GetCustomAttribute(typeof(ClearOn));
           PersistantAction p;
           if(c.toNull){
@@ -70,6 +70,7 @@ public static class ResetEvents{
       foreach(var m in t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)){
         if(m.IsDefined(typeof(RunOn))){
           if(m.ReturnType!=null){}
+          if(!m.IsStatic) DebugConsole.WriteFailure($"{m} cannot be a ResetEvent as it is not static", true);
           RunOn c = (RunOn)m.GetCustomAttribute(typeof(RunOn));
           PersistantAction p = new(()=>{
             m.Invoke(null,[]);
