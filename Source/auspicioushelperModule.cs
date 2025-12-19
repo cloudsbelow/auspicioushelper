@@ -93,7 +93,9 @@ public class auspicioushelperModule : EverestModule {
     }
   }
   static void OnExit(Level l, LevelExit e, LevelExit.Mode m, Session s, HiresSnow h)=>OnExitMap.run();
+  public static int CACHENUM;
   static void OnReload(bool silent){
+    CACHENUM++;
     MapHider.handleReload(); 
     try {
       ChannelState.unwatchAll();
@@ -103,7 +105,6 @@ public class auspicioushelperModule : EverestModule {
         MapenterEv.Run(l.Level.Session.MapData);
         MarkedRoomParser.parseMapdata(l.Level.Session.MapData);
       }
-      DebugConsole.Write(Engine.Scene?.ToString()??"null scene");
     } catch (Exception ex){
       if(ex is DebugConsole.PassingException p) throw p;
       else DebugConsole.Write($"reloading error: {ex}");

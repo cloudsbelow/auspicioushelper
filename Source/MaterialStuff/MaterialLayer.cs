@@ -212,6 +212,6 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
   public void removeEnt(OverrideVisualComponent o){
     toRemove.Add(o);
   }
-  public void AddC(OverrideVisualComponent c)=>addEnt(c);
-  public void RemoveC(OverrideVisualComponent c)=>removeEnt(c);
+  public virtual void AddC(OverrideVisualComponent c)=>addEnt(c);
+  public virtual void RemoveC(OverrideVisualComponent c)=>removeEnt(c);
 }

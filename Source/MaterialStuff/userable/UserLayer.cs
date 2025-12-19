@@ -164,9 +164,39 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       handles[handles.Count-1]= o;
     }
   }
+  HashSet<OverrideVisualComponent> waiting = null;
+  //[Import.SpeedrunToolIop.Static]
+  static HashSet<UserLayer> hasWaiting = new();
+  [ResetEvents.RunOn(ResetEvents.RunTimes.OnReset)]
+  public static void ClearWaiting(){
+    foreach(var l in hasWaiting) l.waiting = null;
+    hasWaiting.Clear();
+  }
+  public override void AddC(OverrideVisualComponent c) {
+    if(!info.enabled){
+      if(waiting == null) {
+        DebugConsole.Write($"Non-enabled layer {this} added to. Waiting.");
+        waiting = new();
+        hasWaiting.Add(this);
+      }
+      waiting.Add(c);
+    }
+    base.AddC(c);
+  }
+  public override void RemoveC(OverrideVisualComponent c) {
+    waiting?.Remove(c);
+    base.RemoveC(c);
+  }
   public override void onEnable() {
     base.onEnable();
     foreach(var r in resources) r.Use();
+    if(waiting!=null){
+      if(!info.enabled) throw new Exception(" literally How");
+      foreach(var o in waiting) AddC(o);
+      waiting = null;
+      hasWaiting.Remove(this);
+      DebugConsole.Write($"Layer with waiting items {this} corrected successfully");
+    }
   }
   public override void onRemove() {
     base.onRemove();

@@ -2,6 +2,7 @@
 
 
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
@@ -11,11 +12,14 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 public class VirtualShader{
-  Effect shader;
-  Effect quiet;
+  internal Effect shader;
+  internal Effect quiet;
   public bool isnull=>shader==null;
-  public VirtualShader(Effect shader, Effect quiet = null){
-    this.shader=shader; this.quiet=quiet;
+  internal int cacheNum;
+  internal string path;
+  public VirtualShader(string path){
+    cacheNum = -1;
+    this.path=path;
   }
   public void setBaseparams(){
     var p = shader.Parameters;
@@ -60,10 +64,16 @@ public class VirtualShader{
     if(quiet!=null)quiet.Parameters[key]?.SetValue(t);
   }
   public static implicit operator Effect(VirtualShader v){
-    if(v==null) return null;
+    if(v==null || v.shader == null) return null;
+    if(v.cacheNum != auspicioushelperModule.CACHENUM) {
+      DebugConsole.Write("Reloading shader", v.path);
+      auspicioushelperGFX.Fill(v);
+    }
     return v.quiet!=null&&auspicioushelperModule.Settings.UseQuietShader?v.quiet:v.shader;
   }
-  public static implicit operator VirtualShader(Effect eff)=>new VirtualShader(eff);
+  public void Clear(){
+    shader = (quiet = null);
+  }
 }
 
 public class VirtualShaderList:IEnumerable<VirtualShader>{
