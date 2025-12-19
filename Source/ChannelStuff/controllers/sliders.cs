@@ -30,7 +30,7 @@ public class ChannelFlagThing:Entity{
     if(!d.tryGetStr("flag", out flag)) flag='@'+channel;
   }
   public override void Added(Scene scene) {
-    Add(new ChannelTracker(channel,(double val)=>(scene as Level).Session.SetFlag(flag,val!=0)));
+    Add(new ChannelTracker(channel,(double val)=>(scene as Level).Session.SetFlag(flag,val!=0),true));
     base.Added(scene);
   }
 }

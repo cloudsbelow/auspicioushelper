@@ -11,7 +11,8 @@ trigger.triggerText = "Dream Trans"
 trigger.placements = {
     name = "Dream Transition Enabler",
     data = {
-        assistSmuggle=false
+        assistSmuggle=false,
+        prioTemplateDreamblocks=false,
     }
 }
 

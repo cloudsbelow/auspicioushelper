@@ -258,19 +258,19 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     if(p.dreamBlock is SentinalDb d && d.parent.allowTransition){
       goto yes;
     } else {
-      foreach(DreamMarkerComponent c in p.Scene.Tracker.GetComponents<DreamMarkerComponent>()){
-        if(c.dbm.dreaming && !c.dbm.allowTransition && c.Entity.Collidable){
-          bool flag;
-          if(c.Collider!=null) flag = p.CollideCheck(c.Entity);
-          else{
-            Collider orig = c.Entity.Collider;
-            c.Entity.Collider=c.Collider;
-            flag = p.CollideCheck(c.Entity);
-            c.Entity.Collider=orig;
-          }
-          if(flag) goto yes;
-        }
-      }
+      // foreach(DreamMarkerComponent c in p.Scene.Tracker.GetComponents<DreamMarkerComponent>()){
+      //   if(c.dbm.dreaming && !c.dbm.allowTransition && c.Entity.Collidable){
+      //     bool flag;
+      //     if(c.Collider!=null) flag = p.CollideCheck(c.Entity);
+      //     else{
+      //       Collider orig = c.Entity.Collider;
+      //       c.Entity.Collider=c.Collider;
+      //       flag = p.CollideCheck(c.Entity);
+      //       c.Entity.Collider=orig;
+      //     }
+      //     if(flag) goto yes;
+      //   }
+      // }
     }
     foreach(DreamTrans t in p.Scene.Tracker.GetEntities<DreamTrans>()) if(p.CollideCheck(t)) goto yes;
     return;
@@ -297,9 +297,11 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     public bool assistSmuggle;
     public Hitbox invalidHitbox = new Hitbox(-100,-100,-10000,0);
     public DreamMarkerComponent comp;
+    public bool prio;
     public DreamTrans(EntityData d, Vector2 o):base(d,o){
       hooks.enable();
       assistSmuggle = d.Bool("assistSmuggle",false);
+      prio = d.Bool("prioTemplateDreamblocks",false);
     }
     public void ManifestTemp(){
       comp.Collider = Collider;
@@ -311,6 +313,26 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     }
   }
 
+  static bool prioThing(Player p, CollisionData d){
+    if(!p.Inventory.DreamDash || !p.DashAttacking) return false;
+    Vector2 cpos = p.Position+d.Direction;
+    foreach(DreamTrans dt in p.Scene.Tracker.GetEntities<DreamTrans>()) if(dt.prio && p.CollideCheck(dt)){
+      foreach(DreamMarkerComponent c in p.Scene.Tracker.GetComponents<DreamMarkerComponent>()){
+        if(!c.dbm.dreaming || c.Entity.Collidable == false) continue;
+        bool flag=false;
+        if(c.Collider==null) flag = p.CollideCheck(c.Entity,cpos);
+        else{
+          Collider og = c.Entity.Collider;
+          c.Entity.Collider=c.Collider;
+          flag = p.CollideCheck(c.Entity);
+          c.Entity.Collider=og;
+        }
+        if(flag && c.dbm.DreamCheckStart(p,d.Direction)) return true;
+      }
+      break;
+    }
+    return false;
+  }
   static void Hook(On.Celeste.Player.orig_OnCollideH orig, Player p, CollisionData d){
     if(!DDsh(p)){
       TemplateDreamblockModifier t = d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateDreamblockModifier>();
@@ -318,6 +340,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
         if(t.dreaming && t.DreamCheckStart(p,d.Direction)) return;
         t = t.parent?.GetFromTree<TemplateDreamblockModifier>();
       }
+      if(prioThing(p,d)) return;
     }
     orig(p,d);
   }
@@ -328,6 +351,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
         if(t.dreaming && t.DreamCheckStart(p,d.Direction)) return;
         t = t.parent?.GetFromTree<TemplateDreamblockModifier>();
       }
+      if(prioThing(p,d)) return;
     }
     orig(p,d);
   }

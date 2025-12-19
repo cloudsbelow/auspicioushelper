@@ -67,13 +67,16 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   float minHoldTimer = 0.35f;
   float[] customThrowspeeds;
   bool moveImmediately = true;
+  float? neutralHolddelay = null;
   public TemplateHoldable(EntityData d, Vector2 offset):base(d.Position+offset){
     Position+=new Vector2(d.Width/2, d.Height);
     hoffset = d.Nodes.Length>0?(d.Nodes[0]-new Vector2(d.Width/2, d.Height)):new Vector2(0,-d.Height/2);
     Collider = new Hitbox(d.Width,d.Height,-d.Width/2,-d.Height);
     if(d.Width>8 || d.Height>11) replaceNormalRelease = true;
     lpos = Position;
-    Add(Hold = new Holdable(d.Float("cannot_hold_timer",0.1f)));
+    var hds = Util.csparseflat(d.Attr("cannot_hold_timer","0.1"));
+    Add(Hold = new Holdable(hds.Length==0?0.1f:hds[0]));
+    if(hds.Length>1) neutralHolddelay = hds[1];
     var ex = Util.ciparseflat(d.Attr("Holdable_collider_expand","4"));
     int topEx = ex.Length switch{>=1=>ex[0],_=>4};
     int rightEx = ex.Length switch{>=2=>ex[1],>=1=>ex[0],_=>4};
@@ -289,11 +292,11 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       Left = f.left;
       //while()
       doneFail:
-      done:
-        Hold.cannotHoldTimer=Hold.cannotHoldDelay;
-        Hold.Holder = null;
-        Position=Position.Round();
+      done: ;
     }
+    Hold.cannotHoldTimer=force.X==0 && neutralHolddelay is {} neutralh? neutralh:Hold.cannotHoldDelay;
+    Hold.Holder = null;
+    Position=Position.Round();
     RemoveTag(Tags.Persistent);
     if(!keepCollidableAlways) te.setCollidability(true);
     if(te==null) return;
@@ -312,7 +315,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     if (Speed != Vector2.Zero){
       noGravityTimer = 0.1f;
     }
-    DebugConsole.Write("thrown speed: ",Speed);
+    DebugConsole.Write($"thrown speed: {Speed}, cannot hold {Hold.cannotHoldTimer}");
   }
   void OnCollideH(CollisionData data){
     if (data.Hit is DashSwitch){

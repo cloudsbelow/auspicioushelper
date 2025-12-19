@@ -348,7 +348,7 @@ public class TileOccluder:Component{
   public void Occlude(LightingRenderer r, int index, Vector2 center, float rad){
     Vector3 atlasCenter = r.GetCenter(index);
     Color mask = r.GetMask(index, 0, 1);
-    Vector2 pos = Entity.Position;
+    Vector2 pos = lpos;
     Vector2 del = center-pos;
 
     bottomEdges.IntoBounds( /// Edges that face _
