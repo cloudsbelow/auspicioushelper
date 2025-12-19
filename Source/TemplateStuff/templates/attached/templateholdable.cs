@@ -94,7 +94,6 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       return dangerous && Hold.Holder == null && Speed!=Vector2.Zero;
     };
     LiftSpeedGraceTime = 0.1f;
-    Tag = Tags.TransitionUpdate;
     keepCollidableAlways = d.Bool("always_collidable",false);
     origpos = Position;
     hooks.enable();

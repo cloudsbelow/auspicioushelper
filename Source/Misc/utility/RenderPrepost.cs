@@ -26,6 +26,7 @@ public class BeforeAfterRender:Component{
       if(c.b!=null) c.b();
     }
     foreach(var f in postbefore) f();
+    TileOccluder.HandleThing(self);
   }
   static void After(On.Celeste.Level.orig_AfterRender orig, Level self){
     foreach(var f in preafter) f();
@@ -35,11 +36,12 @@ public class BeforeAfterRender:Component{
     }
     foreach(var f in postafter) f();
   }
+  [OnLoad]
   static HookManager hooks = new HookManager(()=>{
     On.Celeste.Level.BeforeRender+=Before;
     On.Celeste.Level.AfterRender+=After;
   },()=>{
     On.Celeste.Level.BeforeRender-=Before;
     On.Celeste.Level.AfterRender-=After;
-  }).enable();
+  });
 }

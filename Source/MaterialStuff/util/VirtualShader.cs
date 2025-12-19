@@ -66,7 +66,6 @@ public class VirtualShader{
   public static implicit operator Effect(VirtualShader v){
     if(v==null || v.shader == null) return null;
     if(v.cacheNum != auspicioushelperModule.CACHENUM) {
-      DebugConsole.Write("Reloading shader", v.path);
       auspicioushelperGFX.Fill(v);
     }
     return v.quiet!=null&&auspicioushelperModule.Settings.UseQuietShader?v.quiet:v.shader;

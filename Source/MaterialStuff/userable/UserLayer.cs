@@ -202,7 +202,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
     base.onRemove();
     foreach(var r in resources) r.Unuse();
   }
-  public override string ToString()=>base.ToString()+" "+RuntimeHelpers.GetHashCode(this).ToString();
+  public override string ToString()=>$"UserLayer.{(identifier.Length>40?identifier.Substring(0,40)+"...":identifier)} ({this.GetHashCode()})";
 }
 
 public class MaterialResource{

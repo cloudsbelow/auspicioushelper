@@ -38,7 +38,7 @@ public class DecalRecolor:Entity{
     if(d.Enum<Scopes>("scope",Scopes.wholeMap)==Scopes.wholeMap)Apply(d);
   }
   static Handle Apply(string tex, string val){
-    DebugConsole.Write($"Applying recolor {val} to {tex}");
+    //DebugConsole.Write($"Applying recolor {val} to {tex}");
     if(!Recolors.TryGet(tex, out var st)) Recolors.Add(tex, st=new());
     return st.Push(Util.ColorRemap.Get(val));
   }

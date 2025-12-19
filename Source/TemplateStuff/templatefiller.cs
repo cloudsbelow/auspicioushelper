@@ -10,9 +10,12 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
+using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
+using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -121,6 +124,7 @@ public class templateFiller:Entity{
     public MipGrid FgMipgrid;
     public TileView Bgt = null;
     public Vector2 tiletlc;
+    public TileOccluder tileOcc  = null;
     public TileData(Vector2 tileoffset, Rectangle tilerect){
       this.tr = tilerect;
       tiletlc = tileoffset;
@@ -190,6 +194,7 @@ public class templateFiller:Entity{
         }
       }
       fgt = keepfg? new VirtualMap<char>(fgtiles):null;
+      if(fgt != null) tileOcc = new TileOccluder().Build(fgt);
       bgt = keepbg? new VirtualMap<char>(bgtiles):null;
     }
     internal void setTiles(VirtualMap<char> tiles, bool foreground = true){
@@ -200,8 +205,10 @@ public class templateFiller:Entity{
         fill[i,j]=c;
         has |= c!='0';
       }  
-      if(foreground) fgt = has?new VirtualMap<char>(fill):null;
-      else bgt = has?new VirtualMap<char>(fill):null;
+      if(foreground) {
+        fgt = has?new VirtualMap<char>(fill):null;
+        if(fgt != null) tileOcc = new TileOccluder().Build(fgt);
+      } else bgt = has?new VirtualMap<char>(fill):null;
     }
   }
   public void AddTilesTo(Template tem, Scene s){
@@ -285,10 +292,6 @@ public class templateFiller:Entity{
 
 
 
-
-
-
-
 [Tracked]
 public class TileOccluder:Component{
   public class RowValues{
@@ -335,27 +338,36 @@ public class TileOccluder:Component{
   RowValues bottomEdges;
   RowValues leftEdges;
   RowValues rightEdges;
-  public void Build(VirtualMap<char> dat){
+  Vector2 size;
+  public TileOccluder Build(VirtualMap<char> dat){
     topEdges = new(dat.Rows,dat.Columns,(int i, int j)=> dat[j,i]!='0' && (i==0 || dat[j,i-1]=='0'));
     bottomEdges = new(dat.Rows,dat.Columns,(int i, int j)=> dat[j,i]!='0' && (i==dat.Rows-1 || dat[j,i+1]=='0'));
     leftEdges = new(dat.Columns,dat.Rows,(int i, int j)=> dat[i,j]!='0' && (i==0 || dat[i-1,j]=='0'));
     rightEdges = new(dat.Columns,dat.Rows,(int i, int j)=> dat[i,j]!='0' && (i==dat.Columns-1 || dat[i+1,j]=='0'));
     size = new(dat.Columns*cellW,dat.Rows*cellH);
+    return this;
   }
-  public TileOccluder():base(true,true){}
+  public TileOccluder():base(true,true){
+    hooks.enable();
+  }
+  public TileOccluder(TileOccluder copy):this(){
+    topEdges = copy.topEdges;
+    bottomEdges = copy.bottomEdges;
+    leftEdges = copy.leftEdges;
+    rightEdges = copy.rightEdges;
+    size = copy.size;
+  }
   const float cellW = 8;
   const float cellH = 8;
-  public void Occlude(LightingRenderer r, int index, Vector2 center, float rad){
-    Vector3 atlasCenter = r.GetCenter(index);
-    Color mask = r.GetMask(index, 0, 1);
+  public void Occlude(LightingRenderer r, Vector3 atlasCenter, Color mask, Vector2 center, float rad){
     Vector2 pos = lpos;
     Vector2 del = center-pos;
 
     bottomEdges.IntoBounds( /// Edges that face _
-      (int)((del.Y-rad)/cellH), (int) (del.Y/cellH-float.Epsilon),
-      (int)((del.X-rad)/cellW), (int)((del.X+rad)/cellW), (y,x1,x2)=>{
+      (int) ((del.Y-rad)/cellH), (int) Math.Ceiling(del.Y/cellH-1),
+      (int) ((del.X-rad)/cellW), (int) Math.Ceiling((del.X+rad)/cellW), (y,x1,x2)=>{
         Span<Vector2> items = stackalloc Vector2[6];
-        float ly = y*cellH-del.Y;
+        float ly = y*cellH-del.Y+cellH;
         float lx1 = Math.Max(-rsize, x1*cellW-del.X);
         float lx2 = Math.Min(rsize, x2*cellW-del.X);
         int n = ClipPosy(new(lx1, -ly), new(lx2, -ly), ref items);
@@ -364,8 +376,8 @@ public class TileOccluder:Component{
       }
     );
     topEdges.IntoBounds( /// Edges on the top
-      (int)Math.Ceiling(del.Y/cellH+float.Epsilon), (int) ((del.Y+rad)/cellH),
-      (int)((del.X-rad)/cellW), (int)((del.X+rad)/cellW), (y,x1,x2)=>{
+      (int) Math.Floor(del.Y/cellH+1), (int) Math.Ceiling((del.Y+rad)/cellH),
+      (int) ((del.X-rad)/cellW), (int) Math.Ceiling((del.X+rad)/cellW), (y,x1,x2)=>{
         Span<Vector2> items = stackalloc Vector2[6];
         float ly = y*cellH-del.Y;
         float lx1 = Math.Max(-rsize, x1*cellW-del.X);
@@ -374,11 +386,12 @@ public class TileOccluder:Component{
         PushVerts(r, n, ref items, atlasCenter, mask, false);
       }
     );
+
     rightEdges.IntoBounds(  ///Edges that have out normal this way ->
-      (int)((del.X-rad)/cellW), (int) (del.X/cellW-float.Epsilon),
-      (int)((del.Y-rad)/cellH), (int)((del.Y+rad)/cellH), (x,y1,y2)=>{
+      (int)((del.X-rad)/cellW), (int) Math.Ceiling(del.X/cellW-1),
+      (int)((del.Y-rad)/cellH), (int) Math.Ceiling((del.Y+rad)/cellH), (x,y1,y2)=>{
         Span<Vector2> items = stackalloc Vector2[6];
-        float lx = x*cellW-del.X;
+        float lx = x*cellW-del.X+cellW;
         float ly1 = Math.Max(-rsize, y1*cellH-del.Y);
         float ly2 = Math.Min(rsize, y2*cellH-del.Y);
         int n = ClipPosy(new(ly1, -lx), new(ly2, -lx), ref items);
@@ -387,8 +400,8 @@ public class TileOccluder:Component{
       }
     );
     leftEdges.IntoBounds(  ///Edges that have out normal this way <-
-      (int)Math.Ceiling(del.X/cellW+float.Epsilon), (int) ((del.X+rad)/cellW),
-      (int)((del.Y-rad)/cellH), (int)((del.Y+rad)/cellH), (x,y1,y2)=>{
+      (int) Math.Floor(del.X/cellW+1), (int) Math.Ceiling((del.X+rad)/cellW),
+      (int) ((del.Y-rad)/cellH), (int) Math.Ceiling((del.Y+rad)/cellH), (x,y1,y2)=>{
         Span<Vector2> items = stackalloc Vector2[6];
         float lx = x*cellW-del.X;
         float ly1 = Math.Max(-rsize, y1*cellH-del.Y);
@@ -398,6 +411,13 @@ public class TileOccluder:Component{
         PushVerts(r, n, ref items, atlasCenter, mask, true);
       }
     );
+  }
+  public static void OccludeAll(LightingRenderer r, Vector3 atlasCenter, Color mask, Vector2 center, float rad){
+    for(int i=0; i<rects.Count; i++){
+      if(rects[i].CollideCircle(center,rad)){
+        occs[i].Occlude(r,atlasCenter,mask,center,rad);
+      }
+    }
   }
 
   const int rsize = 128;
@@ -409,14 +429,18 @@ public class TileOccluder:Component{
     int type2=Math.Sign(p2.X)*(x2>p2.Y?1:0);
     int n=0;
     o[n++] = p1;
-    if(type1 !=0){
-      o[n++] = p1*(rsize/x1);
-    } else o[n++] = p1*(rsize/p1.Y);
-    if(type1++==-1 && type2>-1) o[n++] = new Vector2(-rsize,rsize);
-    if(type1==0 && type2==1) o[n++] = new Vector2(rsize, rsize);
-    if(type2 !=0){
-      o[n++] = p2*(rsize/x2);
-    } else o[n++] = p2*(rsize/p2.Y);
+    if(x1!=rsize){
+      if(type1 !=0){
+        o[n++] = p1*(rsize/x1);
+      } else o[n++] = p1*(rsize/p1.Y);
+    }
+    if(type1==-1 && type2>-1) o[n++] = new Vector2(-rsize,rsize);
+    if(type1<=0 && type2==1) o[n++] = new Vector2(rsize, rsize);
+    if(x2!=rsize){
+      if(type2 !=0){
+        o[n++] = p2*(rsize/x2);
+      } else o[n++] = p2*(rsize/p2.Y);
+    }
     o[n++] = p2;
     return n;
   }
@@ -438,19 +462,28 @@ public class TileOccluder:Component{
   }
 
   
-  Vector2 size;
   Vector2 lpos;
-  bool lvis;
+  bool lvis=false;
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReset)]
+  static List<FloatRect> rects = new();
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReset)]
+  static List<TileOccluder> occs = new();
   public static void HandleThing(Level l){
+    rects.Clear();
+    occs.Clear();
     foreach(TileOccluder comp in l.Tracker.GetComponents<TileOccluder>()){
       Vector2 epos = comp.Entity.Position;
       bool nvis = comp.Entity.Visible;
-      if(epos == comp.lpos && nvis == comp.lvis) return;
       FloatRect rNew = new(epos.X,epos.Y, comp.size.X,comp.size.Y);
+      if(nvis){
+        rects.Add(rNew);
+        occs.Add(comp);
+      }
+      if(epos == comp.lpos && nvis == comp.lvis) continue;
       FloatRect rOld = new(comp.lpos.X,comp.lpos.Y, comp.size.X,comp.size.Y);
       bool flag = false;
       if(!comp.lvis) rOld = rNew;
-      else if(comp.lpos != epos && nvis) flag = true;
+      else if((comp.lpos != epos) && nvis) flag = true;
       comp.lpos = epos;
       comp.lvis = nvis;
       foreach(VertexLight v in l.Tracker.GetComponents<VertexLight>()){
@@ -461,4 +494,27 @@ public class TileOccluder:Component{
       }
     }
   }
+  static void OccluderHook(ILContext ctx){
+    ILCursor c = new(ctx);
+    if(c.TryGotoNextBestFit(MoveType.After,
+      itr=>itr.MatchCallvirt<LightingRenderer>(nameof(LightingRenderer.GetCenter)),
+      itr=>itr.MatchStloc(9), itr=>itr.MatchLdarg0(),itr=>itr.MatchLdloc(5),
+      itr=>itr.MatchLdcR4(0), itr=>itr.MatchLdcR4(1),
+      itr=>itr.MatchCallvirt<LightingRenderer>(nameof(LightingRenderer.GetMask)),
+      itr=>itr.MatchStloc(10)
+    )){
+      c.EmitLdarg0();
+      c.EmitLdloc(9);
+      c.EmitLdloc(10);
+      c.EmitLdloc(7);
+      c.EmitLdloc(6);
+      c.EmitLdfld(typeof(VertexLight).GetField(nameof(VertexLight.endRadius),Util.GoodBindingFlags));
+      c.EmitDelegate(OccludeAll);
+    } else DebugConsole.WriteFailure("Failed to add light hooks", true);
+  }
+  static HookManager hooks = new(()=>{
+    IL.Celeste.LightingRenderer.DrawLightOccluders += OccluderHook;
+  }, ()=>{
+    IL.Celeste.LightingRenderer.DrawLightOccluders -= OccluderHook;
+  }, auspicioushelperModule.OnEnterMap);
 }
