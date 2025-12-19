@@ -196,7 +196,7 @@ public class Template:Entity, ITemplateChild{
     if(t==null || expanded) return;
     expanded = true;
     lastRoundloc = roundLoc;
-    t.Use(this);
+    if(!t.Use(this)) return;
     t.AddTilesTo(this, scene);
     Level l = scene as Level;
     Vector2 simoffset = lastRoundloc-t.origin;
@@ -222,7 +222,7 @@ public class Template:Entity, ITemplateChild{
   internal Scene addingScene;
   public void setTemplate(string s=null, Scene scene=null){
     templateStr=s??templateStr;
-    if(t==null && !MarkedRoomParser.getTemplate(templateStr, parent, scene, out t)){
+    if(t==null && !MarkedRoomParser.getTemplate(templateStr, parent?.t?.room, scene, out t)){
       DebugConsole.Write($"No template found with identifier \"{templateStr}\" in {this} at {Position}");
     }
   }

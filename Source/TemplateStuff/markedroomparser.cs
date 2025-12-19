@@ -43,20 +43,24 @@ internal static class MarkedRoomParser{
     Dictionary<string, templateFiller> templates = new();
     var room = new TemplateRoom(l);
     foreach(EntityData d in l.Entities){
+      templateFiller t = null;
       if(d.Name == "auspicioushelper/templateFiller"){
-        templateFiller t = new templateFiller(d, l.Position);
+        t = new templateFiller(d, l.Position);
         t.data.roomdat = l;
-        string id = t.name;
-        if(templates.ContainsKey(id)){
-          DebugConsole.WriteFailure("Multiple templates with the same identifier "+id);
-          continue;
-        }
         int handle = rects.add(new FloatRect(t));
-        handleDict.Add(handle, id);
-        templates.Add(id,t);
-        //DebugConsole.Write(id);
+        handleDict.TryAdd(handle, t.name);
         t.tiledata.setTiles(l.Solids,l.Bg);
+      } else if(d.Name == "auspicioushelper/TemplateFillerSwitcher"){
+        templateFiller.FillerSwitcher sw = new(d);
+        t = sw;
       }
+      if(t == null) continue; 
+      if(templates.ContainsKey(t.name)){
+        DebugConsole.WriteFailure("Multiple templates with the same identifier "+t.name);
+        if(t.name!="" && auspicioushelperModule.InFolderMod){
+          DebugConsole.MakePostcard($"Failed to load. Room {l.Name} has multiple templates with name {t.name}");
+        }
+      } else templates.Add(t.name,t);
     }
     foreach(EntityData d in l.Entities){
       if(d.Name == "auspicioushelper/templateFiller") continue;
@@ -148,7 +152,7 @@ internal static class MarkedRoomParser{
     }
   }
   static readonly HashSet<char> delimiters=new(){'$','#','@','%',':',';'};
-  public static bool getTemplate(string templatestr, Template parent, Scene scene, out templateFiller filler){
+  public static bool getTemplate(string templatestr, TemplateRoom parentRoom, Scene scene, out templateFiller filler){
     if(true){
       int i=0;
       for(;i<templatestr.Length && !delimiters.Contains(templatestr[i]);i++){}
@@ -162,8 +166,8 @@ internal static class MarkedRoomParser{
       for(int i=idx; i<ts.Length; i++)e+=ts[i];
       TemplateRoom dr=null;
       if(idx==0){
-        if(parent!=null){
-          if(parent.t.room.templates.TryGetValue(e, out filler)) goto success;
+        if(parentRoom!=null){
+          if(parentRoom.templates.TryGetValue(e, out filler)) goto success;
         } else {
           string ldn = (scene as Level)?.Session.LevelData.Name??"NULL";
           if(dynamicRooms.TryGetValue(ldn, out dr)){

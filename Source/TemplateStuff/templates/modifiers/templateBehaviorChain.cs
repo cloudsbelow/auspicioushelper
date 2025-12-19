@@ -20,7 +20,7 @@ public class TemplateBehaviorChain:Entity{
   public static void setup(){
     EntityParser.clarify("auspicioushelper/TemplateBehaviorChain",EntityParser.Types.unwrapped,(l,d,o,e)=>{
       string templateStr = e.Attr("template","");
-      if(!MarkedRoomParser.getTemplate(templateStr, EntityParser.currentParent, l, out var t)){
+      if(!MarkedRoomParser.getTemplate(templateStr, EntityParser.currentParent?.t?.room, l, out var t)){
         DebugConsole.Write($"No template found with identifier \"{templateStr}\" in {d.Name} at {d.Position}");
         return null;
       } else return startChain(t,e,e.Position+o,l,EntityParser.currentParent);

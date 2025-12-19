@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
@@ -223,7 +224,7 @@ public class templateFiller:Entity{
       tem.addEnt(new BgTiles(this, tem.roundLoc, tem.depthoffset));
     }
   }
-  public virtual void Use(Template user){}
+  public virtual bool Use(Template user)=>true;
   public virtual templateFiller GetInstance()=>this;
   
 
@@ -251,7 +252,7 @@ public class templateFiller:Entity{
     List<string> list = new();
     int idx=-1;
     enum ChooseMode{
-      Loop, Pseudo, True
+      Loop, PseudoRandom, TrueRandom, Channel
     }
     enum ResetMode{
       Individual, Room, Never
@@ -259,29 +260,43 @@ public class templateFiller:Entity{
     ChooseMode mode;
     ResetMode reset;
     bool inUsing=false;
-    public override void Use(Template user){
+    string channel;
+    public FillerSwitcher(EntityData d){
+      name = d.Attr("template_name","");
+      channel = d.Attr("channel");
+      mode = d.Enum("SelectionMode", ChooseMode.Loop);
+      reset = d.Enum("LoopResetMode", ResetMode.Individual);
+      list = Util.listparseflat(d.Attr("templates"));
+    }
+    public override bool Use(Template user){
       if(inUsing){
-        DebugConsole.MakePostcard("Infinite loop in templates detected. Bad");
-        return;
+        DebugConsole.MakePostcard("Infinite loop in template switchers detected. Bad");
+        return false;
       }
       using(new Util.AutoRestore<bool>(ref inUsing, true)){
         switch(mode){
           case ChooseMode.Loop: idx=(idx+1)%list.Count; break;
-          case ChooseMode.Pseudo: Calc.Random.Next(list.Count); break;
-          case ChooseMode.True: RandomNumberGenerator.GetInt32(list.Count); break;
+          case ChooseMode.PseudoRandom: idx = Calc.Random.Next(list.Count); break;
+          case ChooseMode.TrueRandom: idx = RandomNumberGenerator.GetInt32(list.Count); break;
+          case ChooseMode.Channel: idx = (int)Math.Floor(ChannelState.readChannel(channel)); break;
         }
-        if(!MarkedRoomParser.getTemplate(list[idx], user, user.Scene??user.addingScene, out var t)){
-          DebugConsole.MakePostcard($"Could not find the template \"{list[idx]}\"");
+        if(idx<0 || idx>=list.Count){
+          DebugConsole.MakePostcard($"Tried to get item {idx+1} of {room.Name}/{name}, but only {list.Count} were given");
+          return false;
+        }
+        if(!MarkedRoomParser.getTemplate(list[idx], room, user.Scene??user.addingScene, out var t)){
+          DebugConsole.MakePostcard($"Could not find the template \"{list[idx]}\" in filler switcher {room.Name}/{name}");
         }
         t.Use(user);
         data = t.data;
         tiledata = t.tiledata;
         offset = t.offset;
       }
+      return true;
     }
     public override templateFiller GetInstance() {
       if(reset == ResetMode.Individual) return Util.shallowCopy(this);
-      if(reset == ResetMode.Room) used.Add(this);
+      if(reset == ResetMode.Room && mode == ChooseMode.Loop) used.Add(this);
       return this;
     }
     public FillerSwitcher(EntityData d, Vector2 o):base(){
@@ -293,7 +308,7 @@ public class templateFiller:Entity{
 
 
 [Tracked]
-public class TileOccluder:Component{
+public class TileOccluder:OnAnyRemoveComp{
   public class RowValues{
     int[] starts;
     int[] e1;
@@ -491,6 +506,17 @@ public class TileOccluder:Component{
         if(rOld.CollideCircle(v.Center,v.EndRadius) || (flag && rNew.CollideCircle(v.Center,v.endRadius))){
           v.Dirty = true;
         }
+      }
+    }
+  }
+  public override void OnRemove() {
+    Scene s = Entity?.Scene;
+    if(s==null || !lvis) return;
+    FloatRect rOld = new(lpos.X,lpos.Y, size.X,size.Y);
+    foreach(VertexLight v in s.Tracker.GetComponents<VertexLight>()){
+      if(v.Dirty) continue;
+      if(rOld.CollideCircle(v.Center,v.EndRadius)){
+        v.Dirty = true;
       }
     }
   }
