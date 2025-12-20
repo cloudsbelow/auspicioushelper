@@ -47,7 +47,7 @@ internal static class MarkedRoomParser{
       if(d.Name == "auspicioushelper/templateFiller"){
         t = new templateFiller(d, l.Position);
         t.data.roomdat = l;
-        int handle = rects.add(new FloatRect(t));
+        int handle = rects.add(t.data.roomRect);
         handleDict.TryAdd(handle, t.name);
         t.tiledata.setTiles(l.Solids,l.Bg);
       } else if(d.Name == "auspicioushelper/TemplateFillerSwitcher"){
@@ -63,7 +63,7 @@ internal static class MarkedRoomParser{
       } else templates.Add(t.name,t);
     }
     foreach(EntityData d in l.Entities){
-      if(d.Name == "auspicioushelper/templateFiller") continue;
+      if(d.Name == "auspicioushelper/templateFiller" || d.Name == "auspicioushelper/TemplateFillerSwitcher") continue;
       //DebugConsole.Write("Looking at entity "+d.Name);
       var hits = rects.collidePointAll(d.Position);
       bool w=false;

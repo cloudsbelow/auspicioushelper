@@ -199,7 +199,7 @@ public class Template:Entity, ITemplateChild{
     if(!t.Use(this)) return;
     t.AddTilesTo(this, scene);
     Level l = scene as Level;
-    Vector2 simoffset = lastRoundloc-t.origin;
+    Vector2 simoffset = lastRoundloc-t.data.origin;
     string fp = fullpath;
     foreach(EntityData w in t.data.ChildEntities){
       Entity e = EntityParser.create(w,l,t.data.roomdat,simoffset,this,fp);

@@ -142,7 +142,7 @@ public class ConnectedBlocks:Entity{
         var pair = holds[0];
         RemChildren(all,minimum,f);
         Vector2 pos = pair.Key+levelOffset;
-        f.offset = minimum-pos;
+        f.data.offset = minimum-pos;
         Vector2? forcepos = pair.Value.Name=="auspicioushelper/TemplateBehaviorChain"&&pair.Value.Bool("forceOwnPosition",false)?pair.Key:null;
         TemplateBehaviorChain.Chain chain = new(f, new List<EntityData>(){pair.Value,InplaceTemplateWrapper.creationDat}, null, forcepos); 
         var first = chain.NextEnt();
@@ -164,7 +164,7 @@ public class ConnectedBlocks:Entity{
         if(hold.isCreated || !string.IsNullOrWhiteSpace(hold.d.Attr("template",""))) continue;
         if(checker.collideFr(new(hold))){
           RemChildren(all,minimum,f);
-          f.offset = minimum-(hold.Position+hold.Offset);
+          f.data.offset = minimum-(hold.Position+hold.Offset);
           hold.makeExternally(f);
           goto end;
         }

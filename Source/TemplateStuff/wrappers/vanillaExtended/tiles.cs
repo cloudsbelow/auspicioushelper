@@ -48,8 +48,8 @@ internal class BgTiles:BackgroundTiles, ISimpleEnt, IBoundsHaver{
   public Template parent {get;set;}
   public Vector2 toffset {get;set;}
   public FloatRect bounds {get;set;}
-  public BgTiles(templateFiller t, Vector2 posoffset, int depthoffset):base(posoffset+t.offset, t.tiledata.bgt){
-    toffset = t.offset;
+  public BgTiles(templateFiller t, Vector2 posoffset, int depthoffset):base(posoffset+t.data.offset, t.tiledata.bgt){
+    toffset = t.data.offset;
     Depth+=depthoffset;
     TileHooks.hooks.enable();
     RemoveTag(Tags.Global);
@@ -84,8 +84,8 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
   public Vector2 toffset {get;set;}
   public FloatRect bounds {get;set;}
   TileOccluder occlude;
-  public FgTiles(templateFiller t, Vector2 posoffset, int depthoffset):base(posoffset+t.offset, t.tiledata.fgt){
-    toffset = t.offset;
+  public FgTiles(templateFiller t, Vector2 posoffset, int depthoffset):base(posoffset+t.data.offset, t.tiledata.fgt){
+    toffset = t.data.offset;
     Depth+=depthoffset;
     TileHooks.hooks.enable();
     tileTypes = t.tiledata.fgt;

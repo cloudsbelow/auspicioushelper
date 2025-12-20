@@ -22,35 +22,37 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/templateFiller")]
 [CustomloadEntity]
-public class templateFiller:Entity{
+public class templateFiller{
   
   internal string name;
-  internal Vector2 offset;
-  internal Vector2 origin=>-offset+Position;
   internal MarkedRoomParser.TemplateRoom room;
   internal TemplateData data = new();
   internal TileData tiledata;
-
-
 
 
   internal class TemplateData{
     public LevelData roomdat;
     internal List<DecalData> decals = new();
     internal List<EntityData> ChildEntities = new(); 
+    internal Vector2 offset;
+    internal Vector2 position;
+    internal Vector2 size;
+    internal Vector2 origin=>-offset+position;
+    internal FloatRect roomRect=>new(position.X,position.Y,size.X,size.Y);
   }
 
-  internal templateFiller(EntityData d, Vector2 leveloffset):base(d.Position){
-    this.Collider = new Hitbox(d.Width, d.Height);
+  internal templateFiller(EntityData d, Vector2 leveloffset){
+    data.position = d.Position;
+    data.size = new(d.Width, d.Height);
     name = d.Attr("template_name","");
-    tiledata = new(leveloffset+Position, new Rectangle((int)d.Position.X/8, (int)d.Position.Y/8, d.Width/8,d.Height/8));
-    this.offset = d.Nodes?.Length>0?d.Position-d.Nodes[0]:Vector2.Zero;
+    tiledata = new(leveloffset+data.position, new Rectangle((int)d.Position.X/8, (int)d.Position.Y/8, d.Width/8,d.Height/8));
+    data.offset = d.Nodes?.Length>0?d.Position-d.Nodes[0]:Vector2.Zero;
   }
-  internal templateFiller(Int2 pos, Int2 size):base(pos){
-    tiledata = new(Position, new Rectangle(pos.x/8,pos.y/8,size.x/8,size.y/8));
+  internal templateFiller(Int2 pos, Int2 size){
+    data.position = pos;
+    tiledata = new(data.position, new Rectangle(pos.x/8,pos.y/8,size.x/8,size.y/8));
   }
   internal templateFiller(){}
-  public override void Awake(Scene scene)=>RemoveSelf();
   public class TileView{
     VirtualMap<MTexture> tiles;
     VirtualMap<List<AnimatedTiles.Tile>> anims;
@@ -232,7 +234,7 @@ public class templateFiller:Entity{
   public static templateFiller MkNestingFiller(EntityData internalTemplate,TemplateBehaviorChain.Chain chain = null){
     var f=new templateFiller();
     f.data.ChildEntities.Add(internalTemplate);
-    f.Position = internalTemplate.Position;
+    f.data.position = internalTemplate.Position;
     f.chain = chain;
     return f;
   }
@@ -242,6 +244,7 @@ public class templateFiller:Entity{
   }
 
   [CustomEntity("auspicioushelper/TemplateFillerSwitcher")]
+  [CustomloadEntity]
   public class FillerSwitcher:templateFiller{
     static HashSet<FillerSwitcher> used = new();
     [ResetEvents.RunOn(ResetEvents.RunTimes.OnReset)]
@@ -290,7 +293,6 @@ public class templateFiller:Entity{
         t.Use(user);
         data = t.data;
         tiledata = t.tiledata;
-        offset = t.offset;
       }
       return true;
     }

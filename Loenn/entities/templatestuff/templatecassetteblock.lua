@@ -17,6 +17,7 @@ entity.placements = {
       freeze = false,
       do_boost = false,
       --do_raise = false,
+      refreshEntsAlways = false,
       
       _loenn_display_template = true,
     }

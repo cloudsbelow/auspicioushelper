@@ -31,7 +31,7 @@ public class CustomloadEntity:Attribute{
           if(t.GetMethod(fn,flags,[]) is {} f2)l=(l,d,o,e)=>f2.Invoke(null,[]);
           if(l==null) DebugConsole.WriteFailure($"Could not find valid function {fn} on {t}",true);
         }
-        foreach(var s in ce.IDs) found.Add(s,l);
+        if(ce!=null) foreach(var s in ce.IDs) found.Add(s,l);
       }
     }
   }

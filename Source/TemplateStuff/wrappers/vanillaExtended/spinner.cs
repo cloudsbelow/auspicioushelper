@@ -84,6 +84,16 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     }
     if(filler!=null) filler.Position=Position;
   }
+  public override void Awake(Scene scene) {
+    base.Awake(scene);
+    if(InView()){
+      inView = true;
+      if(!expanded) CreateSprites();
+      if(color == CrystalColor.Rainbow && !hasCustomCOlor) UpdateHue();
+      Visible = hvisible && inView;
+    }
+  }
+  new bool InView()=>MaterialPipe.clipBounds.CollidePointExpand(Int2.Round(Position),16);
   public void parentChangeStat(int vis, int col, int act){
     if(vis!=0){
       hvisible = vis>0;

@@ -21,7 +21,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
   
   public string channel{get;set;}
   enum State {
-    gone, trying, there
+    gone, manifest, trying, there
   }
   State there = State.there;
   public List<Entity> todraw=new List<Entity>();
@@ -30,6 +30,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
   protected override Vector2 virtLoc =>Position+Vector2.UnitY*hoffset;
   float hoffset; 
   bool freeze;
+  bool paranoid;
   CassetteMaterialLayer layer = null;
   public TemplateCassetteBlock(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateCassetteBlock(EntityData d, Vector2 offset, int depthoffset)
@@ -38,12 +39,14 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
     channel = d.Attr("channel","");
     prop = prop&~Propagation.Inside;
     doBoost = d.Bool("do_boost",false);
+    paranoid = d.Bool("refreshEntsAlways",false);
   }
   public override void addTo(Scene scene) {
     bool gone = new ChannelTracker(channel, setChVal).AddTo(this).value == 0;
     if(gone && doBoost) hoffset=2;
     base.addTo(scene);
     CassetteMaterialLayer.layers.TryGetValue(channel,out layer);
+    if(gone && paranoid) silent=true;
     if(gone)setChVal(0);
     setupEnts(GetChildren<Entity>());
   }
@@ -59,6 +62,18 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
     };
   }
   public void tryManifest(){
+    if(paranoid && there!=State.manifest){
+      if(layer != null) destroyChildren(true);
+      makeChildren(Scene);
+      if(children.Count>0){
+        UpdateHook.AddAfterUpdate(()=>{
+          enforce();
+          tryManifest();
+        },false,true);
+      }
+      there = State.manifest;
+      return;
+    }
     Player p = Scene?.Tracker.GetEntity<Player>();
     if(getParentCol() && p!=null && !p.Dead && hasInside(p)){
       p.Position.Y-=4;
@@ -83,10 +98,15 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
     prop|=Propagation.Inside;
     setVisColAct(true,true,true);
   }
+  bool silent=false;
   public void setChVal(double val){
     if(val==0){
       if(there == State.there){
-        setVisColAct(layer!=null,false,!freeze);
+        if(paranoid && layer == null) UpdateHook.AddAfterUpdate(()=>{
+          destroyChildren(!silent);
+          silent=false;
+        },false,true);
+        else setVisColAct(layer!=null,false,!freeze);
         if(doBoost && hoffset!=2){
           hoffset = 2;
           childRelposSafe();
