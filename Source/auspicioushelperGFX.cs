@@ -34,12 +34,12 @@ public static class auspicioushelperGFX {
       DebugConsole.WriteFailure("Failed to fetch shader at Effects/"+v.path);
     } else try{
       v.shader = new Effect(graphicsDeviceService.GraphicsDevice, asset.Data);
-      try {
-        ModAsset qasset = Everest.Content.Get(Util.concatPaths("Effects",v.path)+"_quiet.cso",true);
-        if(qasset!=null) v.quiet = new Effect(graphicsDeviceService.GraphicsDevice, qasset.Data);
-      }catch(Exception err2){
-        DebugConsole.Write("Failed to load quiet shader Effects/"+v.path+"_quiet with exception "+ err2.ToString());
-      }
+      // try {
+      //   ModAsset qasset = Everest.Content.Get(Util.concatPaths("Effects",v.path)+"_quiet.cso",true);
+      //   if(qasset!=null) v.quiet = new Effect(graphicsDeviceService.GraphicsDevice, qasset.Data);
+      // }catch(Exception err2){
+      //   DebugConsole.Write("Failed to load quiet shader Effects/"+v.path+"_quiet with exception "+ err2.ToString());
+      // }
     }catch(Exception err){
       DebugConsole.WriteFailure("Failed to load shader Effects/"+v.path+" with exception "+ err.ToString());
     }

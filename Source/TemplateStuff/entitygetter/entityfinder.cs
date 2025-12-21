@@ -36,7 +36,6 @@ public static class Finder{
     last = null; finding = null;
     if(flagged.TryGetValue(d.ID.ToString(), out var ident)){
       finding=ident;
-      DebugConsole.Write($"Looking for entity on path {d.ID}. Has {ident.Count} actions enqueued");
       //finding = new FoundEntity(d, ident);
     }
   }

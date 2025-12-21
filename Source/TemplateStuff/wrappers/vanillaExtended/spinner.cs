@@ -47,6 +47,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     Get<PlayerCollider>().OnCollide = OtherOnPlayer;
     Depth = d.Int("depth", -8500);
     dontStun = d.Name!="spinner";
+    borderColor = Util.hexToColor(d.Attr("border","000"));
   }
   void OtherOnPlayer(Player p){
     if(dreamThru && p.StateMachine.state == Player.StDreamDash) return;
@@ -58,6 +59,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   bool inView = false;
   bool makeFiller = true;
   Color customColor;
+  Color borderColor = Color.Red;
   bool hasCustomCOlor;
   bool dreamThru;
   public override void Update(){
@@ -82,7 +84,14 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
       Collidable = hcollidable && scollidable;
       Visible = hvisible && inView;
     }
-    if(filler!=null) filler.Position=Position;
+    if(filler!=null){
+      filler.Position=Position;
+      filler.Visible = Visible;
+    }
+    if(border!=null){
+      border.Position=Position;
+      border.Visible = Visible;
+    }
   }
   public override void Awake(Scene scene) {
     base.Awake(scene);
@@ -131,28 +140,52 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   public class SpinnerFiller:Entity{
     public SpinnerFiller(Vector2 position):base(position){}
   }
+  public class CustomBorder:CrystalStaticSpinner.Border{
+    List<(MTexture, Vector2, float rot)> items;
+    public CustomBorder(Entity parent, Entity fill, List<(MTexture, Vector2, float)> items):base(parent,fill){
+      this.items = items;
+    }
+    public override void Render() {
+      Spinner parent = (Spinner)drawing[0];
+      if(!parent.Visible) return;
+      Vector2 rpos = parent.Position.Round();
+      foreach(var (tex, pos, rot) in items){
+        tex.Draw(rpos+pos, Vector2.Zero, parent.borderColor, Vector2.One, rot);
+      }
+    }
+  }
   void CreateSpritesOther(){
     if (expanded)return;
     Calc.PushRandom(randomSeed);
     List<MTexture> atlasSubtextures = GFX.Game.GetAtlasSubtextures(fgTextureLookup[this.color]);
     MTexture mTexture = Calc.Random.Choose(atlasSubtextures);
+    MTexture borderMain = BorderGenerator.GetBorder(mTexture);
+    List<(MTexture, Vector2, float)> borderList = new();
     if(fancyRecolor != null) mTexture = Util.ColorRemap.Get(fancyRecolor).RemapTex(mTexture);
     Color color = Color.White;
     if(hasCustomCOlor) color = customColor;
     else if (this.color == CrystalColor.Rainbow) color = GetHue(Position);
 
-    if(!SolidCheck_(new Vector2(base.X - 4f, base.Y - 4f))){
-      Add(new Image(mTexture.GetSubtexture(0, 0, 14, 14)).SetOrigin(12f, 12f).SetColor(color));
-    }
-    if(!SolidCheck_(new Vector2(base.X + 4f, base.Y - 4f))){
-      Add(new Image(mTexture.GetSubtexture(10, 0, 14, 14)).SetOrigin(2f, 12f).SetColor(color));
-    }
-    if(!SolidCheck_(new Vector2(base.X + 4f, base.Y + 4f))){
-      Add(new Image(mTexture.GetSubtexture(10, 10, 14, 14)).SetOrigin(2f, 2f).SetColor(color));
-    }
-
-    if(!SolidCheck_(new Vector2(base.X - 4f, base.Y + 4f))){
-      Add(new Image(mTexture.GetSubtexture(0, 10, 14, 14)).SetOrigin(12f, 2f).SetColor(color));
+    if(!neverClip){
+      if(!SolidCheck_(new Vector2(base.X - 4f, base.Y - 4f))){
+        Add(new Image(mTexture.GetSubtexture(0, 0, 14, 14)).SetOrigin(12f, 12f).SetColor(color));
+        borderList.Add((borderMain.GetSubtexture(0,0,15,15), new(-13,-13), 0));
+      }
+      if(!SolidCheck_(new Vector2(base.X + 4f, base.Y - 4f))){
+        Add(new Image(mTexture.GetSubtexture(10, 0, 14, 14)).SetOrigin(2f, 12f).SetColor(color));
+        borderList.Add((borderMain.GetSubtexture(11,0,15,15), new(-2,-13), 0));
+      }
+      if(!SolidCheck_(new Vector2(base.X + 4f, base.Y + 4f))){
+        Add(new Image(mTexture.GetSubtexture(10, 10, 14, 14)).SetOrigin(2f, 2f).SetColor(color));
+        borderList.Add((borderMain.GetSubtexture(11,11,15,15), new(-2,-2), 0));
+      }
+      if(!SolidCheck_(new Vector2(base.X - 4f, base.Y + 4f))){
+        Add(new Image(mTexture.GetSubtexture(0, 10, 14, 14)).SetOrigin(12f, 2f).SetColor(color));
+        borderList.Add((borderMain.GetSubtexture(0,11,15,15), new(-13,-2), 0));
+      }
+    } else {
+      Add(new Image(mTexture).SetColor(color).SetOrigin(12f,12f));
+      borderList.Add((borderMain, new(-13,-13), 0));
     }
 
     if(makeFiller) foreach (CrystalStaticSpinner entity in base.Scene.Tracker.GetEntities<Spinner>()){
@@ -163,11 +196,14 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
             base.Scene.Add(filler = new SpinnerFiller(Position));
             filler.Depth = base.Depth + 1;
           }
+          Vector2 offsetPos = ((Position + entity.Position) / 2f - Position).Round();
+          float imRot = (float)Calc.Random.Choose(0, 1, 2, 3) * (MathF.PI / 2f);
           MTexture ftex = Calc.Random.Choose(GFX.Game.GetAtlasSubtextures(bgTextureLookup[this.color]));
+          borderList.Add((BorderGenerator.GetBorder(ftex), offsetPos-new Vector2(ftex.Width/2+1, ftex.Height/2+1).Rotate(imRot), imRot));
           if(fancyRecolor!=null) ftex=Util.ColorRemap.Get(fancyRecolor).RemapTex(ftex);
           Image image = new Image(ftex);
-          image.Position = (Position + entity.Position) / 2f - Position;
-          image.Rotation = (float)Calc.Random.Choose(0, 1, 2, 3) * (MathF.PI / 2f);
+          image.Position = offsetPos;
+          image.Rotation = imRot;
           image.CenterOrigin();
           image.Color=color;
           filler.Add(image);
@@ -175,13 +211,21 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
       }
     }
 
-    base.Scene.Add(border = new Border(this, filler));
+    if(borderColor != new Color(0,0,0,0))base.Scene.Add(border = new CustomBorder(this, filler, borderList));
     expanded = true;
     Calc.PopRandom();
     if(hasCustomCOlor && filler!=null) foreach(var f in filler.Components) if(f is Image i){
       i.Color = customColor;
     }
-    if(filler != null && parent is {} temp) temp.AddNewEnts([filler]);
+    if(parent is {} temp){
+      if(filler != null)temp.AddNewEnts([filler]);
+      if(border != null)temp.AddNewEnts([border]);
+    }
+  }
+  void ITemplateChild.AddAllChildren(List<Entity> l){
+    l.Add(this);
+    if(filler!=null)l.Add(filler);
+    if(border!=null)l.Add(border);
   }
   Color getColor(){
     Color color = Color.White;

@@ -21,6 +21,7 @@ entity.placements = {
       neverClip = false,
       color = "Rainbow",
       fancy = "",
+      border = "000",
     }
   }
 }

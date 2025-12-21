@@ -10,14 +10,6 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 public class auspicioushelperModuleSettings : EverestModuleSettings {
-  private bool _tryQuietShader = false;
-  [SettingSubText("Use compression-friendly shaders when available (not reccomended or intended)")]
-  public bool UseQuietShader{
-    get=>_tryQuietShader;
-    set{
-      _tryQuietShader = value;
-    }
-  }
   public enum DebugMode{
     None, WindowsConsole, CommandLog, LogTxtPollute
   }
