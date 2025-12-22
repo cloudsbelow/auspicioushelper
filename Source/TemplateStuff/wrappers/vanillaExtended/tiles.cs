@@ -130,6 +130,8 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
         }
       }
     }
+    foreach(var m in staticMovers) m.Destroy();
+    staticMovers.Clear();
     RemoveSelf();
   }
   public void fakeDestroy(){

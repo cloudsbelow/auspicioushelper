@@ -108,7 +108,6 @@ public class auspicioushelperModule : EverestModule {
     } catch (Exception ex){
       if(ex is DebugConsole.PassingException p) throw p;
       else DebugConsole.Write($"reloading error: {ex}");
-      Logger.Warn("auspicioushelper","Invalid state. Ausp prevented some potential errors but other mods may not.\n");
     }
     Session?.load();
   }

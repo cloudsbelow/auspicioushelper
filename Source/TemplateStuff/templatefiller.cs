@@ -462,6 +462,7 @@ public class TileOccluder:OnAnyRemoveComp{
     return n;
   }
   static void PushVerts(LightingRenderer r, int n, ref Span<Vector2> o, Vector3 center, Color mask, bool flipWinding = false){
+    if(r.indexCount+32>r.indices.Length) flushLightMatrices(r);
     int s = r.vertexCount;
     int flip = flipWinding?1:0;
     r.verts[s].Position = center + new Vector3(o[0],0);
@@ -476,6 +477,17 @@ public class TileOccluder:OnAnyRemoveComp{
       r.indices[r.indexCount++] = s+i-flip; 
     }
     r.vertexCount += n;
+  }
+  static Matrix lightMat = Matrix.CreateScale(0.0009765625f) * Matrix.CreateScale(2f, -2f, 1f) * Matrix.CreateTranslation(-1f, 1f, 0f);
+  static void flushLightMatrices(LightingRenderer r){
+    Engine.Instance.GraphicsDevice.BlendState = LightingRenderer.OccludeBlendState;
+    GFX.FxPrimitive.Parameters["World"].SetValue(lightMat);
+    foreach (EffectPass pass in GFX.FxPrimitive.CurrentTechnique.Passes)
+    {
+      pass.Apply();
+      Engine.Instance.GraphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, r.verts, 0, r.vertexCount, r.indices, 0, r.indexCount / 3);
+    }
+    r.StartDrawingPrimitives();
   }
 
   

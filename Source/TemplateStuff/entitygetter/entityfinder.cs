@@ -37,12 +37,14 @@ public static class Finder{
     if(flagged.TryGetValue(d.ID.ToString(), out var ident)){
       finding=ident;
       //finding = new FoundEntity(d, ident);
+      //DebugConsole.Write($"Searching for {d.Name} with id {d.ID}. {ident.Count} actions enqueued");
     }
   }
   public static void EndingLoad(EntityData d){
     if(finding!=null){
       if(last==null){
-        DebugConsole.Write($"Failed to find the entity {d.Name} with id {d.ID} - (maybe this entity adds itself non-standardly?)");
+        DebugConsole.WriteFailure($"Failed to find the entity {d.Name} with id {d.ID} - (maybe this entity adds itself non-standardly?)");
+        if(auspicioushelperModule.InFolderMod) DebugConsole.MakePostcard($"Failed to find the entity {d.Name} with id {d.ID}. This entity may not be compatible or there may be mod conflicts.");
       } else {
         DebugConsole.Write($"Found the entity {d.Name} with id {d.ID} - position {last.Position}");
         foreach(var a in finding) a(last);
@@ -70,8 +72,8 @@ public static class Finder{
       DebugConsole.WriteFailure("Failed to add hook to entity finder");
   }
   static ILHook llhook;
-  public static void AddHook(On.Monocle.Scene.orig_Add_Entity orig, Scene self, Entity e){
-    if(self is Level l){
+  public static void AddHook(On.Monocle.EntityList.orig_Add_Entity orig, EntityList self, Entity e){
+    if(self.Scene is Level l){
       //if(e!=null)DebugConsole.Write("Add "+ e?.ToString());
       if(finding!=null)last = e??last;
     }
@@ -80,10 +82,10 @@ public static class Finder{
   [OnLoad]
   public static HookManager hooks = new HookManager(()=>{
     llhook = new ILHook(typeof(Level).GetMethod("orig_LoadLevel",Util.GoodBindingFlags), LLILHook);
-    On.Monocle.Scene.Add_Entity+=AddHook;
+    On.Monocle.EntityList.Add_Entity+=AddHook;
   },void ()=>{
     llhook?.Dispose();
-    On.Monocle.Scene.Add_Entity-=AddHook;
+    On.Monocle.EntityList.Add_Entity-=AddHook;
   });
 
 

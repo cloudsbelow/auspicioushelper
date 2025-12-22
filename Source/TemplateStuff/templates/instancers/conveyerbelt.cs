@@ -94,6 +94,7 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
       desc.te.toffset = desc.sp.pos;
     }
     childRelposSafe();
+    timer-=Engine.DeltaTime;
     if(!loop && timer<=0){
       SplineAccessor spos = new(spline, Vector2.Zero, true, loop);
       float extent = -timer*speed;
@@ -101,7 +102,7 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
       timer+=maxtimer;
       Template nte = addInstance(spos.pos);
       belt.Enqueue(new(){te=nte,sp=spos,extent = extent});
-    } else timer-=Engine.DeltaTime;
+    } 
   }
   public void RemoveChild(ITemplateChild c){
     foreach(var desc in belt) if(desc.te == c.parent && desc.te.children.Count==1){
