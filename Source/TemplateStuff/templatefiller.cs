@@ -497,10 +497,13 @@ public class TileOccluder:OnAnyRemoveComp{
   
   Vector2 lpos;
   bool lvis=false;
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReset)]
   static List<FloatRect> rects = new();
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReset)]
   static List<TileOccluder> occs = new();
+  [ResetEvents.RunOn(ResetEvents.RunTimes.OnReset)]
+  static void Clear(){
+    rects.Clear();
+    occs.Clear();
+  }
   public static void HandleThing(Level l){
     rects.Clear();
     occs.Clear();
