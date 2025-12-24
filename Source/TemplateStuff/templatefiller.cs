@@ -430,6 +430,10 @@ public class TileOccluder:OnAnyRemoveComp{
     );
   }
   public static void OccludeAll(LightingRenderer r, Vector3 atlasCenter, Color mask, Vector2 center, float rad){
+    if(rects.Count!=occs.Count){
+      DebugConsole.Write("Whatttt");
+      return;
+    }
     for(int i=0; i<rects.Count; i++){
       if(rects[i].CollideCircle(center,rad)){
         occs[i].Occlude(r,atlasCenter,mask,center,rad);

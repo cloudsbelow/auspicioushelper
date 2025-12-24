@@ -22,7 +22,7 @@ public static class Atlasifyer{
     ShelfAllocator.Reset();
     SkylineAllocator.Reset();
   }
-  const int tw=4096;
+  const int tw=2048;
   const int th=1024;
   static int texCounter=0;
   public static void addTex(){

@@ -472,6 +472,7 @@ public class Anti0fZone:Entity{
     orig(p);
     inPlayerUpdate = false;
   }
+  static bool naiveCheck(Player p)=>p.StateMachine.State==Player.StDreamDash;
   public static HookManager hooks = new HookManager(()=>{
     MethodInfo update = typeof(Player).GetMethod(
       "orig_Update", BindingFlags.Public |BindingFlags.Instance
@@ -479,6 +480,7 @@ public class Anti0fZone:Entity{
     updateHook = new ILHook(update, ILUpdateHook);
     On.Celeste.Actor.NaiveMove+=NaiveMoveHook;
     On.Celeste.Player.Update+=Hook;
+    runNaive.Add(naiveCheck);
   },void ()=>{
     updateHook.Dispose();
     On.Celeste.Actor.NaiveMove-=NaiveMoveHook;

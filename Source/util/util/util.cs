@@ -43,6 +43,7 @@ public static partial class Util{
 
   public class FunctionList<T1>{
     List<Func<T1,bool>> funcs = new();
+    public int Count=>funcs.Count;
     public enum InvocationMode{
       And, AndShortcircut, Or, OrShortcircuit
     }
@@ -50,7 +51,9 @@ public static partial class Util{
     public FunctionList(InvocationMode mode = InvocationMode.OrShortcircuit){
       this.mode = mode;
     }
-    public void Add(Func<T1,bool> n)=>funcs.Add(n);
+    public void Add(Func<T1,bool> n){
+      if(!funcs.Contains(n))funcs.Add(n);
+    }
     public void Remove(Func<T1,bool> n)=>funcs.Remove(n);
     public bool AndShortcircut(T1 p){
       foreach(var f in funcs) if(!f(p)) return false;

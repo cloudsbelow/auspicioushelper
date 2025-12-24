@@ -120,19 +120,19 @@ res = Parser(tokenize("""
     {
         _editorLayer = 0,
         _fromLayer = "entities",
-        _id = 1966,
+        _id = 3766,
         _name = "auspicioushelper/spinner",
-        _type = "entity",
+        border = "333",
         color = "Red",
         customColor = "ffffff",
         depth = -8099,
         dreamThru = true,
-        fancy = "(#a80000,#ff4f4f:0.75,#ff9eb0)-(826,b497d1:0.8,d2c2e2)",
+        fancy = "(#a80000,#ff4f4f:0.75,#ff9eb0)-(446,88c:0.8,bbe)",
         makeFiller = true,
         neverClip = true,
         numDebris = 4,
-        x = 596,
-        y = 67
+        x = 688,
+        y = 192
     }
 }
 """)).parse_value()[0]

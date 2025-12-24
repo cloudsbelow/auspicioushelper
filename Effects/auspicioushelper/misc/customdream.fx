@@ -72,7 +72,8 @@ float4 main(float4 color : COLOR0, float2 pos : TEXCOORD0) : SV_Target {
   if(true){
     float2 hpos = floor(pos/pscale+cpos*0.17);
     float fchash = floor(hash(hpos,6)*3);
-    if(hash(hpos,7)<0.005*density.z){
+    float item = max(max(hash(hpos,7),hash(hpos+float2(100,100),8)),hash(hpos+float2(200,300),9));
+    if(item<0.15*pow(density.z,1/3)){
       return saturate(1-fchash)*color0+saturate(1-abs(fchash-1))*color1+saturate(fchash-1)*color4;
     }
   }
