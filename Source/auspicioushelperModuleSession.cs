@@ -26,17 +26,22 @@ public class auspicioushelperModuleSession : EverestModuleSession {
   public void save(){
     if(respDat==null) channelData = ChannelState.save();
   }
-  public void load(){
+  public void load(Session s){
+    if(respDat is {} r && s!=null){
+      s.Level = r.level;
+      s.RespawnPoint = r.loc;
+    }
     ChannelState.load(channelData);
   } 
 
   public class RespawnData {
     public enum RespawnType {
-      CampfireRespawn, Basic
+      Basic,CampfireRespawn
     }
     public Vector2 loc;
     public string level;
-    RespawnType ty;
+    public RespawnType ty;
+    public RespawnData(){}
     public RespawnData(RespawnType t = RespawnType.Basic){
       ty = t;
     }
@@ -65,6 +70,7 @@ public class auspicioushelperModuleSession : EverestModuleSession {
       On.Celeste.Level.Reload-=Hook;
       On.Celeste.Editor.MapEditor.LoadLevel-=Hook;
     });
+    public override string ToString()=>$"Respawn ({ty}) at {level}, {loc}";
   }
   public RespawnData respDat;
 }

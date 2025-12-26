@@ -53,7 +53,7 @@ public class auspicioushelperModule : EverestModule {
   static void LoadLevlHook(On.Celeste.Level.orig_LoadLevel orig, Level l, Player.IntroTypes playerIntro, bool isFromLoader = false){
     DebugConsole.Write($"{playerIntro}");
     if(playerIntro == Player.IntroTypes.Respawn){
-      Session.load();
+      Session.load(null);
       ChannelState.unwatchAll();
 
       OnReset.run();
@@ -68,6 +68,7 @@ public class auspicioushelperModule : EverestModule {
     OnNewScreen.run();
     OnReloadMap.run();
     OnEnterMap.run();
+
     try{
     InFolderMod = session?.MapData?.Filename!=null && 
       Path.Combine("Maps",session.MapData.Filename) is {} fpath && 
@@ -79,7 +80,7 @@ public class auspicioushelperModule : EverestModule {
 
     DebugConsole.Write($"\n\nEntering Map! Folder mod: {InFolderMod}");
     try{
-      Session?.load();
+      Session?.load(session);
       if(session?.MapData!=null){
         MapenterEv.Run(session.MapData);
         MarkedRoomParser.parseMapdata(session.MapData);
@@ -109,7 +110,7 @@ public class auspicioushelperModule : EverestModule {
       if(ex is DebugConsole.PassingException p) throw p;
       else DebugConsole.Write($"reloading error: {ex}");
     }
-    Session?.load();
+    Session?.load(null);
   }
 
   public override void LoadContent(bool firstLoad) {

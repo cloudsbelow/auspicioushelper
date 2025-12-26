@@ -93,6 +93,7 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
   public bool triggering;
   bool useOnPickup;
   bool useOnRelase;
+  int bdepth;
   public RefillW2(Vector2 position, bool twoDashes, bool oneUse):base(position){
     base.Collider = new Hitbox(16f, 16f, -8f, -8f);
     Add(new PlayerCollider(OnPlayer));
@@ -126,7 +127,6 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
     Add(sine = new SineWave(0.6f, 0f));
     sine.Randomize();
     UpdateY();
-    base.Depth = -100;
   }
 
   bool selfCol = true;
@@ -156,7 +156,8 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
       GFX.Game.GetAtlased("objects/auspicioushelper/refill/empty_b1")
     ];
     precession = Calc.Random.Range(0,MathF.PI*2);
-
+    bdepth = d.Int("depth",-100);
+    base.Depth = bdepth;
   }
   public override void Added(Scene scene){
     base.Added(scene);
@@ -197,7 +198,7 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
       selfCol = true;
       sprite.Visible = true;
       outline.Visible = false;
-      base.Depth = -100+(parent?.depthoffset??0);
+      Depth = bdepth+(parent?.depthoffset??0);
       wiggler.Start();
       Audio.Play(twoDashes ? "event:/new_content/game/10_farewell/pinkdiamond_return" : "event:/game/general/diamond_return", Position);
       level.ParticlesFG.Emit(p_regen, 16, Position, Vector2.One * 2f);

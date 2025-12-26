@@ -20,6 +20,7 @@ entity.placements = {
       useOnPickup = true,
       useOnRelease = true,
       numRefresh = -1,
+      depth = -100,
     }
   }
 }

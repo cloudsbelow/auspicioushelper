@@ -38,7 +38,9 @@ public class SpeedConsist:Trigger{
     applyOnlyOnce=d.Bool("applyOnlyOnce",true);
     setYSpeed=d.tryGetStr("setYSpeed",out var st) && float.TryParse(st, out float f)?f:null;
   }
+  bool pass = false;
   public void thing(Player player){
+    if(pass) return;
     float val = Math.Abs(player.Speed.X);
     int dir = Math.Sign(player.Speed.X);
     if(val>=min && val<=max && dir*amult>=0){
@@ -46,9 +48,15 @@ public class SpeedConsist:Trigger{
       player.Speed.X = to*dir;
       if(setYSpeed is float f) player.Speed.Y = f;
       DebugConsole.Write($"Normalized speed from {old} to {player.Speed}");
-      if(applyOnlyOnce) RemoveSelf();
+      if(applyOnlyOnce){
+        RemoveSelf();
+        pass = true;
+      }
     }
-    if(tryOnlyOnce) RemoveSelf();
+    if(tryOnlyOnce){
+      RemoveSelf();
+      pass = true;
+    }
   }
   public override void OnStay(Player player) {
     base.OnStay(player);

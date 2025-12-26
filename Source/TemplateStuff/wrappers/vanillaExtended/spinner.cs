@@ -236,7 +236,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   }
   int numdebris = 4;
   public void destroy(bool yes){
-    if(yes)SpinnerDebris.CreateBurst(Scene,numdebris,Position,parent.gatheredLiftspeed,hasCustomCOlor?customColor:getColor());
+    if(yes)SpinnerDebris.CreateBurst(Scene,numdebris,Position,parent.gatheredLiftspeed,hasCustomCOlor?customColor:getColor(),fancyRecolor);
     RemoveSelf();
   }
 
@@ -269,10 +269,11 @@ public class SpinnerDebris:FastDebris{
   Color color;
   float percent;
   float duration;
+  MTexture shard = GFX.Game["particles/shard"];
   public SpinnerDebris():base(Vector2.Zero){
     base.Depth = -9990;
     Radius = new Int2(1,1);
-    image = new Image(GFX.Game["particles/shard"]);
+    image = new Image(shard);
     image.CenterOrigin();
     Add(image);
     onCollideH = (CollisionData d)=>{
@@ -284,8 +285,9 @@ public class SpinnerDebris:FastDebris{
       speed.Y *= -1f;
     };
   }
-  public SpinnerDebris Init(Vector2 position, Color color, Vector2 speed){
+  public SpinnerDebris Init(Vector2 position, Color color, Vector2 speed, Util.ColorRemap remap = null){
     Position = position;
+    image.Texture = remap==null? shard:remap.RemapTex(shard);
     image.Color = (this.color = color);
     image.Scale = Vector2.One;
     percent = 0f;
@@ -326,12 +328,13 @@ public class SpinnerDebris:FastDebris{
     image.Color = color;
     base.Render();
   }
-  public static void CreateBurst(Scene scene, int count, Vector2 loc, Vector2 ls, Color color){
+  public static void CreateBurst(Scene scene, int count, Vector2 loc, Vector2 ls, Color color, string remap){
+    Util.ColorRemap r = string.IsNullOrWhiteSpace(remap)? null:Util.ColorRemap.Get(remap);
     for(int i=0; i<count; i++){
       bool isotropic = Calc.Random.Chance(0.4f);
       float angle = Util.randomizeAngleQuad(isotropic?Calc.Random.Range(0,MathF.PI/2):Calc.Random.Range(0,MathF.PI/6));
       Vector2 speed = Calc.AngleToVector(angle+Calc.Random.Range(-0.3f,0.3f),!isotropic?Calc.Random.Range(260,400):Calc.Random.Range(160,200));
-      scene.Add(Engine.Pooler.Create<SpinnerDebris>().Init(loc+speed.SafeNormalize(Calc.Random.Range(0,5)), color,ls+speed));
+      scene.Add(Engine.Pooler.Create<SpinnerDebris>().Init(loc+speed.SafeNormalize(Calc.Random.Range(0,5)), color,ls+speed, r));
     }
   }
 }

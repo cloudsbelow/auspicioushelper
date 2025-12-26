@@ -13,7 +13,6 @@ public class BeforeAfterRender:Component{
   Action a;
   public BeforeAfterRender(Action before, Action after=null):base(false,false){
     b=before; a=after;
-    hooks.enable();
   }
   public static Util.HybridSet<Action> prebefore = new();
   public static Util.HybridSet<Action> postbefore = new();
