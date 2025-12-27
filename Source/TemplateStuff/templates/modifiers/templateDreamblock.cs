@@ -166,8 +166,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
       if(e is Trigger t){
         if(t is DreamTrans dt && dt.assistSmuggle){
           dt.Add(new PlayerCollider((Player p)=>{
-            if(p.StateMachine.State == Player.StNormal && p.Holding!=null && DreamCheckStart(p,Vector2.Zero)){
-              fake.lastEntity = dt;
+            if(p.StateMachine.State == Player.StNormal && p.Holding!=null && DreamCheckStart(p,Vector2.Zero, dt)){
               dt.ManifestTemp();
             }
           }));
@@ -176,10 +175,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
         continue;
       }
       e.Add(new PlayerCollider((Player p)=>{
-        if(DreamCheckStart(p,Vector2.Zero)){
-          //DebugConsole.Write($"{e} {e.Collidable} {e.Scene}", e.Scene);
-          fake.lastEntity = e;
-        }
+        DreamCheckStart(p,Vector2.Zero,e);
       }, colTypes.GetValueOrDefault(e.GetType())));
       e.Add(new DreamMarkerComponent(this,colTypes.GetValueOrDefault(e.GetType())));
       if(useVisuals && !(e is Template)){
@@ -230,7 +226,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     if(conserve) speed=p.Speed;
     return speed*(reverse? -1:1);
   }
-  bool DreamCheckStart(Player p, Vector2 dir){
+  bool DreamCheckStart(Player p, Vector2 dir, Entity from){
     bool flag = dreaming && p.Inventory.DreamDash && p.DashAttacking && (
       (dir == Vector2.Zero&&p.DashDir!=Vector2.Zero) || Vector2.Dot(dir, p.DashDir)>0
     );
@@ -242,6 +238,8 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
       p.gliderBoostTimer = 0f;
       GetFromTree<ITemplateTriggerable>()?.OnTrigger(new DreamInfo(false, triggerOnEnter, p.DashDir));
       p.dreamBlock = fake;
+      fake.lastEntity = from;
+      if(from?.Get<ChildMarker>()?.parent is { } entparent) p.LiftSpeed = entparent.gatheredLiftspeed;
     }
     return flag;
   }
@@ -327,7 +325,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
           flag = p.CollideCheck(c.Entity);
           c.Entity.Collider=og;
         }
-        if(flag && c.dbm.DreamCheckStart(p,d.Direction)) return true;
+        if(flag && c.dbm.DreamCheckStart(p,d.Direction,c.Entity)) return true;
       }
       break;
     }
@@ -337,7 +335,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     if(!DDsh(p)){
       TemplateDreamblockModifier t = d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateDreamblockModifier>();
       while(t!=null){
-        if(t.dreaming && t.DreamCheckStart(p,d.Direction)) return;
+        if(t.dreaming && t.DreamCheckStart(p,d.Direction,d.Hit)) return;
         t = t.parent?.GetFromTree<TemplateDreamblockModifier>();
       }
       if(prioThing(p,d)) return;
@@ -348,7 +346,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
     if(!DDsh(p)){
       TemplateDreamblockModifier t = d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateDreamblockModifier>();
       while(t!=null){
-        if(t.dreaming && t.DreamCheckStart(p,d.Direction)) return;
+        if(t.dreaming && t.DreamCheckStart(p,d.Direction,d.Hit)) return;
         t = t.parent?.GetFromTree<TemplateDreamblockModifier>();
       }
       if(prioThing(p,d)) return;
