@@ -26,7 +26,7 @@ using MonoMod.Utils;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateDreamblockModifier")]
-public class TemplateDreamblockModifier:Template,IOverrideVisuals{
+public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IRegisterEnts{
   public HashSet<OverrideVisualComponent> comps  {get;set;}= new();
   public void AddC(OverrideVisualComponent c)=>comps.Add(c);
   public void RemoveC(OverrideVisualComponent c)=>comps.Remove(c);
@@ -148,9 +148,8 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
       Add(ct);
     }
     base.addTo(scene);
-    setupEnts(GetChildren<Entity>());
   }
-  void setupEnts(List<Entity> l){
+  public override void RegisterEnts(List<Entity> l) {
     foreach(var e in l){
       foreach(var c in e.Components){
         if(c is PlayerCollider pc){
@@ -184,10 +183,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals{
         comp.AddToOverride(new(renderer,-999,dreaming,dreaming));
       }
     }
-  }
-  public override void OnNewEnts(List<Entity> l) {
-    setupEnts(l);
-    base.OnNewEnts(l);
+    base.RegisterEnts(l);
   }
   public class DreamRenderer:BasicMaterialLayer{
     static VirtualShaderList effect = new VirtualShaderList{

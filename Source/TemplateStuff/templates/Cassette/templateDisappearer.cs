@@ -107,12 +107,14 @@ public class TemplateDisappearer:Template{
 }
 
 [CustomEntity("auspicioushelper/TemplateEntityModifier")]
-public class TemplateEntityModifier:TemplateDisappearer{
+public class TemplateEntityModifier:TemplateDisappearer, Template.IRegisterEnts{
   public TemplateEntityModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   string actCh;
   string colCh;
   string visCh;
   string shakeCh;
+  bool customSpeed;
+  ChannelTracker speedTracker;
   HashSet<string> only;
   GroupTracker.TrackedGroupComp ents;
   bool log;
@@ -121,6 +123,7 @@ public class TemplateEntityModifier:TemplateDisappearer{
     actCh = d.Attr("activeChannel");
     colCh = d.Attr("collidableChannel");
     visCh = d.Attr("visibleChannel");
+    customSpeed = d.Bool("allowCustomSpeed",false);
     shakeCh = d.Attr("shakeChannel");
     log = d.Bool("log",false);
     if(d.tryGetStr("only", out string lis)){
@@ -139,35 +142,53 @@ public class TemplateEntityModifier:TemplateDisappearer{
       }
     }, true));
   }
-  public override void OnNewEnts(List<Entity> l) {
-    if(only!=null || log) foreach(Entity e in l){
+  public override void RegisterEnts(List<Entity> l) {
+    if(only!=null || log || customSpeed) foreach(Entity e in l){
       string name = e.GetType().FullName;
       if(log) DebugConsole.Write($"In {this}: adding extra {name}");
-      if(only?.Contains(e.GetType().FullName)??false) ents.Add(e);
+      if((only?.Contains(e.GetType().FullName)??false || customSpeed) && e!=this) ents.Add(e);
     }
-    base.OnNewEnts(l);
+    base.RegisterEnts(l);
   }
   public override void addTo(Scene scene) {
+    if(only!=null || customSpeed) ents = new();
     base.addTo(scene);
-    if(only!=null || log){
-      List<Entity> l = new();
-      AddAllChildren(l);
-      if(only!=null)Add(ents = new());
-      foreach(Entity e in l){
-        string name = e.GetType().FullName;
-        if(log) DebugConsole.Write($"In {this}: contains {name}");
-        if(only?.Contains(e.GetType().FullName)??false) ents.Add(e);
-      }
-    }
     //feels like a crime
-    foreach(string s in new HashSet<string>(){actCh?.Trim(),colCh?.Trim(),visCh?.Trim()}){
-      AddChwatcher(s, s==visCh, s==colCh, s==actCh);
+    if(visCh.HasContent()) Add(new ChannelTracker(visCh,(double n)=>{
+      bool nv = n!=0;
+      if(only==null) setVisibility(nv);
+      else foreach(var ent in ents) ent.Visible = nv; 
+    }, true));
+    if(colCh.HasContent()) Add(new ChannelTracker(colCh,(double n)=>{
+      bool nv = n!=0;
+      if(only==null) setCollidability(nv);
+      else foreach(var ent in ents) ent.Collidable = nv; 
+    }, true));
+    if(actCh.HasContent()){
+      if(!customSpeed) Add(new ChannelTracker(colCh,(double n)=>{
+        bool nv = n!=0;
+        if(only==null) setAct(nv);
+        else foreach(var ent in ents) ent.Active = nv; 
+      }, true));
+      else {
+        setAct(false);
+        Add(speedTracker = new ChannelTracker(actCh));
+      }
     }
     if(!string.IsNullOrWhiteSpace(shakeCh)){
       Add(new ChannelTracker(shakeCh,(double n)=>{
         if(n!=0) shake(100000);
         else EndShake();
       },true));
+    }
+  }
+  public override void Update() {
+    base.Update();
+    if(speedTracker != null){
+      var old = Engine.DeltaTime;
+      Engine.DeltaTime = old*speedTracker.Float;
+      foreach(var ent in ents) ent.Update();
+      Engine.DeltaTime = old;
     }
   }
 }

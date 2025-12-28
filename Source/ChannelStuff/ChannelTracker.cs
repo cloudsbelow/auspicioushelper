@@ -9,6 +9,12 @@ namespace Celeste.Mod.auspicioushelper;
 public class ChannelTracker : OnAnyRemoveComp{
   public string channel {get; set;}
   public double value;
+  public float Float=>(float)value;
+  public int IntRd=>(int)Math.Floor(value);
+  public int IntRu=>(int)Math.Ceiling(value);
+  public int IntR=>(int)Math.Round(value);
+  public int IntTrunc=>(int)value;
+  public bool Bool=>value!=0;
   Action<double> onChannelChange;
   ChannelTrackerList inList=null;
   public ChannelTracker(string channel, Action<double> onChannelChange, bool immediateInvoke = false):base(false, false){

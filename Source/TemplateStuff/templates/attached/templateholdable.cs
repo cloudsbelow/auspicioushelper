@@ -38,6 +38,19 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     void OnPickup(Player p);
     void OnRelease(Player p, Vector2 force);
   }
+  class HoldTemplate:TemplateDisappearer, Template.IRegisterEnts{
+    TemplateHoldable actor;
+    public HoldTemplate(TemplateHoldable owner, Vector2 loc, int doff):base(loc,doff){
+      actor=owner;
+    }
+    public override void RegisterEnts(List<Entity> l) {
+      base.RegisterEnts(l);
+      foreach(var e in l){
+        if(actor.hasReflection) e.Add(new MirrorReflection());
+        if(e is Solid) actor.Mysolids.Add(e);
+      }
+    }
+  }
   TemplateDisappearer te;
   Vector2 hoffset;
   public Vector2 Offset=>hoffset;
@@ -67,6 +80,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   float minHoldTimer = 0.35f;
   float[] customThrowspeeds;
   bool moveImmediately = true;
+  bool hasReflection;
   float? neutralHolddelay = null;
   public TemplateHoldable(EntityData d, Vector2 offset):base(d.Position+offset){
     Position+=new Vector2(d.Width/2, d.Height);
@@ -115,20 +129,20 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     dangerous = d.Bool("dangerous",false);
     voidDieOffset = d.Float("voidDieOffset",100);
     minHoldTimer = d.Float("minHoldTimer",0.35f);
+    hasReflection = d.Bool("mirrorReflection",false);
     SquishCallback = OnSquish2;
     customThrowspeeds = Util.csparseflat(d.Attr("customThrowspeeds"));
     Depth = -1;
+    Add(Mysolids = new());
   }
-  Util.HybridSet<Platform> Mysolids;
+  GroupTracker.TrackedGroupComp Mysolids;
   templateFiller ext = null;
   void make(Scene s, templateFiller use = null){
     created = true;
     if(use != null) ext=use;
-    using(new Template.ChainLock())te = new TemplateDisappearer(d,Position+hoffset,d.Int("depthoffset",0));
-    new DynamicData(te).Set("ausp_holdable",this);
+    using(new Template.ChainLock())te = new HoldTemplate(this,Position+hoffset,d.Int("depthoffset",0));
     if(ext!=null) te.setTemplate(ext);
     te.addTo(s);
-    Mysolids = new (te.GetChildren<Solid>());
   }
   BirdTutorialGui tutorialGui=null;
   IEnumerator tutorialRoutine(){
@@ -198,8 +212,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     }
     return false;
   }
-  void OnPickup()
-  {
+  void OnPickup(){
     touched();
     AllowPushing=false;
     IgnoreJumpThrus=true;
@@ -357,11 +370,6 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     if(inRelpos || Mysolids.Contains(data.Hit) || Mysolids.Contains(data.Pusher)) return;
     DebugConsole.Write($"squished: {data.Pusher} {data.Hit}");
     DebugConsole.Write("colliders", new FloatRect(this), new FloatRect(data.Pusher));
-    // if(data.Pusher.Get<ChildMarker>()?.parent is Template t && new DynamicData(t).TryGet<TemplateHoldable>("ausp_holdable", out var th)){
-    //   DebugConsole.Write($"Other",th, th.Position, new FloatRect(th));
-    //   DebugConsole.Write("collide this st->other",te.fgt.CollideCheck(th));
-    //   DebugConsole.Write("collide this->other st",t.fgt.CollideCheck(this));
-    // }
     Reset();
   }
   CollisionExtensions.CachedCollision colLeft = new();

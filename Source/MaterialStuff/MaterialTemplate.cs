@@ -7,7 +7,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/MaterialTemplate")]
-public class MaterialTemplate:TemplateDisappearer, IOverrideVisualsEasy{
+public class MaterialTemplate:TemplateDisappearer, IOverrideVisualsEasy, Template.IRegisterEnts{
   public HashSet<OverrideVisualComponent> comps {get;} = new();
   bool invis;
   bool collidable = true;
@@ -24,9 +24,6 @@ public class MaterialTemplate:TemplateDisappearer, IOverrideVisualsEasy{
   string lident;
   IOverrideVisuals layer;
   public override void addTo(Scene scene) {
-    base.addTo(scene);
-    List<Entity> l = new();
-    AddAllChildren(l);
     var mlayer = MaterialController.getLayer(lident);
     if(!string.IsNullOrWhiteSpace(channel)){
       Add(new ChannelTracker(channel, (double nval)=>{
@@ -36,15 +33,13 @@ public class MaterialTemplate:TemplateDisappearer, IOverrideVisualsEasy{
         }
       },true));
     }
-    if(mlayer is IOverrideVisuals qlay){
-      layer = qlay;
-      SetupEnts(l);
-    } else {
-      DebugConsole.Write($"Layer {lident} not found");
-    }
+    if(mlayer is IOverrideVisuals qlay) layer = qlay;
+    else DebugConsole.Write($"Layer {lident} not found");
+
+    base.addTo(scene);
     if(!collidable)setCollidability(false);
   }
-  void SetupEnts(List<Entity> l){
+  public override void RegisterEnts(List<Entity> l) {
     if(layer==null) return;
     int tdepth = -TemplateDepth(); 
     foreach(var e in l) if(!(e is Template)){
@@ -52,9 +47,6 @@ public class MaterialTemplate:TemplateDisappearer, IOverrideVisualsEasy{
       comp.AddToOverride(new(this,-30000,false,true));
       comp.AddToOverride(new(layer,tdepth,invis&&active, active));
     }
-  }
-  public override void OnNewEnts(List<Entity> l) {
-    base.OnNewEnts(l);
-    SetupEnts(l);
+    base.RegisterEnts(l);
   }
 }

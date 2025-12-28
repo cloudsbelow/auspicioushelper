@@ -36,6 +36,8 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
   Util.Easings inEasing = Util.Easings.SineIn;
   float outSpeed = 2;
   float inSpeed = 0.5f;
+  string outgoingSound;
+  string returningSound;
   public TemplateZipmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateZipmover(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
@@ -62,6 +64,8 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
     inSpeed = d.Float("returnSpeed",0.5f);
     outEasing = d.Enum<Util.Easings>("easing",Util.Easings.SineIn);
     inEasing = d.Enum<Util.Easings>("returnEasing",Util.Easings.SineIn);
+    outgoingSound = d.Attr("outSound","event:/auspicioushelper/zip/ah_zip_start");
+    returningSound = d.Attr("returnSound","event:/auspicioushelper/zip/ah_zip_return");
   }
   UpdateHook upd;
   ChannelTracker ct;
@@ -117,7 +121,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
       goto waiting;
     going:
       triggered = true;
-      sfx.Play("event:/auspicioushelper/zip/ah_zip_start");
+      if(outgoingSound.HasContent())sfx.Play(outgoingSound);
       yield return 0.1f;
       at=0;
       while(at<1){
@@ -136,7 +140,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
       SceneAs<Level>().Shake();
       shake(0.1f);
       if(channel!=null)ChannelState.SetChannel(channel,0);
-      sfx.instance.setParameterValue("start_end",1);
+      sfx.instance?.setParameterValue("start_end",1);
       yield return 0.25f;
 
       if((atype == ActivationType.rideAutomatic || atype==ActivationType.dashAutomatic) && 
@@ -152,7 +156,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
       triggered=false;
       yield return 0.25f;
       sfx.Stop();
-      sfx.Play("event:/auspicioushelper/zip/ah_zip_return");
+      if(returningSound.HasContent())sfx.Play(returningSound);
       at=0;
       while(at<1){
         yield return null;
@@ -163,7 +167,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
         childRelposSafe();
       }
       currentSegment--;
-      sfx.instance.setParameterValue("return_end",1);
+      sfx.instance?.setParameterValue("return_end",1);
       shake(0.1f);
       yield return null;
 
@@ -171,6 +175,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
       if(currentSegment>0) goto returning;
       if(channel!=null)ChannelState.SetChannel(channel,0);
       yield return 0.5f;
+      sfx.Stop();
       goto waiting;
   }
   public override void Removed(Scene scene){

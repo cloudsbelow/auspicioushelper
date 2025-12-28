@@ -17,7 +17,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateCassetteBlock")]
 [Tracked(true)]
-public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITemplateChild{
+public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITemplateChild, Template.IRegisterEnts{
   
   public string channel{get;set;}
   enum State {
@@ -44,11 +44,10 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
   public override void addTo(Scene scene) {
     bool gone = new ChannelTracker(channel, setChVal).AddTo(this).value == 0;
     if(gone && doBoost) hoffset=2;
-    base.addTo(scene);
     CassetteMaterialLayer.layers.TryGetValue(channel,out layer);
+    base.addTo(scene);
     if(gone && paranoid) silent=true;
     if(gone)setChVal(0);
-    setupEnts(GetChildren<Entity>());
   }
   const float fakeshake=0.2f;
   public override Vector2? getShakeVector(float n) {
@@ -133,7 +132,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
     base.Update();
     if(there == State.trying) tryManifest();
   }
-  void setupEnts(List<Entity> l){
+  public override void RegisterEnts(List<Entity> l) {
     int tdepth = TemplateDepth();
     bool ghost = there!=State.there;
     if(layer!=null) foreach(Entity e in l){
@@ -143,10 +142,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
       c.AddToOverride(new(layer, -10000+tdepth, ghost,ghost));
       if(layer.fg!=null) c.AddToOverride(new(layer.fg,1000-tdepth, true,true));
     }
-  }
-  public override void OnNewEnts(List<Entity> l) {
-    setupEnts(l);
-    base.OnNewEnts(l);
+    base.RegisterEnts(l);
   }
   public HashSet<OverrideVisualComponent> comps = new();
   public void AddC(OverrideVisualComponent c)=>comps.Add(c);

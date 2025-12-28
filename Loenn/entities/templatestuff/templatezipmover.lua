@@ -30,7 +30,8 @@ entity.placements = {
       returnSpeed=0.5,
       easing="SineIn",
       returnEasing="SineIn",
-
+      outgoingSound = "event:/auspicioushelper/zip/ah_zip_start",
+      returningSound = "event:/auspicioushelper/zip/ah_zip_return",
       
       _loenn_display_template = true,
     }

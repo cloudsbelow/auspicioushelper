@@ -215,6 +215,7 @@ public class Template:Entity, ITemplateChild{
       AddBasicEnt(e, simoffset+d.Position-lastRoundloc);
     }
     if(!recursive) templateAwake();
+    if(this is IRegisterEnts) RegisterEnts(GetChildren<Entity>());
   }
   public virtual void templateAwake(){
     foreach(var c in children) c.templateAwake();
@@ -435,13 +436,11 @@ public class Template:Entity, ITemplateChild{
     if(parent != null) return parent.GetFromTree<T>();
     return default(T);
   }
+  public interface IRegisterEnts{}
   public virtual void RegisterEnts(List<Entity> l){}
-  public virtual void OnNewEnts(List<Entity> l){
-    RegisterEnts(l);
-    parent?.OnNewEnts(l);
-  }
   public void AddNewEnts(List<Entity> l){
-    OnNewEnts(l);
+    var cur=this;
+    do if(cur is IRegisterEnts) cur.RegisterEnts(l); while((cur=cur.parent)!=null);
     if(GetFromTree<TemplateDisappearer>() is {} disap)disap.enforce();
   }
   public int TemplateDepth(){

@@ -42,6 +42,7 @@ entity.placements = {
       tutorial = false,
       minHoldTimer = 0.35,
       customThrowspeeds = "",
+      mirrorReflection = true,
       
       _loenn_display_template = true,
     }

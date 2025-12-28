@@ -53,7 +53,7 @@ public class StaticmoverLock:MovementLock,IDisposable{
 }
 
 [CustomEntity("auspicioushelper/TemplateStaticmover")]
-public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOverrideVisuals{
+public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOverrideVisuals, Template.IRegisterEnts{
   public override Vector2 gatheredLiftspeed=>ownLiftspeed;
   public override void relposTo(Vector2 loc, Vector2 liftspeed) {
     if(sm?.Platform==null) base.relposTo(loc,liftspeed);
@@ -126,12 +126,6 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     made = true;
     makeChildren(s,false);
     if(!getSelfCol()) parentChangeStatBypass(layer==null?-1:0,-1,0);
-    List<Entity> allChildren = new();
-    AddAllChildren(allChildren);
-    foreach(Entity e in allChildren){
-      if(e is Platform p) doNot.Add(p);
-    }
-    SetupEnts(allChildren);
   }
   bool shouldDie=false;
   public override void addTo(Scene scene){
@@ -235,7 +229,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   public HashSet<OverrideVisualComponent> comps = new();
   public void AddC(OverrideVisualComponent c)=>comps.Add(c);
   public void RemoveC(OverrideVisualComponent c)=>comps.Remove(c);
-  public void SetupEnts(List<Entity> l){
+  public override void RegisterEnts(List<Entity> l) {
     foreach(var e in l)if(e is Platform p)doNot.Add(p);
     bool ghost = !getSelfCol();
     int tdepth = TemplateDepth();
@@ -247,10 +241,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
         if(layer.fg!=null)c.AddToOverride(new(layer.fg, 1000-tdepth,true,true));
       }
     }
-  }
-  public override void OnNewEnts(List<Entity> l) {
-    SetupEnts(l);
-    base.OnNewEnts(l);
+    base.RegisterEnts(l);
   }
   bool cachedCol = true;
 

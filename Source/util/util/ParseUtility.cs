@@ -382,4 +382,5 @@ public static partial class Util{
   }
   public static string RemovePrefix(this string s, string prefix) =>
     s.StartsWith(prefix) ? s[prefix.Length..] : s;
+  internal static bool HasContent(this string s)=>!string.IsNullOrWhiteSpace(s);
 }
