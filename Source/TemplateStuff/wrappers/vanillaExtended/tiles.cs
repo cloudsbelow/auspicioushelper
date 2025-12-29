@@ -69,14 +69,6 @@ internal class BgTiles:BackgroundTiles, ISimpleEnt, IBoundsHaver{
   }
 }
 
-class DumbGridWrapper:Grid{
-  public DumbGridWrapper(Grid g):base(g.CellWidth,g.CellHeight,g.Data){}
-  public override bool Collide(Vector2 point){
-    Vector2 vector = point - base.AbsolutePosition;
-    if(vector.X<0 || vector.Y<0) return false;
-    return Data[(int)(vector.X / CellWidth), (int)(vector.Y / CellHeight)];
-  }
-}
 [Tracked]
 internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
   public Template.Propagation prop=> Template.Propagation.All;
@@ -93,7 +85,7 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
     OnDashCollide = (Player p, Vector2 dir)=>((ITemplateChild) this).propagateDashhit(p,dir);
     if(PartialTiles.usingPartialtiles){
       Collider = new MiptileCollider(t.tiledata.FgMipgrid, Vector2.One);
-    } else Collider = new DumbGridWrapper(Collider as Grid);
+    } else Collider = new DumbGridWrapper(Collider as Grid, t.tiledata.lowresGrid);
     RemoveTag(Tags.Global);
   }
   public void setOffset(Vector2 ppos){

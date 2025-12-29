@@ -7,13 +7,33 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks.Dataflow;
 using IL.Celeste.Mod.UI;
+using Microsoft.VisualBasic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using MonoMod.Utils;
+using FloatVec = System.Numerics.Vector<float>;
+using Vec = System.Numerics.Vector;
 
 namespace Celeste.Mod.auspicioushelper;
 public class MipGrid{
+  public static string getBlockstr(ulong data){
+    string s = "";
+    for(int y=0; y<blockh; y++){
+      if(y!=0) s+="\n";
+      for(int x=0; x<blockw; x++){
+        s+=(data&(1UL<<(x+8*y)))!=0?"X":"_";
+      }
+    }
+    return s;
+  }
+  public static string getRowstr(int data){
+    string s = "";
+    for(int x=0; x<blockw; x++){
+      s+=(data&(1<<(x)))!=0?"X":"_";
+    }
+    return s;
+  }
   //ok but we hardcode these everywhere so like don't
   //well if these are ever not a power of two it will be even worse. just leave them at 8.
   const int blockw = 8;
@@ -276,9 +296,8 @@ public class MipGrid{
   internal int highestlevel;
   const ulong FULL = 0xffff_ffff_ffff_ffffUL;
   const ulong BYTEMARKER = 0x0101_0101_0101_0101UL;
-  public MipGrid(Grid grid){
+  public MipGrid(VirtualMap<bool> map){
     //cellshape = new Vector2(g.CellWidth,g.CellHeight);
-    VirtualMap<bool> map = grid.Data;
     Layer l = new Layer((map.Columns+blockw-1)/blockw,(map.Rows+blockh-1)/blockh);
     int ss = VirtualMap<bool>.SegmentSize;
     int mlx = map.segments.GetLength(0);
@@ -309,6 +328,7 @@ public class MipGrid{
     height = map.Rows;
     buildMips();
   }
+  public MipGrid(Grid g):this(g.Data){}
   public MipGrid(Layer l, bool noMips=false){
     layers = [l];
     width = l.width*blockw;
@@ -373,9 +393,7 @@ public class MipGrid{
     int leveldenom = level+level+level+3;
     Int2 rtlc = Int2.Max(f.tlc,0);
     Int2 rbrc = Int2.Min(f.brc, new Int2(width,height));
-    //DebugConsole.Write("",level, rtlc, rbrc, width, height);
     if(rbrc.x<0 || rbrc.y<0 || rtlc.x>=width || rtlc.y>=height) return false;
-    collideFrLevel(rtlc.x>>3,(rtlc.y>>3)+1, rtlc, rbrc, 0);
 
     int addAmt = 1<<leveldenom;
     int xstop = (rbrc.x+addAmt-1)>>leveldenom;
@@ -387,6 +405,10 @@ public class MipGrid{
     }
     return false;
   }
+
+
+
+
   //oloc is offset of other grid in level 0 area space. x,y are level's blockspace
   bool collideMipGridLevel(MipGrid o, Vector2 oloc, int x, int y, int level){
     int levelDiv = 1<<(level*3);
@@ -463,14 +485,76 @@ public class MipGrid{
     int fy = loc.y-by*blockh;
     return (layers[0].getBlock(bx,by) & (1UL<<(fx+8*fy)))!=0;
   }
-  public static string getBlockstr(ulong data){
+
+
+
+    // p=p-center;
+    // Vector2 d=Vector2.Max(Vector2.Zero,new Vector2(Math.Abs(p.X)-w,Math.Abs(p.Y)-h));
+    // return d.X*d.X+d.Y*d.Y<r*r;
+  static string AsStr(FloatVec v){
     string s = "";
-    for(int y=0; y<blockh; y++){
-      if(y!=0) s+="\n";
-      for(int x=0; x<blockw; x++){
-        s+=(data&(1UL<<(x+8*y)))!=0?"X":"_";
+    for(int i=0; i<FloatVec.Count; i++) s+=v[i]+" ";
+    return s;
+  }
+  static ulong MakeCircleMask(int blockx, int blocky, Vector2 loc, float rad, int level){
+    float ldenom = 1<<(level*3); 
+    rad = rad/ldenom;
+    loc = loc/ldenom - new Vector2(blockx*8, blocky*8);
+    ulong ret = 0;
+    FloatVec half = new(0.5f);
+    float xloc = loc.X;
+    FloatVec yc = new(loc.Y);
+    FloatVec r2 = new(rad*rad);
+    Span<float> items = stackalloc float[FloatVec.Count];
+    for(int i=0; i<8; i++){
+      int mask = 0;
+      for(int j=0; j<8; j+=FloatVec.Count){
+        for(int k=0; k<FloatVec.Count; k++) items[k] = xloc-j-k;
+        var px = new FloatVec(items);
+        // DebugConsole.Write(AsStr(px));
+        var py = yc - half*(2*i+1);
+        var dx = Vec.Max(Vec.Max(px-half,FloatVec.Zero),-px-half);
+        var dy = Vec.Max(Vec.Max(py-half,FloatVec.Zero),-py-half);
+        var del = dx*dx+dy*dy;
+        var f = Vec.LessThan(del,r2);
+        for(int k=0; k<FloatVec.Count; k++)mask|=(f[k]&1)<<(j+k);
+      }
+      ret |= ((ulong)mask)<<(i*8);
+    }
+    return ret;
+  }
+  bool collideCircleLevel(int x, int y, Vector2 center, float rad, int level){
+    ulong dat = layers[level].getBlock(x,y);
+    ulong mask = MakeCircleMask(x,y,center,rad,level);
+    if(dat == 0 || mask == 0) return false;
+    ulong hit = dat&mask;
+    if(level == 0) return hit!=0;
+    while(hit != 0){
+      int index = System.Numerics.BitOperations.TrailingZeroCount(hit);
+      if(collideCircleLevel(x*blockw+index%8,y*blockh+index/8,center,rad,level-1)) return true;
+      hit &= hit-1;
+    }
+    return false;
+  }
+  public bool CollideCircle(Vector2 center, float rad){
+    Vector2 rv = new(rad,rad);
+    IntRect f = IntRect.fromCorners(Int2.Floor(center-rv), Int2.Ceil(center+rv));
+    int mld = Math.Max(f.w,f.h);
+    int level = 0;
+    while(level<highestlevel && (1<<(3*(level+1)))<mld)level++;
+    int leveldenom = level+level+level+3;
+    Int2 rtlc = Int2.Max(f.tlc,0);
+    Int2 rbrc = Int2.Min(f.brc, new Int2(width,height));
+    if(rbrc.x<0 || rbrc.y<0 || rtlc.x>=width || rtlc.y>=height) return false;
+
+    int addAmt = 1<<leveldenom;
+    int xstop = (rbrc.x+addAmt-1)>>leveldenom;
+    int ystop = (rbrc.y+addAmt-1)>>leveldenom;
+    for(int x=rtlc.x>>leveldenom; x<xstop; x++){
+      for(int y=rtlc.y>>leveldenom; y<ystop; y++){
+        if(collideCircleLevel(x,y,center,rad,level)) return true;
       }
     }
-    return s;
+    return false;
   }
 }

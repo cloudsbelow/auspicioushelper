@@ -64,7 +64,7 @@ public static class DebugConsole {
   public static void Write(string message, object o){
     Write(message+" "+(o==null?"NULL":o.ToString()));
   }
-  public static void nl(int n){
+  public static void nl(int n=1){
     for(int i=0; i<n; i++) Write("");
   }
   public static void Write(string message, params object[] os){

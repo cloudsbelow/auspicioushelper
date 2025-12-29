@@ -125,6 +125,7 @@ public class templateFiller{
     public bool created = false;
     public TileView Fgt = null;
     public MipGrid FgMipgrid;
+    public MipGrid lowresGrid;
     public TileView Bgt = null;
     public Vector2 tiletlc;
     public TileOccluder tileOcc  = null;
@@ -197,7 +198,10 @@ public class templateFiller{
         }
       }
       fgt = keepfg? new VirtualMap<char>(fgtiles):null;
-      if(fgt != null) tileOcc = new TileOccluder().Build(fgt);
+      if(fgt != null){
+        tileOcc = new TileOccluder().Build(fgt);
+        lowresGrid = new MipGrid(fgt.Map(x=>x!='0'));
+      }
       bgt = keepbg? new VirtualMap<char>(bgtiles):null;
     }
     internal void setTiles(VirtualMap<char> tiles, bool foreground = true){
@@ -210,7 +214,10 @@ public class templateFiller{
       }  
       if(foreground) {
         fgt = has?new VirtualMap<char>(fill):null;
-        if(fgt != null) tileOcc = new TileOccluder().Build(fgt);
+        if(fgt != null){
+          tileOcc = new TileOccluder().Build(fgt);
+          lowresGrid = new MipGrid(fgt.Map(x=>x!='0'));
+        }
       } else bgt = has?new VirtualMap<char>(fill):null;
     }
   }

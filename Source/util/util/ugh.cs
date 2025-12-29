@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
@@ -66,6 +67,22 @@ public static partial class Util{
     for(int i=0; i<data.Count; i++) res.Add(pred(data[i]));
     return res;
   } 
+  public static T2[,] Map<T1,T2>(this T1[,] data, Func<T1,T2> pred){
+    int w = data.GetLength(0);
+    int h = data.GetLength(1);
+    var r = new T2[w, h];
+    var sin = MemoryMarshal.CreateSpan(ref data[0,0], w*h);
+    var sout = MemoryMarshal.CreateSpan(ref r[0,0], w*h);
+    for (int i = 0; i < sin.Length; i++)sout[i] = pred(sin[i]);
+    return r;
+  }
+  public static VirtualMap<T2> Map<T1,T2>(this VirtualMap<T1> data, Func<T1,T2> pred){
+    VirtualMap<T2> o = new(data.Columns,data.Rows);
+    for(int sx=0; sx<data.SegmentColumns; sx++) for(int sy=0; sy<data.SegmentRows; sy++){
+      o.segments[sx,sy] = data.segments[sx,sy]?.Map(pred);
+    }
+    return o;
+  }
 
   public struct Double4{
     public double X;

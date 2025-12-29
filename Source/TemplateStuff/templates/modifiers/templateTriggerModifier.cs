@@ -4,11 +4,13 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Reflection.Emit;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
 using Microsoft.VisualBasic;
 using Microsoft.Xna.Framework;
+using Mono.Cecil;
 using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
@@ -215,20 +217,21 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   }
   class TouchInfo:TriggerInfo{
     public enum Type {
-      collideV, collideH, jump, climbjump, walljump, wallbounce, super, grounded, climbing , dashH, dashV
+      collideV, collideH, jump, climbjump, walljump, wallbounce, super, grounded, climbing , dashH, dashV,
+      invalid, FishExplosion, SeekerExplosion,
     }
     public Type ty;
     public bool use = false;
-    public TouchInfo(Player p, Type t){
+    public TouchInfo(Entity p, Type t){
       entity = p;
       ty=t;
     }
     public override bool shouldTrigger => use;
     public TouchInfo asUsable(){
-      use = true;
+      use = ty!=Type.invalid;
       return this;
     }
-    public override string category => "touch/"+ty.ToString()+(entity is Player p?$"/{p.StateMachine.state}":"");
+    public override string category => "touch/"+ty.ToString()+(entity is Player p?$"/{p.StateMachine.GetCurrentStateName()}":"");
   }
   class HitInfo:TriggerInfo{
     public bool use = false;
@@ -294,6 +297,31 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     if(p.StateMachine.State == Player.StClimb){
       triggerFromArr(p.CollideAll<Platform>(p.Position + Vector2.UnitX*(float)p.Facing), new TouchInfo(p, TouchInfo.Type.climbing));
     }
+  }
+  public static void ExplodeThing(Entity e){
+    foreach(Solid s in e.Scene.Tracker.GetEntities<Solid>()) if(e.CollideCheck(s)){
+      s.Get<ChildMarker>()?.parent?.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new TouchInfo(e, e switch{
+        Seeker=>TouchInfo.Type.SeekerExplosion,
+        Puffer=>TouchInfo.Type.FishExplosion,
+        _=>TouchInfo.Type.invalid
+      }));
+    }
+  }
+  [OnLoad.ILHook(typeof(Seeker),nameof(Seeker.RegenerateCoroutine),OnLoad.ILHook.Mode.Coroutine)]
+  [OnLoad.ILHook(typeof(Puffer),nameof(Puffer.Explode))]
+  static void ExplodeHook(ILContext ctx){
+    ILCursor c = new(ctx);
+    if(c.TryGotoNextBestFit(MoveType.Before,
+      itr=>itr.MatchCallvirt<Entity>("get_Scene")||itr.MatchCall<Entity>("get_Scene"),
+      itr=>itr.MatchCallvirt<Scene>("get_Tracker"),
+      itr=>itr.MatchCallvirt<Tracker>(nameof(Tracker.GetEntities)) &&
+        itr.Operand is GenericInstanceMethod g && 
+        g.GenericArguments.Count==1 && 
+        g.GenericArguments[0].FullName==typeof(TempleCrackedBlock).FullName
+    )){
+      c.EmitDup();
+      c.EmitDelegate(ExplodeThing);
+    } else DebugConsole.WriteFailure("Failed to apply explosion hooks",true);
   }
 
   static void MoveHDelegate(Platform h, Actor a){

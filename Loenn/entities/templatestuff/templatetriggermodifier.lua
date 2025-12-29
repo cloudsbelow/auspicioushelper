@@ -26,6 +26,8 @@ entity.fieldInformation = function(entity)
                 "climbing",
                 "dashH",
                 "dashV",
+                "FishExplosion",
+                "SeekerExplosion",
             }
         }
     },

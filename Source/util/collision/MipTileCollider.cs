@@ -43,7 +43,10 @@ public sealed class MiptileCollider:Grid{
   public override Collider Clone() {
     return new MiptileCollider(mg,cellsize);
   }
-  public override bool Collide(Circle circle)=>false; //so does vanilla...
+  //cellsize better be square...
+  public override bool Collide(Circle circle){
+    return mg.CollideCircle((circle.AbsolutePosition-tlc)/cellsize,circle.Radius/cellsize.X);
+  }
   public override bool Collide(Grid grid) {
     if(grid is MiptileCollider o){
       return CollideMipTileOffset(o,Vector2.Zero);
@@ -82,13 +85,14 @@ public sealed class MiptileCollider:Grid{
   public override bool Collide(Vector2 point) {
     return mg.collidePoint(Int2.Floor((point-tlc)/cellsize));
   }
-  Entity lastentity;
+  internal Entity lastentity;
   public override void Added(Entity entity) {
     lastentity=entity;
     base.Added(entity);
   }
   public static MiptileCollider fromGrid(Grid g){
     if(g is MiptileCollider gr) return gr;
+    if(g is DumbGridWrapper gri) return gri.mtc;
     DynamicData d = new(g);
     if(!d.TryGet<MiptileCollider>("ausp_mipgrid", out var grid)){
       if(PartialTiles.usingPartialtiles){
@@ -101,5 +105,29 @@ public sealed class MiptileCollider:Grid{
   }
   public override void Render(Camera camera, Color color) {
     Draw.HollowRect(AbsoluteX, AbsoluteY, Width, Height, color);
+  }
+}
+
+
+class DumbGridWrapper:Grid{
+  public MiptileCollider mtc;
+  MipGrid mg;
+  Vector2 cellsize;
+  public Vector2 tlc=>((Entity?.Position??Vector2.Zero)+Position).Round();
+  public DumbGridWrapper(Grid g, MipGrid mg):base(g.CellWidth,g.CellHeight,g.Data){
+    this.mg=mg;
+    this.mtc=new(mg,cellsize=new(CellWidth,CellHeight));
+  }
+  public override void Added(Entity entity) {
+    base.Added(entity);
+    mtc.lastentity = entity;
+  }
+  public override bool Collide(Vector2 point){
+    Vector2 vector = point - base.AbsolutePosition;
+    if(vector.X<0 || vector.Y<0) return false;
+    return Data[(int)(vector.X / CellWidth), (int)(vector.Y / CellHeight)];
+  }
+  public override bool Collide(Circle c){
+    return mg.CollideCircle((c.AbsolutePosition-tlc)/cellsize,c.Radius/cellsize.X);
   }
 }
