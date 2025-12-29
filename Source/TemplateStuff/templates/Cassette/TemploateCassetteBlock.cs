@@ -12,6 +12,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using Microsoft.Build.Utilities;
 using System.Diagnostics;
+using Celeste.Mod.auspicioushelper.Wrappers;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -21,7 +22,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
   
   public string channel{get;set;}
   enum State {
-    gone, manifest, trying, there
+    gone, trying, there, popManifest
   }
   State there = State.there;
   public List<Entity> todraw=new List<Entity>();
@@ -61,18 +62,27 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
     };
   }
   public void tryManifest(){
-    if(paranoid && there!=State.manifest){
-      if(layer != null) destroyChildren(true);
+    if(paranoid && there==State.gone){
+      there = State.popManifest;
+      if(layer != null){
+        destroyChildren(true);
+      }
       makeChildren(Scene);
+      AddNewEnts(GetChildren<Entity>());
       if(children.Count>0){
         UpdateHook.AddAfterUpdate(()=>{
+          DebugConsole.Write("sadsadasd",getSelfCol());
+          foreach(var i in children) if(i is FgTiles f){
+            DebugConsole.Write("F",f.Scene,f.parent,f.Collidable);
+          }
           enforce();
+          there = State.trying;
           tryManifest();
         },false,true);
       }
-      there = State.manifest;
       return;
     }
+    there = State.trying;
     Player p = Scene?.Tracker.GetEntity<Player>();
     if(getParentCol() && p!=null && !p.Dead && hasInside(p)){
       p.Position.Y-=4;
@@ -103,6 +113,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
       if(there == State.there){
         if(paranoid && layer == null) UpdateHook.AddAfterUpdate(()=>{
           destroyChildren(!silent);
+          setVisColAct(false,false,!freeze);
           silent=false;
         },false,true);
         else setVisColAct(layer!=null,false,!freeze);
@@ -111,12 +122,13 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
           childRelposSafe();
         }
         if(layer!=null) foreach(var c in comps)c.SetStealUse(layer,true,true);
+      }else if(paranoid){
+        destroyChildren(false);
       }
       there = State.gone;
       prop&=~Propagation.Inside;
     } else {
       if(there == State.gone){
-        there = State.trying;
         tryManifest();
       }
       if(doBoost && there == State.there){

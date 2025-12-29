@@ -3,9 +3,15 @@
 
 using System;
 using System.Collections;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Celeste.Mod.Entities;
+using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
+using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper.Wrappers;
 
@@ -275,6 +281,7 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
   {
     if (player.UseRefill(twoDashes))
     {
+      //Enabled = true;
       Audio.Play(twoDashes ? "event:/new_content/game/10_farewell/pinkdiamond_touch" : "event:/game/general/diamond_touch", Position);
       Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
       Collidable = (selfCol = false);
@@ -308,4 +315,32 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
     SlashFx.Burst(Position, num);
     if (oneUse) RemoveSelf();
   }
+
+
+  //toxicity speedrun remenant code. if you feel like using, make sure to make it not so flimsy.
+  // [Import.SpeedrunToolIop.Static]
+  // static bool Enabled = false;
+  // static object Delegate(object o){
+  //   if(!Enabled) return o;
+  //   Enabled = false;
+  //   IEnumerator Wait(float minTime){
+  //     while(Input.Dash.Check || minTime>0){
+  //       minTime-=Engine.DeltaTime;
+  //       yield return null;
+  //     }
+  //   }
+  //   return new SwapImmediately(Wait((float)o));
+  // }
+  // [OnLoad.ILHook(typeof(Player),nameof(Player.DashCoroutine),OnLoad.ILHook.Mode.Coroutine)]
+  // static void Hook(ILContext ctx){
+  //   ILCursor c = new(ctx);
+  //   float val;
+  //   while(c.TryGotoNextBestFit(MoveType.After,
+  //     itr=>itr.MatchLdcR4(out val),
+  //     itr=>itr.MatchBox(typeof(float))
+  //   )){
+  //     //DebugConsole.DumpIl(c);
+  //     c.EmitDelegate(Delegate);
+  //   }
+  // }
 }

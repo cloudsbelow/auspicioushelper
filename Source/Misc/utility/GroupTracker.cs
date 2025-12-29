@@ -57,7 +57,10 @@ public class GroupTracker{
     tracked.Clear();
     ents.Clear();
   }
-  void QuietRemove(TrackedComponent c)=>tracked.Remove(c);
+  void QuietRemove(TrackedComponent c){
+    tracked.Remove(c);
+    ents.Remove(c.Entity);
+  }
   Util.HybridSet<TrackedComponent> tracked = new();
   Util.HybridSet<Entity> ents = new();
   public class TrackedGroupComp:OnAnyRemoveComp, IEnumerable<Entity>{

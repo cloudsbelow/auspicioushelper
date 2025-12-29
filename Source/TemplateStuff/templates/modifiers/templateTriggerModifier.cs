@@ -105,7 +105,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     triggerOnTouch = d.Bool("triggerOnTouch",false);
     seekersTrigger = d.Bool("seekersTrigger",false);
     throwablesTrigger = d.Bool("holdablesTrigger",false);
-    if(triggerOnTouch || advtouch.Count>0 || seekersTrigger || throwablesTrigger) hooks.enable();
+    if(triggerOnTouch || advtouch.Count>0 || seekersTrigger || throwablesTrigger || log) hooks.enable();
     channel = d.Attr("channel",null);
     if(!d.Bool("propagateRiding",true)) prop &= ~Propagation.Riding;
     if(!d.Bool("propagateInside",true)) prop &= ~Propagation.Inside;

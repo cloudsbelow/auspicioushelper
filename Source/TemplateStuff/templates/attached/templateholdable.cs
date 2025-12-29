@@ -40,13 +40,13 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   }
   class HoldTemplate:TemplateDisappearer, Template.IRegisterEnts{
     TemplateHoldable actor;
-    public HoldTemplate(TemplateHoldable owner, Vector2 loc, int doff):base(loc,doff){
+    public HoldTemplate(TemplateHoldable owner, Vector2 loc, int doff):base(owner.d,loc,doff){
       actor=owner;
     }
     public override void RegisterEnts(List<Entity> l) {
       base.RegisterEnts(l);
       foreach(var e in l){
-        if(actor.hasReflection) e.Add(new MirrorReflection());
+        if(actor.hasReflection && e.Depth<=9000) e.Add(new MirrorReflection());
         if(e is Solid) actor.Mysolids.Add(e);
       }
     }

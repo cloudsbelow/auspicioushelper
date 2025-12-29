@@ -17,6 +17,7 @@ entity.placements = {
       collidableChannel="",
       visibleChannel="",
       shakeChannel="",
+      allowCustomSpeed=false,
       log = false,
       only = ""
     }

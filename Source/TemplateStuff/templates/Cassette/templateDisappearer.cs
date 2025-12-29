@@ -130,18 +130,6 @@ public class TemplateEntityModifier:TemplateDisappearer, Template.IRegisterEnts{
       only = new(Util.listparseflat(lis,false,true));
     }
   }
-  void AddChwatcher(string s, bool vis, bool col, bool act){
-    if(string.IsNullOrWhiteSpace(s)) return;
-    Add(new ChannelTracker(s, (double nval)=>{
-      bool num = nval!=0;
-      if(ents==null) setVisColAct(vis?num:getSelfVis(), col?num:getSelfCol(), act?num:getSelfAct());
-      else foreach(Entity e in ents){
-        if(vis) e.Visible = num;
-        if(col) e.Collidable = num;
-        if(act) e.Active = num;
-      }
-    }, true));
-  }
   public override void RegisterEnts(List<Entity> l) {
     if(only!=null || log || customSpeed) foreach(Entity e in l){
       string name = e.GetType().FullName;
@@ -165,7 +153,7 @@ public class TemplateEntityModifier:TemplateDisappearer, Template.IRegisterEnts{
       else foreach(var ent in ents) ent.Collidable = nv; 
     }, true));
     if(actCh.HasContent()){
-      if(!customSpeed) Add(new ChannelTracker(colCh,(double n)=>{
+      if(!customSpeed) Add(new ChannelTracker(actCh,(double n)=>{
         bool nv = n!=0;
         if(only==null) setAct(nv);
         else foreach(var ent in ents) ent.Active = nv; 

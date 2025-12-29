@@ -64,8 +64,8 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
     inSpeed = d.Float("returnSpeed",0.5f);
     outEasing = d.Enum<Util.Easings>("easing",Util.Easings.SineIn);
     inEasing = d.Enum<Util.Easings>("returnEasing",Util.Easings.SineIn);
-    outgoingSound = d.Attr("outSound","event:/auspicioushelper/zip/ah_zip_start");
-    returningSound = d.Attr("returnSound","event:/auspicioushelper/zip/ah_zip_return");
+    outgoingSound = d.Attr("outgoingSound","event:/auspicioushelper/zip/ah_zip_start");
+    returningSound = d.Attr("returningSound","event:/auspicioushelper/zip/ah_zip_return");
   }
   UpdateHook upd;
   ChannelTracker ct;

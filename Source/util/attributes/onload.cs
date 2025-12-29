@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Celeste.Mod.Entities;
 using MonoMod.Cil;
+using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -18,20 +19,32 @@ public class OnLoad:Attribute{
     public virtual void Apply(FieldInfo f){}
   }
   public class ILHook:CustomOnload{
+    public enum Mode{
+      Normal, Coroutine, PropGet, PropSet, Placeholder
+    }
     string methodStr;
     Type ty;
-    public ILHook(Type ty, string method){
+    Mode mode;
+    public ILHook(Type ty, string method, Mode mode = Mode.Normal){
       methodStr=method;
       this.ty=ty;
+      this.mode=mode;
     }
     public override void Apply(MethodInfo m){
+      if(mode == Mode.Placeholder) return;
       var p = m.GetParameters();
       if(p.Length!=1 || p[0].ParameterType!=typeof(ILContext) || !m.IsStatic){
         DebugConsole.WriteFailure($"ILHook attr {m} on {ty}.{methodStr} illegal",true);
       }
-      MethodInfo methodbase = ty.GetMethod(methodStr, Util.GoodBindingFlags);
+      MethodInfo methodbase = mode switch {
+        Mode.Normal=>ty.GetMethod(methodStr, Util.GoodBindingFlags),
+        Mode.Coroutine=>ty.GetMethod(methodStr, Util.GoodBindingFlags)?.GetStateMachineTarget(),
+        Mode.PropGet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetGetMethod(),
+        Mode.PropSet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetSetMethod(),
+        _=>null
+      };
       if(methodbase == null){
-        DebugConsole.WriteFailure($"Could not add hook to nonexistent method {ty}.{methodStr}",true);
+        DebugConsole.WriteFailure($"Could not add hook to nonexistent method {ty}.{methodStr} ({mode})",true);
         return;
       }
       var hook = new MonoMod.RuntimeDetour.ILHook(methodbase, (ILContext ctx)=>m.Invoke(null,[ctx]));
