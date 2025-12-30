@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Celeste.Mod.Entities;
 using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -19,36 +20,72 @@ public class OnLoad:Attribute{
     public virtual void Apply(FieldInfo f){}
   }
   public class ILHook:CustomOnload{
-    public enum Mode{
-      Normal, Coroutine, PropGet, PropSet, Placeholder
-    }
     string methodStr;
     Type ty;
-    Mode mode;
-    public ILHook(Type ty, string method, Mode mode = Mode.Normal){
+    Util.HookTarget mode;
+    public ILHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal){
       methodStr=method;
       this.ty=ty;
       this.mode=mode;
     }
-    public override void Apply(MethodInfo m){
-      if(mode == Mode.Placeholder) return;
+    internal static MonoMod.RuntimeDetour.ILHook apply(Util.HookTarget mode, MethodInfo m, Type ty, string methodStr){
+      if(mode == Util.HookTarget.Placeholder) return null;
       var p = m.GetParameters();
       if(p.Length!=1 || p[0].ParameterType!=typeof(ILContext) || !m.IsStatic){
         DebugConsole.WriteFailure($"ILHook attr {m} on {ty}.{methodStr} illegal",true);
       }
       MethodInfo methodbase = mode switch {
-        Mode.Normal=>ty.GetMethod(methodStr, Util.GoodBindingFlags),
-        Mode.Coroutine=>ty.GetMethod(methodStr, Util.GoodBindingFlags)?.GetStateMachineTarget(),
-        Mode.PropGet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetGetMethod(),
-        Mode.PropSet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetSetMethod(),
+        Util.HookTarget.Normal=>ty.GetMethod(methodStr, Util.GoodBindingFlags),
+        Util.HookTarget.Coroutine=>ty.GetMethod(methodStr, Util.GoodBindingFlags)?.GetStateMachineTarget(),
+        Util.HookTarget.PropGet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetGetMethod(),
+        Util.HookTarget.PropSet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetSetMethod(),
         _=>null
       };
       if(methodbase == null){
         DebugConsole.WriteFailure($"Could not add hook to nonexistent method {ty}.{methodStr} ({mode})",true);
-        return;
+        return null;
       }
-      var hook = new MonoMod.RuntimeDetour.ILHook(methodbase, (ILContext ctx)=>m.Invoke(null,[ctx]));
+      return new MonoMod.RuntimeDetour.ILHook(methodbase, (ILContext ctx)=>m.Invoke(null,[ctx]));
+    }
+    public override void Apply(MethodInfo m){
+      var hook = apply(mode,m,ty,methodStr);
+      if(hook == null) return;
       HookManager.cleanupActions.enroll(new ScheduledAction(hook.Dispose, $"dispose ILHOOK<{ty}> {methodStr}"));
+    }
+  }
+  public class OnHook:CustomOnload{
+    string methodStr;
+    Type ty;
+    Util.HookTarget mode;
+    public OnHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal){
+      methodStr=method;
+      this.ty=ty;
+      this.mode=mode;
+    }
+    internal static Hook apply(Util.HookTarget mode, MethodInfo m, Type ty, string methodStr){
+      if(mode == Util.HookTarget.Placeholder) return null;
+      //DebugConsole.Write($"doing on hook on {ty}.{methodStr} ({mode}) via",m);
+      var p = m.GetParameters();
+      if(!m.IsStatic){
+        DebugConsole.WriteFailure($"On hook attr {m} on {ty}.{methodStr} illegal",true);
+      }
+      MethodInfo methodbase = mode switch {
+        Util.HookTarget.Normal=>ty.GetMethod(methodStr, Util.GoodBindingFlags),
+        Util.HookTarget.Coroutine=>ty.GetMethod(methodStr, Util.GoodBindingFlags)?.GetStateMachineTarget(),
+        Util.HookTarget.PropGet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetGetMethod(),
+        Util.HookTarget.PropSet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetSetMethod(),
+        _=>null
+      };
+      if(methodbase == null){
+        DebugConsole.WriteFailure($"Could not add hook to nonexistent method {ty}.{methodStr} ({mode})",true);
+        return null;
+      }
+      return new Hook(methodbase, m);
+    }
+    public override void Apply(MethodInfo m){
+      var hook = apply(mode,m,ty,methodStr);
+      if(hook == null) return;
+      HookManager.cleanupActions.enroll(new ScheduledAction(hook.Dispose, $"dispose ONHOOK<{ty}> {methodStr}"));
     }
   }
   public static void Run(){
@@ -73,5 +110,11 @@ public class OnLoad:Attribute{
         }
       }
     }
+  }
+}
+
+public partial class Util{
+  public enum HookTarget{
+    Normal, Coroutine, PropGet, PropSet, Placeholder
   }
 }

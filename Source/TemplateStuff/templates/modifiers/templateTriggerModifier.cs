@@ -307,7 +307,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       }));
     }
   }
-  [OnLoad.ILHook(typeof(Seeker),nameof(Seeker.RegenerateCoroutine),OnLoad.ILHook.Mode.Coroutine)]
+  [OnLoad.ILHook(typeof(Seeker),nameof(Seeker.RegenerateCoroutine),Util.HookTarget.Coroutine)]
   [OnLoad.ILHook(typeof(Puffer),nameof(Puffer.Explode))]
   static void ExplodeHook(ILContext ctx){
     ILCursor c = new(ctx);

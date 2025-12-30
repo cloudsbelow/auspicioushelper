@@ -2,6 +2,7 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using Celeste.Mod.Entities;
 
@@ -79,5 +80,68 @@ public static class ResetEvents{
         }
       }
     }
+  }
+
+  [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+  public class LazyLoadDuration:Attribute{
+    RunTimes t;
+    public LazyLoadDuration(RunTimes unloadTime=RunTimes.OnEnter){
+      t=unloadTime;
+    }
+    public static RunTimes Get(Type t)=>t.GetCustomAttribute(typeof(LazyLoadDuration)) is LazyLoadDuration l? l.t:RunTimes.OnEnter;
+  }
+  [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
+  public class LazyThing:Attribute{
+    public virtual Action apply(MethodInfo m)=>null;
+  }
+  public class LazyHook:LazyThing{
+    protected string methodStr;
+    protected Type ty;
+    protected Util.HookTarget mode;
+    public LazyHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal){
+      methodStr=method;
+      this.ty=ty;
+      this.mode=mode;
+    }
+  }
+  public class ILHook:LazyHook{
+    public ILHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal):base(ty,method,mode){}
+    public override Action apply(MethodInfo m){
+      if(OnLoad.ILHook.apply(mode, m, ty, methodStr) is not {} h) return null;
+      return h.Dispose;
+    }
+  }
+  public class OnHook:LazyHook{
+    public OnHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal):base(ty,method,mode){}
+    public override Action apply(MethodInfo m){
+      if(OnLoad.OnHook.apply(mode, m, ty, methodStr) is not {} h) return null;
+      return h.Dispose;
+    }
+  }
+  public class OnEnable:LazyThing{
+    public override Action apply(MethodInfo m){
+      m.Invoke(null,[]);
+      return null;
+    }
+  }
+  public class OnDisable:LazyThing{
+    public override Action apply(MethodInfo m){
+      return ()=>m.Invoke(null,[]);
+    }
+  }
+
+  static Dictionary<Type,HookManager> LLstuff = new();
+  public static void LazyEnable(Type t){
+    if(!LLstuff.TryGetValue(t, out var h)){
+      List<Action> onDispose = new();
+      LLstuff[t] = h = new(()=>{
+        foreach(MethodInfo m in t.GetMethods(Util.GoodBindingFlags)) if(m.IsStatic){
+          foreach(var attr in m.GetCustomAttributes<LazyThing>()) if(attr.apply(m) is {} g) onDispose.Add(g);
+        }
+      },()=>{
+        foreach(var a in onDispose) a();
+        onDispose.Clear();
+      } , LazyLoadDuration.Get(t), $"auto-lazyload {t}");
+    } h.enable();
   }
 }

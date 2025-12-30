@@ -28,7 +28,8 @@ public class CustomloadEntity:Attribute{
         if(attr.fnName is {} fn){
           BindingFlags flags = BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic;
           if(t.GetMethod(fn,flags,[typeof(EntityData)]) is {} f1)l=(l,d,o,e)=>f1.Invoke(null,[e]);
-          if(t.GetMethod(fn,flags,[]) is {} f2)l=(l,d,o,e)=>f2.Invoke(null,[]);
+          else if(t.GetMethod(fn,flags,[typeof(Level),typeof(LevelData),typeof(Vector2),typeof(EntityData)]) is {} f2)l=(l,d,o,e)=>f2.Invoke(null,[l,d,o,e]);
+          else if(t.GetMethod(fn,flags,[]) is {} f3)l=(l,d,o,e)=>f3.Invoke(null,[]);
           if(l==null) DebugConsole.WriteFailure($"Could not find valid function {fn} on {t}",true);
         }
         if(ce!=null) foreach(var s in ce.IDs) found.Add(s,l);

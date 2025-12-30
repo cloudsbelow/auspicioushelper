@@ -84,7 +84,7 @@ public class ConnectedBlocks:Entity{
             goto search;
           }
         }
-      
+      things.Sort((x,y)=>y.Item3.actualDepth.CompareTo(x.Item3.actualDepth));
       Int2 minimum = Int2.Round(Position);
       Int2 maximum = Int2.Round(Position);
       foreach(var t in things){
