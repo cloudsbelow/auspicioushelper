@@ -419,4 +419,10 @@ public static partial class Util{
       reference=oldValue;
     }
   }
+  public static AutoRestore<T> WithRestore<T>(ref T toRestore){
+    return new AutoRestore<T>(ref toRestore);
+  }
+  public static AutoRestore<T> WithRestore<T>(ref T toRestore, T nval){
+    return new AutoRestore<T>(ref toRestore, nval);
+  }
 }

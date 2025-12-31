@@ -67,6 +67,9 @@ public static partial class Util{
     for(int i=0; i<data.Count; i++) res.Add(pred(data[i]));
     return res;
   } 
+  public static void MapInplace<T>(this List<T> data, Func<T,T> pred){
+    for(int i=0; i<data.Count; i++) data[i]=pred(data[i]);
+  }
   public static T2[,] Map<T1,T2>(this T1[,] data, Func<T1,T2> pred){
     int w = data.GetLength(0);
     int h = data.GetLength(1);

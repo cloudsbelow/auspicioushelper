@@ -29,6 +29,6 @@ public class NoiseSamplerOS2_2DLoop{
     ypos=radius*MathF.Sin(theta);
   }
   public float sample(uint handle){
-    return OpenSimplex2S.Noise2(handle, xpos,ypos);
+    return OpenSimplex2S.Noise2_ImproveX(handle, xpos,ypos);
   }
 }

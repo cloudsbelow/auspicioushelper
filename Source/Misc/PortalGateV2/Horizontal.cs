@@ -9,23 +9,39 @@ using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.auspicioushelper;
 
-[ResetEvents.LazyLoadDuration(ResetEvents.RunTimes.OnNewScreen)]
+[ResetEvents.LazyLoadDuration(ResetEvents.RunTimes.OnEnter)]
 [Tracked]
 public class PortalFaceH:Entity{
   public bool facingRight = false;
   public bool flipped = false;
   public float height;
   PortalFaceH other;
+  MTexture texture = GFX.Game["util/lightbeam"];
+  NoiseSamplerOS2_2DLoop ogen = new NoiseSamplerOS2_2DLoop(20, 70, 100);
+  List<uint> handles = new();
   public PortalFaceH(Vector2 pos, float height, bool facingRight, bool vflip):base(pos){
     Collider = new Hitbox(2,height,-1,0);
     flipped=vflip;
     this.facingRight = facingRight;
     this.height=height;
+    for(int i=0; i<height; i+=2){
+      handles.Add(ogen.getHandle());
+      handles.Add(ogen.getHandle());
+    }
+  }
+  public override void Update() {
+    base.Update();
+    ogen.update(Engine.DeltaTime);
   }
   public override void Render(){
     base.Render();
-    Draw.Rect(Collider,Color.Red);
-    Draw.Rect(new Rectangle((int)X+(facingRight?0:-4),(int)Y,4,4),Color.Red);
+    float wrec1 = (facingRight?1f:-1f) / (float)texture.Width;
+    for(int i=2; i<height-2; i+=4){
+      float alpha = Math.Min(1,Math.Max(0,ogen.sample(handles[i]))+0.2f);
+      if(alpha<0) continue;
+      float length = ogen.sample(handles[i+1])*10+20;
+      texture.Draw(Position+new Vector2(0,i), new Vector2(0,0.5f), Color.White*alpha, new Vector2(wrec1 * length, 8), 0);
+    }
   }
 
   public Vector2 getSpeed()=>Vector2.Zero;
@@ -70,7 +86,7 @@ public class PortalFaceH:Entity{
   public static class Pair{
     static void Load(Level l, LevelData ld, Vector2 o, EntityData d){
       var e1 = new PortalFaceH(o+d.Position, d.Height, d.Bool("right_facing_f0"), false);
-      var e2 = new PortalFaceH(o+d.Nodes[0], d.Height, d.Bool("right_facing_f1"), false);
+      var e2 = new PortalFaceH(o+d.Nodes[0], d.Height, d.Bool("right_facing_f1"), d.Bool("flipGravity"));
       e1.other = e2;
       e2.other = e1;
       l.Add([e1,e2]);

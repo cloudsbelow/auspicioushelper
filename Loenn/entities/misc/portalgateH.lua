@@ -16,6 +16,7 @@ entity.placements = {
       height = 8,
       right_facing_f0=false,
       right_facing_f1=true,
+      flipGravity=false,
       color_hex="ffffffaa",
       attached=false,
       giveRCB = true,
@@ -27,6 +28,21 @@ entity.placements = {
 entity.fieldInformation = {
     color_hex = { fieldType = "color", useAlpha = true }
 }
+--_gravityHelper 
+function entity.assortedMods(entity)
+  if entity.flipGravity == true then
+    entity._gravityHelper=true
+  else
+    entity._gravityHelper = nil
+  end
+
+  if entity.flipGravity then
+    return {"auspicioushelper", "GravityHelper"}
+  else
+    return {"auspicioushelper"} 
+  end
+end
+
 
 entity.texture = "loenn/auspicioushelper/portal"
 function entity.scale(room, entity)

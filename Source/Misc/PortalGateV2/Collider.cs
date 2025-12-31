@@ -50,13 +50,22 @@ public class PColliderH:ColliderList{
     return rel;
   }
   void Swap(){
-    Entity.Position = OthersidePos(Entity.Position);
     if(Entity is Player player){
+      Vector2 oldBottom = player.Position - Vector2.UnitY*(GelperIop.IsFlipped(player)? -orig.height:0);
+      player.Get<PlayerHair>()?.Nodes.MapInplace(x=>OffsetPosFlip(x,x-oldBottom));
       player.Speed = calcspeed(player.Speed);
-      player.Facing = (Facings)(-(int)player.Facing);
+      if(flipH)player.Facing = (Facings)(-(int)player.Facing);
       player.DashDir = player.DashDir*flipMult;
     } else if(DynamicData.For(Entity).TryGet("Speed", out Vector2 val)){
       DynamicData.For(Entity).Set("Speed",calcspeed(val));
+    }
+    Entity.Position = OthersidePos(Entity.Position);
+    if(Entity is Actor a && flipV){
+      using(new CollideDetourLock()) Entity.Collider = orig;
+      GelperIop.SetActorGravity(a,2,1);
+      orig = a.Collider as Hitbox;
+      if(orig == null) throw new Exception("hum");
+      a.Collider = this;
     }
     var temp = f1;
     f1 = f2;
@@ -67,7 +76,6 @@ public class PColliderH:ColliderList{
     Vector2 eloc = Entity.Position;
     float frontEdge = eloc.X+orig.Position.X+(f1.facingRight?0:orig.width);
     float dist = (f1.X-frontEdge)*(f1.facingRight?-1:1);
-    DebugConsole.Write("dist",dist);
     if(dist*2+orig.width<0 && !fromSwap) Swap();
     else if(dist>=margin) End();
   }
@@ -78,10 +86,9 @@ public class PColliderH:ColliderList{
     );
     return ret;
   }
-  Vector2 OthersidePos(Vector2 old){
-    Vector2 offset = new(orig.Position.X+orig.width/2, orig.Position.Y+orig.height/2);
-    return GetOppositePoint(old+offset)-offset;
-  }
+  Vector2 OffsetPos(Vector2 old, Vector2 offset)=>GetOppositePoint(old+offset)-offset;
+  Vector2 OffsetPosFlip(Vector2 old, Vector2 offset)=>GetOppositePoint(old+offset)-offset*flipMult;
+  Vector2 OthersidePos(Vector2 old)=>OffsetPos(old,new(orig.Position.X+orig.width/2, orig.Position.Y+orig.height/2));
   bool GetRects(out FloatRect r1, out FloatRect r2){
     var epos = Entity.Position;
     float absleft = epos.X+orig.Position.X;
@@ -94,7 +101,7 @@ public class PColliderH:ColliderList{
       overlap = Math.Max(0, absleft+orig.width - f1.X);
       r1 = new(absleft, abstop, orig.width-overlap, orig.height);
     }
-    float nrely = flipV? f1.Position.Y+f1.height-orig.height-epos.Y : abstop-f1.Position.Y;
+    float nrely = flipV? f1.Position.Y+f1.height-orig.height-abstop : abstop-f1.Position.Y;
     r2 = new(f2.Position.X-(f2.facingRight? 0:overlap), f2.Position.Y+nrely, overlap, orig.height);
     if(overlap<orig.width){
       return overlap>0;
@@ -190,38 +197,47 @@ public class PColliderH:ColliderList{
       }
       Position = pch.OthersidePos(e.Position);
       Vector2 oldpos = e.Position;
+      if(Scene.OnInterval(1)){
+        DebugConsole.Write("",pch.f1,pch.f2,oldpos,Position);
+      }
       
       var delta = -e.Position+Position;
-      Vector2 mulMove = new Vector2(pch.flipH?-1:1,1);
-      if(e is Actor){
+      Vector2 mulMove = new Vector2(pch.flipH?-1:1,pch.flipV?-1:1);
+      if(e is Actor act){
         if(e is Player p){
           PlayerHair h = p.Get<PlayerHair>();
           if(pch.flipH) p.Facing = (Facings)(0 - p.Facing);
+          var oldHair = h.Nodes.Map(x=>x);
           p.Position+=delta;
+          Vector2 oldBottom = oldpos - Vector2.UnitY*(GelperIop.IsFlipped(p)? -pch.orig.height:0);
           for(int i=0; i<h.Sprite.HairCount; i++){
-            h.Nodes[i]=(h.Nodes[i]-oldpos)*mulMove+p.Position;
+            h.Nodes[i]=pch.OffsetPosFlip(h.Nodes[i],h.Nodes[i]-oldBottom);
           }
-          try{
-            p.Render();
-          }catch(Exception ex){
-            DebugConsole.Write("Error in rendering otherside player");
-            DebugConsole.Write(ex.ToString());
-          }
-          for(int i=0; i<h.Sprite.HairCount; i++){
-            h.Nodes[i]=(h.Nodes[i]-p.Position)*mulMove+oldpos;
-          }
+          using(Util.WithRestore(ref p.varJumpTimer))
+          using(Util.WithRestore(ref p.jumpGraceTimer))
+          using(Util.WithRestore(ref p.onGround))
+          using(Util.WithRestore(ref p.Speed))
+          using(Util.WithRestore(ref p.DashDir))
+          do{
+            if(pch.flipV) GelperIop.TryFlip(p);
+            try{p.Render();}catch(Exception ex){
+              DebugConsole.Write("Error in rendering player",ex);
+            }
+            if(pch.flipV) GelperIop.TryFlip(p);
+          } while(false);
+          h.Nodes = oldHair;
           if(pch.flipH) p.Facing = (Facings)(0 - p.Facing);
           p.Position=oldpos;
           return;
         }
-
+        if(GelperIop.IsActorInverted?.Invoke(act)??false)mulMove.Y=-mulMove.Y;
         foreach(Component c in e.Components){
           if(c is Sprite s) {
             var temp = s.RenderPosition;
-            s.RenderPosition = oldpos+delta;
-            s.Scale.X*=mulMove.X;
+            s.RenderPosition = pch.OffsetPosFlip(s.RenderPosition,s.RenderPosition-Center);
+            s.Scale*=mulMove;
             s.Render();
-            s.Scale.X*=mulMove.X;
+            s.Scale*=mulMove;
             s.RenderPosition = temp;
           }
         }
