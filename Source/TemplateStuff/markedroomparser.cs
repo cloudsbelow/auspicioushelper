@@ -3,7 +3,6 @@
 
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Celeste.Editor;
 using Microsoft.Xna.Framework;
 using Monocle;
 

@@ -3,13 +3,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Celeste.Editor;
 using Celeste.Mod.Entities;
 using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using Monocle;
-using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 

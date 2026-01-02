@@ -72,7 +72,7 @@ public abstract class TriggerInfo{
 [CustomEntity("auspicioushelper/TemplateTriggerModifier")]
 public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   bool triggerOnTouch;
-  Dictionary<TouchInfo.Type,HashSet<int>> advtouch = new();
+  Util.Trie<bool> advtouch = new(true);
   bool passTrigger;
   bool hideTrigger;
   bool blockTrigger;
@@ -86,28 +86,29 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   bool throwablesTrigger = false;
   string skipCh;
   bool skip = false;
-
+  static readonly List<string> list = new(){
+    "Normal","Climb","Dash","Swim","Boost","RedDash","HitSquash","Launch","Pickup","DreamDash","SummitLaunch",
+    "Dummy","IntroWalk","IntroJump","IntroRespawn","IntroWakeUp","BirdDashTutorial","Frozen","ReflectionFall",
+    "StarFly","TempleFall","CassetteFly","Attract","IntroMoonJump","FlingBird","IntroThinkForABit"
+  };
   public TemplateTriggerModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateTriggerModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
     foreach(string s in Util.listparseflat(d.Attr("advancedTouchOptions",""),true)){
+      if(s.StartsWith('/')){
+        advtouch.Add(s.Substring(1)+"*",true);
+        continue;
+      }
+      advtouch.Add("touch/"+s+"*",true);
       string[] strs = s.Split('/');
       if(Enum.TryParse<TouchInfo.Type>(strs[0],out var res)){
-        if(!advtouch.TryGetValue(res, out var n)) n = advtouch[res] = new();
-        if(strs.Length == 1){
-          n = advtouch[res] = null;
-        }
-        if(n!=null){
-          for(int i=1; i<strs.Length; i++) if(int.TryParse(strs[i], out int st))n.Add(st);
-        }
-      } else {
-        DebugConsole.Write($"Invalid trigger option {strs[0]}");
+        for(int i=1; i<strs.Length; i++) if(int.TryParse(strs[i], out int st))advtouch.Add("touch/"+strs[0]+"/"+list[st],true);
       }
     }
     triggerOnTouch = d.Bool("triggerOnTouch",false);
     seekersTrigger = d.Bool("seekersTrigger",false);
     throwablesTrigger = d.Bool("holdablesTrigger",false);
-    if(triggerOnTouch || advtouch.Count>0 || seekersTrigger || throwablesTrigger || log) hooks.enable();
+    if(triggerOnTouch || advtouch.hasStuff || seekersTrigger || throwablesTrigger || log) hooks.enable();
     channel = d.Attr("channel",null);
     if(!d.Bool("propagateRiding",true)) prop &= ~Propagation.Riding;
     if(!d.Bool("propagateInside",true)) prop &= ~Propagation.Inside;
@@ -168,10 +169,9 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   Queue<Tuple<float, TriggerInfo>> delayed;
   float activeTime = 0;
   public void HandleTrigger(TriggerInfo sm){
-    if(sm is TouchInfo tinfo){
-      bool has = advtouch.TryGetValue(tinfo.ty,out var l) && 
-        (l==null || (sm.entity is Player p && l.Contains(p.StateMachine.state)));
-      if(has!=triggerOnTouch)tinfo.asUsable();
+    if(sm is IUsable tinfo){
+      bool has = advtouch.GetOrDefault(sm.category);
+      if(has!=triggerOnTouch && (!triggerOnTouch || sm is TouchInfo)) tinfo.asUsable();
     } 
     if(sm is HitInfo hinfo){
       if(seekersTrigger && hinfo.entity is Seeker seeker && Math.Abs(seeker.Speed.X)>100) {
@@ -215,10 +215,13 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       HandleTrigger(delayed.Dequeue().Item2);
     }
   }
-  class TouchInfo:TriggerInfo{
+  interface IUsable{
+    TriggerInfo asUsable();
+  }
+  public class TouchInfo:TriggerInfo, IUsable{
     public enum Type {
       collideV, collideH, jump, climbjump, walljump, wallbounce, super, grounded, climbing , dashH, dashV,
-      invalid, FishExplosion, SeekerExplosion,
+      invalid, FishExplosion, SeekerExplosion, bumper,
     }
     public Type ty;
     public bool use = false;
@@ -227,20 +230,20 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       ty=t;
     }
     public override bool shouldTrigger => use;
-    public TouchInfo asUsable(){
+    public TriggerInfo asUsable(){
       use = ty!=Type.invalid;
       return this;
     }
     public override string category => "touch/"+ty.ToString()+(entity is Player p?$"/{p.StateMachine.GetCurrentStateName()}":"");
   }
-  class HitInfo:TriggerInfo{
+  class HitInfo:TriggerInfo, IUsable{
     public bool use = false;
     public override bool shouldTrigger => use;
     bool horizontal;
     public HitInfo(Template parent, Actor a, bool horizontal):base(){
       entity=a;this.parent=parent;this.horizontal=horizontal;
     }
-    public HitInfo asUsable(){
+    public TriggerInfo asUsable(){
       use=true;
       return this;
     }

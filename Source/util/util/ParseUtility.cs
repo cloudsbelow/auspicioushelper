@@ -4,12 +4,10 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using Celeste.Editor;
 using Monocle;
 using Microsoft.Xna.Framework;
 using System;
 using System.Text.RegularExpressions;
-using System.Runtime.CompilerServices;
 
 namespace Celeste.Mod.auspicioushelper;
 public static partial class Util{
@@ -28,6 +26,19 @@ public static partial class Util{
       (float)((rgba>>(shift*2))&mask)*mult, 
       (float)((rgba>>shift)&mask)*mult, 
       (float)(rgba&mask)*mult);
+  }
+  static readonly string hexSource = "0123456789abcdef";
+  static void WriteHex(byte b, Span<char> to, int offset){
+    to[offset] = hexSource[b>>4];
+    to[offset+1] = hexSource[b&15];
+  }
+  public static string ColorToHexRGBA(Color c){
+    Span<char> arr = stackalloc char[8];
+    WriteHex(c.R, arr, 0);
+    WriteHex(c.G, arr, 2);
+    WriteHex(c.B, arr, 4);
+    WriteHex(c.A, arr, 6);
+    return new string(arr);
   }
   public static Vector4 hexToColorVec(string hex){
     hex = hex.TrimStart('#');

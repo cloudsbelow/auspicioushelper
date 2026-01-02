@@ -2,9 +2,6 @@
 
 
 
-using System;
-using System.Security.Principal;
-using Celeste.Editor;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.auspicioushelper;

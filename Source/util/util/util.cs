@@ -171,6 +171,7 @@ public static partial class Util{
           containedItem=item;
         } else throw new Exception("Key already present in trie");
       }
+      public bool HasStuff=>n!=null || res!=null;
     }
     TrieNode root = new TrieNode();
     bool alwaysClean;
@@ -185,6 +186,7 @@ public static partial class Util{
     public T GetOrDefault(string s) =>     root.Get(alwaysClean?s.AsClean():s, 0, out var item)? item:default;
     public bool TryGet(string s, out T o)=>root.Get(alwaysClean?s.AsClean():s, 0, out o);
     public void Clear()=>root=new();
+    public bool hasStuff=>root.HasStuff;
   }
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static CollisionDirection getCollisionDir(Vector2 move){

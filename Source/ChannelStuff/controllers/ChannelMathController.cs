@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Celeste.Editor;
 using Celeste.Mod.Entities;
 using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;

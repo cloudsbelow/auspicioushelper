@@ -6,7 +6,7 @@
       Version: 1.5961.0
   OptionalDependencies:
     - Name: SpeedrunTool
-      Version: 3.27.11
+      Version: 3.24.5
     - Name: CommunalHelper
       Version: 1.21.1
     - Name: ExtendedCameraDynamics

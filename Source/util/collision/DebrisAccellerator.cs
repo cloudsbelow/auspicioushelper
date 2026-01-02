@@ -20,6 +20,7 @@ public class FastDebris:Actor{
     }
   }
   public Vector2 speed;
+  public Vector2 Speed {get=>speed; set=>speed=value;}
   public Collision onCollideV;
   public Collision onCollideH;
   public bool onGround;

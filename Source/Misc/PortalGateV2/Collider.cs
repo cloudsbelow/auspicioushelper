@@ -1,6 +1,8 @@
 
 
 using System;
+using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -9,12 +11,12 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
-public class PColliderH:ColliderList{
-  PortalFaceH f1;
-  PortalFaceH f2;
+public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollision{
+  public PortalFaceH f1;
+  public PortalFaceH f2;
   bool flipV;
-  bool flipH=>f1.facingRight==f2.facingRight;
-  Vector2 flipMult=>new(flipH?-1:1,flipV?-1:1);
+  public bool flipH=>f1.facingRight==f2.facingRight;
+  public Vector2 flipMult=>new(flipH?-1:1,flipV?-1:1);
   Hitbox orig;
   Othersider o;
   public const float margin = 2;
@@ -50,6 +52,9 @@ public class PColliderH:ColliderList{
     return rel;
   }
   void Swap(){
+    // DebugConsole.Write("entawuerh",Entity);
+    // DebugConsole.Write("entawuerh",new DynamicData(Entity));
+    // DebugConsole.Write("entawuerh",new DynamicData(Entity).Get("speed"));
     if(Entity is Player player){
       Vector2 oldBottom = player.Position - Vector2.UnitY*(GelperIop.IsFlipped(player)? -orig.height:0);
       player.Get<PlayerHair>()?.Nodes.MapInplace(x=>OffsetPosFlip(x,x-oldBottom));
@@ -60,7 +65,7 @@ public class PColliderH:ColliderList{
       DynamicData.For(Entity).Set("Speed",calcspeed(val));
     }
     Entity.Position = OthersidePos(Entity.Position);
-    if(Entity is Actor a && flipV){
+    if(Entity is Actor a && flipV && GelperIop.SetActorGravity!=null){
       using(new CollideDetourLock()) Entity.Collider = orig;
       GelperIop.SetActorGravity(a,2,1);
       orig = a.Collider as Hitbox;
@@ -76,7 +81,8 @@ public class PColliderH:ColliderList{
     Vector2 eloc = Entity.Position;
     float frontEdge = eloc.X+orig.Position.X+(f1.facingRight?0:orig.width);
     float dist = (f1.X-frontEdge)*(f1.facingRight?-1:1);
-    if(dist*2+orig.width<0 && !fromSwap) Swap();
+    if((distToBottom<0 || distToTop<0) && dist>=0) End();
+    else if(dist*2+orig.width<0 && !fromSwap) Swap();
     else if(dist>=margin) End();
   }
   Vector2 GetOppositePoint(Vector2 old){
@@ -110,6 +116,8 @@ public class PColliderH:ColliderList{
       return false;
     }
   }
+  public float distToTop=>Entity.Position.Y+orig.Position.Y-f1.Y;
+  public float distToBottom=>f1.Y+f1.height-Entity.Position.Y-orig.Position.Y-orig.height;
   public override float Top=>orig.Position.Y;
   public override float Left=>orig.Position.X;
   public override float Width=>orig.width;
@@ -130,7 +138,11 @@ public class PColliderH:ColliderList{
     return (GetRects(out var r1, out var r2) && r2.CollideExRect(o.X,o.Y,h.width,h.height)) || r1.CollideExRect(o.X,o.Y,h.width,h.height);
   }
   public override bool Collide(ColliderList l) {
-    return (GetRects(out var r1, out var r2) && l.Collide(r2.munane())) || l.Collide(r1.munane());
+    if(l is DelegatingPointcollider upc){
+      Vector2 avoid = upc.Entity.Position;
+      bool split = GetRects(out var r1, out var r2);
+      return split && (r1.CollidePointCompact(avoid) || r2.CollidePointCompact(avoid));
+    }else return (GetRects(out var r1, out var r2) && l.Collide(r2.munane())) || l.Collide(r1.munane());
   }
   public override bool Collide(Grid g) {
     return (GetRects(out var r1, out var r2) && g.Collide(r2.munane())) || g.Collide(r1.munane());
@@ -154,8 +166,7 @@ public class PColliderH:ColliderList{
     if(!CollideDetourLock.IsLocked && e.Collider is PColliderH pch && c is not PColliderH and not null){
       if(c is not Hitbox h){
         DebugConsole.Write("Wrong wrong wrong",c);
-        orig(e,c);
-        return;
+        throw new Exception("Tried to set collider to illegal value inside portal. Ask clouds about compat");
       }
       e.Collider = new PColliderH(pch, h);
     } else orig(e,c);
@@ -197,12 +208,9 @@ public class PColliderH:ColliderList{
       }
       Position = pch.OthersidePos(e.Position);
       Vector2 oldpos = e.Position;
-      if(Scene.OnInterval(1)){
-        DebugConsole.Write("",pch.f1,pch.f2,oldpos,Position);
-      }
-      
       var delta = -e.Position+Position;
       Vector2 mulMove = new Vector2(pch.flipH?-1:1,pch.flipV?-1:1);
+
       if(e is Actor act){
         if(e is Player p){
           PlayerHair h = p.Get<PlayerHair>();
@@ -245,4 +253,5 @@ public class PColliderH:ColliderList{
       e.Position = oldpos;
     }
   }
+  public override string ToString()=>"PortalCollider."+RuntimeHelpers.GetHashCode(this);
 }

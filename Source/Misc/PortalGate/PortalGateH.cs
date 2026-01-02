@@ -4,10 +4,8 @@
 using System;
 using System.Collections.Generic;
 using Celeste.Mod.auspicioushelper;
-using Celeste.Editor;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;

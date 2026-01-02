@@ -1,17 +1,12 @@
 
 
 
-using System.Collections;
 using System.Collections.Generic;
-using System.Reflection.Metadata;
-using Celeste.Editor;
 using Celeste.Mod.Entities;
 using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
-using Microsoft.Build.Utilities;
-using System.Diagnostics;
 using Celeste.Mod.auspicioushelper.Wrappers;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -71,7 +66,6 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
       AddNewEnts(GetChildren<Entity>());
       if(children.Count>0){
         UpdateHook.AddAfterUpdate(()=>{
-          DebugConsole.Write("sadsadasd",getSelfCol());
           foreach(var i in children) if(i is FgTiles f){
             DebugConsole.Write("F",f.Scene,f.parent,f.Collidable);
           }

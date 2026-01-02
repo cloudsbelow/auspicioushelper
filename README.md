@@ -4,3 +4,8 @@ Assembly references are not supported (except for stuff in the interop folder.) 
 *any public fields not in the interop folder are liable to be changed or reworked without prior notification. use at your own risk*
 
 
+todo
+portal reinterpert push
+watesr
+lavasandwhich support
+arbitrary shape rooms

@@ -12,6 +12,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using MonoMod.Cil;
+using MonoMod.RuntimeDetour;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -36,9 +37,17 @@ public class BackdropCapturer{
       this.b=b;
     }
   }
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload, ResetEvents.RunTimes.OnExit)]
   [Import.SpeedrunToolIop.Static]
-  public static ConditionalWeakTable<Backdrop,BackdropRef> back = new();
+  public static Dictionary<Backdrop,BackdropRef> back = new();
+  [Import.SpeedrunToolIop.Static]
+  public static int validNumber = 1;
+  [OnLoad.OnHook(typeof(MapData),nameof(MapData.CreateBackdrops))]
+  static List<Backdrop> Hook(On.Celeste.MapData.orig_CreateBackdrops orig, MapData self, BinaryPacker.Element dat){
+    back.Clear();
+    validNumber++;
+    return orig(self,dat);
+  }
   public class CapturedBackdrops:IMaterialLayerSimple{
     public MaterialLayerInfo info {get;set;} = new(true, int.MaxValue/2);
     List<Backdrop> captured = new();
@@ -53,6 +62,7 @@ public class BackdropCapturer{
     string selector;
     public MaterialResource resource;
     Level last = null;
+    int validWhen = 0;
     public CapturedBackdrops(Level l, string selector){
       tex = new(false);
       this.selector = "%"+selector;
@@ -66,7 +76,8 @@ public class BackdropCapturer{
     }
     public void setupForLevel(Level l){
       expensiveHooks.enable();
-      if(last == l) return;
+      if(last==l && validWhen==validNumber) return;
+      validWhen = validNumber;
       foreach(var b in captured){
         if(back.TryGetValue(b, out var br))br.Unuse();
       }
@@ -143,6 +154,7 @@ public class BackdropCapturer{
     name=name.Trim();
     if(name[0]=='%') s.Add(name);
   }
+  [OnLoad.ILHook(typeof(MapData),nameof(MapData.ParseLevelsList))]
   static void RoomParseHook(ILContext ctx){
     ILCursor c = new(ctx);
     if(c.TryGotoNextBestFit(MoveType.Before,
@@ -157,6 +169,7 @@ public class BackdropCapturer{
   static bool SkipDelegate(Backdrop b){
     return BackdropUnlock.unlocked || !back.TryGetValue(b, out var br) || br.origvis;
   }
+  [OnLoad.ILHook(typeof(BackdropRenderer), nameof(BackdropRenderer.Render))]
   static void SkipHook(ILContext ctx){
     ILCursor c = new(ctx);
     ILLabel target = null;
@@ -169,16 +182,8 @@ public class BackdropCapturer{
       c.EmitLdloc2();
       c.EmitDelegate(SkipDelegate);
       c.EmitBrfalse(target);
-    } else DebugConsole.WriteFailure("Failed to add skip hook");
+    } else DebugConsole.WriteFailure("Failed to add skip hook", true);
   }
-  [OnLoad]
-  public static HookManager hooks = new(()=>{
-    IL.Celeste.MapData.ParseLevelsList+=RoomParseHook;
-    IL.Celeste.BackdropRenderer.Render+=SkipHook;
-  }, ()=>{
-    IL.Celeste.MapData.ParseLevelsList-=RoomParseHook;
-    IL.Celeste.BackdropRenderer.Render-=SkipHook;
-  });
   public static HookManager expensiveHooks = new(()=>{
     On.Celeste.Backdrop.IsVisible+=Hook;
   },()=>{

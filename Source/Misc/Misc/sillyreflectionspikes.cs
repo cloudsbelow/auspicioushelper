@@ -123,7 +123,7 @@ public class CustomSpikes : Entity{
   public void OnCollide(Player p){
     Vector2 realSpeed = p.Speed;
     int s = p.StateMachine.State;
-    if((dreamThru && s==Player.StDreamDash) || (dashThru && s==Player.StDreamDash)) return;
+    if((dreamThru && s==Player.StDreamDash) || (dashThru && s==Player.StDash)) return;
     if(fixPickup && s==Player.StPickup && oldHoldableSpeed is {} oldSpeed) realSpeed+=oldSpeed;
     if(fixOnblock && s==Player.StNormal||s==Player.StDash && p.liftSpeedTimer>=p.LiftSpeedGraceTime-Engine.DeltaTime){
       realSpeed+=p.LiftSpeed;

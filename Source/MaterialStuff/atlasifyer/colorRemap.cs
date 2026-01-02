@@ -218,6 +218,20 @@ public static partial class Util{
       }
       return te;
     }
+    public MTexture RemapTexTintFirst(MTexture tex, Color c){
+      if(string.IsNullOrWhiteSpace(tex.AtlasPath)){
+        DebugConsole.WriteFailure("Empty atlas path for target remapping texture");
+        return tex;
+      }
+      var path = tex.AtlasPath+"$#"+Util.ColorToHexRGBA(c);
+      if(!remappedTexs.TryGetValue(path, out var te)){
+        var dat = Util.TexData(tex, out var w, out var h).Map(col=>remapRgb((Double4)col*(Double4)c).toColor());
+        te =  Atlasifyer.PushToAtlas(dat,w,h,ident+path).MakeLike(tex);
+        remappedTexs.Add(path,te);
+      }
+      return te;
+    }
   }
+  
   public static Color toColor(this Vector4 v)=>new Color(v.X,v.Y,v.Z,v.W);
 }

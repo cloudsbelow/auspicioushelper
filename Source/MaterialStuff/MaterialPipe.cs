@@ -1,8 +1,6 @@
 
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using Celeste.Editor;
 using Celeste.Mod.Helpers;
 using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;

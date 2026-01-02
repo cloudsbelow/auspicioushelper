@@ -19,28 +19,31 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   static int uidctr = 0;
   int id;
   public static CrystalColor GetColor(EntityData d){
-    if(!string.IsNullOrWhiteSpace(d.Attr("customColor"))){
-      return Enum.TryParse<CrystalColor>(d.Attr("color"), ignoreCase: true, out var r)?r:CrystalColor.Rainbow;
-    }
-    if(Enum.TryParse<CrystalColor>(d.Attr("color"), ignoreCase: true, out var res)) return res;
-    return CrystalColor.Blue;
-  }
-  public static CrystalColor GetAndPrint(EntityData d){
-    var res = GetColor(d);
-    DebugConsole.Write(res.ToString());
-    return res;
+    if(Enum.TryParse<CrystalColor>(d.Attr("color"), ignoreCase: true, out var r))return r;
+    return d.Name == "spinner"? CrystalColor.Blue:CrystalColor.Rainbow;
   }
   string fancyRecolor;
   bool dontStun;
+  MTexture debrisTex;
+  public static Color ColorFromCrystal(CrystalColor c)=>c switch{
+    CrystalColor.Blue=>new Color(99, 155, 255), 
+    CrystalColor.Red=>new Color(235, 42, 58), 
+    CrystalColor.Purple=>new Color(199, 42, 235), 
+    _=>Color.White
+  };
   public Spinner(EntityData d, Vector2 offset):base(d.Position+offset, false, GetColor(d)){
     id = uidctr++;
     hooks.enable();
     makeFiller = d.Bool("makeFiller",true);
     fancyRecolor = d.StringOrNull("fancy");
+    debrisTex = GFX.Game["particles/shard"];
+    if(fancyRecolor.HasContent())
+      debrisTex = Util.ColorRemap.Get(fancyRecolor).RemapTexTintFirst(debrisTex, ColorFromCrystal(color));
+    
     if(!string.IsNullOrWhiteSpace(d.Attr("customColor"))){
       hasCustomCOlor = true;
-      customColor = Util.hexToColor(d.Attr("customColor"));
     }
+    customColor = Util.hexToColor(d.Attr("customColor", "ffffff"));
     numdebris = d.Int("numDebris",4);
     dreamThru = d.Bool("dreamThru",false);
     neverClip = d.Bool("neverClip",false);
@@ -236,7 +239,11 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   }
   int numdebris = 4;
   public void destroy(bool yes){
-    if(yes)SpinnerDebris.CreateBurst(Scene,numdebris,Position,parent.gatheredLiftspeed,hasCustomCOlor?customColor:getColor(),fancyRecolor);
+    if(yes){
+      Color useColor = fancyRecolor.HasContent()? customColor:
+        (customColor.ToVector4()*ColorFromCrystal(color).ToVector4()).toColor();
+      SpinnerDebris.CreateBurst(Scene,numdebris,Position,parent.gatheredLiftspeed,useColor,debrisTex);
+    }
     RemoveSelf();
   }
 
@@ -285,9 +292,9 @@ public class SpinnerDebris:FastDebris{
       speed.Y *= -1f;
     };
   }
-  public SpinnerDebris Init(Vector2 position, Color color, Vector2 speed, Util.ColorRemap remap = null){
+  public SpinnerDebris Init(Vector2 position, Color color, Vector2 speed, MTexture debrisTexture){
     Position = position;
-    image.Texture = remap==null? shard:remap.RemapTex(shard);
+    image.Texture = debrisTexture;
     image.Color = (this.color = color);
     image.Scale = Vector2.One;
     percent = 0f;
@@ -328,13 +335,12 @@ public class SpinnerDebris:FastDebris{
     image.Color = color;
     base.Render();
   }
-  public static void CreateBurst(Scene scene, int count, Vector2 loc, Vector2 ls, Color color, string remap){
-    Util.ColorRemap r = string.IsNullOrWhiteSpace(remap)? null:Util.ColorRemap.Get(remap);
+  public static void CreateBurst(Scene scene, int count, Vector2 loc, Vector2 ls, Color color, MTexture debrisTex){
     for(int i=0; i<count; i++){
       bool isotropic = Calc.Random.Chance(0.4f);
       float angle = Util.randomizeAngleQuad(isotropic?Calc.Random.Range(0,MathF.PI/2):Calc.Random.Range(0,MathF.PI/6));
       Vector2 speed = Calc.AngleToVector(angle+Calc.Random.Range(-0.3f,0.3f),!isotropic?Calc.Random.Range(260,400):Calc.Random.Range(160,200));
-      scene.Add(Engine.Pooler.Create<SpinnerDebris>().Init(loc+speed.SafeNormalize(Calc.Random.Range(0,5)), color,ls+speed, r));
+      scene.Add(Engine.Pooler.Create<SpinnerDebris>().Init(loc+speed.SafeNormalize(Calc.Random.Range(0,5)), color,ls+speed, debrisTex));
     }
   }
 }

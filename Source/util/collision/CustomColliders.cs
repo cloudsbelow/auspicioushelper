@@ -5,7 +5,6 @@
 
 using System;
 using System.Runtime.CompilerServices;
-using Celeste.Editor;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Utils;
@@ -130,4 +129,23 @@ class DumbGridWrapper:Grid{
   public override bool Collide(Circle c){
     return mg.CollideCircle((c.AbsolutePosition-tlc)/cellsize,c.Radius/cellsize.X);
   }
+}
+
+public class DelegatingPointcollider:ColliderList{
+  public interface CustomPointCollision{
+    bool Collide(ColliderList l);
+  }
+  public override float Top=>0;
+  public override float Left=>0;
+  public override float Width=>0;
+  public override float Height=>0;
+  public override float Right=>0;
+  public override float Bottom=>0;
+  public override bool Collide(Circle circle)=>false;
+  public override bool Collide(Grid grid)=>false;
+  public override bool Collide(Hitbox hitbox)=>false;
+  public override bool Collide(Rectangle rect)=>false;
+  public override bool Collide(Vector2 from, Vector2 to)=>false;
+  public override bool Collide(Vector2 point)=>false;
+  public override bool Collide(ColliderList list)=>list is CustomPointCollision pch? pch.Collide(this):false;
 }

@@ -19,6 +19,14 @@ public class Bumperw : Bumper, ISimpleEnt {
   public Vector2 toffset {get;set;}
   Vector2 twoffset = Vector2.Zero;
   public Bumperw(EntityData e, Vector2 o):base(e,o){
+    var pc = Get<PlayerCollider>();
+    var orig = pc.OnCollide;
+    pc.OnCollide = (Player p)=>{
+      DebugConsole.Write("HJere",p);
+      bool flag = respawnTimer<=0;
+      orig(p);
+      if(flag) parent?.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new TemplateTriggerModifier.TouchInfo(p,TemplateTriggerModifier.TouchInfo.Type.bumper));
+    };
     Tween tw = Get<Tween>();
     if(tw == null) return;
     Vector2 delta = e.Nodes[0]-e.Position;
@@ -30,6 +38,7 @@ public class Bumperw : Bumper, ISimpleEnt {
       }
       anchor = rpp+toffset+twoffset;
     };
+
   }
   public override void Update() {
     anchor = rpp+toffset+twoffset;

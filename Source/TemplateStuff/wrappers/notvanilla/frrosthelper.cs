@@ -3,11 +3,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Celeste.Editor;
-using Iced.Intel;
 using Microsoft.Xna.Framework;
-using Mono.Cecil.Mdb;
-using Mono.CompilerServices.SymbolWriter;
 using Monocle;
 using MonoMod.Utils;
 
