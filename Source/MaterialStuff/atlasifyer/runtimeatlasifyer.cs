@@ -19,39 +19,41 @@ public static class Atlasifyer{
     contains.Clear();
     foreach(var tex in texs) tex.Texture.Dispose();
     texs.Clear();
-    ShelfAllocator.Reset();
     SkylineAllocator.Reset();
   }
-  const int tw=2048;
-  const int th=1024;
+  const int itw=512;
+  const int ith=256;
+  const int MAXDIM = 4096;
+  static int curw=0;
+  static int curh=0;
   static int texCounter=0;
-  public static void addTex(){
-    texs.Add(new(new VirtualTexture($"ausp_atlas_{texCounter++}", tw, th, Color.Transparent)));
-    DebugConsole.Write($"ADDED NEW ATLAS TEXTURE {tw} x {th}! There are currently ",texs.Count);
-  }
-  static class ShelfAllocator{
-    static int cy=th+1;
-    static int mh=0;
-    static int cx=0;
-    public static Rectangle GetRect(int w, int h){
-      if(w>tw-cx){
-        cy+=mh; cx=0; 
-        mh=0;
-      }
-      if(h>th-cy){
-        addTex();
-        cy=0; cx=0; mh=0;
-      }
-      Rectangle toRet =  new Rectangle(cx,cy,w,h);
-      mh=Math.Max(mh,h);
-      cx+=w;
-      return toRet;
+  public static bool ExpandTex(){
+    if(texs.Count==0 || curh==MAXDIM) {
+      texs.Add(new(new VirtualTexture($"ausp_atlas_{texCounter++}", curw=itw, curh=ith, Color.Transparent)));
+      DebugConsole.Write($"ADDED NEW ATLAS TEXTURE {itw}x{ith}. There are currently ",texs.Count);
+      return true;
     }
-    public static void Reset(){cy=th+1;}
+    if(curh<curw){
+      curh = Math.Min(MAXDIM,Math.Min(curh*2,curh+1024));
+    } else {
+      curw = Math.Min(curw*2,MAXDIM);
+    }
+    GraphicsDevice gd = auspicioushelperGFX.gd;
+    var last = texs[^1];
+    var old = last.Texture.Texture;
+    Texture2D ntex = last.Texture.Texture = new Texture2D(gd, curw,curh);
+    Color[] dat = new Color[old.Width*old.Height];
+    old.GetData(dat);
+    ntex.SetData(0,new(0,0,old.Width,old.Height),dat,0,dat.Length);
+    last.Width = last.Texture.Width = curw;
+    last.Height = last.Texture.Height = curh;
+    last.ClipRect = new Rectangle(0,0,curw,curh);
+    DebugConsole.Write($"Expanding atlas texture to {curw}x{curh}");
+    return false;
   }
   static class SkylineAllocator{
     const int blocksize = 4;
-    static short[] heights = new short[tw/blocksize];
+    static short[] heights = new short[MAXDIM/blocksize];
     public static void Reset(){
       for(int i=0; i<heights.Length; i++) heights[i]=0;
     }
@@ -69,17 +71,17 @@ public static class Atlasifyer{
         while(indices.Count>0 && heights[indices.Tail()]<=cur) indices.Pop();
         indices.Push(i);
       }
-      int best = h>tw-heights[indices.Head()]?-1:0;
+      int best = h>curh-heights[indices.Head()]?-1:0;
       int score = best==-1?int.MaxValue:CalcScore(s,runningSum,heights[indices.Head()]);
       short curY = heights[indices.Head()];
-      for(short hidx=(short)s; hidx<tw/blocksize; hidx++){
+      for(short hidx=(short)s; hidx<curw/blocksize; hidx++){
         int lidx = hidx-s;
         if(indices.Head()<=lidx)indices.Dequeue();
         short cur = heights[hidx];
         runningSum+=cur-heights[lidx];
         while(indices.Count>0 && heights[indices.Tail()]<=cur) indices.Pop();
         indices.Push(hidx);
-        if(h<=tw-heights[indices.Head()]){
+        if(h<=curh-heights[indices.Head()]){
           int nscore = CalcScore(s,runningSum,heights[indices.Head()]);
           if(nscore<score){
             score = nscore;
@@ -89,8 +91,7 @@ public static class Atlasifyer{
         }
       }
       if(best==-1 || texs.Count==0){
-        addTex();
-        Reset();
+        if(ExpandTex()) Reset();
         return GetRect(w,h);
       }
       for(int i=0; i<s; i++) heights[best+i]=(short)(curY+h);
@@ -100,7 +101,10 @@ public static class Atlasifyer{
   public static MTexture PushToAtlas(Color[] data, int w, int h, string uid, out Rectangle clipRect){
     clipRect=Rectangle.Empty;
     if(contains.TryGetValue(uid, out var tex)) return tex;
-    if(w>tw||h>th) return null;
+    if(w>itw||h>ith){
+      DebugConsole.WriteFailure($"Texture of size {w}x{h} too big to atlas (max allowed size {itw}x{ith})");
+      return null;
+    }
     clipRect = SkylineAllocator.GetRect(w,h);
 
     var te = texs[texs.Count-1];
@@ -143,7 +147,7 @@ public static class Atlasifyer{
   }
   [Command("auspDebug_AddAtlasRect","Adds a rectangle of solid color to the runtime atlas. For debugging.")]
   public static void AddDebug(int width, int height, string color=""){
-    if(string.IsNullOrWhiteSpace(color)) color=Calc.Random.Choose("f00","ff0","0f0","0ff","00f", "0a0","000","fff","740","aaa");
+    if(string.IsNullOrWhiteSpace(color)) color=Calc.Random.Choose("f00","ff0","0f0","0ff","00f", "0a0","fff","740","aaa");
     Color c = Util.hexToColor(color);
     var dat = new Color[width*height];
     for(int i=0; i<dat.Length; i++)dat[i]=c;

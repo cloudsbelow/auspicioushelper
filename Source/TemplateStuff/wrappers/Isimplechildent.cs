@@ -103,15 +103,12 @@ internal class BasicPlatform:ITemplateChild{
   public void addTo(Scene scene){
     scene.Add(p);
   }
-  public bool hasRiders<T>() where T:Actor{
+  bool ITemplateChild.hasPlayerRider(){
     if(p == null || p.Scene==null) return false;
     if(p is Solid s){
-      if(typeof(T) == typeof(Player)) return s.HasPlayerRider();
-      if(typeof(T) == typeof(Actor)) return s.HasRider();
-      return false;
+      return s.HasPlayerRider();
     } else if(p is JumpThru j){
-      if(typeof(T) == typeof(Player)) return j.HasPlayerRider();
-      if(typeof(T) == typeof(Actor)) return j.HasRider();
+      return j.HasPlayerRider();
     }
     return false;
   }

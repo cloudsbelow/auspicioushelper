@@ -212,7 +212,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     if(shouldDie) return;
     evalLiftspeed(true);
     if(ridingTrigger){
-      if(hasRiders<Player>()) sm.TriggerPlatform();
+      if(hasPlayerRider()) sm.TriggerPlatform();
     }
     if(hasTrigger>0)hasTrigger--;
   }
@@ -283,7 +283,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     var p = orig(s);
     if(p!=null) return p;
     foreach(StaticMover sm in s.staticMovers) if(sm.Entity is TemplateStaticmover tsm){
-      if(tsm.conveyRiding && tsm.hasRiders<Player>()) return UpdateHook.cachedPlayer;
+      if(tsm.conveyRiding && tsm.hasPlayerRider()) return UpdateHook.cachedPlayer;
       if(tsm.hasTrigger>0){
         tsm.hasTrigger = 0;
         return UpdateHook.cachedPlayer;

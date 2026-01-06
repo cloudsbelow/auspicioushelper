@@ -114,7 +114,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
       if(triggered) goto going;
       if(ct!=null && ct.value!=0) OnTrigger(null);
       if(atype == ActivationType.ride || atype==ActivationType.rideAutomatic){
-        if(hasRiders<Player>()) OnTrigger(null);
+        if(hasPlayerRider()) OnTrigger(null);
       } else if(atype == ActivationType.dash || atype==ActivationType.dashAutomatic){
         if(dashed!=0) OnTrigger(null);
       }

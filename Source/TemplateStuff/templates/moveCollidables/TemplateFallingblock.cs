@@ -51,7 +51,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
   IEnumerator Sequence(){
     float speed;
     bool first = true;
-    while((!triggeredByRiding || !hasRiders<Player>()) && !triggered){
+    while((!triggeredByRiding || !hasPlayerRider()) && !triggered){
       yield return null;
     }
     OnTrigger(null);

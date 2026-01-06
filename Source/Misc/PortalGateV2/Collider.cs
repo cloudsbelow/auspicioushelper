@@ -64,7 +64,14 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     } else if(DynamicData.For(Entity).TryGet("Speed", out Vector2 val)){
       DynamicData.For(Entity).Set("Speed",calcspeed(val));
     }
+    
+    Vector2? camoffset=null;
+    if(Entity.Scene is Level lev && true && Entity is Player pla){
+      camoffset = lev.Camera.Position-pla.Position;
+    }
     Entity.Position = OthersidePos(Entity.Position);
+    if(camoffset is Vector2 ncam) (Entity.Scene as Level).Camera.Position = Entity.Position+ncam; 
+
     if(Entity is Actor a && flipV && GelperIop.SetActorGravity!=null){
       using(new CollideDetourLock()) Entity.Collider = orig;
       GelperIop.SetActorGravity(a,2,1);

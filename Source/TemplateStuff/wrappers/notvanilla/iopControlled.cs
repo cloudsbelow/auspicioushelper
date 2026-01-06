@@ -144,10 +144,6 @@ public class IopControlled:ITemplateChild{
       l.Add(e.e);
     }
   }
-  public bool hasRiders<T>() where T:Actor{
-    if(typeof(T)==typeof(Player)) return hasPlayerRider();
-    throw new NotImplementedException();
-  }
   public bool hasPlayerRider(){
     foreach(var en in ents){
       if(en.e is Platform p){

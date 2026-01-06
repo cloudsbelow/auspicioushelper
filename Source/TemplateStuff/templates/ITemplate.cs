@@ -26,7 +26,7 @@ public interface ITemplateChild{
   void addTo(Scene s){}
   void templateAwake(){}
   void parentChangeStat(int vis, int col, int act);
-  bool hasRiders<T>() where T : Actor{
+  bool hasPlayerRider(){
     return false;
   }
   bool hasInside(Actor a){
@@ -256,9 +256,9 @@ public class Template:Entity, ITemplateChild{
     }
     basicents.add(e,offset);
   }
-  public bool hasRiders<T>() where T:Actor{
+  public bool hasPlayerRider(){
     foreach(ITemplateChild c in children){
-      if((c.prop & Propagation.Riding)!=0 && c.hasRiders<T>()) return true;
+      if((c.prop & Propagation.Riding)!=0 && c.hasPlayerRider()) return true;
     }
     return false;
   }

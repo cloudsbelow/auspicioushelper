@@ -108,6 +108,6 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
           } else if(quiet<4) Audio.Play("event:/game/09_core/iceblock_reappear",Position);
         });
       }
-    } else if(ridingTriggers && routine == null && hasRiders<Player>()) trigger();
+    } else if(ridingTriggers && routine == null && hasPlayerRider()) trigger();
   }
 }

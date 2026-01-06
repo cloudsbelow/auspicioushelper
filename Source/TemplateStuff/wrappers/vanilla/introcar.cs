@@ -49,9 +49,7 @@ public class IntroCarW:IntroCar, ISimpleEnt{
     base.Added(scene);
     parent.AddNewEnts([wheels]);
   }
-  public bool hasRiders<T>() where T:Actor{
-    if(typeof(T) == typeof(Player)) return UpdateHook.cachedPlayer?.IsRiding(this)??false;
-    else foreach(Actor v in Scene.Tracker.GetEntitiesTrackIfNeeded<T>()) if(v.IsRiding(this)) return true;
-    return false;
+  bool ITemplateChild.hasPlayerRider(){
+    return UpdateHook.cachedPlayer?.IsRiding(this)??false;
   }
 }

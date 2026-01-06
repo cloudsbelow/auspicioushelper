@@ -20,10 +20,12 @@ public class PortalFaceH:Entity{
   PortalFaceH other;
   MTexture texture = GFX.Game["util/lightbeam"];
   NoiseSamplerOS2_2DLoop ogen = new NoiseSamplerOS2_2DLoop(20, 70, 100);
+  Color color;
   List<uint> handles = new();
   [Import.SpeedrunToolIop.Static]
   [ResetEvents.NullOn(ResetEvents.RunTimes.OnReload)]
   static Solid fakeSolid;
+  Vector2 renderOffset;
   StaticMover sm;
   Vector2 movementCounter;
   public PortalFaceH(Vector2 pos, float height, bool facingRight, bool vflip):base(pos){
@@ -42,9 +44,11 @@ public class PortalFaceH:Entity{
         int numV = (int)Math.Round(movementCounter.Y, MidpointRounding.ToEven);
         int numH = (int)Math.Round(movementCounter.X, MidpointRounding.ToEven);
         if(numH!=0) MoveHExact(numH);
+        if(numV!=0) Position.Y+=numV;
 
         movementCounter -= new Vector2(numH,numV);
-      }
+      },
+      OnShake = (Vector2 amount)=>renderOffset+=amount
     });
   }
   public override void Update() {
@@ -58,7 +62,7 @@ public class PortalFaceH:Entity{
       float alpha = Math.Min(1,Math.Max(0,ogen.sample(handles[i]))+0.2f);
       if(alpha<0) continue;
       float length = ogen.sample(handles[i+1])*10+20;
-      texture.Draw(Position+new Vector2(0,i), new Vector2(0,0.5f), Color.White*alpha, new Vector2(wrec1 * length, 8), 0);
+      texture.Draw(Position+renderOffset+new Vector2(0,i), new Vector2(0,0.5f), color*alpha, new Vector2(wrec1 * length, 8), 0);
     }
   }
 
@@ -212,8 +216,9 @@ public class PortalFaceH:Entity{
   [CustomloadEntity(nameof(Load))]
   public static class Pair{
     static void Load(Level l, LevelData ld, Vector2 o, EntityData d){
-      var e1 = new PortalFaceH(o+d.Position, d.Height, d.Bool("right_facing_f0"), false);
-      var e2 = new PortalFaceH(o+d.Nodes[0], d.Height, d.Bool("right_facing_f1"), d.Bool("flipGravity"));
+      var c = Util.hexToColor(d.Attr("color_hex","ffffffaa"));
+      var e1 = new PortalFaceH(o+d.Position, d.Height, d.Bool("right_facing_f0"), false){color=c};
+      var e2 = new PortalFaceH(o+d.Nodes[0], d.Height, d.Bool("right_facing_f1"), d.Bool("flipGravity")){color=c};
       e1.other = e2;
       e2.other = e1;
       l.Add([e1,e2]);

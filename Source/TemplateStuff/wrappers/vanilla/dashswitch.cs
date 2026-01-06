@@ -53,11 +53,7 @@ public class DashSwitchW:DashSwitch, ISimpleEnt{
     MoveTo(loc+toffset, liftspeed);
     lpos = Position;
   }
-  public bool hasRiders<T>() where T:Actor{
-    if(typeof(T) == typeof(Player)) return HasPlayerRider();
-    if(typeof(T) == typeof(Actor)) return HasRider();
-    return false;
-  }
+  bool ITemplateChild.hasPlayerRider()=>HasPlayerRider();
   public bool hasInside(Actor a){
     if(Scene==null)return false;
     return Collider.Collide(a.Collider);

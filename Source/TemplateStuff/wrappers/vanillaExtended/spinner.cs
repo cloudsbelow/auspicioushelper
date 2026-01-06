@@ -29,7 +29,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     CrystalColor.Blue=>new Color(99, 155, 255), 
     CrystalColor.Red=>new Color(235, 42, 58), 
     CrystalColor.Purple=>new Color(199, 42, 235), 
-    _=>Color.White
+    _=>new Color(200,200,200)
   };
   public Spinner(EntityData d, Vector2 offset):base(d.Position+offset, false, GetColor(d)){
     id = uidctr++;

@@ -38,8 +38,8 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
       if(givels)insideplayer.LiftSpeed = liftspeed;
     }
   }
-  public bool hasRiders<T>() where T:Actor{
-    return typeof(T)==typeof(Player) && insideplayer!=null;
+  bool ITemplateChild.hasPlayerRider(){
+    return insideplayer!=null;
   }
   public void destroy(bool particles){
     RemoveSelf();

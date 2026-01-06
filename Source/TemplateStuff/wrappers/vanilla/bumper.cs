@@ -22,7 +22,6 @@ public class Bumperw : Bumper, ISimpleEnt {
     var pc = Get<PlayerCollider>();
     var orig = pc.OnCollide;
     pc.OnCollide = (Player p)=>{
-      DebugConsole.Write("HJere",p);
       bool flag = respawnTimer<=0;
       orig(p);
       if(flag) parent?.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new TemplateTriggerModifier.TouchInfo(p,TemplateTriggerModifier.TouchInfo.Type.bumper));

@@ -78,7 +78,7 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
     waiting:
       stuckTimer = maxStuckTime;
       steerdelay = 0.2f;
-      while(!triggered && !(triggerFromRiding && hasRiders<Player>())) yield return null;
+      while(!triggered && !(triggerFromRiding && hasPlayerRider())) yield return null;
       disconnect();
       parent?.GetFromTree<IRemovableContainer>()?.RemoveChild(this);
       triggered=true;
@@ -96,7 +96,7 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
       Vector2 movevec = movedir;
       Player p = Scene.Tracker.GetEntity<Player>();
       if(movedir.Y==0){
-        if(cansteer && p != null && p.StateMachine.state == 0 && Input.MoveY.Value!=0 && hasRiders<Player>()){
+        if(cansteer && p != null && p.StateMachine.state == 0 && Input.MoveY.Value!=0 && hasPlayerRider()){
           if(steerdelay>0){
             steerdelay-=Engine.DeltaTime;
           } else {
@@ -112,7 +112,7 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
         if(collideflag) ownLiftspeed.X=0;
         if(MoveVCollide(qs,speed*movevec.Y*Engine.DeltaTime,0)) ownLiftspeed.Y=0;
       } else {
-        if(cansteer && p != null && p.StateMachine.state == 1 && Input.MoveX.Value!=0 && hasRiders<Player>()){
+        if(cansteer && p != null && p.StateMachine.state == 1 && Input.MoveX.Value!=0 && hasPlayerRider()){
           if(steerdelay>0){
             steerdelay-=Engine.DeltaTime;
           } else {

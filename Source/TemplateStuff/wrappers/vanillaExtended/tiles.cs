@@ -95,13 +95,9 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
     base.Added(scene);
     bounds = new FloatRect(SceneAs<Level>().Bounds);
   }
-  public bool hasRiders<T>() where T:Actor{
+  bool ITemplateChild.hasPlayerRider(){
     if(Scene==null)DebugConsole.Write("I hate hate hate hate hate hate hate you");
-    if(typeof(T) == typeof(Player)) return UpdateHook.cachedPlayer?.IsRiding(this)??false;
-    foreach(T a in Scene.Tracker.GetEntities<T>()){
-      if(a.IsRiding(this)) return true;
-    }
-    return false;
+    return UpdateHook.cachedPlayer?.IsRiding(this)??false;
   }
   public bool hasInside(Actor a){
     return Collider.Collide(a.Collider);

@@ -44,7 +44,7 @@ public class TemplateMoonblock:Template{
   const float dashReturn = 1.5f;
   public override void Update() {
     base.Update();
-    if(hasRiders<Player>()){
+    if(hasPlayerRider()){
       sinkTimer = 0.3f;
     } else {
       if(sinkTimer>0)sinkTimer -= Engine.DeltaTime;

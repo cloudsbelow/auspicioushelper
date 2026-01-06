@@ -221,6 +221,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     }
     Speed = Vector2.Zero;
     AddTag(Tags.Persistent);
+    if(te==null) return;
     foreach (Entity e in te.GetChildren<Entity>()){
       e.AddTag(Tags.Persistent);
       if(e is IPickupChild pc) pc.OnPickup(Hold.Holder);
@@ -310,13 +311,6 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     Hold.Holder = null;
     Position=Position.Round();
     RemoveTag(Tags.Persistent);
-    if(!keepCollidableAlways) te.setCollidability(true);
-    if(te==null) return;
-    foreach (Entity e in te.GetChildren<Entity>()){
-      e.RemoveTag(Tags.Persistent);
-      if(e is IPickupChild pc) pc.OnRelease(p, force);
-      if(e is IBoundsHaver h) h.bounds = new FloatRect(SceneAs<Level>().Bounds);
-    }
     force = force*200f;
     if (force.X != 0f && force.Y == 0f){
       force.Y = -0.4f*200;
@@ -328,6 +322,14 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       noGravityTimer = 0.1f;
     }
     DebugConsole.Write($"thrown speed: {Speed}, cannot hold {Hold.cannotHoldTimer}");
+
+    if(te==null) return;
+    if(!keepCollidableAlways) te.setCollidability(true);
+    foreach (Entity e in te.GetChildren<Entity>()){
+      e.RemoveTag(Tags.Persistent);
+      if(e is IPickupChild pc) pc.OnRelease(p, force);
+      if(e is IBoundsHaver h) h.bounds = new FloatRect(SceneAs<Level>().Bounds);
+    }
   }
   void OnCollideH(CollisionData data){
     if (data.Hit is DashSwitch){

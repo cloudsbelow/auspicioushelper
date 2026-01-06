@@ -27,8 +27,7 @@ public class MaddiesStuff{
               p.CollideCheckOutside(wrapped,p.Position+Vector2.UnitX*(allowLeftToRight?-1:1)) &&
               p.Facing == (allowLeftToRight?Facings.Left:Facings.Right);
     }
-    public bool hasRiders<T>() where T:Actor{
-      if(typeof(T)!=typeof(Player)) return false;
+    bool ITemplateChild.hasPlayerRider(){
       return UpdateHook.cachedPlayer is {} p && !p.Dead && PlayerIsRiding(p);         
     }
     public void relposTo(Vector2 nloc, Vector2 liftspeed){

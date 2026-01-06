@@ -277,10 +277,8 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
       base.Render();
     }
   }
-  public void OnPlayer(Player player)
-  {
-    if (player.UseRefill(twoDashes))
-    {
+  public void OnPlayer(Player player){
+    if (player.UseRefill(twoDashes)){
       //Enabled = true;
       Audio.Play(twoDashes ? "event:/new_content/game/10_farewell/pinkdiamond_touch" : "event:/game/general/diamond_touch", Position);
       Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
@@ -300,14 +298,11 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
     Celeste.Freeze(0.05f);
     yield return null;
     level.Shake();
-    Sprite obj = sprite;
-    Sprite obj2 = flash;
-    bool visible = false;
-    obj2.Visible = false;
-    obj.Visible = visible;
-    if (!oneUse) outline.Visible = true;
+    sprite.Visible = selfCol;
+    flash.Visible = selfCol;
+    if (!oneUse) outline.Visible = !selfCol;
 
-    Depth = 8999+(parent?.depthoffset??0);
+    if(!selfCol) Depth = 8999+(parent?.depthoffset??0);
     yield return 0.05f;
     float num = player.Speed.Angle();
     level.ParticlesFG.Emit(p_shatter, 5, Position, Vector2.One * 4f, num - MathF.PI/ 2f);
