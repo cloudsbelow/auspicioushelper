@@ -86,6 +86,14 @@ public static partial class Util{
     }
     return o;
   }
+  public static T2 ReduceMap<T1,T2>(this List<T1> list, Func<T1,T2> map, Func<T2,T2,T2> reduce, T2 initial = default){
+    for(int i=0; i<list.Count; i++) initial = reduce(initial,map(list[i]));
+    return initial;
+  }
+  public static T2 Reduce<T2>(this List<T2> list, Func<T2,T2,T2> reduce, T2 initial = default){
+    for(int i=0; i<list.Count; i++) initial = reduce(initial,list[i]);
+    return initial;
+  }
 
   public struct Double4{
     public double X;

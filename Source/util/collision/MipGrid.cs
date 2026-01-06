@@ -283,6 +283,13 @@ public class MipGrid{
       return 0;
     }
     public ulong getAreaAligned(int x, int y)=>getBlock(x/blockw,y/blockh);
+    public bool collidePoint(Int2 loc){
+      int bx = (loc.x+blockw)/blockw-1;
+      int by = (loc.y+blockh)/blockh-1;
+      int fx = loc.x-bx*blockw;
+      int fy = loc.y-by*blockh;
+      return (getBlock(bx,by) & (1UL<<(fx+8*fy)))!=0;
+    }
   }
   
 
