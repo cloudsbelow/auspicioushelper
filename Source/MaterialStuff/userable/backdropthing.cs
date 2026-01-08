@@ -19,7 +19,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 public class BackdropCapturer{
   static BackdropRenderer renderer = new();
-  public class BackdropUnlock:IDisposable{
+  public ref struct BackdropUnlock:IDisposable{
     static int num=0;
     public BackdropUnlock(){num++;}
     void IDisposable.Dispose()=>num--;

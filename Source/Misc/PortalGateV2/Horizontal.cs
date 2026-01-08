@@ -11,7 +11,6 @@ using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.auspicioushelper;
 
-[ResetEvents.LazyLoadDuration(ResetEvents.RunTimes.OnEnter)]
 [Tracked]
 public class PortalFaceH:Entity{
   public bool facingRight = false;
@@ -26,7 +25,7 @@ public class PortalFaceH:Entity{
   [ResetEvents.NullOn(ResetEvents.RunTimes.OnReload)]
   static Solid fakeSolid;
   Vector2 renderOffset;
-  StaticMover sm;
+  LiftspeedSm sm;
   Vector2 movementCounter;
   public PortalFaceH(Vector2 pos, float height, bool facingRight, bool vflip):base(pos){
     Collider = new Hitbox(1,height,facingRight?0:-1,0);
@@ -37,14 +36,14 @@ public class PortalFaceH:Entity{
       handles.Add(ogen.getHandle());
       handles.Add(ogen.getHandle());
     }
-    Add(sm = new StaticMover(){
+    Add(sm = new LiftspeedSm(){
       SolidChecker = (s)=>CollideCheckOutside(s,Position+new Vector2(facingRight?-1:1,0)),
-      OnMove = (Vector2 move)=>{
+      OnMoveOther = (Vector2 move)=>{
         movementCounter+=move;
         int numV = (int)Math.Round(movementCounter.Y, MidpointRounding.ToEven);
         int numH = (int)Math.Round(movementCounter.X, MidpointRounding.ToEven);
         if(numH!=0) MoveHExact(numH);
-        if(numV!=0) Position.Y+=numV;
+        if(numV!=0) moveVExact(numV);
 
         movementCounter -= new Vector2(numH,numV);
       },
@@ -66,11 +65,25 @@ public class PortalFaceH:Entity{
     }
   }
 
-  public Vector2 getSpeed()=>Vector2.Zero;
+  public Vector2 getSpeed()=>sm.getLiftspeed();
 
 
   [ResetEvents.OnHook(typeof(Actor),nameof(Actor.MoveHExact))]
   static bool Hook(On.Celeste.Actor.orig_MoveHExact orig, Actor s, int m, Collision col, Solid pusher){ 
+    var portals = s.Scene.Tracker.GetEntities<PortalFaceH>();
+    if(portals.Count==0) return orig(s,m,col,pusher);
+
+    if(pusher != null && s.Collider is PColliderH pch_ && !pch_.fixing &&
+      pch_.GetPrimaryRect(out var prim, out var alw) && (alw||!pusher.Collider.Collide(prim.munane()))
+    ){
+      if(pusher.Collider is Hitbox){
+        var f = pch_.GetSecondaryRect();
+        m=m+(int)(m<0? s.Right-f.right:s.Left-f.x);
+      }
+      if(pch_.flipH) m*=-1;
+      s.LiftSpeed = pch_.calcspeed(pusher.LiftSpeed,true);
+    }
+
     int dir = Math.Sign(m);
     Vector2 eloc = s.Position;
     if(s.Collider is Hitbox h){
@@ -79,7 +92,7 @@ public class PortalFaceH:Entity{
       float frontEdge = eloc.X+h.Position.X+(hitRight?0:h.width);
       float minDist=float.PositiveInfinity;
       PortalFaceH closest=null;
-      foreach(PortalFaceH p in s.Scene.Tracker.GetEntities<PortalFaceH>()) {
+      foreach(PortalFaceH p in portals) {
         if(hitRight != p.facingRight) continue;
         Vector2 ploc = p.Position;
         if(ploc.Y>absTop || ploc.Y+p.height<absTop+h.height) continue;
@@ -94,11 +107,13 @@ public class PortalFaceH:Entity{
     }
     if(s.Collider is PColliderH pch){
       bool res = orig(s,m,col,pusher);
-      pch.Done();
+      if(s.Collider == pch) pch.Done();
+      else if(s.Collider is PColliderH pcho) pcho.Done();
       return res;
     }
     return orig(s,m,col,pusher);
   }
+  public static bool fish;
   ref struct BlockPoint:IDisposable{
     Vector2 oldPos;
     bool oldCollidable;
@@ -125,7 +140,8 @@ public class PortalFaceH:Entity{
       if(m<0 && pch.distToTop<-m) using(new BlockPoint(pch.f1.Position)) res=orig(s,m,c,pusher);
       else if(m>0 && pch.distToBottom<m) using(new BlockPoint(pch.f1.Position+pch.f1.height*Vector2.UnitY)) res=orig(s,m,c,pusher);
       else return orig(s,m,c,pusher);
-      pch.Done();
+      if(s.Collider == pch) pch.Done();
+      else if(s.Collider is PColliderH pcho) pcho.Done();
       return res;
     } else return orig(s,m,c,pusher);
   }
@@ -145,7 +161,7 @@ public class PortalFaceH:Entity{
         });
       }
     } else {
-      Vector2 orig = Position;
+      float orig = Position.X;
       foreach(Actor act in Scene.Tracker.GetEntities<Actor>()){
         if(act.Collider is Hitbox h){
           Vector2 abspos = act.Position+h.Position;
@@ -156,25 +172,28 @@ public class PortalFaceH:Entity{
           act.Collider = new PColliderH(act, this, other);
         }
         if(act.Collider is PColliderH pch && (pch.f1 == this || pch.f2 == this)){
-          Position = orig;
+          Position.X = orig;
           for(int i=0; i!=amt; i+=dir){
-            Position.X = orig.X+i;
+            Position.X = orig+i+dir;
             Solid s = act.CollideFirst<Solid>();
             if(s!=null){
               s.Collidable = false;
-              if(pch.f1 == this){ //center is on other side; "slamming" case
-                act.LiftSpeed = pch.calcspeed(s.LiftSpeed);
-                act.MoveHExact(-amt*(pch.flipH?-1:1),act.SquishCallback,s);
+              pch.fixing = true;
+              if(pch.f2 == this){ //center is on other side; "slamming" case
+                act.LiftSpeed = pch.calcspeed(s.LiftSpeed,true);
+                act.MoveHExact(-dir*(pch.flipH?-1:1),act.SquishCallback,s);
               } else { //center is on this side; "extruding" case
-                act.MoveHExact(amt,act.SquishCallback,s);
+                act.LiftSpeed = pch.calcspeed(s.LiftSpeed,false);
+                act.MoveHExact(dir,act.SquishCallback,s);
               }
+              pch.fixing = false;
               s.Collidable = true;
             }
           }
           pch.Done();
         }
       }
-      Position.X = orig.X+amt;
+      Position.X = orig+amt;
     }
     if(oldCollidable is {} val) sm.Platform.Collidable=val;
   }
@@ -183,28 +202,33 @@ public class PortalFaceH:Entity{
     bool? oldCollidable = (sm?.Platform as Solid)?.Collidable;
     if(oldCollidable is not null)sm.Platform.Collidable=false;
     int dir = Math.Sign(amt);
-    List<Actor> inf1 = new();
-    List<Actor> inf2 = new();
-    HashSet<Entity> removed = Scene.Entities.removing;
+    float orig = Position.Y;
+    List<Entity> toClean = new();
     foreach(Actor act in Scene.Tracker.GetEntities<Actor>()){
-      if(act.Collider is not PColliderH pch)continue;
-      if(pch.f1 == this) inf1.Add(act);
-      if(pch.f2 == this) inf2.Add(act);
-    }
-    using(new BlockPoint(Position+(amt<0?new Vector2(0,height):Vector2.Zero))){
+      if(act.Collider is not PColliderH pch || !(pch.f1==this || pch.f2==this))continue;
+      toClean.Add(act);
+      Position.Y=orig;
       for(int i=0; i!=amt; i+=dir){
-        Position.Y+=dir;
-        fakeSolid.MoveVExact(dir);
-        // foreach(var a in inf1) if(!removed.Contains(a) && a.Collider is PColliderH pch1){
-        //   Solid s = a.CollideFirst<Solid>();
-        //   if(s != null) using(Util.WithRestore(ref s.Collidable, false)) a.MoveVExact(dir, a.SquishCallback, s);
-        // }
-        // foreach(var a in inf2) if(!removed.Contains(a) && a.Collider is PColliderH pch2){
-        //   Solid s = a.CollideFirst<Solid>();
-        //   if(s != null) using(Util.WithRestore(ref s.Collidable, false)) a.MoveVExact(-dir*pch., a.SquishCallback, s);
-        // }
+        Position.Y = orig+i+dir;
+        Solid s = act.CollideFirst<Solid>();
+        if(s!=null){
+          s.Collidable = false;
+          pch.fixing = true;
+          if(pch.f2 == this){ 
+            act.LiftSpeed = pch.calcspeed(s.LiftSpeed,true);
+            act.MoveVExact(-dir*(pch.flipV?-1:1),act.SquishCallback,s);
+          } else { 
+            act.LiftSpeed = pch.calcspeed(s.LiftSpeed,false);
+            act.MoveVExact(dir,act.SquishCallback,s);
+          }
+          pch.fixing = false;
+          s.Collidable = true;
+        }
       }
     }
+    Position.Y = orig+amt;
+    using(var bp = new BlockPoint(new(Position.X,amt>0?orig:orig+height)))fakeSolid.MoveVExact(amt);
+    foreach(var e in toClean) if(e.Collider is PColliderH pch_) pch_.Done(); 
     if(oldCollidable is {} val) sm.Platform.Collidable=val; 
   }
 
@@ -222,14 +246,19 @@ public class PortalFaceH:Entity{
       e1.other = e2;
       e2.other = e1;
       l.Add([e1,e2]);
-      ResetEvents.LazyEnable(typeof(PortalFaceH));
-      ResetEvents.LazyEnable(typeof(PColliderH));
+      ResetEvents.LazyEnable(typeof(PortalFaceH),typeof(PColliderH));
 
+      if(fakeSolid?.Scene != null && fakeSolid.Scene!=l){
+        fakeSolid.RemoveSelf();
+        fakeSolid=null;
+      } 
       if(fakeSolid==null){
         l.Add(fakeSolid = new(new Vector2(-1000,-1000),0,0,false));
+        fakeSolid.AddTag(Tags.Global);
         UpdateHook.EnsureUpdateAny();
       }
       fakeSolid.Collider = new DelegatingPointcollider();
+      DebugConsole.Write("blah",Util.ColorRemap.Get("#fff").remapRgb(new(0.5,0.3,0,0.5)), new Util.Double4(0.5,0.3,0,0.5).Unpremultiply().Premultiply());
     }
   }
 }

@@ -100,11 +100,14 @@ public class FastDebris:Actor{
   }
   public static void UpdateDebris(Level lv){
     var l = lv.Tracker.GetEntities<FastDebris>();
+    Component[] nc = lv.Tracker.GetComponents<NeedsAcceleratorComp>().ToArray();
     //14 chosen completely arbitrarily
-    if(l.Count<14)foreach(FastDebris e in l)e.updateCollision(false);
+    bool useAccelerator = l.Count>=8 || nc.Length>0;
+    if(!useAccelerator) foreach(FastDebris e in l)e.updateCollision(false);
     else {
       SolidMiptree.Construct(lv,((IntRect)lv.Bounds).expandAll_(32));
       foreach(FastDebris e in l)e.updateCollision(true);
+      foreach(NeedsAcceleratorComp c in nc) if(c.Entity.Active) c.onTree();
     }
   }
 

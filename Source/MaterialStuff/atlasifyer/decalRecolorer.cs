@@ -16,7 +16,7 @@ public class DecalRecolor:Entity{
   [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
   [Import.SpeedrunToolIop.Static]
   static Util.Trie<Util.SetStack<Util.ColorRemap>> Recolors=new();
-  public class DecalRerouter:IDisposable{
+  public ref struct DecalRerouter:IDisposable{
     static Stack<Util.ColorRemap> remaps = new();
     public static Util.ColorRemap Current=>remaps.Count>0?remaps.Peek():null;
     Util.ColorRemap mine;

@@ -80,7 +80,11 @@ public class OnLoad:Attribute{
         DebugConsole.WriteFailure($"Could not add hook to nonexistent method {ty}.{methodStr} ({mode})",true);
         return null;
       }
-      return new Hook(methodbase, m);
+      try{
+        return new Hook(methodbase, m);
+      }catch(Exception ex){
+        throw new Exception($"Failed on hook on {ty}.{methodStr} using {m}: ${ex.Message}");
+      }
     }
     public override void Apply(MethodInfo m){
       var hook = apply(mode,m,ty,methodStr);

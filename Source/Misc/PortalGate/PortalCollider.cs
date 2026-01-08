@@ -74,7 +74,7 @@ public class PortalColliderH:ColliderList{
     return list.Collide(r1.munane()) || list.Collide(r2.munane());
   }
 
-  class CollideDetourLock:IDisposable{
+  ref struct CollideDetourLock:IDisposable{
     static int active;
     void IDisposable.Dispose() {
       if(active>0) active--;

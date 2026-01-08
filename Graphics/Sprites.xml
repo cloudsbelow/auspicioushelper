@@ -42,4 +42,9 @@
     <Loop id="idle" path="silverwinged/wings" delay=".08" frames="0-8,0-8,0-7,9"/>
     <Anim id="collect" path="silverwinged/wings" delay=".16" frames="7-9"/>
   </auspicioushelper_conditionalstrawb>
+  <auspicioushelper_horse path="objects/auspicioushelper/horse/" start="no">
+    <Justify x="0.5" y="0.5"/>
+    <Loop id="no" path="n" delay="0.25" frames="1,2,1,2,1,2,1,1,1,1,1,2"/>
+    <Loop id="yes" path="h" delay="0.25" frames="1,2,1,2,1,2,1,1,1,1,1,2"/>
+  </auspicioushelper_horse>
 </Sprites>

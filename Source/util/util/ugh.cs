@@ -94,6 +94,12 @@ public static partial class Util{
     for(int i=0; i<list.Count; i++) initial = reduce(initial,list[i]);
     return initial;
   }
+  public delegate bool FilterMapFunction<T1,T2>(T1 val, out T2 res);
+  public static List<T2> FilterMap<T1,T2>(this List<T1> list, FilterMapFunction<T1,T2> func){
+    List<T2> n = new();
+    foreach(var x in list) if(func(x, out var r)) n.Add(r);
+    return n;
+  }
 
   public struct Double4{
     public double X;
@@ -113,10 +119,14 @@ public static partial class Util{
     public static double Dot(Double4 v, Double4 o)=>v.X*o.X + v.Y*o.Y + v.Z*o.Z + v.W*o.W;
     public static implicit operator Double4(Vector4 v)=>new(v.X,v.Y,v.Z,v.W);
     public static implicit operator Double4(Color v)=>new((double)v.R/255.0,(double)v.G/255.0,(double)v.B/255.0,(double)v.A/255.0);
+    public Double4 Unpremultiply()=>W==0?this:new(X/W,Y/W,Z/W,W);
+    public Double4 Premultiply()=>W==0?this:new(X*W,Y*W,Z*W,W);
+    public Double4 PremultiplyWith(double d)=>new(X*d,Y*d,Z*d,d);
     public double LengthSquared()=>Dot(this,this);
     public double Length()=>Math.Sqrt(this.LengthSquared());
     public Color toColor()=>new Color((float)X,(float)Y,(float)Z,(float)W);
     public static Double4 Zero=>new(0,0,0,0);
+    public override string ToString()=>$"Double4:{{{X},{Y},{Z},{W}}}";
   }
 
   public static float fromsrgb(float c)=> c<=0.04045? c/12.92f : MathF.Pow((c+0.055f)/1.055f, 2.4f);

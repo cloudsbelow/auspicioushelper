@@ -38,7 +38,7 @@ public class SamplerList{
       DebugConsole.WriteFailure($"{state} is currently not a valid sampelrstate");
     }
   }
-  public class OverridenSamplerstate:IDisposable{
+  public struct OverridenSamplerstate:IDisposable{
     List<Tuple<int, SamplerState>> orig=null;
     SamplerState origr0;
     GraphicsDevice gd;

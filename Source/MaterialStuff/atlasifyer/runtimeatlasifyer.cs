@@ -101,17 +101,20 @@ public static class Atlasifyer{
   public static MTexture PushToAtlas(Color[] data, int w, int h, string uid, out Rectangle clipRect){
     clipRect=Rectangle.Empty;
     if(contains.TryGetValue(uid, out var tex)) return tex;
-    if(w>itw||h>ith){
-      DebugConsole.WriteFailure($"Texture of size {w}x{h} too big to atlas (max allowed size {itw}x{ith})");
-      return null;
+    
+    if(w>itw || h>ith){
+      DebugConsole.Write($"Texture {uid} of size {w}x{h} too big to atlas (max allowed size {itw}x{ith}) Using fallback");
+      var ntex = new VirtualTexture("CreatedFor_"+uid, w,h, Color.Transparent);
+      ntex.Texture.SetData(data);
+      tex = new(ntex);
+    } else {
+      clipRect = SkylineAllocator.GetRect(w,h);
+      var te = texs[texs.Count-1];
+      te.Texture.Texture.SetData(0,clipRect,data,0,data.Length);
+      tex = new(te,clipRect);
     }
-    clipRect = SkylineAllocator.GetRect(w,h);
-
-    var te = texs[texs.Count-1];
-    te.Texture.Texture.SetData(0,clipRect,data,0,data.Length);
-    MTexture child = new(te,clipRect);
-    contains.Add(uid, child);
-    return child;
+    contains.Add(uid, tex);
+    return tex;
   }
   public static MTexture PushToAtlas(Color[] data, int w, int h, string uid)=>PushToAtlas(data,w,h,uid,out var _);
   public static MTexture MakeLike(this MTexture change, MTexture copy){

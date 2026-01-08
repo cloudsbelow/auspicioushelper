@@ -64,10 +64,11 @@ public class FancyWater:Water, ISimpleEnt{
   bool CollectCCW(Dictionary<Int2, Edges> e, MipGrid.Layer cull, Int2 at, Edges edge, List<Edgepoint> into){
     Int2 dir = edgeToVec(edge);
     e[at] = e[at]&~edge;
-    if(cull.conta)
+    Edges no = nextCCWOuter(edge);
+    Edges ni = nextCCWInner(edge);
+    if(!e.GetValueOrDefault(at+edgeToVec(no)).HasFlag(edge))
     if(cull.collidePoint(at+dir)){
-      var n = nextCCWInner(edge);
-      if(e.GetValueOrDefault(at+dir).HasFlag(n)) return CollectCCW(e,cull,at,n,into);
+      if(e.GetValueOrDefault(at+dir).HasFlag(ni)) return CollectCCW(e,cull,at,ni,into);
     }
     return false;
   }

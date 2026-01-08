@@ -12,7 +12,7 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 public static class EntityParser{
-  public class FakeLock:IDisposable{
+  public struct FakeLock:IDisposable{
     static int ctr = 0;
     public static bool fake=>ctr>0;
     public FakeLock(){

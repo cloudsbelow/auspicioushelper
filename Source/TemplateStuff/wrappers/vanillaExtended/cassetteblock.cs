@@ -147,7 +147,7 @@ public class CassetteW:CassetteBlock, ISimpleEnt{
 [Tracked]
 [CustomEntity("auspicioushelper/CassetteFixerThing")]
 public class CassetteBlockFixer:Entity{
-  class WillToggleLock:IDisposable{
+  ref struct WillToggleLock:IDisposable{
     static int count;
     public static bool locked=>count>0;
     public WillToggleLock(){count++;}

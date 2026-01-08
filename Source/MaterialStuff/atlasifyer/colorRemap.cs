@@ -192,7 +192,7 @@ public static partial class Util{
       }
     }
     public Double4 remapRgb(Double4 srgbIn){
-      Double4 loc = srgbIn.SrgbToOklab();
+      Double4 loc = srgbIn.Unpremultiply().SrgbToOklab();
       Double4 f=Double4.Zero;
       double tw=0;
       for(int i=0; i<things.Count; i++){
@@ -200,7 +200,8 @@ public static partial class Util{
         tw+=w;
         f+=v*w;
       }
-      return ((tw>0?f/tw:Double4.Zero)*loc.W).OklabToSrgb();
+      var res = (tw>0?f/tw:Double4.Zero).OklabToSrgb();
+      return res.PremultiplyWith(loc.W);
     }
     public void DebugPrint(){
       foreach(var t in things)DebugConsole.Write(t.DebugString());

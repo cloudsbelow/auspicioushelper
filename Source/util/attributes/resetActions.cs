@@ -144,4 +144,7 @@ public static class ResetEvents{
       } , LazyLoadDuration.Get(t), $"auto-lazyload {t}");
     } h.enable();
   }
+  public static void LazyEnable(params Type[] ts){
+    foreach(var t in ts) LazyEnable(t);
+  }
 }

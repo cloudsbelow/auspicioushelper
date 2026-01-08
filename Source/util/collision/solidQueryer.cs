@@ -92,6 +92,47 @@ public static class SolidMiptree{
       }
       return null;
     }
+  
+    public Entity GetFirstPixel(Int2 pixel, CollisionDirection dir){
+      int bucketY = (int)((pixel.y-offset.Y)/cellsize);
+      int bucketX = (int)((pixel.x-offset.X)/cellsize);
+      var l = buckets[stride*bucketY+bucketX];
+      if(l == null) return null;
+      FloatRect f = new(pixel.x,pixel.y,1,1);
+      foreach(var r in l) if((r.dir&dir)!=0){
+        if(r.f.x<pixel.x+1 && r.f.x+r.f.w>pixel.x){
+          if(r.f.y<pixel.y+1 && r.f.y+r.f.h>pixel.y){
+            switch(r.e.Collider){
+              case Hitbox: return r.e;
+              case Circle c:
+                Vector2 cent = c.AbsolutePosition-pixel-Vector2.One*0.5f;
+                Vector2 d=Vector2.Max(Vector2.Zero,new Vector2(Math.Abs(cent.X)-1,Math.Abs(cent.Y)-1));
+                if(d.X*d.X+d.Y*d.Y<c.Radius*c.Radius) return r.e;
+                continue;
+              case Grid g:
+                if(g is MiptileCollider mtc){
+                  if(mtc.collideFr(f)) return r.e;
+                } else {
+                  var offset = pixel-r.f.tlc;
+                  var offsetbrc = pixel+Int2.One-r.f.tlc;
+                  Int2 cs = new Int2((int)g.CellWidth,(int)g.CellHeight);
+                  Int2 start = offset/cs;
+                  for(int x=Math.Max(start.x,0); x*cs.x<offsetbrc.x; x++){
+                    for(int y=Math.Max(start.y,0); y*cs.y<offsetbrc.y; y++){
+                      if(g.Data[x,y]) return r.e;
+                    }
+                  }
+                }
+                continue;
+              case ColliderList li:
+                if(FloatRect.fromCorners(pixel,pixel+Vector2.One).CollideCollider(li)) return r.e;
+                continue;
+            }
+          }
+        }
+      }
+      return null;
+    }
   }
   static List<CollisionLevel> levels = new();
   static IntRect lbounds;
@@ -138,11 +179,16 @@ public static class SolidMiptree{
     }
     return null;
   }
+  static public Entity TestPixel(Int2 pixel, CollisionDirection dir){
+    if(lbounds.CollidePointCompact(pixel)) for(int i=0; i<=maxlevel; i++){
+      if(levels[i].GetFirstPixel(pixel, dir) is {} e) return e;
+    }
+    return null;
+  }
   public static void Add(Entity e, CollisionDirection dir){
     RectCollider r;
     r.e=e;
     r.dir=dir;
-    //if((dir&CollisionDirection.up)==0) DebugConsole.Write($"{e},{dir}");
     if(r.dir!=CollisionDirection.none){
       r.f = new IntRect(
         (int)Math.Round(e.Left),(int)Math.Round(e.Top),
@@ -153,5 +199,12 @@ public static class SolidMiptree{
       for(; i<maxlevel && s>(1<<(mipStep*i)); i++);
       levels[i].Add(r);
     }
+  }
+}
+[Tracked]
+public class NeedsAcceleratorComp:Component{
+  public Action onTree;
+  public NeedsAcceleratorComp(Action onTree):base(false,false){
+    this.onTree = onTree;
   }
 }

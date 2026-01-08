@@ -91,7 +91,7 @@ public class Template:Entity, ITemplateChild{
   public Wrappers.BasicMultient basicents = null;
   public DashCollision OnDashCollide = null;
   string templateStr;
-  public class ChainLock:IDisposable{
+  public ref struct ChainLock:IDisposable{
     static int ctr = 0;
     public static bool locked=>ctr>0; 
     public ChainLock(){ctr++;}
@@ -458,19 +458,14 @@ public class MovementLock:IDisposable{
   static HashSet<Actor> alreadyX = new();
   static HashSet<Actor> alreadyY = new();
   static int instances = 0;
-  static int csinstances = 0;
   public static bool canSkip=>instances>0;
   static bool cantSkip=>instances==0;
-  bool always;
-  public MovementLock(bool always=true){
-    this.always=always;
-    if(always) csinstances++;
+  public MovementLock(bool optional=true){
     if(instances++==0){
       alreadyX.Clear(); alreadyY.Clear();
     }
   }
   public virtual void Dispose(){
-    if(always) csinstances--;
     if(--instances == 0){
       alreadyX.Clear(); alreadyY.Clear();
     }

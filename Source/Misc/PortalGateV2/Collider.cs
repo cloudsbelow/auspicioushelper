@@ -14,24 +14,26 @@ namespace Celeste.Mod.auspicioushelper;
 public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollision{
   public PortalFaceH f1;
   public PortalFaceH f2;
-  bool flipV;
+  public bool flipV;
+  public bool fixing = false;
+  bool doCamera = false;
   public bool flipH=>f1.facingRight==f2.facingRight;
   public Vector2 flipMult=>new(flipH?-1:1,flipV?-1:1);
   Hitbox orig;
-  Othersider o;
-  public const float margin = 2;
+  //prevent wallbounces
+  public const float margin = 5;
   public PColliderH(Entity wrap, PortalFaceH f1, PortalFaceH f2){
     this.f1=f1; this.f2=f2;
     flipV = f1.flipped!=f2.flipped;
     if(wrap.Collider is not Hitbox h) throw new Exception("Collider is not hitbox.");
     orig = h;
     #pragma warning disable CL013
-    wrap.Scene.Add(o = new(wrap, OthersidePos(wrap.Position)));
+    wrap.Scene.Add(new Othersider(wrap, OthersidePos(wrap.Position)));
     #pragma warning restore CL013
   }
   public PColliderH(PColliderH copy, Hitbox n){
     f1=copy.f1; f2=copy.f2; flipV=copy.flipV;
-    orig=n;
+    orig=n; doCamera = copy.doCamera;
   }
   public override void Added(Entity entity) {
     base.Added(entity);
@@ -44,17 +46,14 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
   void End(){
     using(new CollideDetourLock()) Entity.Collider = orig;
   }
-  public Vector2 calcspeed(Vector2 speed){
-    Vector2 rel = speed-f1.getSpeed();
+  public Vector2 calcspeed(Vector2 speed, bool fromOtherside=false){
+    Vector2 rel = speed-(fromOtherside?f2:f1).getSpeed();
     if(flipH) rel.X*=-1;
     if(flipV) rel.Y*=-1;
-    rel+=f2.getSpeed();
+    rel+=(fromOtherside?f1:f2).getSpeed();
     return rel;
   }
   void Swap(){
-    // DebugConsole.Write("entawuerh",Entity);
-    // DebugConsole.Write("entawuerh",new DynamicData(Entity));
-    // DebugConsole.Write("entawuerh",new DynamicData(Entity).Get("speed"));
     if(Entity is Player player){
       Vector2 oldBottom = player.Position - Vector2.UnitY*(GelperIop.IsFlipped(player)? -orig.height:0);
       player.Get<PlayerHair>()?.Nodes.MapInplace(x=>OffsetPosFlip(x,x-oldBottom));
@@ -66,7 +65,7 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     }
     
     Vector2? camoffset=null;
-    if(Entity.Scene is Level lev && true && Entity is Player pla){
+    if(Entity.Scene is Level lev && true && Entity is Player pla && false){
       camoffset = lev.Camera.Position-pla.Position;
     }
     Entity.Position = OthersidePos(Entity.Position);
@@ -84,7 +83,7 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     f2 = temp;
     Done(true);
   }
-  public void Done(bool fromSwap = false){ //this is the paranoia of a person who is not ok
+  public void Done(bool fromSwap = false){ //this is the paranoia of a person who is not ok (entirely redundant)
     Vector2 eloc = Entity.Position;
     float frontEdge = eloc.X+orig.Position.X+(f1.facingRight?0:orig.width);
     float dist = (f1.X-frontEdge)*(f1.facingRight?-1:1);
@@ -122,6 +121,19 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
       r1 = new(r2.x,r2.y, orig.width, orig.height);
       return false;
     }
+  }
+  public bool GetPrimaryRect(out FloatRect r1, out bool completelySubsumed){
+    var tlc = Entity.Position+orig.Position;
+    float overlap = Math.Max(0, f1.facingRight? f1.X-tlc.X : tlc.X+orig.width-f1.X);
+    r1 = new(f1.facingRight? tlc.X+overlap : tlc.X, tlc.Y, orig.width-overlap, orig.height);
+    completelySubsumed = overlap>=orig.width;
+    return overlap>0;
+  }
+  public FloatRect GetSecondaryRect(){
+    var tlc = Entity.Position+orig.Position;
+    float overlap = Math.Max(0, f1.facingRight? f1.X-tlc.X : tlc.X+orig.width-f1.X);
+    float nrely = flipV? f1.Position.Y+f1.height-orig.height-tlc.Y : tlc.Y-f1.Position.Y;
+    return new(f2.Position.X-(f2.facingRight? 0:overlap), f2.Position.Y+nrely, overlap, orig.height);
   }
   public float distToTop=>Entity.Position.Y+orig.Position.Y-f1.Y;
   public float distToBottom=>f1.Y+f1.height-Entity.Position.Y-orig.Position.Y-orig.height;
@@ -162,13 +174,13 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     Draw.HollowRect(r1.x, r1.y, r1.w, r1.h, color);
   }
 
-  class CollideDetourLock:IDisposable{
+  ref struct CollideDetourLock:IDisposable{
     static bool active;
     public CollideDetourLock(){active=true;}
     void IDisposable.Dispose()=>active=false;
     public static bool IsLocked=>active;
   }
-  [OnLoad.OnHook(typeof(Entity),nameof(Entity.Collider),Util.HookTarget.PropSet)]
+  [ResetEvents.OnHook(typeof(Entity),nameof(Entity.Collider),Util.HookTarget.PropSet)]
   static void SetColliderDetour(Action<Entity, Collider> orig, Entity e, Collider c){
     if(!CollideDetourLock.IsLocked && e.Collider is PColliderH pch && c is not PColliderH and not null){
       if(c is not Hitbox h){
@@ -182,8 +194,8 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     if(toFix is not PColliderH p) return toFix;
     return p.orig;
   }
-  [OnLoad.ILHook(typeof(Player),nameof(Player.Ducking),Util.HookTarget.PropGet)]
-  [OnLoad.ILHook(typeof(Player),nameof(Player.orig_Update))]
+  [ResetEvents.ILHook(typeof(Player),nameof(Player.Ducking),Util.HookTarget.PropGet)]
+  [ResetEvents.ILHook(typeof(Player),nameof(Player.orig_Update))]
   static void FixEqHook(ILContext ctx){
     ILCursor c = new(ctx);
     int n=0;
@@ -197,6 +209,17 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
       c.EmitDelegate(fixCollider);
     }
     if(n!=2) DebugConsole.WriteFailure("The slothful ILHook design failed. Tell clouds to be more rigorous if you encounter this",true);
+  }
+  [ResetEvents.OnHook(typeof(Holdable),nameof(Holdable.Update))]
+  static void adjust(On.Celeste.Holdable.orig_Update orig, Holdable h){
+    if(h.IsHeld && h.Holder.Collider is PColliderH pch){
+      if(h.Entity.Collider is Hitbox hb) h.Entity.Collider = new PColliderH(h.Entity,pch.f1,pch.f2);
+      if(h.Entity.Collider is PColliderH pch_){
+        pch_.f1=pch.f1;
+        pch_.f2=pch.f2;
+      }
+    }
+    orig(h);
   }
 
 

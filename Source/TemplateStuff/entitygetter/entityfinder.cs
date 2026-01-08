@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Celeste.Mod.Entities;
+using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
@@ -22,6 +23,7 @@ public static class Finder{
     hooks.enable();
     foreach(var sig in path.Split(',')) try{
       if(string.IsNullOrWhiteSpace(sig)) continue;
+      DebugConsole.Write($"watching \"{sig}\"");
       string cl = Regex.Replace(sig,@"\s+","");
       if(!flagged.TryGetValue(cl, out var li)){
         flagged.Add(cl,li = new());
@@ -32,13 +34,17 @@ public static class Finder{
       "Please remember to format your path to match: \\d+(/\\d+)*");
     }
   }
-  public static void StartingLoad(EntityData d){
+  static void StartingLoad(EntityData d){
     last = null; finding = null;
-    if(flagged.TryGetValue(d.ID.ToString(), out var ident)){
-      finding=ident;
-      //finding = new FoundEntity(d, ident);
-      //DebugConsole.Write($"Searching for {d.Name} with id {d.ID}. {ident.Count} actions enqueued");
-    }
+    if(flagged.TryGetValue(d.ID.ToString(), out var ident)) finding = ident;
+  }
+  static void StartingLoadTrigger(EntityData d){
+    last = null; finding = null;
+    string matchstr;
+    if(
+      flagged.TryGetValue(matchstr="t"+d.ID.ToString(), out var ident) ||
+      flagged.TryGetValue(matchstr="trigger"+d.ID.ToString(), out ident)
+    )finding = ident;
   }
   public static void EndingLoad(EntityData d){
     if(finding!=null){
@@ -55,27 +61,37 @@ public static class Finder{
   }
   public static void LLILHook(ILContext ctx){
     var c = new ILCursor(ctx);
-    if(!c.TryGotoNext(MoveType.Before, instr=>instr.MatchCall<Level>("LoadCustomEntity"))){
-      goto bad;
-    }
+    Type et = typeof(List<EntityData>.Enumerator);
+    //entities
+    if(!c.TryGotoNext(MoveType.Before, instr=>instr.MatchCall<Level>("LoadCustomEntity"))) goto bad;
     c.EmitLdloc(17);
     c.EmitDelegate(StartingLoad);
-    Type et = typeof(List<EntityData>.Enumerator);
-    if(!c.TryGotoNext(MoveType.Before, instr=>instr.MatchLdloca(16),instr=>instr.MatchCall(et,"MoveNext"))){
-      goto bad;
-    }
+    if(!c.TryGotoNext(MoveType.Before, instr=>instr.MatchLdloca(16),instr=>instr.MatchCall(et,"MoveNext"))) goto bad;
     c.Index++;
     c.EmitLdloc(17);
     c.EmitDelegate(EndingLoad);
+
+    //triggers
+    if(!c.TryGotoNext(MoveType.Before, instr=>instr.MatchCall<Level>("LoadCustomEntity"))) goto bad;
+    c.EmitLdloc(46);
+    c.EmitDelegate(StartingLoadTrigger);
+    if(!c.TryGotoNext(MoveType.Before, instr=>instr.MatchLdloca(16),instr=>instr.MatchCall(et,"MoveNext"))) goto bad;
+    c.Index++;
+    c.EmitLdloc(46);
+    c.EmitDelegate(EndingLoad);
     return;
     bad:
-      DebugConsole.WriteFailure("Failed to add hook to entity finder");
+      DebugConsole.WriteFailure("Failed to add hook to entity finder",true);
   }
   static ILHook llhook;
   public static void AddHook(On.Monocle.EntityList.orig_Add_Entity orig, EntityList self, Entity e){
     if(self.Scene is Level l){
       //if(e!=null)DebugConsole.Write("Add "+ e?.ToString());
       if(finding!=null)last = e??last;
+      if(e is Player p && flagged.TryGetValue("player",out var waaa)){
+        DebugConsole.Write($"Found new player; {waaa.Count} actions");
+        foreach(var a in waaa) a(p); 
+      } 
     }
     orig(self, e);
   } 
@@ -151,6 +167,55 @@ public static class Finder{
       });
       if(c.Count==1) return c[0];
       return new ColliderList(c.ToArray());
+    }
+  }
+
+  [CustomEntity("auspicioushelper/CollisionCounter")]
+  [MapenterEv(nameof(Search))]
+  public class CollisionCounter:Entity{
+    class GroupMarker:OnAnyRemoveComp{
+      (int, bool) loc;
+      public GroupMarker((int,bool) loc):base(false,false){
+        this.loc=loc;
+      }
+      public override void Added(Entity entity) {
+        base.Added(entity);
+        if(!groups.TryGetValue(loc, out var ss)) groups.Add(loc,ss=new());
+        ss.Add(this);
+      }
+      public override void OnRemove(){
+        if(groups.TryGetValue(loc, out var ss))ss.Remove(this);
+      }
+    }
+    [Import.SpeedrunToolIop.Static]
+    [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+    static Dictionary<(int,bool),List<GroupMarker>> groups = new();
+    static void Search(EntityData d){
+      int num = d.ID;
+      watch(d.Attr("groupA",""),(e)=>e.Add(new GroupMarker((num,false))));
+      watch(d.Attr("groupB",""),(e)=>e.Add(new GroupMarker((num,true))));
+    }
+    int num;
+    bool aCollidable=true;
+    bool bCollidable=true;
+    string channel="";
+    int tCount;
+    public CollisionCounter(EntityData d, Vector2 o):base(d.Position+o){
+      num = d.ID;
+      tCount = d.Attr("groupA","").Split(",").Length+d.Attr("groupB","").Split(",").Length;
+      aCollidable=d.Bool("onlyCollidableA",true);
+      bCollidable=d.Bool("onlyCollidableB",true);
+      channel = d.Attr("channel","numCollisions");
+    }
+    public override void Update() {
+      base.Update();
+      var l1 = groups.GetValueOrDefault((num,false))?.FilterMap((GroupMarker c,out Entity e)=>(e=c.Entity).Collidable||!aCollidable);
+      var l2 = groups.GetValueOrDefault((num,true))?.FilterMap((GroupMarker c,out Entity e)=>(e=c.Entity).Collidable||!bCollidable);
+      if(l1 == null || l2 == null) return;
+      if(l1.Count+l2.Count>tCount) DebugConsole.MakePostcard("Mysterious! please contact cloudsbelow that you've recieved this!");
+      int count = 0;
+      foreach(var e in l1) using(Util.WithRestore(ref e.Collidable,true)) foreach(var f in l2) if(f.CollideCheck(e)) count++;
+      ChannelState.SetChannel(channel,count);
     }
   }
 }

@@ -427,4 +427,15 @@ public static partial class Util{
   public static AutoRestore<T> WithRestore<T>(ref T toRestore, T nval){
     return new AutoRestore<T>(ref toRestore, nval);
   }
+  public struct RingBuffer<T>{
+    T[] items;
+    int loopidx;
+    public ref T this[int idx]{
+      get=>ref items[(idx+loopidx)%items.Length];
+    }
+    public void Backward()=>loopidx = (items.Length+loopidx-1)%items.Length;
+    public void Forward()=>loopidx = (loopidx+1)%items.Length;
+    public RingBuffer(T[] dat)=>items=dat;
+    public RingBuffer(int capacity):this(new T[capacity]){}
+  }
 }

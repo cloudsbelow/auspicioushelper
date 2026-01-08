@@ -16,22 +16,6 @@ internal static class SpeedrunToolIop{
     try{
       MaterialPipe.fixFromSrt();
       PortalGateH.intersections.Clear();
-      foreach(Entity e in Engine.Instance.scene.Entities){
-        if(e is PortalOthersider m) m.RemoveSelf();
-        if(e is PortalGateH portalgateh){
-          portalHooks.hooks.enable();
-        }
-        if(e is Actor a){
-          PortalGateH.SurroundingInfoH s = PortalGateH.evalEnt(a);
-          PortalIntersectInfoH info = null;
-          if(a.Left<s.leftl) {
-            PortalGateH.intersections[a]=(info = new PortalIntersectInfoH(s.leftn, s.left,a));
-          } else if(a.Right>s.rightl){
-            PortalGateH.intersections[a]=(info = new PortalIntersectInfoH(s.rightn, s.right, a));
-          }
-          if(info!=null) info.addOthersider();
-        }
-      }
       BackdropCapturer.CapturedBackdrops.FixFromSrt(level);
     }catch(Exception ex){
       DebugConsole.WriteFailure($"Auspicioushelper speedruntool failed: \n {ex}");
@@ -51,7 +35,7 @@ internal static class SpeedrunToolIop{
         }
       }
       if(st.Count==0) continue;
-      DebugConsole.Write($"(SRT) Type {t.FullName}: adding static fields [{string.Join(", ",st)}]");
+      //Logger.Verbose("auspicioushelper",$"(SRT) Type {t.FullName}: adding static fields [{string.Join(", ",st)}]");
       toDeregister.Add(SpeedrunToolImport.RegisterStaticTypes(t, st.ToArray()));
     }
   }

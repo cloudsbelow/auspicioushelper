@@ -269,7 +269,7 @@ public class ConnectedBlocks:Entity{
     };
   }
   
-  public class PaddingLock:IDisposable{
+  public ref struct PaddingLock:IDisposable{
     static int ctr = 0;
     public PaddingLock(){
       ctr++;
