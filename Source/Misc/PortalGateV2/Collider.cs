@@ -135,6 +135,8 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     float nrely = flipV? f1.Position.Y+f1.height-orig.height-tlc.Y : tlc.Y-f1.Position.Y;
     return new(f2.Position.X-(f2.facingRight? 0:overlap), f2.Position.Y+nrely, overlap, orig.height);
   }
+  public float offsetBottom=>orig.height+orig.Position.Y;
+  public float offsetTop=>orig.Position.Y;
   public float distToTop=>Entity.Position.Y+orig.Position.Y-f1.Y;
   public float distToBottom=>f1.Y+f1.height-Entity.Position.Y-orig.Position.Y-orig.height;
   public override float Top=>orig.Position.Y;

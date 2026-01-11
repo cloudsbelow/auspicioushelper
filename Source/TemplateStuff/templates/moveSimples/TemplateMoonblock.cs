@@ -13,7 +13,7 @@ namespace Celeste.Mod.auspicioushelper;
 public class TemplateMoonblock:Template{
   float floatfreq;
   float floatamp;
-  float sinkamount;
+  Vector2 sinkamount;
   float sinkSpeed;
   float dashmagn;
   Vector2 offset;
@@ -27,7 +27,8 @@ public class TemplateMoonblock:Template{
   public TemplateMoonblock(EntityData d, Vector2 offset, int depthoffset):base(d,d.Position+offset,depthoffset){
     floatfreq = d.Float("drift_frequency",1f);
     floatamp = d.Float("drift_amplitude",4);
-    sinkamount = d.Float("sink_amount",12);
+    var l = Util.csparseflat(d.String("sink_amount","12"));
+    sinkamount = l.Length switch {1=>new Vector2(0,l[0]), >=2=>new Vector2(l[0],l[1]), _=>new Vector2(0,12)};
     sinkSpeed = d.Float("sink_speed",1f);
     dashmagn = d.Float("dash_influence",8);
     sinephase = d.Bool("useCustomStartphase",false)?d.Float("startphase",0): Calc.Random.NextFloat(MathF.PI*2);
@@ -57,8 +58,8 @@ public class TemplateMoonblock:Template{
     offset = Vector2.Zero;
     offset += Vector2.UnitY*floatamp*MathF.Sin(sinephase*floatfreq);
     ownLiftspeed += Vector2.UnitY*floatamp*floatfreq*MathF.Cos(sinephase*floatfreq);
-    offset += Util.SineInOut(ylerp, out var dyl)*Vector2.UnitY*sinkamount;
-    ownLiftspeed += Vector2.UnitY*sinkSpeed*sign*dyl*sinkamount;
+    offset += Util.SineInOut(ylerp, out var dyl)*sinkamount;
+    ownLiftspeed += sinkSpeed*sign*dyl*sinkamount;
     offset += dashdir*dashmagn*Util.Spike(Util.QuadIn(dashease,out var d2), out var d1);
     ownLiftspeed += -dashdir*dashmagn*d1*d2*dashReturn;
     childRelposSafe();

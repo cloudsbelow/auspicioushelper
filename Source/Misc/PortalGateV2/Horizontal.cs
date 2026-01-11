@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
@@ -117,11 +118,11 @@ public class PortalFaceH:Entity{
   ref struct BlockPoint:IDisposable{
     Vector2 oldPos;
     bool oldCollidable;
-    public BlockPoint(Vector2 Pos){
+    public BlockPoint(Vector2 Pos, bool Collidable = true){
       oldPos = fakeSolid.Position;
       oldCollidable = fakeSolid.Collidable;
       fakeSolid.Position = Pos;
-      fakeSolid.Collidable = true;
+      fakeSolid.Collidable = Collidable;
     }
     void IDisposable.Dispose() {
       fakeSolid.Collidable = oldCollidable;
@@ -224,10 +225,16 @@ public class PortalFaceH:Entity{
           pch.fixing = false;
           s.Collidable = true;
         }
+        if(pch.f1 != this) continue;
+        if(amt<0 && Position.Y+height<act.Position.Y+pch.offsetBottom){
+          using(new BlockPoint(Position+Vector2.UnitY*height,false)) act.MoveVExact(-1,act.SquishCallback,fakeSolid);
+        }
+        if(amt>0 && Position.Y>act.Position.Y+pch.offsetTop){
+          using(new BlockPoint(Position+Vector2.UnitY*height,false)) act.MoveVExact(1,act.SquishCallback,fakeSolid);
+        }
       }
     }
     Position.Y = orig+amt;
-    using(var bp = new BlockPoint(new(Position.X,amt>0?orig:orig+height)))fakeSolid.MoveVExact(amt);
     foreach(var e in toClean) if(e.Collider is PColliderH pch_) pch_.Done(); 
     if(oldCollidable is {} val) sm.Platform.Collidable=val; 
   }

@@ -53,7 +53,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     borderColor = Util.hexToColor(d.Attr("border","000"));
   }
   void OtherOnPlayer(Player p){
-    if(dreamThru && p.StateMachine.state == Player.StDreamDash) return;
+    if(dreamThru && (p.StateMachine.State == Player.StDreamDash || Import.CommunalHelperIop.InTunnel(p))) return;
     p.Die((p.Position - Position).SafeNormalize());
   }
   bool hvisible = true;

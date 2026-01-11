@@ -72,8 +72,8 @@ public class OnLoad:Attribute{
       MethodInfo methodbase = mode switch {
         Util.HookTarget.Normal=>ty.GetMethod(methodStr, Util.GoodBindingFlags),
         Util.HookTarget.Coroutine=>ty.GetMethod(methodStr, Util.GoodBindingFlags)?.GetStateMachineTarget(),
-        Util.HookTarget.PropGet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetGetMethod(),
-        Util.HookTarget.PropSet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetSetMethod(),
+        Util.HookTarget.PropGet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetGetMethod(true),
+        Util.HookTarget.PropSet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetSetMethod(true),
         _=>null
       };
       if(methodbase == null){

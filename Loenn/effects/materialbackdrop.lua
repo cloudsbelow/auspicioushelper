@@ -6,11 +6,11 @@ effect.canForeground = true
 
 effect.defaultData = {
     identifier="",
-    passes="",
+    passes="null",
     params="",
     textures="",
     renderOrder=100000000,
-    quadFirst=true,
+    quadFirst=false,
     alwaysRender=true,
     reload=false
 }
@@ -24,6 +24,15 @@ effect.fieldOrder = {
 effect.fieldInformation = {
     renderOrder = {
         fieldType = "integer"
+    },
+    passes = {
+        fieldType = "list"
+    },
+    textures = {
+        fieldType = "list"
+    },
+    params = {
+        fieldType = "list"
     }
 }
 

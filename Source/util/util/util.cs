@@ -438,4 +438,18 @@ public static partial class Util{
     public RingBuffer(T[] dat)=>items=dat;
     public RingBuffer(int capacity):this(new T[capacity]){}
   }
+  // public class SomeList<T>{
+  //   List<T> items = new();
+  //   HashSet<T> toRemove = new();
+  //   List<T> deferredAdd = new(0);
+  //   List<T> deferredRemove = new(0);
+  //   bool locked;
+  //   void Catchup(){
+  //     if(deferredAdd.Count==0 && deferredRemove.Count==0) return;
+  //     foreach(var v in deferredAdd) Add(v);
+  //     deferredAdd.Clear();
+  //     foreach(var v in deferredRemove) Remove(v);
+  //     deferredRemove.Clear();
+  //   }
+  // }
 }

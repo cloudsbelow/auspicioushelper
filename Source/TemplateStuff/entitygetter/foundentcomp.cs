@@ -12,7 +12,6 @@ using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
-[Tracked]
 public class FoundEntity:OnAnyRemoveComp{
   Util.HybridSet<string> idents = new();
   [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
@@ -116,3 +115,11 @@ public class FoundEntity:OnAnyRemoveComp{
     }
   }
 }
+
+// public class MultiFoundentity:OnAnyRemoveComp{
+//   Dictionary<string, List<Entity>
+//   ChannelTracker
+//   public override void OnRemove() {
+//     throw new NotImplementedException();
+//   }
+// }

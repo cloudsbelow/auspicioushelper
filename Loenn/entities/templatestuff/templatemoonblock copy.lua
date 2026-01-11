@@ -4,22 +4,20 @@ local aelperLib = require("mods").requireFromPlugin("libraries.aelper_lib")
 
 local entity = {}
 
-entity.name = aelperLib.register_template_name("auspicioushelper/TemplateMoonblock")
+entity.name = aelperLib.register_template_name("auspicioushelper/TemplateCloud")
 entity.depth = -13000
 
 entity.placements = {
   {
-    name = "Template Moonblock",
+    name = "Template Cloud",
     data = {
       template = "",
       depthoffset=0,
-      drift_frequency=1,
-      drift_amplitude=4,
-      sink_amount="12",
-      sink_speed=1,
-      dash_influence=8,
-      startphase=0,
-      useCustomStartphase=false,
+      fragile = true,
+      respawnTime = 2.5,
+      cloudDir = "0,1",
+      fromRiding = true,
+      noDoubleBoost = true,
     }
   }
 }
@@ -32,6 +30,6 @@ entity.fieldInformation = function(entity)
 end
 
 entity.selection = aelperLib.template_selection
-entity.draw = aelperLib.get_entity_draw("tmoon")
+entity.draw = aelperLib.get_entity_draw("tcloud")
 
 return entity
