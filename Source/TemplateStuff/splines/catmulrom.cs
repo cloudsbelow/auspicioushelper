@@ -120,13 +120,14 @@ public class CatRomSegNorm{
     float a = Math.Clamp(t*invmap.Length-idx,0,1);
     float low = invmap[idx];
     float high = idx<invmap.Length-1?invmap[idx+1]:1;
-    return b.point((1-a)*low+high*a);
+    return b.point((1-a)*low + high*a);
   }
   public Vector2 point(float t, out Vector2 derivative){
     int idx = Math.Clamp((int)MathF.Floor(t*invmap.Length),0,invmap.Length-1);
     float a = Math.Clamp(t*invmap.Length-idx,0,1);
-    float low = idx==0?0:invmap[idx-1];
-    Vector2 res =  b.point((1-a)*low+invmap[idx]*a, out var d);
+    float low = idx==0?0:invmap[idx];
+    float high = idx<invmap.Length-1?invmap[idx+1]:1;
+    Vector2 res =  b.point((1-a)*low + a*high, out var d);
     derivative = d.SafeNormalize(totalLength);
     return res;
   }
@@ -182,7 +183,6 @@ public class CatmullNorm:Spline{
     float loc = Util.SafeMod(t,segments);
     int idx = (int)MathF.Floor(loc);
     Vector2 res =  segs[idx].point(loc-idx, out derivative);
-
     return res;
   }
   public override void fromNodes(Vector2[] innodes) {

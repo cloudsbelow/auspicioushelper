@@ -117,7 +117,11 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       if(!int.TryParse(p.Key.Trim(),out var idx)||idx>15||idx<0) DebugConsole.WriteFailure($"Invalid texture slot {p.Key}");
       else if(string.IsNullOrWhiteSpace(p.Value)) DebugConsole.WriteFailure($"Invalid texutre resource at {idx}");
       else switch(p.Value.ToLower()){
-        case "bg": case "background": 
+        case "lv": case "level":
+          info.independent = layerformat.independent=false;
+          textures.Add(new(idx,texture = ITexture.bgWrapper));
+          break;
+        case "bg": case "background":
           info.usesbg = layerformat.useBg=true;
           textures.Add(new(idx,texture = ITexture.bgWrapper));
           break;

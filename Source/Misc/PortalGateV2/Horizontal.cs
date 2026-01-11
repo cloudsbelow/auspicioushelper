@@ -11,9 +11,20 @@ using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.auspicioushelper;
-
+/**
+todo:
+fix in templates
+fix in naivemove
+*/
 [Tracked]
-public class PortalFaceH:Entity{
+public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
+  public struct PortalInfo{
+    public bool canAttach = false;
+    public bool instantCam = false;
+    public bool giveRcb = false;
+    public PortalInfo(){}
+  }
+  public PortalInfo info;
   public bool facingRight = false;
   public bool flipped = false;
   public float height;
@@ -28,16 +39,17 @@ public class PortalFaceH:Entity{
   Vector2 renderOffset;
   LiftspeedSm sm;
   Vector2 movementCounter;
-  public PortalFaceH(Vector2 pos, float height, bool facingRight, bool vflip):base(pos){
+  public PortalFaceH(Vector2 pos, float height, bool facingRight, bool vflip, PortalInfo pinfo = default):base(pos){
     Collider = new Hitbox(1,height,facingRight?0:-1,0);
     flipped=vflip;
+    info = pinfo;
     this.facingRight = facingRight;
     this.height=height;
     for(int i=0; i<height; i+=2){
       handles.Add(ogen.getHandle());
       handles.Add(ogen.getHandle());
     }
-    Add(sm = new LiftspeedSm(){
+    if(pinfo.canAttach) Add(sm = new LiftspeedSm(){
       SolidChecker = (s)=>CollideCheckOutside(s,Position+new Vector2(facingRight?-1:1,0)),
       OnMoveOther = (Vector2 move)=>{
         movementCounter+=move;
@@ -66,7 +78,7 @@ public class PortalFaceH:Entity{
     }
   }
 
-  public Vector2 getSpeed()=>sm.getLiftspeed();
+  public Vector2 getSpeed()=>sm?.getLiftspeed()??Vector2.Zero;
 
 
   [ResetEvents.OnHook(typeof(Actor),nameof(Actor.MoveHExact))]
@@ -248,8 +260,13 @@ public class PortalFaceH:Entity{
   public static class Pair{
     static void Load(Level l, LevelData ld, Vector2 o, EntityData d){
       var c = Util.hexToColor(d.Attr("color_hex","ffffffaa"));
-      var e1 = new PortalFaceH(o+d.Position, d.Height, d.Bool("right_facing_f0"), false){color=c};
-      var e2 = new PortalFaceH(o+d.Nodes[0], d.Height, d.Bool("right_facing_f1"), d.Bool("flipGravity")){color=c};
+      PortalInfo pi = new(){
+        canAttach = d.Bool("attached",true),
+        giveRcb = d.Bool("giveRCB",true),
+        instantCam = d.Bool("instant_camera",false)
+      };
+      var e1 = new PortalFaceH(o+d.Position, d.Height, d.Bool("right_facing_f0"), false, pi){color=c};
+      var e2 = new PortalFaceH(o+d.Nodes[0], d.Height, d.Bool("right_facing_f1"), d.Bool("flipGravity"), pi){color=c};
       e1.other = e2;
       e2.other = e1;
       l.Add([e1,e2]);
@@ -265,7 +282,6 @@ public class PortalFaceH:Entity{
         UpdateHook.EnsureUpdateAny();
       }
       fakeSolid.Collider = new DelegatingPointcollider();
-      DebugConsole.Write("blah",Util.ColorRemap.Get("#fff").remapRgb(new(0.5,0.3,0,0.5)), new Util.Double4(0.5,0.3,0,0.5).Unpremultiply().Premultiply());
     }
   }
 }

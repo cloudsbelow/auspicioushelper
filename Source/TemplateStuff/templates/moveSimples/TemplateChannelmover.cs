@@ -62,8 +62,12 @@ public class TemplateChannelmover:Template{
   }
   public override void addTo(Scene scene){
     target = low = (int) Math.Floor(new ChannelTracker(channel, setChVal).AddTo(this).value);
-    spos = new(SplineEntity.GetSpline(dat, SplineEntity.Types.simpleLinear), Vector2.Zero, true);
+    Spline se;
+    spos = new(se=SplineEntity.GetSpline(dat, SplineEntity.Types.simpleLinear), Vector2.Zero, true);
     spos.set(target);
+    for(float i=0.001f; i<0.002; i+=0.001f){
+      spos.setSidedFromDir(i,1);
+    }
     base.addTo(scene);
   }
   public override void Update(){
@@ -92,6 +96,7 @@ public class TemplateChannelmover:Template{
           low--;
         }
       }
+      DebugConsole.Write("",spos.pos,spos.t,cfrac,afrac);
     }
   }
 }

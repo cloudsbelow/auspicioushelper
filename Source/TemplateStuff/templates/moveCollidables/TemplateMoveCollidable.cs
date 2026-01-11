@@ -27,8 +27,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
   public TemplateMoveCollidable(EntityData data, Vector2 pos, int depthoffset):base(data,pos,depthoffset){
     Position = Position.Round();
     movementCounter = Vector2.Zero;
-    prop &= ~Propagation.Riding; 
-    triggerHooks.enable();
+    prop &= ~Propagation.Riding;
     hitJumpthrus = data.Bool("hitJumpthrus",false);
     moveThroughDashblocks = data.Bool("throughDashblocks",false);
     if(hitJumpthrus) MaddiesIop.hooks.enable();
@@ -352,6 +351,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
   public virtual void OnTrigger(TriggerInfo info){
     if(TriggerInfo.TestPass(info,this)) triggered = true;
   }
+  [OnLoad.OnHook(typeof(Platform),nameof(Platform.OnStaticMoverTrigger))]
   static void smtHook(On.Celeste.Platform.orig_OnStaticMoverTrigger orig, Platform p, StaticMover sm){
     if(p is ITemplateChild c){
       c.parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(TriggerInfo.SmInfo.getInfo(sm));
@@ -363,10 +363,4 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     }
     orig(p,sm);
   }
-  [OnLoad]
-  public static HookManager triggerHooks = new HookManager(()=>{
-    On.Celeste.Platform.OnStaticMoverTrigger+=smtHook;
-  },()=>{
-    On.Celeste.Platform.OnStaticMoverTrigger-=smtHook;
-  }); 
 }

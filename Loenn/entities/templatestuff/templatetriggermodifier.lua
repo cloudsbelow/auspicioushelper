@@ -28,6 +28,7 @@ entity.fieldInformation = function(entity)
                 "dashV",
                 "FishExplosion",
                 "SeekerExplosion",
+                "bumper"
             }
         }
     },

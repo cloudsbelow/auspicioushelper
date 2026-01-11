@@ -18,6 +18,7 @@ public class BeforeAfterRender:Component{
   public static Util.HybridSet<Action> postbefore = new();
   public static Util.HybridSet<Action> preafter = new();
   public static Util.HybridSet<Action> postafter = new();
+  [OnLoad.OnHook(typeof(Level),nameof(Level.BeforeRender))]
   static void Before(On.Celeste.Level.orig_BeforeRender orig, Level self){
     foreach(var f in prebefore) f();
     orig(self);
@@ -27,6 +28,7 @@ public class BeforeAfterRender:Component{
     foreach(var f in postbefore) f();
     TileOccluder.HandleThing(self);
   }
+  [OnLoad.OnHook(typeof(Level),nameof(Level.AfterRender))]
   static void After(On.Celeste.Level.orig_AfterRender orig, Level self){
     foreach(var f in preafter) f();
     orig(self);
@@ -35,12 +37,4 @@ public class BeforeAfterRender:Component{
     }
     foreach(var f in postafter) f();
   }
-  [OnLoad]
-  static HookManager hooks = new HookManager(()=>{
-    On.Celeste.Level.BeforeRender+=Before;
-    On.Celeste.Level.AfterRender+=After;
-  },()=>{
-    On.Celeste.Level.BeforeRender-=Before;
-    On.Celeste.Level.AfterRender-=After;
-  });
 }

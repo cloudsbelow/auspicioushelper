@@ -10,6 +10,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateDashhitModifier")]
+[Tracked]
 public class TemplateDashhitModifier:Template, ITemplateTriggerable{
   enum Dir{
     Left, Right, Up, Down
@@ -56,11 +57,23 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
   string skipCh;
   bool skip=false;
   bool alwaysLetThrough=true;
+  string echannel;
+  ChannelTracker etracker;
+  static bool thing=false;
+  bool checkEntanglement(TemplateDashhitModifier other){
+    if(string.IsNullOrWhiteSpace(echannel)) return false;
+    return etracker!=null? etracker.value==other.etracker?.value : echannel==other.echannel;
+  }
   public TemplateDashhitModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateDashhitModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
     OnDashCollide = (Player p, Vector2 dir)=>{
       if(!skip){
+        if(!string.IsNullOrWhiteSpace(echannel) && !thing) using(Util.WithRestore(ref thing, true)){
+          foreach(TemplateDashhitModifier o in Scene.Tracker.GetEntities<TemplateDashhitModifier>()){
+            if(checkEntanglement(o)) o.OnDashCollide(p,dir);
+          }
+        }
         Result d = res[dirToInt(getDir(dir))];
         if(d.HasFlag(Result.Trigger)) OnTrigger(new DashhitInfo(p,dir,this));
         if(alwaysLetThrough && !d.HasFlag(Result.Normal)) (this as ITemplateChild).propagateDashhit(p,dir);
@@ -85,6 +98,8 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
     var match = Regex.Match(dstr, @"\d+");
     if (match.Success) int.TryParse(match.Value,out refillDashesOnTrigger);
     alwaysLetThrough = d.Bool("alwaysPropegate",false);
+    echannel = d.Attr("entanglementId","");
+    if(echannel.StartsWith('@')) Add(etracker = new(echannel.Substring(1)));
   }
   public override void addTo(Scene scene) {
     base.addTo(scene);

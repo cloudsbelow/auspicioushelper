@@ -36,15 +36,10 @@ public class CustomloadEntity:Attribute{
       }
     }
   }
+  [OnLoad.EverestEvent(typeof(Everest.Events.Level),nameof(Everest.Events.Level.OnLoadEntity))]
   static bool Load(Level l, LevelData d, Vector2 o, EntityData e){
     if(!found.TryGetValue(e.Name,out var fn))return false;
     if(fn!=null) fn(l,d,o,e);
     return true;
   }
-  [OnLoad]
-  public static HookManager hooks = new(()=>{
-    Everest.Events.Level.OnLoadEntity+=Load;
-  },()=>{
-    Everest.Events.Level.OnLoadEntity-=Load;
-  });
 }

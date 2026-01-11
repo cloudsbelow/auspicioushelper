@@ -29,7 +29,7 @@ entity.fieldInformation = {
     color_hex = { fieldType = "color", useAlpha = true }
 }
 --_gravityHelper 
-function entity.assortedMods(entity)
+function entity.associatedMods(entity)
   if entity.flipGravity == true then
     entity._gravityHelper=true
   else

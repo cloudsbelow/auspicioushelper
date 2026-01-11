@@ -92,6 +92,24 @@ public class OnLoad:Attribute{
       HookManager.cleanupActions.enroll(new ScheduledAction(hook.Dispose, $"dispose ONHOOK<{ty}> {methodStr}"));
     }
   }
+  public class EverestEvent:CustomOnload{
+    Type type;
+    string evstr;
+    public EverestEvent(Type ty, string evstr){
+      this.type = ty; this.evstr = evstr;
+    }
+    internal static Action apply(MethodInfo m, Type t, string ev){
+      var evt = t.GetEvent(ev);
+      var delType = evt.EventHandlerType;
+      var del = Delegate.CreateDelegate(delType,null,m);
+      evt.AddEventHandler(null,del);
+      return ()=>evt.RemoveEventHandler(null,del);
+    }
+    public override void Apply(MethodInfo m){
+      var v = apply(m,type,evstr);
+      HookManager.cleanupActions.enroll(new ScheduledAction(v, $"dispose {m} on everest event {type}.{evstr}"));
+    }
+  }
   public static void Run(){
     MethodInfo hookm = typeof(HookManager).GetMethod(nameof(HookManager.enable));
     foreach(var t in typeof(auspicioushelperModule).Assembly.GetTypesSafe()){

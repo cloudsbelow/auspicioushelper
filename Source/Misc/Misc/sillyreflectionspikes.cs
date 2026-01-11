@@ -26,6 +26,7 @@ public class CustomSpikes : Entity{
   bool dreamThru;
   bool dashThru;
   bool fixPickup;
+  bool fixDash;
   bool fixOnblock;
   bool fixOwnSpeed;
   StaticMover sm;
@@ -41,8 +42,9 @@ public class CustomSpikes : Entity{
     dreamThru = data.Bool("dreamThru", false);
     dashThru = data.Bool("dashThru", false);
     fixOwnSpeed = data.Bool("useOwnSpeed",false);
-    fixPickup = data.Bool("fixPickup");
-    fixOnblock = data.Bool("fixOnBlock");
+    fixPickup = data.Bool("fixPickup",true);
+    fixDash = data.Bool("fixDash",true);
+    fixOnblock = data.Bool("fixOnBlock",true);
     switch (Direction) {
       case Directions.Up:
         base.Collider = new Hitbox(size, 3f, 0f, -3f);
@@ -124,7 +126,7 @@ public class CustomSpikes : Entity{
     Vector2 realSpeed = p.Speed;
     int s = p.StateMachine.State;
     if((dreamThru && s==Player.StDreamDash) || (dashThru && s==Player.StDash)) return;
-    if(fixPickup && s==Player.StPickup && oldHoldableSpeed is {} oldSpeed) realSpeed+=oldSpeed;
+    if(((fixPickup && s==Player.StPickup) || (fixDash && s==Player.StDash && p.Speed==Vector2.Zero)) && oldSpeed is {} old) realSpeed+=old;
     if(fixOnblock && s==Player.StNormal||s==Player.StDash && p.liftSpeedTimer>=p.LiftSpeedGraceTime-Engine.DeltaTime){
       realSpeed+=p.LiftSpeed;
     }
@@ -160,10 +162,10 @@ public class CustomSpikes : Entity{
     return CollideCheck(jumpThru, Position + Vector2.UnitY);
   }
 
-  public static Vector2? oldHoldableSpeed;
-  static void SetOldSpeed(Vector2 speed)=>oldHoldableSpeed = speed;
-  static void RemoveOldSpeed()=>oldHoldableSpeed = null;
-  static ILHook pickupHook;
+  public static Vector2? oldSpeed;
+  static void SetOldSpeed(Vector2 speed)=>oldSpeed = speed;
+  static void RemoveOldSpeed()=>oldSpeed = null;
+  [OnLoad.ILHook(typeof(Player),nameof(Player.PickupCoroutine),Util.HookTarget.Coroutine)]
   static void PickupHook(ILContext ctx){
     ILCursor c = new(ctx);
     if(c.TryGotoNextBestFit(MoveType.Before,
@@ -173,20 +175,24 @@ public class CustomSpikes : Entity{
       c.Index++;
       c.EmitDup();
       c.EmitDelegate(SetOldSpeed);
-    } else DebugConsole.WriteFailure("Could not add pickup speed retain hook");
+    } else DebugConsole.WriteFailure("Could not add pickup speed retain hook",true);
     if(c.TryGotoNextBestFit(MoveType.After,
       itr=>itr.MatchLdfld(out var field) && field.Name.Contains("oldSpeed"),
       itr=>itr.MatchStfld<Player>(nameof(Player.Speed))
     )){
       c.EmitDelegate(RemoveOldSpeed);
-    } else DebugConsole.WriteFailure("Could not add pickup speed retain hook");
+    } else DebugConsole.WriteFailure("Could not add pickup speed retain hook",true);
   }
-  [OnLoad]
-  static HookManager hooks = new(()=>{
-    MethodInfo dc = typeof(Player).GetMethod("PickupCoroutine",BindingFlags.Instance | BindingFlags.NonPublic);
-    MethodInfo dc2 = dc.GetStateMachineTarget();
-    pickupHook = new ILHook(dc2,PickupHook);
-  },()=>{
-    pickupHook.Dispose();
-  });
+  [OnLoad.OnHook(typeof(Player),nameof(Player.DashBegin))]
+  static void Hook(On.Celeste.Player.orig_DashBegin orig, Player p){
+    orig(p);
+    oldSpeed = p.beforeDashSpeed;
+  }
+  [OnLoad.ILHook(typeof(Player),nameof(Player.DashCoroutine), Util.HookTarget.Coroutine)]
+  static void DashHook(ILContext ctx){
+    ILCursor c = new(ctx);
+    if(c.TryGotoNextBestFit(MoveType.After, itr=>itr.MatchStfld<Player>(nameof(Player.Speed)))){
+      c.EmitDelegate(RemoveOldSpeed);
+    } else DebugConsole.WriteFailure("COuld not add old speed invalidation hook");
+  }
 }

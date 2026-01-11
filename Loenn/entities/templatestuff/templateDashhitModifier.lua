@@ -22,6 +22,7 @@ entity.placements = {
       Down="Normal",
       refillOptions="0",
       alwaysPropegate=true,
+      entanglementId="",
       
       _loenn_display_template = true,
     }
@@ -42,5 +43,9 @@ end
 
 entity.selection = aelperLib.template_selection
 entity.draw = aelperLib.get_entity_draw("tdash")
+
+entity.fieldOrder = {
+    "x", "y", "template", "depthoffset", "Left", "Right", "Up", "Down"
+}
 
 return entity

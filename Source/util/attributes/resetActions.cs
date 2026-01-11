@@ -118,6 +118,16 @@ public static class ResetEvents{
       return h.Dispose;
     }
   }
+  public class EverestEvent:LazyThing{
+    Type ty;
+    string evstr;
+    public EverestEvent(Type ty, string evstr){
+      this.ty=ty; this.evstr = evstr;
+    }
+    public override Action apply(MethodInfo m) {
+      return OnLoad.EverestEvent.apply(m,ty,evstr);
+    }
+  }
   public class OnEnable:LazyThing{
     public override Action apply(MethodInfo m){
       m.Invoke(null,[]);

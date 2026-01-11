@@ -1,4 +1,6 @@
-﻿local effect = {}
+﻿local defaults = require("aelper_defaults")
+
+local effect = {}
 
 effect.name = "auspicioushelper/MaterialEffect"
 effect.canBackground = true
@@ -9,7 +11,7 @@ effect.defaultData = {
     passes="null",
     params="",
     textures="",
-    renderOrder=100000000,
+    renderOrder=-1000000,
     quadFirst=false,
     alwaysRender=true,
     reload=false
@@ -26,13 +28,20 @@ effect.fieldInformation = {
         fieldType = "integer"
     },
     passes = {
-        fieldType = "list"
+        fieldType = "list",
+        elementDefault="null",
+        elementOptions={
+            fieldType = "string",
+            options=defaults.defaultShaders
+        }
     },
     textures = {
-        fieldType = "list"
+        fieldType = "list",
+        elementDefault = "1:gp"
     },
     params = {
-        fieldType = "list"
+        fieldType = "list",
+        elementDefault = "color:#fff"
     }
 }
 

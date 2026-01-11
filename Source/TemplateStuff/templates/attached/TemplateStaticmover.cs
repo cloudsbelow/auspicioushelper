@@ -97,7 +97,6 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
       }
     }));
     shakeHooks.enable();
-    TemplateMoveCollidable.triggerHooks.enable();
     if(d.Nodes?.Length>=1) smoffset = d.Nodes[0]-d.Position;
   }
   void evalLiftspeed(bool precess = true){

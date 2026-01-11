@@ -348,35 +348,28 @@ public static class ChannelState{
       channelStates[pair.Key] = pair.Value;
     }
   }
+  [OnLoad.OnHook(typeof(Session),nameof(Session.SetFlag))]
   static void Hook(On.Celeste.Session.orig_SetFlag orig, Session s, string f, bool v){
     orig(s,f,v);
     if(channelStates.ContainsKey('$'+f)) SetChannel('$'+f,v?1:0,true);
   }
+  [OnLoad.OnHook(typeof(Session),nameof(Session.GetFlag))]
   static bool Hook(On.Celeste.Session.orig_GetFlag orig, Session s, string f){
     if(string.IsNullOrEmpty(f) || f[0]!='@' || (s?.Flags?.Contains(f)??false)) return orig(s,f);
     return readChannel(f.Substring(1))!=0;
   }
+  [OnLoad.OnHook(typeof(Session),nameof(Session.SetCounter))]
   static void Hook(On.Celeste.Session.orig_SetCounter orig, Session s, string f, int n){
     orig(s,f,n);
     if(channelStates.ContainsKey('#'+f)) SetChannel('#'+f,n,true);
   }
+  [OnLoad.OnHook(typeof(Session),nameof(Session.GetCounter))]
   static int Hook(On.Celeste.Session.orig_GetCounter orig, Session s, string f){
     if(string.IsNullOrEmpty(f) || f[0]!='@') return orig(s,f);
     foreach(var c in s.Counters) if(c.Key==f) return c.Value;
     return (int)readChannel(f.Substring(1));
   }
-  [OnLoad]
-  public static HookManager hooks = new HookManager(()=>{
-    On.Celeste.Session.GetFlag+=Hook;
-    On.Celeste.Session.GetCounter+=Hook;
-    On.Celeste.Session.SetFlag+=Hook;
-    On.Celeste.Session.SetCounter+=Hook;
-  },()=>{
-    On.Celeste.Session.GetFlag-=Hook;
-    On.Celeste.Session.GetCounter-=Hook;
-    On.Celeste.Session.SetFlag-=Hook;
-    On.Celeste.Session.SetCounter-=Hook;
-  });
+
   public static void writeAll(){
     DebugConsole.Write("");
     DebugConsole.Write("===CHANNEL STATE===");

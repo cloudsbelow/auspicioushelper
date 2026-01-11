@@ -115,11 +115,3 @@ public class FoundEntity:OnAnyRemoveComp{
     }
   }
 }
-
-// public class MultiFoundentity:OnAnyRemoveComp{
-//   Dictionary<string, List<Entity>
-//   ChannelTracker
-//   public override void OnRemove() {
-//     throw new NotImplementedException();
-//   }
-// }
