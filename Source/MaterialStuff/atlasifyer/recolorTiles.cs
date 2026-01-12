@@ -45,7 +45,7 @@ public static class RecolorTiles{
     )){
       c.EmitLdloc2();
       c.EmitDelegate(RecolorDelegate);
-    } else DebugConsole.WriteFailure("Could not make recoloring hook");
+    } else DebugConsole.WriteFailure("Could not make recoloring hook",true);
   }
   [OnLoad]
   public static HookManager hooks = new(()=>{

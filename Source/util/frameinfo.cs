@@ -71,7 +71,6 @@ public class UpdateHook:Component{
 
   public UpdateHook(Action before=null, Action after=null):base(true,false){
     beforeAction=before;afterAction =after;
-    hooks.enable();
   }
   public override void Update() {
     base.Update();
@@ -79,6 +78,7 @@ public class UpdateHook:Component{
   }
   internal static int framenum;
   public static Player cachedPlayer;
+  [OnLoad.OnHook(typeof(Level),nameof(Level.Update))]
   internal static void updateHook(On.Celeste.Level.orig_Update update, Level self){
     updateListFlags.Clear();
     cachedPlayer = self.Tracker.GetEntity<Player>();
@@ -102,11 +102,4 @@ public class UpdateHook:Component{
     }
     AfterUpdateLock.ExtraUpdate(self,true);
   }
-
-  [OnLoad]
-  internal static HookManager hooks = new HookManager(()=>{
-    On.Celeste.Level.Update+=updateHook;
-  }, void ()=>{
-    On.Celeste.Level.Update-=updateHook;
-  });
 }

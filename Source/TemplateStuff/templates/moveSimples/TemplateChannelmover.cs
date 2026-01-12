@@ -20,6 +20,7 @@ public class TemplateChannelmover:Template{
   bool doshake = false;
   Util.Easings easing;
   EntityData dat;
+  bool allowFraction = false;
   public TemplateChannelmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateChannelmover(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
@@ -34,62 +35,89 @@ public class TemplateChannelmover:Template{
       toggle = altern = true;
     }
     doshake = d.Bool("shake",false);
+    allowFraction = d.Bool("allowFraction",false);
   }
-  int target;
+  float target;
   int low;
   float cur=>low+cfrac;
   float cfrac=0;
   float afrac=0;
   float dir=0;
   public void setChVal(double val){
-    target = (int)Math.Floor(val);
-    if(toggle || (cfrac!=0 && Math.Sign(dir)==Math.Sign(target-cur))) return;
-    dir = target>cur?1:-1*asym;
-    if(cfrac == 0){
-      if(dir<0){
-        low--;
-        afrac = cfrac=1;
+    if(!allowFraction){
+      target = (int)Math.Floor(val);
+      if(toggle || (cfrac!=0 && Math.Sign(dir)==Math.Sign(target-cur))) return;
+      dir = target>cur?1:-1*asym;
+      if(cfrac == 0){
+        if(dir<0){
+          low--;
+          afrac = cfrac=1;
+        }
+      } else if(cfrac == 1){
+        if(dir>0){
+          low++;
+          afrac = cfrac = 0;
+        }
+      } else if(altern){
+        if(dir>0) cfrac = Util.getEasingPreimage(easing, afrac);
+        else cfrac = 1-Util.getEasingPreimage(easing,1-afrac);
       }
-    } else if(cfrac == 1){
-      if(dir>0){
-        low++;
-        afrac = cfrac = 0;
-      }
-    } else if(altern){
-      if(dir>0) cfrac = Util.getEasingPreimage(easing, afrac);
-      else cfrac = 1-Util.getEasingPreimage(easing,1-afrac);
+    } else {
+      target = (float) val;
+      dir = target>cur?1:-1*asym;
     }
   }
   public override void addTo(Scene scene){
-    target = low = (int) Math.Floor(new ChannelTracker(channel, setChVal).AddTo(this).value);
-    spos = new(SplineEntity.GetSpline(dat, SplineEntity.Types.simpleLinear), Vector2.Zero, true);
+    if(!allowFraction){
+      target = low = (int) Math.Floor(new ChannelTracker(channel, setChVal).AddTo(this).value);
+    } else {
+      target = cfrac = afrac = (float) new ChannelTracker(channel, setChVal).AddTo(this).value;
+    }
+    Spline se;
+    spos = new(se=SplineEntity.GetSpline(dat, SplineEntity.Types.simpleLinear), Vector2.Zero, true);
     spos.set(target);
     base.addTo(scene);
   }
   public override void Update(){
     base.Update();
-    if(cfrac == 0 && low == target){
-      ownLiftspeed = Vector2.Zero;
-    } else if(Engine.DeltaTime!=0){
-      cfrac = Math.Clamp(cfrac+Engine.DeltaTime*dir*relspd,0,1);
-      float x = altern && dir<0?1-cfrac:cfrac;
-      float y = Util.ApplyEasing(easing, x, out var deriv);
-      afrac = altern && dir<0?1-y:y;
-      spos.setSidedFromDir(low%spos.numsegs+afrac, Math.Sign(dir));
-      ownLiftspeed = spos.tangent*relspd*dir*deriv;
-      childRelposSafe();
-      if(cfrac == 1){
-        afrac = cfrac = 0;
-        low++;
-      }
-      if(cfrac == 0){
-        if(doshake){
-          if(low == target) shake(0.2f);
-          else shake(0.1f);
+    if(allowFraction){
+      if(afrac == target) ownLiftspeed = Vector2.Zero;
+      else {
+        bool flag1 = afrac==cfrac;
+        afrac = Util.EaseOutApproach(easing, afrac, target, Math.Abs(dir*Engine.DeltaTime), out float deriv);
+        bool flag2 = afrac==target;
+        spos.setSidedFromDir(Util.SafeMod(afrac,spos.numsegs), Math.Sign(dir));
+        ownLiftspeed = spos.tangent*(flag1&&flag2? (afrac-cfrac)/MathF.Max(Engine.DeltaTime,0.001f) : relspd*dir*deriv); 
+        childRelposSafe();
+        if(flag2){
+          cfrac = afrac;
+          if(doshake) shake(0.2f);
         }
-        if(target<low){
-          afrac = cfrac = 1;
-          low--;
+      }
+    } else {
+      if(cfrac == 0 && low == target){
+        ownLiftspeed = Vector2.Zero;
+      } else if(Engine.DeltaTime!=0){
+        cfrac = Math.Clamp(cfrac+Engine.DeltaTime*dir*relspd,0,1);
+        float x = altern && dir<0?1-cfrac:cfrac;
+        float y = Util.ApplyEasing(easing, x, out var deriv);
+        afrac = altern && dir<0?1-y:y;
+        spos.setSidedFromDir(low%spos.numsegs+afrac, Math.Sign(dir));
+        ownLiftspeed = spos.tangent*relspd*dir*deriv;
+        childRelposSafe();
+        if(cfrac == 1){
+          afrac = cfrac = 0;
+          low++;
+        }
+        if(cfrac == 0){
+          if(doshake){
+            if(low == target) shake(0.2f);
+            else shake(0.1f);
+          }
+          if(target<low){
+            afrac = cfrac = 1;
+            low--;
+          }
         }
       }
     }

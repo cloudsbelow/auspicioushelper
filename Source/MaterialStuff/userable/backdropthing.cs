@@ -164,7 +164,7 @@ public class BackdropCapturer{
       c.EmitLdloc0();
       c.EmitLdloc3();
       c.EmitDelegate(BackdropRoomhook);
-    } else DebugConsole.WriteFailure("Failed to add backdrop hook");
+    } else DebugConsole.WriteFailure("Failed to add backdrop hook", true);
   }
   static bool SkipDelegate(Backdrop b){
     return BackdropUnlock.unlocked || !back.TryGetValue(b, out var br) || br.origvis;

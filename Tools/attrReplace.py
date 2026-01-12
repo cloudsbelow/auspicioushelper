@@ -118,12 +118,12 @@ def format_value(v, indent=0):
 res = Parser(tokenize("""
 {
     {
-        neverClip = true,
+        depth = -9999
     }
 }
 """)).parse_value()[0]
 
-keepKeys = ["x","y","width","height","makeFiller","depth","dreamThru"]
+keepKeys = ["x","y","width","height","makeFiller","dreamThru"]
 remKeys = []
 
 with open("Tools/text/source.txt", "r") as f:

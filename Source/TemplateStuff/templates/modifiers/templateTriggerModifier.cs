@@ -336,7 +336,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       c.EmitLdloc3();
       c.EmitLdarg0();
       c.EmitDelegate(MoveHDelegate);
-    } else DebugConsole.WriteFailure("Failed to make actor moveH IL hook for triggerModifier");
+    } else DebugConsole.WriteFailure("Failed to make actor moveH IL hook for triggerModifier",true);
   }
   static void MoveVDelegate(Platform h, Actor a){
     if(h.Get<ChildMarker>() is ChildMarker c) c.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new HitInfo(c.parent,a,false));
@@ -366,7 +366,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       c.EmitLdarg0();
       c.EmitLdloc1();
       c.EmitDelegate(setCoyotePlatform);
-    } else DebugConsole.WriteFailure("\n\n Failed to add coyote hooks \n\n");
+    } else DebugConsole.WriteFailure("\n\n Failed to add coyote hooks \n\n",true);
   }
   static ILHook coyoteHook;
   static HookManager hooks = new(()=>{

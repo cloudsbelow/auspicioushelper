@@ -201,8 +201,9 @@ public class ConnectedBlocks:Entity{
       UpdateHook.EnsureUpdateAny();
     }
   }
+  public interface IShouldntInduct{}
   public static void addAllSms(Entity e, Util.OrderedSet<Entity> all){
-    if(all.Contains(e)) return;
+    if(all.Contains(e) || e is IShouldntInduct) return;
     List<StaticMover> sms = null;
     if(e is Platform p) sms = p.staticMovers;
     if(MaddiesIop.at != null && e.GetType() == MaddiesIop.at){
@@ -217,7 +218,7 @@ public class ConnectedBlocks:Entity{
       //sms = MaddiesIop.playerInteractingSolid.get(e).staticMovers;
     }
     all.Add(e);
-    if(sms!=null)foreach(var sm in sms) addAllSms(sm.Entity, all);
+    if(sms!=null) foreach(var sm in sms) addAllSms(sm.Entity, all);
   }
   public class InplaceFiller:templateFiller{
     internal FgTiles saved = null;
@@ -316,6 +317,7 @@ class DecalMarker:Component{
     n.Position = forcepos;
     return n;
   }
+  [OnLoad.ILHook(typeof(Level),nameof(Level.orig_LoadLevel))]
   static void Manip(ILContext ctx){
     ILCursor c = new(ctx);
     foreach(int reg in new List<int>(){51,52}){
@@ -330,16 +332,8 @@ class DecalMarker:Component{
       } else goto bad;
     }
     return;
-    bad: DebugConsole.WriteFailure("Could not add decal marking hook");
+    bad: DebugConsole.WriteFailure("Could not add decal marking hook",true);
   }
-  static ILHook loadLevelHook;
-  [OnLoad]
-  public static HookManager hooks = new(()=>{
-    MethodInfo oll = typeof(Level).GetMethod("orig_LoadLevel",BindingFlags.Public |BindingFlags.Instance);
-    loadLevelHook = new(oll, Manip);
-  },()=>{
-    loadLevelHook.Dispose();
-  });
 }
 
 public interface IFreeableComp{

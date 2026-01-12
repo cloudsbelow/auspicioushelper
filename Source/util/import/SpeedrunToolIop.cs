@@ -15,11 +15,12 @@ internal static class SpeedrunToolIop{
   static void loadState(Dictionary<Type, Dictionary<string, object>> values, Level level){
     try{
       MaterialPipe.fixFromSrt();
-      PortalGateH.intersections.Clear();
       BackdropCapturer.CapturedBackdrops.FixFromSrt(level);
+      foreach(var e in level.Entities){
+        if(e is ResetEvents.IReloadHooks irh) irh.Apply();
+      }
     }catch(Exception ex){
-      DebugConsole.WriteFailure($"Auspicioushelper speedruntool failed: \n {ex}");
-      throw new Exception();
+      DebugConsole.WriteFailure($"Auspicioushelper speedruntool failed: \n {ex}",true);
     }
   }
 

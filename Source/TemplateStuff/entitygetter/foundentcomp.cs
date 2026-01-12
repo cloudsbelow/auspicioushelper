@@ -12,7 +12,6 @@ using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
-[Tracked]
 public class FoundEntity:OnAnyRemoveComp{
   Util.HybridSet<string> idents = new();
   [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]

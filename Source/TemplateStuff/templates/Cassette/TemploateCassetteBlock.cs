@@ -66,9 +66,6 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
       AddNewEnts(GetChildren<Entity>());
       if(children.Count>0){
         UpdateHook.AddAfterUpdate(()=>{
-          foreach(var i in children) if(i is FgTiles f){
-            DebugConsole.Write("F",f.Scene,f.parent,f.Collidable);
-          }
           enforce();
           there = State.trying;
           tryManifest();

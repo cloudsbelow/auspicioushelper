@@ -420,6 +420,7 @@ local hasFrutiger = {
     tblk=true,
     tcass=true,
     tchan=true,
+    tcloud=true,
     tconv=true,
     tdash=true,
     tfake=true,

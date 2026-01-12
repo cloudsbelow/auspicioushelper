@@ -94,7 +94,7 @@ public static class ResetEvents{
   public class LazyThing:Attribute{
     public virtual Action apply(MethodInfo m)=>null;
   }
-  public class LazyHook:LazyThing{
+  public abstract class LazyHook:LazyThing{
     protected string methodStr;
     protected Type ty;
     protected Util.HookTarget mode;
@@ -116,6 +116,16 @@ public static class ResetEvents{
     public override Action apply(MethodInfo m){
       if(OnLoad.OnHook.apply(mode, m, ty, methodStr) is not {} h) return null;
       return h.Dispose;
+    }
+  }
+  public class EverestEvent:LazyThing{
+    Type ty;
+    string evstr;
+    public EverestEvent(Type ty, string evstr){
+      this.ty=ty; this.evstr = evstr;
+    }
+    public override Action apply(MethodInfo m) {
+      return OnLoad.EverestEvent.apply(m,ty,evstr);
     }
   }
   public class OnEnable:LazyThing{
@@ -146,5 +156,26 @@ public static class ResetEvents{
   }
   public static void LazyEnable(params Type[] ts){
     foreach(var t in ts) LazyEnable(t);
+  }
+  public interface IReloadHooks{
+    void Apply();
+  }
+  public interface IReloadHooks<T>:IReloadHooks{
+    void IReloadHooks.Apply(){
+      LazyEnable(typeof(T));
+    }
+  }
+  public interface IReloadHooks<T1,T2>:IReloadHooks{
+    void IReloadHooks.Apply(){
+      LazyEnable(typeof(T1));
+      LazyEnable(typeof(T2));
+    }
+  }
+  public interface IReloadHooks<T1,T2,T3>:IReloadHooks{
+    void IReloadHooks.Apply(){
+      LazyEnable(typeof(T1));
+      LazyEnable(typeof(T2));
+      LazyEnable(typeof(T3));
+    }
   }
 }

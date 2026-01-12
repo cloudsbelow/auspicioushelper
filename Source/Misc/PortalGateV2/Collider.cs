@@ -1,6 +1,7 @@
 
 
 using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Celeste.Mod.Helpers;
@@ -16,7 +17,6 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
   public PortalFaceH f2;
   public bool flipV;
   public bool fixing = false;
-  bool doCamera = false;
   public bool flipH=>f1.facingRight==f2.facingRight;
   public Vector2 flipMult=>new(flipH?-1:1,flipV?-1:1);
   Hitbox orig;
@@ -33,7 +33,7 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
   }
   public PColliderH(PColliderH copy, Hitbox n){
     f1=copy.f1; f2=copy.f2; flipV=copy.flipV;
-    orig=n; doCamera = copy.doCamera;
+    orig=n;
   }
   public override void Added(Entity entity) {
     base.Added(entity);
@@ -53,23 +53,46 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     rel+=(fromOtherside?f1:f2).getSpeed();
     return rel;
   }
+  IEnumerator glitchRoutine(float time){
+    yield return time;
+    Glitch.Value = 0;
+  }
   void Swap(){
     if(Entity is Player player){
       Vector2 oldBottom = player.Position - Vector2.UnitY*(GelperIop.IsFlipped(player)? -orig.height:0);
       player.Get<PlayerHair>()?.Nodes.MapInplace(x=>OffsetPosFlip(x,x-oldBottom));
       player.Speed = calcspeed(player.Speed);
       if(flipH)player.Facing = (Facings)(-(int)player.Facing);
-      player.DashDir = player.DashDir*flipMult;
+      player.DashDir *= flipMult;
+      player.currentLiftSpeed *= flipMult;
+      player.lastLiftSpeed *= flipMult;
     } else if(DynamicData.For(Entity).TryGet("Speed", out Vector2 val)){
       DynamicData.For(Entity).Set("Speed",calcspeed(val));
     }
     
     Vector2? camoffset=null;
-    if(Entity.Scene is Level lev && true && Entity is Player pla && false){
+    if(Entity.Scene is Level lev && Entity is Player pla && f1.info.instantCam){
       camoffset = lev.Camera.Position-pla.Position;
     }
     Entity.Position = OthersidePos(Entity.Position);
     if(camoffset is Vector2 ncam) (Entity.Scene as Level).Camera.Position = Entity.Position+ncam; 
+    if(Entity is Player pl){
+      Level l = pl.Scene as Level;
+      if(l==null) return;
+      if(!((IntRect)l.Bounds).CollidePoint(pl.Position)){
+        if(l.Session.MapData.GetAt(pl.Position) is LevelData ld){
+          l.NextTransitionDuration=0;
+          l.NextLevel(pl.Position,Vector2.Zero);
+          Glitch.Value = 0.15f;
+          Audio.Play("event:/new_content/game/10_farewell/glitch_short", pl.Position);
+          Celeste.Freeze(0.05f);
+          pl.Add(new Coroutine(glitchRoutine(0.25f)));
+        } else {
+          l.EnforceBounds(pl);
+        }
+      }
+      if(f1.info.giveRcb) RcbHelper.give(f2.facingRight, f2.X);
+    }
 
     if(Entity is Actor a && flipV && GelperIop.SetActorGravity!=null){
       using(new CollideDetourLock()) Entity.Collider = orig;
@@ -135,6 +158,8 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     float nrely = flipV? f1.Position.Y+f1.height-orig.height-tlc.Y : tlc.Y-f1.Position.Y;
     return new(f2.Position.X-(f2.facingRight? 0:overlap), f2.Position.Y+nrely, overlap, orig.height);
   }
+  public float offsetBottom=>orig.height+orig.Position.Y;
+  public float offsetTop=>orig.Position.Y;
   public float distToTop=>Entity.Position.Y+orig.Position.Y-f1.Y;
   public float distToBottom=>f1.Y+f1.height-Entity.Position.Y-orig.Position.Y-orig.height;
   public override float Top=>orig.Position.Y;

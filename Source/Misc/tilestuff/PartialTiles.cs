@@ -111,7 +111,7 @@ internal class PartialTiles{
     } else goto bad;
     return;
     bad:
-      DebugConsole.WriteFailure("Could not set up partial tile hooks");
+      DebugConsole.WriteFailure("Could not set up partial tile hooks",true);
   }
 
   static MipGrid.Layer capturing = null;
@@ -186,7 +186,7 @@ internal class PartialTiles{
     }
     return;
     bad:
-      DebugConsole.WriteFailure("Could not make hooks for partial capturing");
+      DebugConsole.WriteFailure("Could not make hooks for partial capturing",true);
   }
 
   static PersistantAction resetState;

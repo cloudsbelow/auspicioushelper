@@ -29,6 +29,7 @@ entity.placements = {
       dashThru = false,
       useOwnSpeed = true,
       fixPickup = true,
+      fixDash = true,
       fixOnBlock = true,
       canAttach=true,
       width = 8,

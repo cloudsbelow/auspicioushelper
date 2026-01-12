@@ -164,4 +164,6 @@ public static class Atlasifyer{
   public static void AddMany(int num, int maxs = 32, int mins=4){
     for(int i=0; i<num; i++)AddDebug(Calc.Random.Range(mins,maxs),Calc.Random.Range(mins,maxs));
   }
+  [Command("auspDebug_AtlasSize","Print current atlas size")]
+  public static void AtlasSize()=>Engine.Commands.Log($"There are {texs.Count} texutres. The most recent has size {curw}x{curh}");
 }

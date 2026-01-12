@@ -23,7 +23,7 @@ public static class Finder{
     hooks.enable();
     foreach(var sig in path.Split(',')) try{
       if(string.IsNullOrWhiteSpace(sig)) continue;
-      DebugConsole.Write($"watching \"{sig}\"");
+      //DebugConsole.Write($"watching \"{sig}\"");
       string cl = Regex.Replace(sig,@"\s+","");
       if(!flagged.TryGetValue(cl, out var li)){
         flagged.Add(cl,li = new());
@@ -52,7 +52,7 @@ public static class Finder{
         DebugConsole.WriteFailure($"Failed to find the entity {d.Name} with id {d.ID} - (maybe this entity adds itself non-standardly?)");
         if(auspicioushelperModule.InFolderMod) DebugConsole.MakePostcard($"Failed to find the entity {d.Name} with id {d.ID}. This entity may not be compatible or there may be mod conflicts.");
       } else {
-        DebugConsole.Write($"Found the entity {d.Name} with id {d.ID} - position {last.Position}");
+        //DebugConsole.Write($"Found the entity {d.Name} with id {d.ID} - position {last.Position}");
         foreach(var a in finding) a(last);
       }
     } 

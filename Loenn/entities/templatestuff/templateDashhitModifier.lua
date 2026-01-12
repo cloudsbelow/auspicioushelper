@@ -7,7 +7,7 @@ local entity = {}
 entity.name = aelperLib.register_template_name("auspicioushelper/TemplateDashhitModifier")
 entity.depth = -13000
 
-local rtypes = {"Normal","Bounce","Rebound","NormalTrigger","BouceTrigger","ReboundTrigger"}
+local rtypes = {"Normal","Bounce","Rebound","Bumper","NormalTrigger","BounceTrigger","ReboundTrigger","BumperTrigger"}
 
 entity.placements = {
   {
@@ -21,6 +21,8 @@ entity.placements = {
       Up="Normal",
       Down="Normal",
       refillOptions="0",
+      alwaysPropegate=true,
+      entanglementId="",
       
       _loenn_display_template = true,
     }
@@ -41,5 +43,9 @@ end
 
 entity.selection = aelperLib.template_selection
 entity.draw = aelperLib.get_entity_draw("tdash")
+
+entity.fieldOrder = {
+    "x", "y", "template", "depthoffset", "Left", "Right", "Up", "Down"
+}
 
 return entity

@@ -32,7 +32,22 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       case "false": passes.setparamvalex(key, false); break;
       default: switch(val[0]){
         case '#': passes.setparamvalex(key, Util.toArray(Util.hexToColor(val).ToVector4())); break;
-        case '{': case '[': passes.setparamvalex(key, Util.csparseflat(Util.stripEnclosure(val))); break;
+        case '{': case '[': 
+          if(!val.Contains("@")){
+            passes.setparamvalex(key, Util.csparseflat(Util.stripEnclosure(val))); 
+            break;
+          }
+          var arr = Util.listparseflat(val, true,false);
+          float[] values = new float[arr.Count];
+          for(int i=0; i<arr.Count; i++){
+            if(arr[i].StartsWith("@")){
+              string chstr = Util.removeWhitespace(arr[i].Substring(1));
+              int index = i;
+              chset.Add(()=>values[index]=(float)ChannelState._readChannel(chstr));
+            } else values[i] = float.Parse(arr[i]);
+          }
+          chset.Add(()=>passes.setparamvalex(key,values));
+        break;
         case '@': 
           var match = chr.Match(val);
           if (!match.Success){
@@ -117,7 +132,11 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       if(!int.TryParse(p.Key.Trim(),out var idx)||idx>15||idx<0) DebugConsole.WriteFailure($"Invalid texture slot {p.Key}");
       else if(string.IsNullOrWhiteSpace(p.Value)) DebugConsole.WriteFailure($"Invalid texutre resource at {idx}");
       else switch(p.Value.ToLower()){
-        case "bg": case "background": 
+        case "lv": case "level":
+          info.independent = layerformat.independent=false;
+          textures.Add(new(idx,texture = ITexture.bgWrapper));
+          break;
+        case "bg": case "background":
           info.usesbg = layerformat.useBg=true;
           textures.Add(new(idx,texture = ITexture.bgWrapper));
           break;

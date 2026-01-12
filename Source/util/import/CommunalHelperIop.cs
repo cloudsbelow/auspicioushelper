@@ -26,6 +26,7 @@ public static class CommunalHelperIop{
   static bool ExitCond(Player p){
     return CommunalHelperImports.GetDreamTunnelDashCount()!=lastDashcount;
   }
+  public static bool InTunnel(Player p)=>CommunalHelperImports.GetDreamTunnelDashState is {} fn && p.StateMachine.State==fn();
   public static void load(){
     typeof(CommunalHelperImports).ModInterop();
     if(CommunalHelperImports.GetDreamTunnelDashState!=null){

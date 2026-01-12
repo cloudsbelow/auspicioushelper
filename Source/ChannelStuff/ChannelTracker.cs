@@ -123,3 +123,13 @@ public class ChannelTracker : OnAnyRemoveComp{
     public int Count=>list.Count;
   }
 }
+
+public class FloatChannel{
+  string channel=null;
+  float flt;
+  public FloatChannel(string str){
+    if(str.StartsWith('@')) channel = Util.removeWhitespace(str.Substring(1));
+    else flt = float.Parse(str);
+  }
+  public static implicit operator float(FloatChannel obj)=>obj.channel==null?obj.flt:(float)ChannelState.readChannel(obj.channel);
+}

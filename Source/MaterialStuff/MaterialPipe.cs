@@ -178,7 +178,9 @@ public static class MaterialPipe {
     leaving.Remove(l);
     entering.Remove(l);
   }
-  public static void onDie(){
+
+  [OnLoad.EverestEvent(typeof(Everest.Events.Player),nameof(Everest.Events.Player.OnDie))]
+  public static void onDie(Player p){
     foreach(var l in layers) if(l.autoManageRemoval)leaving.Add(l);
   }
   public static void remLeaving(){

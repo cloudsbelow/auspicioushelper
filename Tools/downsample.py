@@ -27,46 +27,50 @@ import matplotlib.pyplot as plt
 #   filtered_freq = freq * lp
 #   return np.fft.ifft2(np.fft.ifftshift(filtered_freq)).real[fac//2::fac,fac//2::fac]
 
-basepath = 'Tools/img/sgs/frontmountain'
+basepath = 'Tools/img/raads'
 
 test = iio.imread(basepath+".png")
 out = np.zeros_like(test)
 s = set()
+
 print(out.shape)
-for row in range(180):
-  for col in range(320):
+center = (109.5, 116.5)
+for row in range(test.shape[0]):
+  for col in range(test.shape[1]):
     s.add(tuple([x for x in test[row,col]]))
     c = test[row,col]
     o = np.zeros(4)
-    if row>50:
-      #back mountain
-      if c[2] == 128:
-        o = np.array([40,40,80   ,255])
-      if c[2] == 135:
-        o = np.array([40,60,90   ,255])
-      if c[2] == 177:
-        o = np.array([80,80,100   ,255])
+    dy = row-center[0]
+    dx = col-center[1]
+    r = np.sqrt(dx*dx+dy*dy)
 
-      if c[2] == 153:
-        #o = np.array([60,60,100   ,255])
-        o = np.array([55,85,130   ,255])
-      if c[2] == 189:
-        o = np.array([55,85,130   ,255])
-      if c[2] == 224:
-        o = np.array([85,120,155   ,255])
-      out[row-50,col] = o
-print(s)
+    if c[0]==255 and c[1]==255 and c[2]==255 and r>104:
+      continue
 
-# for col in range(320):
-#   f = -1
-#   for row in range(180):
-#     if f<0 and test[row+50,col,3] == 255 and test[row+50,col,2]==0:
-#       f=0
-#     elif f>=0:
-#       f+=1
-#       out[row,col] = np.array([f,0,0,255])
+    if  r>=105:
+      pass
+    elif r>=103.5:
+      opacity = 1-(r-103.5)/1.5
+      out[row,col]=opacity*c
+    else:
+      out[row,col]=c
+      continue
+    
+    if row>105 and row<158 and col<30 and r>103.5:
+      out[row,col]=o
+      opacity = 0
+      if c[0]>c[1] and c[0]>c[2]:
+        opacity = 1-(c[0]-237)/(255-237)
+      if c[0]<c[1] and c[0]<c[2]:
+        opacity = 1-(c[1]-241)/(255-241)
+      if opacity != 0:
+        out[row,col] = c*opacity
 
-out[-50:,:] = out[-51].reshape(1,-1,4)
+print("fish")
+print("fish")
+print("fish")
+for i in range(17,24):
+  out[154,i] = test[154,i]
 
 plt.imsave(basepath+"_out.png", out)
 plt.show()

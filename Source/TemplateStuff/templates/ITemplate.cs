@@ -70,6 +70,7 @@ public class Template:Entity, ITemplateChild{
   public List<ITemplateChild> children = new List<ITemplateChild>();
   public int depthoffset;
   public Template parent{get;set;} = null;
+  public IRelocateTemplates relocator = null;
   public string ownidpath;
   [Flags]
   public enum Propagation
@@ -84,7 +85,8 @@ public class Template:Entity, ITemplateChild{
   protected virtual Vector2 virtLoc=>Position;
   public Vector2 roundLoc=>virtLoc.Round();
   public Vector2 ownLiftspeed;
-  public virtual Vector2 gatheredLiftspeed=>parent==null?ownLiftspeed:ownLiftspeed+parent.gatheredLiftspeed;
+  protected Vector2 relocatorLiftspeed=>relocator==null?Vector2.Zero:relocator.GetLiftspeed();
+  public virtual Vector2 gatheredLiftspeed=> parent==null? ownLiftspeed+relocatorLiftspeed : ownLiftspeed+parent.gatheredLiftspeed;
   public Vector2 parentLiftspeed=>parent==null?Vector2.Zero:parent.gatheredLiftspeed;
   public Propagation prop{get;set;} = Propagation.All; 
   public Vector2 toffset = Vector2.Zero;
