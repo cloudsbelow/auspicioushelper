@@ -1,4 +1,4 @@
-﻿local defaults = require("aelper_defaults")
+﻿local defaults = require("mods").requireFromPlugin("libraries.aelper_defaults")
 
 local effect = {}
 

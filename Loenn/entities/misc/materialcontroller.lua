@@ -1,6 +1,5 @@
-local drawableSprite = require("structs.drawable_sprite")
-local utils = require("utils")
-local defaults = require("aelper_defaults")
+
+local defaults = require("mods").requireFromPlugin("libraries.aelper_defaults")
 
 local materialcontroller = {}
 
@@ -22,7 +21,7 @@ materialcontroller.placements = {
       quadFirst = false,
       always = true,
       drawInScene = true,
-      reload=false
+      reload=true
     }
   }
 }

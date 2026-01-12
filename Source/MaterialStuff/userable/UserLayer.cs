@@ -32,7 +32,22 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       case "false": passes.setparamvalex(key, false); break;
       default: switch(val[0]){
         case '#': passes.setparamvalex(key, Util.toArray(Util.hexToColor(val).ToVector4())); break;
-        case '{': case '[': passes.setparamvalex(key, Util.csparseflat(Util.stripEnclosure(val))); break;
+        case '{': case '[': 
+          if(!val.Contains("@")){
+            passes.setparamvalex(key, Util.csparseflat(Util.stripEnclosure(val))); 
+            break;
+          }
+          var arr = Util.listparseflat(val, true,false);
+          float[] values = new float[arr.Count];
+          for(int i=0; i<arr.Count; i++){
+            if(arr[i].StartsWith("@")){
+              string chstr = arr[i].Substring(1);
+              int index = i;
+              chset.Add(()=>values[index]=(float)ChannelState._readChannel(chstr));
+            } else values[i] = float.Parse(arr[i]);
+          }
+          chset.Add(()=>passes.setparamvalex(key,values));
+        break;
         case '@': 
           var match = chr.Match(val);
           if (!match.Success){

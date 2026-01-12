@@ -103,9 +103,10 @@ public static class ChannelState{
           var m = new Modifier(sub, out var success);
           if(success)ops.Add(m);
         }
-        if(!deps.TryGetValue(from, out var dep)) deps.Add(from,dep = new());
+        double ival = _readChannel(from);
+        if(!deps.TryGetValue(from, out var dep)) deps.Add(from,dep = new(ival));
         dep.mods.Add(this);
-        channelStates.Add(outname, apply(_readChannel(from)));
+        channelStates.Add(outname, apply(ival));
         return;
       }
       DebugConsole.WriteFailure($"Channel {ch} ends in ] but contains no [",true);
@@ -120,7 +121,7 @@ public static class ChannelState{
       if(oldval!=outval)SetChannelRaw(outname,outval);
     }
     public void Remove(){
-      if(deps.TryGetValue(from, out var dep))dep.mods.Remove(this);
+      if(deps.TryGetValue(from, out var dep))dep.mods?.Remove(this);
       ForceRemove(outname);
     }
   }
@@ -156,8 +157,9 @@ public static class ChannelState{
       from = Util.listparseflat(expr.Substring(term.Length),true,false);
       int i=0;
       foreach(var ch in from){
-        vals.Add(_readChannel(ch));
-        if(!deps.TryGetValue(ch, out var dep)) deps.Add(ch,dep = new());
+        double ival = _readChannel(ch);
+        vals.Add(ival);
+        if(!deps.TryGetValue(ch, out var dep)) deps.Add(ch,dep = new(ival));
         dep.calcs.Add(new(){calc=this,index=i++});
       }
       outval = vals.Aggregate(seedval,pred);
@@ -172,7 +174,7 @@ public static class ChannelState{
     public void Remove(){
       channelStates.Remove(to);
       foreach(var ch in from){
-        if(deps.TryGetValue(ch, out var dep)){
+        if(deps.TryGetValue(ch, out var dep) && dep.calcs!=null){
           List<CalcAccessor> nlist = new();
           foreach(var d in dep.calcs) if(d.calc!=this)nlist.Add(d);
           dep.calcs = nlist;
@@ -186,18 +188,28 @@ public static class ChannelState{
   class Deps{
     public List<ModifierDesc> mods = new();
     public List<CalcAccessor> calcs = new();
+    public double val;
+    public Deps(double ival)=>val = ival;
     public void Update(double nstate){
       foreach(var mod in mods) mod.Update(nstate);
       foreach(var c in calcs) c.calc.Update(c.index,nstate);
+      val = nstate;
     }
     public void Remove(){
       var l1 = mods;
       var l2 = calcs;
-      mods=new();
-      calcs=new();
+      mods=null;
+      calcs=null;
       foreach(var li in l1) li.Remove();
       foreach(var li in l2) li.calc.Remove();
     }
+  }
+  static void ClearAllDeps(){
+    foreach(var pair in deps){
+      pair.Value.mods = null;
+      pair.Value.calcs = null;
+    }
+    deps.Clear();
   }
   [Import.SpeedrunToolIop.Static]
   private static Dictionary<string, Deps> deps = new();
@@ -207,7 +219,7 @@ public static class ChannelState{
   private static Dictionary<string, ChannelTracker.ChannelTrackerList> watching = new();
 
   public static double readChannel(string ch)=>_readChannel(Util.removeWhitespace(ch));
-  private static double _readChannel(string ch){
+  internal static double _readChannel(string ch){
     if(channelStates.TryGetValue(ch, out var v)) return v;
     else return addModifier(ch);
   }
@@ -248,7 +260,7 @@ public static class ChannelState{
       if(!checkClean(pair.Key)) toRemove.Add(pair.Key);
     }
     foreach(var s in toRemove) channelStates.Remove(s);
-    deps.Clear();
+    ClearAllDeps();
   }
   [ResetEvents.RunOn(ResetEvents.RunTimes.OnExit,ResetEvents.RunTimes.OnReload)]
   public static void unwatchAll(){
@@ -286,16 +298,16 @@ public static class ChannelState{
     if(removing) return;
     removing = true;
     while(ToForceRemove.Count>0){
-      HashSet<Deps> d = new();
+      HashSet<Deps> removing = new();
       while(ToForceRemove.TryDequeue(out var res)){
         if(deps.TryGetValue(res, out var dep)){
-          d.Add(dep);
+          removing.Add(dep);
           deps.Remove(res);
         }
         channelStates.Remove(res);
         watching.Remove(res);
       } 
-      foreach(var dep in d) dep.Remove();
+      foreach(var dep in removing) dep.Remove();
     }
     removing = false;
   }
@@ -303,7 +315,7 @@ public static class ChannelState{
     prefix = Util.removeWhitespace(prefix);
     if(string.IsNullOrEmpty(prefix)){
       unwatchAll();
-      deps.Clear();
+      ClearAllDeps();
       channelStates.Clear();
     }
     foreach(var pair in channelStates){

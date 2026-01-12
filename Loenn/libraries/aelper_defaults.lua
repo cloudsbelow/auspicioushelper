@@ -1,7 +1,7 @@
 
 local defaults = {
   defaultShaders = {
-    "null", "ausp/maskBy", "ausp/maskFrom", "ausp/blurH", "ausp/blurV", "ausp/invertColors", "ausp/invertAlpha", "ausp/innerBorder", "ausp/outerBorder"
+    "null", "ausp/maskBy", "ausp/maskedFrom", "ausp/blurH", "ausp/blurV", "ausp/invertColor", "ausp/invertAlpha", "ausp/innerBorder", "ausp/outerBorder", "ausp/flip", "ausp/static", "ausp/tint", "ausp/opacity"
   }
 }
 
