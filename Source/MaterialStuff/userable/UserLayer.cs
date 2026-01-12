@@ -41,7 +41,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
           float[] values = new float[arr.Count];
           for(int i=0; i<arr.Count; i++){
             if(arr[i].StartsWith("@")){
-              string chstr = arr[i].Substring(1);
+              string chstr = Util.removeWhitespace(arr[i].Substring(1));
               int index = i;
               chset.Add(()=>values[index]=(float)ChannelState._readChannel(chstr));
             } else values[i] = float.Parse(arr[i]);

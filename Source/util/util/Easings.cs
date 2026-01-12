@@ -212,22 +212,26 @@ public static partial class Util{
     return x;
   }
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static float EaseApproach(Easings easing, float val, float target, float amount, float tolerence = 0.001f){
-    if(Math.Abs(val-target)<=tolerence) return target;
+  public static float EaseApproach(Easings easing, float val, float target, float amount, out float derivative, float tolerence = 0.001f){
+    if(Math.Abs(val-target)<=tolerence){
+      derivative = 0;
+      return target;
+    }
     float pre = getEasingPreimage(easing, val, tolerence);
-    ApplyEasing(easing, pre, out float derivative);
+    ApplyEasing(easing, pre, out derivative);
     return Approach(val,target,amount*derivative);
   }
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static float EaseOutApproach(Easings easing, float val, float target, float amount, float tolerence = 0.001f){
+  public static float EaseOutApproach(Easings easing, float val, float target, float amount, out float derivative, float tolerence = 0.001f){
+    derivative = 0;
     if(val == target) return target;
     float delta = Math.Abs(target-val);
     if(delta<=tolerence) return target;
     if(delta>=1){
-      ApplyEasing(easing, 0, out var derivative);
+      ApplyEasing(easing, 0, out derivative);
       return Approach(val,target,derivative*amount);
     }
-    float ndelta = 1-EaseApproach(easing,1-delta,1,amount,tolerence);
+    float ndelta = 1-EaseApproach(easing,1-delta,1,amount, out derivative, tolerence);
     return Approach(val, target, delta-ndelta);
   }
   [MethodImpl(MethodImplOptions.AggressiveInlining)]

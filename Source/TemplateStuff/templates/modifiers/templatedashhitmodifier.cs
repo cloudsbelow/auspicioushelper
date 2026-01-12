@@ -61,7 +61,7 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
   ChannelTracker etracker;
   static bool thing=false;
   bool checkEntanglement(TemplateDashhitModifier other){
-    if(string.IsNullOrWhiteSpace(echannel)) return false;
+    if(string.IsNullOrWhiteSpace(echannel) || other.skip) return false;
     return etracker!=null? etracker.value==other.etracker?.value : echannel==other.echannel;
   }
   public TemplateDashhitModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
@@ -103,6 +103,6 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
   }
   public override void addTo(Scene scene) {
     base.addTo(scene);
-    if(!string.IsNullOrWhiteSpace(skipCh)) Add(new ChannelTracker(skipCh,(double val)=>skip=val!=0));
+    if(!string.IsNullOrWhiteSpace(skipCh)) Add(new ChannelTracker(skipCh,(double val)=>skip=val!=0,true));
   }
 }

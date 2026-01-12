@@ -100,6 +100,19 @@ public static partial class Util{
     foreach(var x in list) if(func(x, out var r)) n.Add(r);
     return n;
   }
+  public static T Minimize<T>(this List<T> list, Func<T,float> func){
+    if(list.Count==0) return default;
+    T first = list[0];
+    float fscore = func(first);
+    for(int i=1; i<list.Count; i++){
+      float nscore = func(list[i]);
+      if(nscore<fscore) {
+        first = list[i];
+        fscore = nscore;
+      }
+    }
+    return first;
+  }
 
   public struct Double4{
     public double X;

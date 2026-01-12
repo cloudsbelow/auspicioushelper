@@ -16,7 +16,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 
 public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{ 
-  public override Vector2 gatheredLiftspeed => dislocated?ownLiftspeed:base.gatheredLiftspeed;
+  public override Vector2 gatheredLiftspeed => dislocated? ownLiftspeed+relocatorLiftspeed : base.gatheredLiftspeed;
   public bool triggered;
   Vector2 movementCounter;
   public Vector2 exactPosition=>Position+movementCounter;

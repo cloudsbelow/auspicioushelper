@@ -24,6 +24,7 @@ entity.placements = {
       easing = "Linear",
       spline = "centripetalNormalized",
       lastNodeIsKnot = true,
+      allowFraction = false,
       
       complete=false,
       alternateEasing=true,

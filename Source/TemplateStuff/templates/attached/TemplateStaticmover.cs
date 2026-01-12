@@ -53,7 +53,7 @@ public class StaticmoverLock:MovementLock,IDisposable{
 }
 
 [CustomEntity("auspicioushelper/TemplateStaticmover")]
-public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOverrideVisuals, Template.IRegisterEnts{
+public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOverrideVisuals, Template.IRegisterEnts, IRelocateTemplates.IDontRelocate{
   public override Vector2 gatheredLiftspeed=>ownLiftspeed;
   public override void relposTo(Vector2 loc, Vector2 liftspeed) {
     if(sm?.Platform==null) base.relposTo(loc,liftspeed);

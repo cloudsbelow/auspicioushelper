@@ -18,6 +18,8 @@ entity.placements = {
       can_be_ID_path = true,
       liftspeed_smear = 4,
       smear_average = false,
+      onlyX = false,
+      onlyY = false,
       
       _loenn_display_template = true,
     }
