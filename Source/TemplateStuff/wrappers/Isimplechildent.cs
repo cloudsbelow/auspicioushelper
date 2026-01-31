@@ -146,4 +146,5 @@ public class ChildMarker:Component,IFreeableComp{
     return ((ITemplateChild) parent).propagatesTo(other)!=Template.Propagation.None;
   }
   void IFreeableComp.Free()=>Entity.Remove(this);
+  public void Trigger(TriggerInfo t)=>parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(t);
 }

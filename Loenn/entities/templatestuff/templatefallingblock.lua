@@ -19,14 +19,14 @@ entity.placements = {
       reverseChannel="",
       triggerChannel="",
       gravity = 500,
-      max_speed = 130,
+      max_speed = 160,
       impact_sfx = "event:/game/general/fallblock_impact",
       shake_sfx = "event:/game/general/fallblock_shake",
       set_trigger_channel=false,
       hitJumpthrus=true,
       triggeredByRiding=true,
       throughDashblocks=true,
-      customFallTiming="0.25,0.1",
+      customFallTiming="0.4,0.1",
       
       _loenn_display_template = true,
     }

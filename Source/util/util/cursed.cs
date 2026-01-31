@@ -2,6 +2,7 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -272,5 +273,26 @@ public static partial class Util{
     T x = (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
     x.Components = new(x);
     return x;
+  }
+
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  static Dictionary<(Type,string),object> cachedReflection;
+  public static object ReflectGet(object c, string m, bool canInvoke=true){
+    Type t = c.GetType();
+    if(!cachedReflection.TryGetValue((t,m), out var accessor)){
+      accessor = t.GetField(m,Util.GoodBindingFlags | BindingFlags.FlattenHierarchy);
+      if(accessor == null) accessor = t.GetProperty(m,GoodBindingFlags|BindingFlags.FlattenHierarchy);
+      if(accessor == null) {
+        accessor = t.GetMethod(m, GoodBindingFlags, []);
+        if(accessor is MethodInfo minf && minf.IsStatic) accessor = null;
+      }
+      cachedReflection.Add((t,m),accessor);
+    }
+    return accessor switch{
+      FieldInfo f=>f.GetValue(c),
+      PropertyInfo p=>p.GetValue(c),
+      MethodInfo minf=> canInvoke?minf.Invoke(c,[]):null,
+      _ => null
+    };
   }
 }

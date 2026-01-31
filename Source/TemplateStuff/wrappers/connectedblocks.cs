@@ -169,7 +169,10 @@ public class ConnectedBlocks:Entity{
           goto end;
         }
       }
-      if(s!=null)Scene.Add(s);
+      if(s!=null){
+        Scene.Add(s);
+        s.Add(new TileOccluder().Build(fgd));
+      }
       if(b!=null){
         b.Position+=minimum-Int2.One*8*padding;
         Scene.Add(b);

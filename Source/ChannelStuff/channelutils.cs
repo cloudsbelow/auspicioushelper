@@ -131,7 +131,7 @@ public static class ChannelState{
   }
   class InlineCalc{
     enum Ops{
-      and, or, sum, xor, prod, invalid
+      and, or, sum, xor, prod,max,min, invalid
     }
     public string to;
     List<string> from = new();
@@ -139,11 +139,8 @@ public static class ChannelState{
     public double outval;
     Func<double, double, double> pred;
     static Func<double, double, double> andPred = (a,b)=>(a!=0&&b!=0)?1:0;
-    static Func<double, double, double> sumPred = (a,b)=>a+b;
     static Func<double, double, double> orPred = (a,b)=>(a!=0||b!=0)?1:0;
-    static Func<double, double, double> xorPred = (a,b)=>(int)a^(int)b;
-    static Func<double, double, double> prodPred = (a,b)=>a*b;
-    int seedval;
+    double seedval;
     static Regex termReg = new Regex(@"^[^\(]*",RegexOptions.Compiled);
     public InlineCalc(string expr){
       to=expr;
@@ -152,8 +149,22 @@ public static class ChannelState{
         DebugConsole.WriteFailure($"Invalid function {op} in {expr}");
         op = Ops.and;
       } 
-      pred = op switch {Ops.and=>andPred, Ops.or=>orPred, Ops.sum=>sumPred, Ops.xor=>xorPred, Ops.prod=>prodPred, _=>andPred};
-      seedval = op switch {Ops.and=>1, Ops.prod=>1, _=>0};
+      pred = op switch {
+        Ops.and=>andPred, 
+        Ops.or=>orPred, 
+        Ops.sum=>(a,b)=>a+b,
+        Ops.xor=>(a,b)=>(int)a^(int)b, 
+        Ops.prod=>(a,b)=>a*b, 
+        Ops.max=>Math.Max,
+        Ops.min=>Math.Min,
+        _=>andPred
+      };
+      seedval = op switch {
+        Ops.and=>1, Ops.prod=>1, 
+        Ops.max=>float.NegativeInfinity,
+        Ops.min=>float.NegativeInfinity,
+        _=>0
+      };
       from = Util.listparseflat(expr.Substring(term.Length),true,false);
       int i=0;
       foreach(var ch in from){
