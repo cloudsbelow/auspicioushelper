@@ -234,4 +234,5 @@ public static partial class Util{
   public static Color colorMult(this Color c, float f){
     return new Color((int)(c.R*f),(int)(c.G*f),(int)(c.B*f),c.A);
   }
+  public static float L1(this Vector2 v)=>Math.Abs(v.X)+Math.Abs(v.Y);
 }

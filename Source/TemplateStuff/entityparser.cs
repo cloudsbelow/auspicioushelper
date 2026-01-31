@@ -256,7 +256,7 @@ anyways i want to praise it more it is wonderful
       if (e.Has("texture")) movingPlatform.OverrideTexture = e.Attr("texture");
       return movingPlatform;
     });
-    clarify("blackGem",Types.basic,HookVanilla.HeartGem);
+    clarify("blackGem",Types.basic,static (l,d,o,e)=>new HeartGem(e,o));
     clarify("wire",Types.unwrapped,static (l,d,o,e)=>new CWire(e,o));
     clarify("cliffflag",Types.unwrapped,static (l,d,o,e)=>new CFlagline(e,o));
     clarify("clothesline",Types.unwrapped,static (l,d,o,e)=>new CClothsline(e,o));

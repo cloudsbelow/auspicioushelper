@@ -9,19 +9,17 @@ using MonoMod.Utils;
 namespace Celeste.Mod.auspicioushelper;
 
 public static class HookVanilla{
-  static void heartPlayerTemplateHook(On.Celeste.HeartGem.orig_OnPlayer orig, HeartGem self, Player p){
+  [OnLoad.OnHook(typeof(HeartGem),nameof(HeartGem.OnPlayer))]
+  static void Hook(On.Celeste.HeartGem.orig_OnPlayer orig, HeartGem self, Player p){
     ChildMarker cm= self.Get<ChildMarker>();
     orig(self,p);
     if(cm!=null) new TriggerInfo.EntInfo("Heart",cm.Entity).PassTo(cm.parent);
   }
-  static HookManager heartHooks = new HookManager(()=>{
-    On.Celeste.HeartGem.OnPlayer+=heartPlayerTemplateHook;
-  },void ()=>{
-    On.Celeste.HeartGem.OnPlayer-=heartPlayerTemplateHook;
-  },auspicioushelperModule.OnEnterMap);
-  public static HeartGem HeartGem(Level l, LevelData d, Vector2 o, EntityData e){
-    heartHooks.enable();
-    return new HeartGem(e,o);
+  [OnLoad.OnHook(typeof(Spikes),nameof(Spikes.OnCollide))]
+  static void Hook(On.Celeste.Spikes.orig_OnCollide orig, Spikes s, Player p){
+    bool alive = !p.Dead;
+    orig(s,p);
+    if(p.Dead && alive && s.Get<ChildMarker>() is {} n) n.Trigger(null); 
   }
 
   public class FireIcePatch:Component, ISimpleWrapper{

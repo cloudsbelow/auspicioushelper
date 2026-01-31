@@ -59,7 +59,6 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     if(sm?.Platform==null) base.relposTo(loc,liftspeed);
   }
   int smearamount;
-  Vector2[] pastLiftspeed;
   bool averageSmear;
   string channel="";
   bool ridingTrigger;
@@ -72,10 +71,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   
   public TemplateStaticmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateStaticmover(EntityData d, Vector2 offset, int depthoffset):base(d,d.Position+offset,depthoffset){
-    smearamount = d.Int("liftspeed_smear",4);
-    averageSmear = d.Bool("smear_average",false);
     channel = d.Attr("channel","");
-    pastLiftspeed = new Vector2[smearamount];
     ridingTrigger = d.Bool("ridingTrigger",true);
     enableUnrooted = d.Bool("EnableUnrooted",false);
     conveyRiding = d.Bool("conveyRiding",false);
@@ -99,23 +95,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     shakeHooks.enable();
     if(d.Nodes?.Length>=1) smoffset = d.Nodes[0]-d.Position;
   }
-  void evalLiftspeed(bool precess = true){
-    float mX=0;
-    float mY=0;
-    if(!averageSmear)foreach(Vector2 v in pastLiftspeed){
-      if(Math.Abs(v.X)>Math.Abs(mX)) mX=v.X;
-      if(Math.Abs(v.Y)>Math.Abs(mY)) mY=v.Y;
-    } else foreach(Vector2 v in pastLiftspeed){
-      mX+=v.X/smearamount; mY+=v.Y/smearamount;
-    }
-    ownLiftspeed = new Vector2(mX,mY);
-    if(!precess) return; 
-    for(int i=smearamount-1; i>=1; i--){
-      pastLiftspeed[i]=pastLiftspeed[i-1];
-    }
-    pastLiftspeed[0]=Vector2.Zero;
-  }
-  internal StaticMover sm;
+  internal LiftspeedSm sm;
   HashSet<Platform> doNot = new();
   CassetteMaterialLayer layer = null;
   bool made=false;
@@ -138,7 +118,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     }
     if(channel != "")CassetteMaterialLayer.layers.TryGetValue(channel,out layer);
     if(enableUnrooted) make(scene);
-    Add(sm = new StaticMover(){
+    Add(sm = new LiftspeedSm(){
       OnEnable=()=>{
         childRelposTo(virtLoc,Vector2.Zero);
         setVisCol(true,true);
@@ -170,11 +150,10 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
         setCollidability(false);
         destroy(true);
       },
-      OnMove=(Vector2 move)=>{
+      OnMoveOther=(Vector2 move)=>{
         if(StaticmoverLock.tryol(sm,move)) return;
         Position+=move;
-        pastLiftspeed[0]+=move/Math.Max(Engine.DeltaTime,0.005f);
-        evalLiftspeed();
+        ownLiftspeed = sm.getLiftspeed();
         bool flag = false;
         if(cachedCol != getSelfCol() && move!=Vector2.Zero){
           flag = true;
@@ -209,7 +188,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   public override void Update(){
     base.Update();
     if(shouldDie) return;
-    evalLiftspeed(true);
+    ownLiftspeed = sm.getLiftspeed();
     if(ridingTrigger){
       if(hasPlayerRider()) sm.TriggerPlatform();
     }
