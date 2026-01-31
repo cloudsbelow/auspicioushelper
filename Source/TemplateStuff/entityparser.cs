@@ -241,7 +241,7 @@ anyways i want to praise it more it is wonderful
       return new Lightning(e,o);
     });
     clarify("bigSpinner", Types.unwrapped, static (l,ld,o,e)=>new Wrappers.Bumperw(e,o));
-    clarify("eyebomb", Types.basic, static (l,d,o,e)=>new Puffer(e,o));
+    clarify("eyebomb", Types.unwrapped, static (l,d,o,e)=>{currentParent.addEnt(new PufferW(l,e,o)); return null;});
 
     clarify("refill",Types.unwrapped,static (l,ld,offset,e)=>(Entity) new RefillW2(e,offset));
     clarify("cameraTargetTrigger", Types.basic, static (l,d,o,e)=>{

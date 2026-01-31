@@ -25,10 +25,12 @@ public class ChannelFadeTrigger:Trigger{
     onlyOnce = d.Bool("onlyOnce")?(byte)2:(byte)0;
   }
   public override void Added(Scene scene) {
+    base.Added(scene);
     if(!string.IsNullOrWhiteSpace(activeChannel)) Add(new ChannelTracker(activeChannel, (v)=>active=v!=0, true)); 
   }
   public override void OnStay(Player player) {
     base.OnStay(player);
+    
     if(active){
       float val = GetPositionLerp(player, positionMode);
       ChannelState.SetChannel(channel,to*val+from*(1-val));

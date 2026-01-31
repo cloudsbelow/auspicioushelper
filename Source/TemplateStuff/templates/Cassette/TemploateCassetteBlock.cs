@@ -41,9 +41,16 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
     bool gone = new ChannelTracker(channel, setChVal).AddTo(this).value == 0;
     if(gone && doBoost) hoffset=2;
     CassetteMaterialLayer.layers.TryGetValue(channel,out layer);
-    base.addTo(scene);
-    if(gone && paranoid) silent=true;
-    if(gone)setChVal(0);
+    if(gone && paranoid && layer == null){
+      reducedAdd(scene);
+      there = State.gone;
+      prop&=~Propagation.Inside;
+      setVisColAct(false,false,!freeze);
+    }else {
+      base.addTo(scene);
+      if(gone && paranoid) silent=true;
+      if(gone)setChVal(0);
+    }
   }
   const float fakeshake=0.2f;
   public override Vector2? getShakeVector(float n) {

@@ -23,7 +23,7 @@ public class ChannelPlayerTrigger:Trigger{
   bool activateOnleave=false;
   bool activateOnStay=false;
   bool restore=false;
-  bool onlyOnce;
+  bool onlyOnce; 
   ChannelState.AdvancedSetter adv=null;
 
   public ChannelPlayerTrigger(EntityData data, Vector2 offset):base(data, offset){

@@ -238,6 +238,11 @@ public class Template:Entity, ITemplateChild{
     makeChildren(scene, parent!=null);
     addingScene = null;
   }
+  public virtual void reducedAdd(Scene scene){
+    setTemplate(templateStr, scene);
+    if(basicents != null)basicents.sceneadd(scene);
+    scene.Add(this);
+  }
   public override void Added(Scene scene){
     bool flag = string.IsNullOrWhiteSpace(templateStr) && t==null;
     if(parent == null && !flag && !expanded){
@@ -502,9 +507,6 @@ public class MovementLock:IDisposable{
       if(move.Y!=0)alreadyY.Add(self);
     }
     orig(self,move);
-  }
-  static void Print(int n){
-    DebugConsole.Write("Testthing", n);
   }
   static void SolidIL(ILContext ctx){
     ILCursor c = new(ctx);

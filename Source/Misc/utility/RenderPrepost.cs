@@ -26,7 +26,6 @@ public class BeforeAfterRender:Component{
       if(c.b!=null) c.b();
     }
     foreach(var f in postbefore) f();
-    TileOccluder.HandleThing(self);
   }
   [OnLoad.OnHook(typeof(Level),nameof(Level.AfterRender))]
   static void After(On.Celeste.Level.orig_AfterRender orig, Level self){

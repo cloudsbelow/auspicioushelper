@@ -43,7 +43,6 @@ public class auspicioushelperModule : EverestModule {
     ChannelState.unwatchTemporary();
     MarkedRoomParser.clearDynamicRooms();
     if(Session is {} s)s.transitions++;
-    if(Session is {} se) DebugConsole.Write("Session transitions", se.transitions, se.respDat);
 
     OnReset.run();
     OnNewScreen.run();
@@ -59,23 +58,25 @@ public class auspicioushelperModule : EverestModule {
     if(origPoint!=s.RespawnPoint)Session.save();
   }
 
+  static string LastLvl;
   [OnLoad.OnHook(typeof(Level),nameof(Level.LoadLevel))]
   static void LoadLevlHook(On.Celeste.Level.orig_LoadLevel orig, Level l, Player.IntroTypes playerIntro, bool isFromLoader = false){
-    if(Session is {} se) DebugConsole.Write("Session transitions", se.transitions, se.respDat);
     DebugConsole.Write($"{playerIntro}");
+    TemplateBehaviorChain.mainRoom.Clear();
     if(playerIntro == Player.IntroTypes.Respawn){
       Session.load(null);
       ChannelState.unwatchAll();
+      UpdateHook.TimeSinceTransMs = 1000000;
 
       OnReset.run();
     }
+    LastLvl = l.Session.LevelData.Name;
     orig(l,playerIntro,isFromLoader);
   }
 
   [ResetEvents.NullOn(ResetEvents.RunTimes.OnExit)]
   public static bool InFolderMod;
   static void OnEnter(Session session){
-    if(Session is {} se) DebugConsole.Write("Session transitions", se.transitions, se.respDat);
     OnExitMap.run();
     OnReset.run();
     OnNewScreen.run();

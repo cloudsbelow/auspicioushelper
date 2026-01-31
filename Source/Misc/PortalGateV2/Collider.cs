@@ -66,26 +66,45 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
       player.DashDir *= flipMult;
       player.currentLiftSpeed *= flipMult;
       player.lastLiftSpeed *= flipMult;
-    } else if(DynamicData.For(Entity).TryGet("Speed", out Vector2 val)){
-      DynamicData.For(Entity).Set("Speed",calcspeed(val));
+    } else {
+      try{
+        if(DynamicData.For(Entity).TryGet("Speed", out Vector2 val)){
+          DynamicData.For(Entity).Set("Speed",calcspeed(val));
+        } else throw new Exception("Speed not set");
+      } catch(Exception){
+        try{
+          if(DynamicData.For(Entity).TryGet("speed", out Vector2 val)){
+            DynamicData.For(Entity).Set("speed",calcspeed(val));
+          } else throw new Exception("speed not set");
+        } catch(Exception){
+          DebugConsole.Write($"Chanign speed of {Entity} failed");
+        }
+      }
     }
     
     Vector2? camoffset=null;
-    if(Entity.Scene is Level lev && Entity is Player pla && f1.info.instantCam){
+    if(Entity.Scene is Level lev && Entity is Player pla){
       camoffset = lev.Camera.Position-pla.Position;
     }
     Entity.Position = OthersidePos(Entity.Position);
-    if(camoffset is Vector2 ncam) (Entity.Scene as Level).Camera.Position = Entity.Position+ncam; 
+    if(camoffset is Vector2 ncam && f1.info.instantCam) (Entity.Scene as Level).Camera.Position = Entity.Position+ncam; 
     if(Entity is Player pl){
       Level l = pl.Scene as Level;
       if(l==null) return;
       if(!((IntRect)l.Bounds).CollidePoint(pl.Position)){
         if(l.Session.MapData.GetAt(pl.Position) is LevelData ld){
           l.NextTransitionDuration=0;
-          l.NextLevel(pl.Position,Vector2.Zero);
+          //dontEnforce = true; 
+          //l.NextLevel(pl.Position,Vector2.Zero);
+          l.Session.Level = ld.Name;
+          l.OnEndOfFrame += delegate {
+            l.UnloadLevel();
+            //Everest.Events.Level.TransitionTo(this, ld.Name, Vector2.Zero);
+            l.LoadLevel(Player.IntroTypes.Transition);
+          };
           Glitch.Value = 0.15f;
           Audio.Play("event:/new_content/game/10_farewell/glitch_short", pl.Position);
-          Celeste.Freeze(0.05f);
+          //Celeste.Freeze(0.05f);
           pl.Add(new Coroutine(glitchRoutine(0.25f)));
         } else {
           l.EnforceBounds(pl);
@@ -106,6 +125,17 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     f2 = temp;
     Done(true);
   }
+  [ResetEvents.NullOn(ResetEvents.RunTimes.OnReset)]
+  static bool dontEnforce=false;
+  // [ResetEvents.OnHook(typeof(Level),nameof(Level.EnforceBounds))]
+  // void Hook(On.Celeste.Level.orig_EnforceBounds orig, Level l, Player p){
+  //   if(dontEnforce || l.transition!=null) 
+  //   if(p.Collider is PColliderH pch){
+  //     var b = l.Bounds;
+  //     pch.GetPrimaryRect(out var r, out bool w);
+  //     if(r.bottom>b.Bottom) 
+  //   } else orig(l,p);
+  // }
   public void Done(bool fromSwap = false){ //this is the paranoia of a person who is not ok (entirely redundant)
     Vector2 eloc = Entity.Position;
     float frontEdge = eloc.X+orig.Position.X+(f1.facingRight?0:orig.width);

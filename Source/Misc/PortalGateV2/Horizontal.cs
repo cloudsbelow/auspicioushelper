@@ -62,6 +62,7 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
       },
       OnShake = (Vector2 amount)=>renderOffset+=amount
     });
+    ogen.update(1);
   }
   public override void Update() {
     base.Update();

@@ -217,7 +217,6 @@ public static class MaterialPipe {
   }
   public static void playerCtorHook(On.Celeste.Player.orig_ctor orig, Player p, Vector2 pos, PlayerSpriteMode s){
     orig(p,pos,s);
-    UpdateHook.TimeSinceTransMs = 1000000;
     remLeaving();
   }
   public static void SceneEnd(On.Celeste.Level.orig_End orig, Level l){

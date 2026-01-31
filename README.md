@@ -5,7 +5,8 @@ Assembly references are not supported (except for stuff in the interop folder.) 
 
 
 todo
-portal reinterpert push
 watesr
-lavasandwhich support
 arbitrary shape rooms
+portal naiive and block and transition
+coverRoom
+teleport issue

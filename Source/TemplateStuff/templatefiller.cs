@@ -511,7 +511,8 @@ public class TileOccluder:OnAnyRemoveComp{
     rects.Clear();
     occs.Clear();
   }
-  public static void HandleThing(Level l){
+
+  public static void HandleThing(On.Celeste.LightingRenderer.orig_BeforeRender orig, LightingRenderer self, Scene l){
     rects.Clear();
     occs.Clear();
     foreach(TileOccluder comp in l.Tracker.GetComponents<TileOccluder>()){
@@ -536,6 +537,7 @@ public class TileOccluder:OnAnyRemoveComp{
         }
       }
     }
+    orig(self,l);
   }
   public override void OnRemove() {
     Scene s = Entity?.Scene;
@@ -568,7 +570,9 @@ public class TileOccluder:OnAnyRemoveComp{
   }
   static HookManager hooks = new(()=>{
     IL.Celeste.LightingRenderer.DrawLightOccluders += OccluderHook;
+    On.Celeste.LightingRenderer.BeforeRender += HandleThing;
   }, ()=>{
     IL.Celeste.LightingRenderer.DrawLightOccluders -= OccluderHook;
+    On.Celeste.LightingRenderer.BeforeRender -= HandleThing;
   }, auspicioushelperModule.OnEnterMap);
 }

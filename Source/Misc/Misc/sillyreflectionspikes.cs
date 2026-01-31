@@ -1,6 +1,7 @@
 
 
 
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -127,7 +128,9 @@ public class CustomSpikes : Entity{
     int s = p.StateMachine.State;
     if((dreamThru && s==Player.StDreamDash) || (dashThru && s==Player.StDash)) return;
     if(((fixPickup && s==Player.StPickup) || (fixDash && s==Player.StDash && p.Speed==Vector2.Zero)) && oldSpeed is {} old) realSpeed+=old;
-    if(fixOnblock && s==Player.StNormal||s==Player.StDash && p.liftSpeedTimer>=p.LiftSpeedGraceTime-Engine.DeltaTime){
+    float ms = Math.Max(Math.Abs(p.LiftSpeed.X),Math.Abs(p.LiftSpeed.Y));
+    float tsm = Math.Max(p.LiftSpeedGraceTime-(ms==0?0:1/ms)-Engine.DeltaTime, float.Epsilon);
+    if(fixOnblock && p.liftSpeedTimer>=tsm){
       realSpeed+=p.LiftSpeed;
     }
     if(fixOwnSpeed){
