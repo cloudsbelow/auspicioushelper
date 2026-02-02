@@ -58,8 +58,6 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   public override void relposTo(Vector2 loc, Vector2 liftspeed) {
     if(sm?.Platform==null) base.relposTo(loc,liftspeed);
   }
-  int smearamount;
-  bool averageSmear;
   string channel="";
   bool ridingTrigger;
   bool enableUnrooted = false;

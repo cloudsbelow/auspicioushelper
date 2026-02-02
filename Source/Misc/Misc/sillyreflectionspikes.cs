@@ -30,7 +30,7 @@ public class CustomSpikes : Entity{
   bool fixDash;
   bool fixOnblock;
   bool fixOwnSpeed;
-  StaticMover sm;
+  LiftspeedSm sm;
   Template parent;
   Vector2 ls;
   float speedRetainTime;
@@ -67,13 +67,13 @@ public class CustomSpikes : Entity{
     Add(new PlayerCollider(OnCollide));
     if(EntityParser.currentParent is {} te){
       parent = te;
-    } else if(data.Bool("canAttach")) Add(sm = new StaticMover{
+    } else if(data.Bool("canAttach")) Add(sm = new LiftspeedSm{
       OnShake = (Vector2 amount)=>imageOffset+=amount,
       SolidChecker = IsRiding,
       JumpThruChecker = IsRiding,
       OnEnable = ()=>Active=(Visible=(Collidable=false)),
       OnDisable = ()=>Active=(Visible=(Collidable=false)),
-      OnMove=(Vector2 amount)=>{
+      OnMoveOther=(Vector2 amount)=>{
         Position+=amount;
         ls = sm.Platform.LiftSpeed;
         speedRetainTime = Engine.DeltaTime+0.001f;
@@ -133,10 +133,7 @@ public class CustomSpikes : Entity{
     if(fixOnblock && p.liftSpeedTimer>=tsm){
       realSpeed+=p.LiftSpeed;
     }
-    if(fixOwnSpeed){
-      if(parent is {} te) realSpeed-=te.gatheredLiftspeed;
-      else realSpeed-=ls;
-    }
+    if(fixOwnSpeed)realSpeed-=sm.getLiftspeed();
     switch (Direction) {
       case Directions.Up:
         if (realSpeed.Y >= 0f && p.Bottom <= base.Bottom) p.Die(new Vector2(0f, -1f));

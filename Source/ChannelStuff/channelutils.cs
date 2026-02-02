@@ -138,8 +138,6 @@ public static class ChannelState{
     List<double> vals = new();
     public double outval;
     Func<double, double, double> pred;
-    static Func<double, double, double> andPred = (a,b)=>(a!=0&&b!=0)?1:0;
-    static Func<double, double, double> orPred = (a,b)=>(a!=0||b!=0)?1:0;
     double seedval;
     static Regex termReg = new Regex(@"^[^\(]*",RegexOptions.Compiled);
     public InlineCalc(string expr){
@@ -150,19 +148,19 @@ public static class ChannelState{
         op = Ops.and;
       } 
       pred = op switch {
-        Ops.and=>andPred, 
-        Ops.or=>orPred, 
-        Ops.sum=>(a,b)=>a+b,
-        Ops.xor=>(a,b)=>(int)a^(int)b, 
-        Ops.prod=>(a,b)=>a*b, 
+        Ops.and=> static (a,b)=>(a!=0&&b!=0)?1:0, 
+        Ops.or=> static (a,b)=>(a!=0||b!=0)?1:0, 
+        Ops.sum=> static (a,b)=>a+b,
+        Ops.xor=> static (a,b)=>(int)a^(int)b, 
+        Ops.prod=> static (a,b)=>a*b, 
         Ops.max=>Math.Max,
         Ops.min=>Math.Min,
-        _=>andPred
+        _=>(a,b)=>(a!=0&&b!=0)?1:0 //and is default
       };
       seedval = op switch {
         Ops.and=>1, Ops.prod=>1, 
         Ops.max=>float.NegativeInfinity,
-        Ops.min=>float.NegativeInfinity,
+        Ops.min=>float.PositiveInfinity,
         _=>0
       };
       from = Util.listparseflat(expr.Substring(term.Length),true,false);

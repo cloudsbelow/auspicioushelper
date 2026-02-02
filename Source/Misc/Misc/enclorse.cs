@@ -68,7 +68,7 @@ public class Enclorse:Entity{
     DebugConsole.Write("Maximum iters passed");
     return;
     completed:
-      if(iturns>=0){
+      if(iturns>=4){
         ChannelState.SetChannel(channel,1);
         sprite.Play("yes");
         Audio.Play("event:/game/07_summit/checkpoint_confetti");

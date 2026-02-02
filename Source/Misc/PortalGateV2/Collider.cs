@@ -94,14 +94,10 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
       if(!((IntRect)l.Bounds).CollidePoint(pl.Position)){
         if(l.Session.MapData.GetAt(pl.Position) is LevelData ld){
           l.NextTransitionDuration=0;
-          //dontEnforce = true; 
-          //l.NextLevel(pl.Position,Vector2.Zero);
+          dontEnforce = true; 
+          l.NextLevel(pl.Position,Vector2.Zero);
           l.Session.Level = ld.Name;
-          l.OnEndOfFrame += delegate {
-            l.UnloadLevel();
-            //Everest.Events.Level.TransitionTo(this, ld.Name, Vector2.Zero);
-            l.LoadLevel(Player.IntroTypes.Transition);
-          };
+          l.TransitionTo(ld,Vector2.Zero);
           Glitch.Value = 0.15f;
           Audio.Play("event:/new_content/game/10_farewell/glitch_short", pl.Position);
           //Celeste.Freeze(0.05f);
@@ -127,15 +123,16 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
   }
   [ResetEvents.NullOn(ResetEvents.RunTimes.OnReset)]
   static bool dontEnforce=false;
-  // [ResetEvents.OnHook(typeof(Level),nameof(Level.EnforceBounds))]
-  // void Hook(On.Celeste.Level.orig_EnforceBounds orig, Level l, Player p){
-  //   if(dontEnforce || l.transition!=null) 
-  //   if(p.Collider is PColliderH pch){
-  //     var b = l.Bounds;
-  //     pch.GetPrimaryRect(out var r, out bool w);
-  //     if(r.bottom>b.Bottom) 
-  //   } else orig(l,p);
-  // }
+  [OnLoad.OnHook(typeof(Level),nameof(Level.EnforceBounds))]
+  static void Hook(On.Celeste.Level.orig_EnforceBounds orig, Level l, Player p){
+    if(dontEnforce) return;
+    if(p.Collider is PColliderH pch && pch.GetPrimaryRect(out var r, out bool w)){
+      if(w) return;
+      using(new CollideDetourLock()) p.Collider = new Hitbox(r.w, r.h, r.x-p.Position.X, r.y-p.Position.Y);
+      orig(l,p);
+      p.Collider = pch;
+    } else orig(l,p);
+  }
   public void Done(bool fromSwap = false){ //this is the paranoia of a person who is not ok (entirely redundant)
     Vector2 eloc = Entity.Position;
     float frontEdge = eloc.X+orig.Position.X+(f1.facingRight?0:orig.width);

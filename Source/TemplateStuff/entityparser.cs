@@ -21,15 +21,10 @@ public static class EntityParser{
     void IDisposable.Dispose()=>ctr--;
   }
   public enum Types{
-    unable,
-    platformbasic,
-    unwrapped,
-    template,
-    basic,
-    removeSMbasic,
-    managedBasic,
-    iopClarified,
-    initiallyerrors,
+    unable, platformbasic, unwrapped, template,
+    basic, removeSMbasic, managedBasic,
+    iopClarified, initiallyerrors,
+    puffer,
   }
   public static LevelData DefaultLD;
   static Dictionary<string, Types> parseMap = new Dictionary<string, Types>();
@@ -108,11 +103,12 @@ anyways i want to praise it more it is wonderful
         }else if(t is Platform){
           etype = parseMap[d.Name] = Types.platformbasic;
         }else if(t is Actor || t is ITemplateChild){
+          if(t is Puffer) loaders[d.Name] = (l,d,o,e)=>{currentParent.addEnt(new PufferW(l,(Puffer) loader(l,d,o,e))); return null;};
           etype = parseMap[d.Name] = Types.unwrapped;
         }else{
           etype = parseMap[d.Name] = Types.removeSMbasic;
         }
-        loaders[d.Name] = loader;
+        loaders.TryAdd(d.Name,loader);
         //DebugConsole.Write($"{d.Name} auto-classified as {etype}");
       } catch(Exception ex){
         DebugConsole.Write($"Entityloader generation for {d.Name} failed: \n{ex}");
@@ -179,6 +175,7 @@ anyways i want to praise it more it is wonderful
       case Types.removeSMbasic: case Types.managedBasic:
         List<StaticMover> SMRemove = new List<StaticMover>();
         foreach(Component c in e.Components) if(c is StaticMover sm){
+          if(c is LiftspeedSm lsm) lsm.parent = currentParent;
           new DynamicData(sm).Set("__auspiciousSM", new TriggerInfo.SmInfo(t,e));
           SMRemove.Add(sm);
           smhooks.enable();
@@ -241,7 +238,6 @@ anyways i want to praise it more it is wonderful
       return new Lightning(e,o);
     });
     clarify("bigSpinner", Types.unwrapped, static (l,ld,o,e)=>new Wrappers.Bumperw(e,o));
-    clarify("eyebomb", Types.unwrapped, static (l,d,o,e)=>{currentParent.addEnt(new PufferW(l,e,o)); return null;});
 
     clarify("refill",Types.unwrapped,static (l,ld,offset,e)=>(Entity) new RefillW2(e,offset));
     clarify("cameraTargetTrigger", Types.basic, static (l,d,o,e)=>{
@@ -276,7 +272,7 @@ anyways i want to praise it more it is wonderful
       return new ConnectedBlocks.InplaceTemplateWrapper(e.Position+o);
     },true);
     defaultModdedSetup();
-    foreach(string s in new string[]{"iceBlock","fireBarrier"}){
+    foreach(string s in new string[]{"iceBlock","fireBarrier","FrostHelper/CustomFireBarrier"}){
       clarify(s, Types.unwrapped, static (l,d,o,e)=>{
         currentParent.addEnt(new HookVanilla.FireIcePatch(origLoader(e.Name)(l,d,o,e)));
         return null;

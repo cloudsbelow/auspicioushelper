@@ -10,15 +10,17 @@ namespace Celeste.Mod.auspicioushelper;
 
 [TrackedAs(typeof(StaticMover))]
 public class LiftspeedSm:StaticMover{
-  const int trackLen = 5;
+  const int trackLen = 8;
   Util.RingBuffer<(Vector2, float)> ls = new(trackLen);
-  Template parent;
+  public Template parent;
+  int frameCount;
   public Vector2 getLiftspeed(){
     if(parent!=null) return parent.gatheredLiftspeed;
-    float timesum = -Engine.DeltaTime;
+    float timesum = frameCount == UpdateHook.framenum? -Engine.DeltaTime:0;
     for(int i=0; i<trackLen; i++){
       if(ls[i].Item1!=Vector2.Zero){
-        if(ls[i].Item1.L1()*timesum>1) return Vector2.Zero;
+        DebugConsole.Write("ls",ls[i].Item1.LInf()*timesum, timesum, ls[i].Item1.LInf());
+        if(ls[i].Item1.LInf()*timesum>1) return Vector2.Zero;
         return ls[i].Item1;
       }
       timesum+=ls[i].Item2;
@@ -33,12 +35,10 @@ public class LiftspeedSm:StaticMover{
       ls[0].Item1 = Platform.LiftSpeed;
       OnMoveOther(amt);
     };
-    OnAttach = p=>{
-      if(p.Get<ChildMarker>() is {} cm) parent = cm.parent;
-    };
   }
   public override void Update() {
     base.Update();
+    frameCount = UpdateHook.framenum;
     if(Engine.DeltaTime!=0){
       ls.Backward();
       ls[0]=new(Vector2.Zero,Engine.DeltaTime);

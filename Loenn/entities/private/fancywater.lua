@@ -9,11 +9,16 @@ entity.depth = -9999
 
 entity.placements = {
   {
-    name = "connected water",
+    name = "fancy water",
     data = {
       width = 8,
       height=8,
       tempalteDrag=1,
+      hasBottom = false,
+      hasTop = true,
+      hasLeft = false,
+      hasRight = false,
+      triggerRiding = true,
     }
   }
 }

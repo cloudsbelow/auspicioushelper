@@ -5,13 +5,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
-[CustomloadEntity(nameof(Search))]
+[CustomEntity("auspicioushelper/ChannelReflector")]
+[MapenterEv(nameof(Search))]
 public class ChannelReflecter:Entity{
   static void Search(EntityData d){
     var ident = d.Attr("path");
@@ -23,16 +25,17 @@ public class ChannelReflecter:Entity{
   bool logPossible;
   List<string> refl;
   public ChannelReflecter(EntityData d,Vector2 o):base(d.Position+o){
-    ident = d.Attr("identifier");
+    ident = d.Attr("path");
     channel = d.Attr("channel");
     logPossible = d.Bool("logAccessible");
     ifNull = d.Float("valueIfNull",0);
     refl = Util.listparseflat(d.Attr("access",""));
+    DebugConsole.Write("Here");
   }
   public override void Update() {
     base.Update();
     if(FoundEntity.find(ident) is not {} e) goto notFound;
-    object o=e;
+    object o=e.Entity;
     foreach(var s in refl){
       try{
         o = Util.ReflectGet(o,s,true);
@@ -50,7 +53,7 @@ public class ChannelReflecter:Entity{
       foreach(var p in t.GetProperties(flags)) if(!p.GetGetMethod()?.IsStatic??false) {
         DebugConsole.Write($"property: {p.Name} ({p.PropertyType})");
       }
-      foreach(var m in t.GetMethods(flags)) if(!m.IsStatic && m.GetParameters().Length==0){
+      foreach(var m in t.GetMethods(flags)) if(!m.IsStatic && m.GetParameters().Length==0 && m.ReturnType!=typeof(void)){
         DebugConsole.Write($"method: {m.Name} ({m.ReturnType})");
       }
       logPossible=false;
@@ -58,10 +61,12 @@ public class ChannelReflecter:Entity{
     try{
       ChannelState.SetChannel(channel,Convert.ToDouble(o));
       return;
-    }catch(Exception ex){
-      DebugConsole.Write($"Exception occurred when converting {o} to number:",ex);
+    }catch(Exception){
+      ChannelState.SetChannel(channel,o==null?ifNull:1);
+      return;
     }
     notFound:
+      if(Scene.OnInterval(1f))DebugConsole.Write("Not found", ident, FoundEntity.find(ident), string.Join(',',refl));
       ChannelState.SetChannel(channel,ifNull);
   }
 }

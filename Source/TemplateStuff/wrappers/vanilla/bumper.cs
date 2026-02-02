@@ -66,6 +66,7 @@ public class PufferW:Component, ISimpleWrapper{
   Vector2 origin;
   public PufferW(Level l, EntityData d, Vector2 o):this(l,new Puffer(d,o)){}
   public PufferW(Level l, Puffer p):base(false,false){
+    DebugConsole.Write("Here Puffer");
     l.Add(e = p);
     e.Add(this);
     ResetEvents.LazyEnable(typeof(PufferW));
@@ -87,6 +88,9 @@ public class PufferW:Component, ISimpleWrapper{
   }
   void ITemplateChild.parentChangeStat(int v, int c, int a){
     vca.Align(v,c,a);
+    e.Visible=vca.Visible;
+    e.Collidable = ownCollidable && vca.Collidable;
+    e.Active = vca.Active;
   }
   [ResetEvents.OnHook(typeof(Puffer), nameof(Puffer.GotoIdle))]
   static void Hook(On.Celeste.Puffer.orig_GotoIdle orig, Puffer p){

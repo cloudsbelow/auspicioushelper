@@ -47,6 +47,7 @@ public struct FloatRect{
   public Vector2 brc=>new Vector2(x+w,y+h);
   public Vector2 trc=>new Vector2(x+w,y);
   public Vector2 blc=>new Vector2(x,y+h);
+  public Vector2 size=>new Vector2(w,h);
   public Vector2 center {
     get=>new Vector2(x+w/2,y+h/2);
   }

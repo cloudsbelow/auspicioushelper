@@ -181,9 +181,10 @@ public class ConnectedBlocks:Entity{
     end:
       RemoveSelf();
   }
-  public static Dictionary<Type, Action<Entity>> ExtraRemovalSteps = new(){
+  public static Dictionary<object, Action<Entity>> ExtraRemovalSteps = new(){
     {typeof(FireBarrier),(Entity e)=>(e as FireBarrier).solid.RemoveSelf()},
     {typeof(IceBlock),(Entity e)=>(e as IceBlock).solid.RemoveSelf()},
+    {"FrostHelper/CustomFireBarrier",(Entity e)=>((Entity)Util.ReflectGet(e,"solid",false))?.RemoveSelf()}
   };
   void RemChildren(Util.OrderedSet<Entity> all, Vector2 minimum, templateFiller f){
     HashSet<Entity> donot = new();
@@ -192,6 +193,7 @@ public class ConnectedBlocks:Entity{
     }
     foreach(var e in all){
       if(ExtraRemovalSteps.TryGetValue(e.GetType(),out var er))er(e);
+      if(e.SourceData?.Name is {} strname && ExtraRemovalSteps.TryGetValue(strname, out var er2))er2(e);
       e.RemoveSelf();
       if(donot.Contains(e)) continue;
       Vector2 fpos = e.Position-minimum+padding*8*Vector2.One;

@@ -235,4 +235,6 @@ public static partial class Util{
     return new Color((int)(c.R*f),(int)(c.G*f),(int)(c.B*f),c.A);
   }
   public static float L1(this Vector2 v)=>Math.Abs(v.X)+Math.Abs(v.Y);
+  public static float LInf(this Vector2 v)=>Math.Max(Math.Abs(v.X),Math.Abs(v.Y));
+  public static Vector3 Expand(this Vector2 v, float n=0)=>new Vector3(v.X,v.Y ,n);
 }

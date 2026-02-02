@@ -26,7 +26,7 @@ public static class HookVanilla{
     public Entity wrapped {get;set;}
     public Template parent {get;set;}
     public Vector2 toffset {get;set;}
-    Solid solid=>new DynamicData(wrapped).Get<Solid>("solid");
+    Solid solid=>(Solid)Util.ReflectGet(wrapped,"solid",false);
     bool getOwnCol(Level l){
       if(wrapped.GetType()==typeof(IceBlock)) return l.coreMode==Session.CoreModes.Cold;
       if(wrapped.GetType()==typeof(FireBarrier)) return l.coreMode==Session.CoreModes.Hot;
@@ -34,13 +34,14 @@ public static class HookVanilla{
     }
     public FireIcePatch(Entity wrapped):base(false,false){
       this.wrapped=wrapped;
-      var comp = wrapped.Get<CoreModeListener>();
-      var orig = comp.OnChange;
-      comp.OnChange = (Session.CoreModes mode)=>{
-        if(vca.Visible)orig(mode);
-        ownCol = getOwnCol(wrapped.Scene as Level);
-        setCol(vca.Collidable && ownCol);
-      };
+      if(wrapped.Get<CoreModeListener>() is {} comp){
+        var orig = comp.OnChange;
+        comp.OnChange = (Session.CoreModes mode)=>{
+          if(vca.Visible)orig(mode);
+          ownCol = getOwnCol(wrapped.Scene as Level);
+          setCol(vca.Collidable && ownCol);
+        };
+      }
       wrapped.Add(this);
     }
     bool ownCol;

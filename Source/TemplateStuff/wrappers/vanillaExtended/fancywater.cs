@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
@@ -24,9 +25,17 @@ public class FancyWater:Water, ISimpleEnt{
   enum Edges{
     none=0, left=1, right=2, top=4, bottom=8, all=15
   }
-  Edges edges;
+  Edges edges = Edges.none;
+  FloatRect relativeDraw;
   public FancyWater(EntityData d, Vector2 o):base(d.Position+o,false,false,d.Width,d.Height){
-
+    if(d.Bool("hasTop",true))edges|=Edges.top;
+    if(d.Bool("hasBottom",false))edges|=Edges.bottom;
+    if(d.Bool("hasLeft",false))edges|=Edges.left;
+    if(d.Bool("hasRight",false))edges|=Edges.right;
+    Vector2 tlc = new(edges.HasFlag(Edges.left)?8:0,edges.HasFlag(Edges.top)?8:0);
+    Vector2 brc = new Vector2(Width,Height)-new Vector2(edges.HasFlag(Edges.right)?8:0,edges.HasFlag(Edges.bottom)?8:0);
+    relativeDraw = FloatRect.fromCorners(tlc,brc);
+    addSurfacesSimple(new(Width,Height));
   }
   void ITemplateChild.relposTo(Vector2 loc, Vector2 ls){
     Vector2 delta = (loc+toffset)-Position;
@@ -36,6 +45,14 @@ public class FancyWater:Water, ISimpleEnt{
       a.LiftSpeed = ls*drag;
     }
     Position = loc+toffset;
+  }
+  public override void Render(){
+    Draw.Rect(Position.X+relativeDraw.x,Position.Y+relativeDraw.y, relativeDraw.w,relativeDraw.h,Color.Red);
+    if(surfaces.Count>0){
+      GameplayRenderer.End();
+      foreach(var surface in surfaces) surface.Render(Position);
+      GameplayRenderer.Begin();
+    }
   }
   bool ITemplateChild.hasPlayerRider()=>UpdateHook.cachedPlayer?.CollideCheck(this)??false;
   struct Edgepoint{
@@ -48,7 +65,46 @@ public class FancyWater:Water, ISimpleEnt{
   List<BentSurface> surfaces = new();
   class BentSurface{
     Edgepoint[] points;
-    public BentSurface(List<Edgepoint> points, bool loop){}
+    VertexPositionColor[] mesh;
+    int surfaceidx;
+    public BentSurface(List<Edgepoint> arr, bool loop){
+      points = arr.ToArray();
+      surfaceidx = (arr.Count-1)*2*3;
+      mesh = new VertexPositionColor[surfaceidx*2];
+      for(int i=0; i<surfaceidx; i++){
+        mesh[i].Color = FillColor;
+        mesh[i+surfaceidx].Color = SurfaceColor;
+      }
+    }
+    public void Render(Vector2 loc){
+      Vector3 p11 = (points[0].point+loc).Expand();
+      Vector3 p12 = (points[0].point+loc+points[0].normal*4).Expand();
+      Vector3 p13 = (points[0].point+loc+points[0].normal*(4+1)).Expand();
+      for(int i=0; i<points.Length-1; i++){
+        int o = i*6;
+        Vector3 p21 = (points[i+1].point+loc).Expand();
+        Vector3 p22 = (points[i+1].point+loc+points[i].normal*4).Expand();
+        Vector3 p23 = (points[i+1].point+loc+points[i].normal*(4+1)).Expand();
+        mesh[o].Position = p11;
+        mesh[o+1].Position = p12;
+        mesh[o+2].Position = p21;
+        mesh[o+3].Position = p21;
+        mesh[o+4].Position = p12;
+        mesh[o+5].Position = p22;
+        int o2 = o+surfaceidx;
+        mesh[o2].Position = p12;
+        mesh[o2+1].Position = p13;
+        mesh[o2+2].Position = p22;
+        mesh[o2+3].Position = p22;
+        mesh[o2+4].Position = p13;
+        mesh[o2+5].Position = p23;
+        p11 = p21;
+        p12 = p22;
+        p13 = p23;
+      }
+      GFX.DrawVertices((Engine.Instance.scene as Level).Camera.matrix, mesh, mesh.Length);
+    }
+
   }
   void addSurfacesSimple(Vector2 size){
     List<Edgepoint> current = new();
