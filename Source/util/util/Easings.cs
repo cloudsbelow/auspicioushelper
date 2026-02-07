@@ -245,4 +245,7 @@ public static partial class Util{
   public static bool pass<T>(T val, T low, T high) where T:IComparable{
     return val.CompareTo(low) >= 0 && val.CompareTo(high) < 0;
   }
+  public static float CRemap(float val, float min, float max, float newMin = 0f, float newMax = 1f){
+    return Util.Clamp((val - min) / (max - min), 0f, 1f) * (newMax - newMin) + newMin;
+  }
 }

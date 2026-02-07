@@ -116,8 +116,8 @@ public class IopControlled:ITemplateChild{
   }
   public void parentChangeStat(int vis, int col, int act){
     if(vis!=0) own.ParentVisible.set(iopTarget,vis>0);
-    if(col!=0) own.ParentVisible.set(iopTarget,col>0);
-    if(act!=0) own.ParentVisible.set(iopTarget,act>0);
+    if(col!=0) own.ParentCollidable.set(iopTarget,col>0);
+    if(act!=0) own.ParentActive.set(iopTarget,act>0);
     if(ParentChangeStat!=null) ParentChangeStat(vis,col,act);
     else {
       foreach(EntEnt ent in ents){

@@ -350,6 +350,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   void Reset(bool particles = true){
     if(resetting){
       DebugConsole.Write("Called multiple times to reset routine (bad)");
+      return;
     }
     resetting = true;
     Collidable = false;

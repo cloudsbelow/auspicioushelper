@@ -36,6 +36,7 @@ public class FancyWater:Water, ISimpleEnt{
     Vector2 brc = new Vector2(Width,Height)-new Vector2(edges.HasFlag(Edges.right)?8:0,edges.HasFlag(Edges.bottom)?8:0);
     relativeDraw = FloatRect.fromCorners(tlc,brc);
     addSurfacesSimple(new(Width,Height));
+    TopSurface = new FakeTopsurface(this);
   }
   void ITemplateChild.relposTo(Vector2 loc, Vector2 ls){
     Vector2 delta = (loc+toffset)-Position;
@@ -66,10 +67,29 @@ public class FancyWater:Water, ISimpleEnt{
   class BentSurface{
     Edgepoint[] points;
     VertexPositionColor[] mesh;
+    float[] heights;
     int surfaceidx;
+    bool loop;
+    class Ripple{
+      public float pos;
+      public float speed;
+      public float height;
+      public float percent;
+      public float duration;
+    }
+    List<Ripple> ripples;
+    struct Tension{
+      public float pos;
+      public float str;
+    }
+    List<Tension> tensions;
+    float timer=0;
+    float waviness=0.05f;
     public BentSurface(List<Edgepoint> arr, bool loop){
+      this.loop=loop;
       points = arr.ToArray();
-      surfaceidx = (arr.Count-1)*2*3;
+      heights = new float[points.Length];
+      surfaceidx = (arr.Count-(loop?0:1))*2*3;
       mesh = new VertexPositionColor[surfaceidx*2];
       for(int i=0; i<surfaceidx; i++){
         mesh[i].Color = FillColor;
@@ -77,14 +97,15 @@ public class FancyWater:Water, ISimpleEnt{
       }
     }
     public void Render(Vector2 loc){
-      Vector3 p11 = (points[0].point+loc).Expand();
-      Vector3 p12 = (points[0].point+loc+points[0].normal*4).Expand();
-      Vector3 p13 = (points[0].point+loc+points[0].normal*(4+1)).Expand();
-      for(int i=0; i<points.Length-1; i++){
+      int start = loop?points.Length-1:0;
+      Vector3 p11 = (points[start].point+loc).Expand();
+      Vector3 p12 = (points[start].point+loc+points[start].normal*heights[start]).Expand();
+      Vector3 p13 = (points[start].point+loc+points[start].normal*(heights[start]+1)).Expand();
+      for(int i=loop?0:1; i<points.Length; i++){
         int o = i*6;
-        Vector3 p21 = (points[i+1].point+loc).Expand();
-        Vector3 p22 = (points[i+1].point+loc+points[i].normal*4).Expand();
-        Vector3 p23 = (points[i+1].point+loc+points[i].normal*(4+1)).Expand();
+        Vector3 p21 = (points[i].point+loc).Expand();
+        Vector3 p22 = (points[i].point+loc+points[i].normal*heights[i]).Expand();
+        Vector3 p23 = (points[i].point+loc+points[i].normal*(heights[i]+1)).Expand();
         mesh[o].Position = p11;
         mesh[o+1].Position = p12;
         mesh[o+2].Position = p21;
@@ -104,12 +125,74 @@ public class FancyWater:Water, ISimpleEnt{
       }
       GFX.DrawVertices((Engine.Instance.scene as Level).Camera.matrix, mesh, mesh.Length);
     }
+    float heightAt(int n)=>loop||(n>=0&&n<points.Length)? heights[Util.SafeMod(n,points.Length)]:0;
+    float heightLerp(float n){
+      int b = (int)MathF.Floor(n);
+      float l = heightAt(b);
+      float h = heightAt(b+1);
+      float f=n-b;
+      return l*(1-f)+f*h;
+    }
+    public void Update(){
+      int n = points.Length-(loop?0:1);
+      for(int i=0; i<heights.Length; i++) heights[i]=0;
+      for (int i = ripples.Count - 1; i >= 0; i--){
+        var r = ripples[i];
+        if(r.percent>1) ripples.RemoveAt(i);
+        r.percent+=Engine.DeltaTime/r.duration;
+        r.pos+=Engine.DeltaTime*r.speed;
+        if(r.pos<0 || r.pos>n){
+          if(loop){
+            r.pos=Util.SafeMod(r.pos,n);
+          } else {
+            r.speed=-r.speed;
+            r.pos=r.pos>n? 2*n-r.pos : -r.pos;
+          }
+        }
+        int k=0;
+        int start = (int)Math.Floor(r.pos-8);
+        for(int j = start>=0?start: (loop? Util.SafeMod(start,n):0); k++<17; j++){
+          if(j>n){
+            if(loop) j=0;
+            else break;
+          }
+          float d = Math.Abs(r.pos - j);
+          float s = j>=4? Util.CRemap(d,4,8,-0.75f,0) : Util.CRemap(d,0,4,1,-0.75f);
+          heights[j]+= s*r.height * Util.CubeIn(1f-r.percent);
+        }
+      }
+      float taus = n/2f/MathF.PI;
+      float f=!loop?waviness:MathF.Max(1f,MathF.Round(taus*waviness))/taus;
+      for(int i=0; i<heights.Length; i++){
+        heights[i]=Util.Clamp(heights[i],-4,4);
+        Math.Sin(timer + i*f);
+      }
+      foreach (Tension t in tensions){
+        int start = (int)Math.Floor(t.pos-8);
+        int k=0;
+        for(int j = start>=0?start: (loop? Util.SafeMod(start,n):0); k++<13; j++){
+          if(j>=n){
+            if(loop) j=0;
+            else break;
+          }
+          float d = Util.CRemap(Math.Abs(t.pos-j), 0,6, 1,0);
+          heights[j]+= Util.CubeOut(d) * t.str *12f;
+        }
+      }
+      if(loop)heights[^1]=heights[0];
+    }
+  }
+  void DoRipple(Vector2 p, float str){
 
   }
   void addSurfacesSimple(Vector2 size){
     List<Edgepoint> current = new();
     Edges dir = Edges.top;
+    if(edges.HasFlag(Edges.left))size.X+=4;
+    if(edges.HasFlag(Edges.right))size.X+=4;
     Vector2 center = size/2;
+    if(edges.HasFlag(Edges.left))center.X-=2;
+    if(edges.HasFlag(Edges.right))center.X+=2;
     bool loop=true;
     do{
       bool has = edges.HasFlag(dir);
@@ -123,6 +206,7 @@ public class FancyWater:Water, ISimpleEnt{
       var lvec = edgeToVec(nextCCWInner(dir));
       if(has && lasthas){
         Vector2 pivot = center+(norm+lvec)*(size/2-Vector2.One*8);
+        //if(current.Count==0)current.Add(new (pivot,lvec));
         current.Add(new(pivot, sixty(lvec, norm)));
         current.Add(new(pivot, sixty(norm,lvec)));
       }
@@ -158,6 +242,17 @@ public class FancyWater:Water, ISimpleEnt{
     Edges.bottom=>Edges.left,
     _=>throw new Exception("non singular edge")
   };
+  class FakeTopsurface:Surface{
+    FancyWater fw;
+    public FakeTopsurface(FancyWater w):base(Vector2.Zero,-Vector2.UnitY,0,0){
+      fw=w;
+    }
+    [OnLoad.OnHook(typeof(Surface),nameof(Surface.DoRipple))]
+    static void Hook(On.Celeste.Water.Surface.orig_DoRipple o, Surface s, Vector2 p, float str){
+      if(s is FakeTopsurface fts){fts.fw.DoRipple(p,str);}
+      else o(s,p,str);
+    }
+  }
   // bool CollectCCW(Dictionary<Int2, Edges> e, MipGrid.Layer cull, Int2 at, Edges edge, List<Edgepoint> into){
   //   Int2 dir = edgeToVec(edge);
   //   e[at] = e[at]&~edge;
