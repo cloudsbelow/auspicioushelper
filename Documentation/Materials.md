@@ -17,7 +17,7 @@ Use the contents of texture #1 as a mask for the input
 invert the alpha of the input. Useful with maskBy to invert the masked area.
 
 **ausp/tint**<br>
-Tint the input by the provided parameters
+Tint the input by the provided parameters<br>
  - **low** The darkest color (what black becomes)
  - **high** The brightest color (what white becomes)
  - **sat** How much of the original hues to keep
@@ -39,6 +39,19 @@ A sigma of 1 spreads things out by around 1 pixel - can be fractional. blurH and
 
 **ausp/opacity**<br>
 Change the opacity of the input multiplicativity by the **opacity** parameter
+
+**ausp/colorgrade**<br>
+Apply the colorgrade on texture slot #1 to the input. To specify an image path for a texture, do the following "1:/ColorGrading/.../someColorgrade"
+
+**ausp/colorgradefade**<br>
+Fade between the colorgrades on texture slots #1 and #2
+ - **fade** the fade parameter. Should be between 0 and 1.
+
+**ausp/compose**<br>
+Compose multiple textures on at most four slots together. The direct inputs are drawn at the top and each successive texture is drawn beneath the previous composition
+ - **num** the number of textures to include. 2.5 will compose the contents of texture slot #1 and #2 at full opacity and will compose #3 at half opacity
+
+
 
 ## Specifying Textures
 Textures in shaders are assigned to 'slots'. You specify which textures you want on which slots in a list with the format `slotnumber:texture`. For example, `1:%sgs, 2:/some/other/texture`. Slot 0 is special - it holds the current input and assigning something to it won't do anything most of the time. The other slots, 1-15, are all available to be used. Each shader will use certain fixed slots. For example, the masking shaders expect the other texture to be in slot 1.

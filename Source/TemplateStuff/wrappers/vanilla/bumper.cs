@@ -60,7 +60,6 @@ public class PufferW:Component, ISimpleWrapper{
   Puffer e;
   public Vector2 toffset {get;set;}
   public Template parent {get;set;}
-  bool displaced;
   TemplateDisappearer.vcaTracker vca = new();
   bool ownCollidable;
   Vector2 origin;

@@ -25,6 +25,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
   bool triggeredByRiding = true;
   UpdateHook upd;
   float waitTimer=0;
+  float waitTime=0;
   float[] delays;
   public TemplateFallingblock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
@@ -44,8 +45,8 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     gravity = d.Float("gravity", 500);
     setTch = d.Bool("set_trigger_channel",false) && !string.IsNullOrWhiteSpace(tch);
     triggeredByRiding = d.Bool("triggeredByRiding",true);
-    delays = Util.csparseflat(d.Attr("customFallTiming",""),0.25f,0.1f);
-    waitTimer = d.Float("maxWaitTiming",0);
+    delays = Util.csparseflat(d.Attr("customFallTiming",""),0.25f,0.1f,-1);
+    waitTimer = waitTime = d.Float("maxWaitTiming",0);
 
     Add(new Coroutine(Sequence()));
     if(setTch)Add(upd = new UpdateHook());
@@ -61,27 +62,35 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     //emancipate();
     parent?.GetFromTree<IRemovableContainer>()?.RemoveChild(this);
     DebugConsole.Write("Delay", delays[0]);
-    shake(delays[0]+waitTimer);
+    shake(delays[0]+waitTime);
     Audio.Play(ShakeSfx,Position);
     yield return delays[0];
     while(waitTimer>0 && hasPlayerRider()){
       waitTimer-=Engine.DeltaTime;
       yield return null;
     }
-    EndShake();
     trying:
-      yield return null;
       Query qs = getq(falldir);
       if(TestMove(qs, 1, falldir)){
         speed = 0;
         if(!first){
-          shake(delays[1]);
+          shake(delays[1]+waitTime);
           Audio.Play(ShakeSfx,Position);
           yield return delays[1];
+          waitTimer=waitTime;
+          while(waitTimer>0 && hasPlayerRider()){
+            waitTimer-=Engine.DeltaTime;
+            yield return null;
+          }
+          EndShake();
           goto falling;
         }
-      } else goto trying;
+      } else {
+        yield return null;
+        goto trying;
+      } 
     falling:
+      EndShake();
       first = false;
       yield return null;
       speed = Calc.Approach(speed,maxspeed,gravity*Engine.DeltaTime);
@@ -95,6 +104,10 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       if(res){
         ownLiftspeed = Vector2.Zero;
         Audio.Play(ImpactSfx,Position);
+        if(delays[2]>=0){
+          shake(delays[2]);
+          yield return delays[2];
+        }
         goto trying;
       }
       else goto falling;

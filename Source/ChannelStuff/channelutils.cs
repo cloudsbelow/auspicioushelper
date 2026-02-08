@@ -251,6 +251,7 @@ public static class ChannelState{
     if(!fromInterop && ch.Length>0){
       if(ch[0]=='$')(Engine.Instance.scene as Level)?.Session.SetFlag(ch.Substring(1),state!=0);
       if(ch[0]=='#')(Engine.Instance.scene as Level)?.Session.SetCounter(ch.Substring(1),(int)state);
+      if(ch[0]=='?')(Engine.Instance.scene as Level)?.Session.SetSlider(ch.Substring(1),(int)state);
     }
   }
   public static double watch(ChannelTracker b){
@@ -283,9 +284,10 @@ public static class ChannelState{
       if(ch[^1]==')') return new InlineCalc(ch).outval;
       DebugConsole.Write($"{ch} contains '(' or '[' but doesn't end with one!");
       return 0;
-    } else if(ch.Length>0 && (ch[0]=='$'||ch[0]=='#')){
+    } else if(ch.Length>0 && (ch[0]=='$'||ch[0]=='#'||ch[0]=='?')){
       if(ch[0]=='#') channelStates[ch]=(Engine.Instance.scene as Level)?.Session.GetCounter(ch.Substring(1))??0;
       if(ch[0]=='$') channelStates[ch]=((Engine.Instance.scene as Level)?.Session.GetFlag(ch.Substring(1))??false)?1:0;
+      if(ch[0]=='?') channelStates[ch]=(Engine.Instance.scene as Level)?.Session.GetSlider(ch.Substring(1))??0;
     } else {
       channelStates.TryAdd(ch,0);
     }
@@ -299,6 +301,11 @@ public static class ChannelState{
       else toRemove.Add(pair.Key);
     }
     foreach(var ch in toRemove) watching.Remove(ch);
+    List<string> toRemoveCh = new();
+    foreach(var (k,v) in channelStates){
+      if(k.Contains(TemplateTemplate.randomChar) && !watching.ContainsKey(k)) toRemoveCh.Add(k);
+    }
+    foreach(var ch in toRemoveCh) channelStates.Remove(ch);
   }
   static Queue<string> ToForceRemove = new();
   static bool removing;
@@ -354,11 +361,9 @@ public static class ChannelState{
   public static Dictionary<string,double> save(){
     Dictionary<string,double> s=new();
     foreach(var pair in channelStates){
-      int idx=0;
-      if(pair.Key.Length>=1 && (pair.Key[0]=='$'||pair.Key[0]=='$'))continue;
-      for(;idx<pair.Key.Length;idx++) if(pair.Key[idx]=='[')break;
-      string clean = pair.Key.Substring(0,idx);
-      if(pair.Key == clean) s.Add(pair.Key,pair.Value);
+      if(pair.Key.Length>=1 && (pair.Key[0]=='$'||pair.Key[0]=='#'||pair.Key[0]=='?'))continue;
+      if(pair.Key.Contains(TemplateTemplate.randomChar)||!checkClean(pair.Key)) continue;
+      s.Add(pair.Key,pair.Value);
     }
     return s;
   }
@@ -379,6 +384,14 @@ public static class ChannelState{
     if(string.IsNullOrEmpty(f) || f[0]!='@' || (s?.Flags?.Contains(f)??false)) return orig(s,f);
     return readChannel(f.Substring(1))!=0;
   }
+  static void SliderChange(Session s, Session.Slider l, float? nval){
+    if(channelStates.ContainsKey('?'+l.Name)) SetChannel('?'+l.Name, nval??0,true);
+  }
+  [OnLoad]
+  static HookManager sliderHooks=new(
+    ()=>{Everest.Events.Session.OnSliderChanged+=SliderChange;},
+    ()=>{Everest.Events.Session.OnSliderChanged-=SliderChange;}
+  );
   [OnLoad.OnHook(typeof(Session),nameof(Session.SetCounter))]
   static void Hook(On.Celeste.Session.orig_SetCounter orig, Session s, string f, int n){
     orig(s,f,n);

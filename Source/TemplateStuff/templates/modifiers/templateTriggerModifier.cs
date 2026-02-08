@@ -184,12 +184,9 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       modifierParent?.OnTrigger(sm);
       goto end;
     }
-    if(sm is TouchInfo tinf_){
-      if(tinf_.use)triggerParent.OnTrigger(tinf_);
-      else modifierParent?.OnTrigger(tinf_);
-    } else {
+    if(TriggerInfo.Test(sm)){
       if(passTrigger)triggerParent.OnTrigger(sm);
-    }
+    } else modifierParent?.OnTrigger(sm);
     end:
       if(!string.IsNullOrWhiteSpace(setCh) && TriggerInfo.Test(sm)) ChannelState.SetChannel(setCh,1);
       adv?.Apply();

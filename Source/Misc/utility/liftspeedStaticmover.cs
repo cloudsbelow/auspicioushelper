@@ -19,7 +19,6 @@ public class LiftspeedSm:StaticMover{
     float timesum = frameCount == UpdateHook.framenum? -Engine.DeltaTime:0;
     for(int i=0; i<trackLen; i++){
       if(ls[i].Item1!=Vector2.Zero){
-        DebugConsole.Write("ls",ls[i].Item1.LInf()*timesum, timesum, ls[i].Item1.LInf());
         if(ls[i].Item1.LInf()*timesum>1) return Vector2.Zero;
         return ls[i].Item1;
       }

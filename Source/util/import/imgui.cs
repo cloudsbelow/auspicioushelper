@@ -35,7 +35,6 @@ public static class ImGui{
     var a = (imgui = asm?.GetType("ImGuiNET.ImGui"));
     if(a==null) return;
     var bf = BindingFlags.Static|BindingFlags.Public;
-    DebugConsole.Write("imgui", a);
     try{
       //foreach(MethodInfo m in a.GetMethods()) DebugConsole.Write(m.ToString());
       begintable = (Func<string, int, bool>) a.GetMethod("BeginTable", bf, [typeof(string), typeof(int)]).CreateDelegate(typeof(Func<string, int, bool>));
@@ -62,7 +61,6 @@ public static class ImGui{
   public static void BuildTabHelper(string tabName, Action renderImGui, Func<bool> canBeVisible,
       Action onOpen=null, Action onClose=null) {
     if(RegisterTab == null) return;
-    DebugConsole.Write($"Added tab {tabName} to mapping utils");
     RegisterTab.Invoke(null, ["auspicioushelper", tabName, renderImGui, canBeVisible, onOpen??(static ()=>{}), onClose??(static ()=>{})]);
   }
 }

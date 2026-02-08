@@ -26,7 +26,7 @@ entity.placements = {
       hitJumpthrus=true,
       triggeredByRiding=true,
       throughDashblocks=true,
-      customFallTiming="0.2,0.1",
+      customFallTiming="0.2,0.1,0.2",
       maxWaitTiming=0.4,
       
       _loenn_display_template = true,

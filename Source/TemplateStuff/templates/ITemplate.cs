@@ -194,29 +194,40 @@ public class Template:Entity, ITemplateChild{
   }
   bool expanded = false;
   public void MarkExpanded()=>expanded=true;
-  public void makeChildren(Scene scene, bool recursive = false){
+  struct RecursionMarker:IDisposable{
+    [ResetEvents.NullOn(ResetEvents.RunTimes.OnReset)]
+    static int count=0;
+    public RecursionMarker(){count++;}
+    void IDisposable.Dispose(){count--;}
+    public static bool isRoot=>count==0;
+  }
+  public void makeChildren(Scene scene){
     if(t==null || expanded) return;
     expanded = true;
     lastRoundloc = roundLoc;
     if(!t.Use(this)) return;
-    t.AddTilesTo(this, scene);
-    Level l = scene as Level;
-    Vector2 simoffset = lastRoundloc-t.data.origin;
-    string fp = fullpath;
-    foreach(EntityData w in t.data.ChildEntities){
-      Entity e = EntityParser.create(w,l,t.data.roomdat,simoffset,this,fp);
-      if(e is ITemplateChild c){
-        addEnt(c);
+    Util.MultiDisposable dispose = new();
+    if(RecursionMarker.isRoot) TemplateTemplate.correctChain(dispose,this);
+    using(dispose.Add(new RecursionMarker())){
+      t.AddTilesTo(this, scene);
+      Level l = scene as Level;
+      Vector2 simoffset = lastRoundloc-t.data.origin;
+      string fp = fullpath;
+      foreach(EntityData w in t.data.ChildEntities){
+        Entity e = EntityParser.create(w,l,t.data.roomdat,simoffset,this,fp);
+        if(e is ITemplateChild c){
+          addEnt(c);
+        }
+        else if(e!=null)scene.Add(e);
       }
-      else if(e!=null)scene.Add(e);
+      foreach(DecalData d in t.data.decals){
+        Decal e = new Decal(d.Texture, simoffset+d.Position, d.Scale, d.Depth??0, d.Rotation, d.ColorHex){
+          DepthSetByPlacement = true
+        };
+        AddBasicEnt(e, simoffset+d.Position-lastRoundloc);
+      }
     }
-    foreach(DecalData d in t.data.decals){
-      Decal e = new Decal(d.Texture, simoffset+d.Position, d.Scale, d.Depth??0, d.Rotation, d.ColorHex){
-        DepthSetByPlacement = true
-      };
-      AddBasicEnt(e, simoffset+d.Position-lastRoundloc);
-    }
-    if(!recursive) templateAwake();
+    if(RecursionMarker.isRoot) templateAwake();
     if(this is IRegisterEnts) RegisterEnts(GetChildren<Entity>());
   }
   public virtual void templateAwake(){
@@ -235,7 +246,7 @@ public class Template:Entity, ITemplateChild{
     setTemplate(templateStr, scene);
     if(basicents != null)basicents.sceneadd(scene);
     scene.Add(this);
-    makeChildren(scene, parent!=null);
+    makeChildren(scene);
     addingScene = null;
   }
   public virtual void reducedAdd(Scene scene){

@@ -184,6 +184,7 @@ public class ConnectedBlocks:Entity{
   public static Dictionary<object, Action<Entity>> ExtraRemovalSteps = new(){
     {typeof(FireBarrier),(Entity e)=>(e as FireBarrier).solid.RemoveSelf()},
     {typeof(IceBlock),(Entity e)=>(e as IceBlock).solid.RemoveSelf()},
+    {typeof(IntroCar),(Entity e)=>(e as IntroCar).wheels.RemoveSelf()},
     {"FrostHelper/CustomFireBarrier",(Entity e)=>((Entity)Util.ReflectGet(e,"solid",false))?.RemoveSelf()}
   };
   void RemChildren(Util.OrderedSet<Entity> all, Vector2 minimum, templateFiller f){

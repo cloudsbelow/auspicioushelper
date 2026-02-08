@@ -71,16 +71,16 @@ public class FancyWater:Water, ISimpleEnt{
     int surfaceidx;
     bool loop;
     class Ripple{
-      public float pos;
-      public float speed;
-      public float height;
-      public float percent;
-      public float duration;
+      public float pos=0;
+      public float speed=0;
+      public float height=3;
+      public float percent=0;
+      public float duration=2;
     }
     List<Ripple> ripples;
-    struct Tension{
-      public float pos;
-      public float str;
+    class Tension{
+      public float pos=0;
+      public float str=4;
     }
     List<Tension> tensions;
     float timer=0;

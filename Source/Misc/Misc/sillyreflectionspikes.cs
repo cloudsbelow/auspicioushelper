@@ -133,7 +133,7 @@ public class CustomSpikes : Entity{
     if(fixOnblock && p.liftSpeedTimer>=tsm){
       realSpeed+=p.LiftSpeed;
     }
-    if(fixOwnSpeed)realSpeed-=sm.getLiftspeed();
+    if(fixOwnSpeed) realSpeed-=sm?.getLiftspeed()??parent?.gatheredLiftspeed??Vector2.Zero;
     switch (Direction) {
       case Directions.Up:
         if (realSpeed.Y >= 0f && p.Bottom <= base.Bottom) p.Die(new Vector2(0f, -1f));

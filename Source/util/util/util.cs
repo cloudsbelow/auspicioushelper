@@ -438,6 +438,17 @@ public static partial class Util{
     public RingBuffer(T[] dat)=>items=dat;
     public RingBuffer(int capacity):this(new T[capacity]){}
   }
+  public class MultiDisposable:IDisposable{
+    List<IDisposable> toDispose=null;
+    public IDisposable Add(IDisposable d){
+      if(toDispose==null) toDispose=new();
+      toDispose.Add(d);
+      return this;
+    }
+    void IDisposable.Dispose() {
+      if(toDispose!=null) foreach(var d in toDispose) d.Dispose();
+    }
+  }
   // public class SomeList<T>{
   //   List<T> items = new();
   //   HashSet<T> toRemove = new();

@@ -24,7 +24,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       passes.setparamvalex(key,val);
     };
   }
-  static Regex chr = new Regex(@"@(\w*(?:\[[^]]+\])?)((?:[*\/][\d\.]+)?)", RegexOptions.Compiled);
+  static Regex chr = new Regex(@"@([?$#]?\w*(?:\[[^]]+\])?)((?:[*\/][\d\.]+)?)", RegexOptions.Compiled);
   void setparamval(string key, string val){
     if(string.IsNullOrEmpty(key)) return;
     switch(val.ToLower()){

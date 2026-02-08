@@ -11,7 +11,7 @@ materialcontroller.placements = {
   {
     name = "main",
     data = {
-      passes="",
+      passes="null",
       identifier="",
       params="",
       textures="",

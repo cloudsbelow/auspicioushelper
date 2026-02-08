@@ -149,7 +149,7 @@ anyways i want to praise it more it is wonderful
     
     currentParent = t;
     Entity e = null; 
-    using (new Template.ChainLock()) e = loader(l,ld,simoffset,d);
+    using (new Template.ChainLock()) e = loader(l,ld,simoffset,TemplateTemplate.withReplace(d));
     if(e==null) goto done;
     ChildMarker.Get(e,t);
     if(path!=null && Finder.flagged.TryGetValue(path+$"/{d.ID}",out var ident)){
@@ -240,6 +240,8 @@ anyways i want to praise it more it is wonderful
     clarify("bigSpinner", Types.unwrapped, static (l,ld,o,e)=>new Wrappers.Bumperw(e,o));
 
     clarify("refill",Types.unwrapped,static (l,ld,offset,e)=>(Entity) new RefillW2(e,offset));
+    clarify("infiniteStar", Types.unwrapped, static (l,ld,o,e)=>new FeatherW(e,o));
+    clarify("booster",Types.unwrapped,static (l,ld,o,e)=>new BoosterW(e,o)); 
     clarify("cameraTargetTrigger", Types.basic, static (l,d,o,e)=>{
       string text2 = e.Attr("deleteFlag");
       if(string.IsNullOrEmpty(text2) || !l.Session.GetFlag(text2)){
@@ -267,6 +269,7 @@ anyways i want to praise it more it is wonderful
       });
     }
     clarify("introCar", Types.unwrapped, static (l,d,o,e)=>new IntroCarW(e,o));
+    clarify("crumbleBlock", Types.unwrapped, static (l,d,o,e)=>new CrumbleBlockW(e,o));
     clarify("cassetteBlock", Types.unwrapped, static (l,d,o,e)=>new CassetteW(e,o, new EntityID(d.Name,e.ID)));
     clarify(ConnectedBlocks.InplaceTemplateWrapper.creationDat.Name, Types.unwrapped, static (l,d,o,e)=>{
       return new ConnectedBlocks.InplaceTemplateWrapper(e.Position+o);

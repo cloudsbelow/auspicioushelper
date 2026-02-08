@@ -66,7 +66,7 @@ public abstract class ITexture{
           cached.Add(asset, tex = Texture2D.FromStream(auspicioushelperGFX.gd, stream));
         }
       } else tex=texture;
-      DebugConsole.Write("Texture:", tex, tex?.Width, tex?.Height);
+      DebugConsole.Write("Texture:", asset?.PathVirtual, tex?.Width, tex?.Height);
     }
     public ImageWrapper(string pathToAsset)
       :this(GetAsset(pathToAsset)){}

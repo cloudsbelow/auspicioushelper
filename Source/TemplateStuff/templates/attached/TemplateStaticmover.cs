@@ -101,7 +101,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     if(made || shouldDie) return;
     addingScene = s;
     made = true;
-    makeChildren(s,false);
+    makeChildren(s);
     if(!getSelfCol()) parentChangeStatBypass(layer==null?-1:0,-1,0);
   }
   bool shouldDie=false;
