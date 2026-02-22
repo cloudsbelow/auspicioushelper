@@ -60,16 +60,22 @@ public static class TemplateIop{
     public void TriggerParent()=>triggerTemplate(parent, Entity);
     //call this when your solids are hit please <3
     public DashCollisionResults RegisterDashhit(Player p, Vector2 dir)=>registerDashhit(parent, p, dir);
-    public void AddPlatform()=>registerPlatform(parent, Entity);
+    public void RegisterEntity()=>registerEntity(parent, Entity);
     public Vector2 getParentLiftspeed()=>getTemplateLiftspeed(parent);
   }
   public static Action<string, int, Level.EntityLoader> clarify;
   public static Action<string, Func<Level, LevelData, Vector2, EntityData, Component>> customClarify; 
   public static Action<Entity, Entity> triggerTemplate;
   public static Func<Entity, Player, Vector2, DashCollisionResults> registerDashhit;
-  //Call this function on any platforms your entity adds to make sure triggering propegates to the template
-  public static Action<Entity, Entity> registerPlatform;
+  
+  //Call this function on any entities your entity adds that are 'part of it' after addTo has been called. This sets up visuals and necessary components if applicable.
+  public static Action<Entity, Entity> registerEntity;
+  
+  //Get the liftspeed of the template containing this entity.
   public static Func<Entity, Vector2> getTemplateLiftspeed;
+  
+  //Get the template parent of the given entity
+  public static Func<Entity,Entity> getParentTemplate;
 }
 
 [ModExportName("auspicioushelper.templates")]
@@ -104,10 +110,22 @@ public static class TemplateIopExp{
     return DashCollisionResults.NormalCollision;
   }
   public static void registerPlatform(Entity template, Platform solid){
-    if(template is Template t) ChildMarker.Get(solid,t);
+    registerEntity(template,solid);
   }
-  public static Vector2 getTemplateLiftspeed(Entity template){
-    if(template is Template t) return t.gatheredLiftspeed;
+  public static void registerEntity(Entity template, Entity ent){
+    if(template is Template t){
+      ChildMarker.Get(ent,t);
+      t.RegisterEnts(new([ent]));
+    }
+  }
+  public static Vector2 getTemplateLiftspeed(Entity entity){
+    if(entity is Template t) return t.gatheredLiftspeed;
+    if(entity.Get<ChildMarker>() is {} cm) return cm.parent.gatheredLiftspeed;
     return Vector2.Zero;
+  }
+  public static Entity getParentTemplate(Entity entity){
+    if(entity is ITemplateChild c) return c.parent;
+    if(entity.Get<ChildMarker>() is {} cm) return cm.parent;
+    return null;
   }
 }

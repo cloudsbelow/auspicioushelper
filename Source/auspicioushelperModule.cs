@@ -174,6 +174,7 @@ public class auspicioushelperModule : EverestModule {
     CommunalHelperIop.load();
     ExtendedCameraIop.load();
     ImGui.load();
+    typeof(SpringTracker.FrosthelperSpring).ModInterop();
     DebugConsole.Write("Loading content");
   }
   public override void Unload() {

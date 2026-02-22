@@ -169,6 +169,8 @@ public class BackdropCapturer{
   static bool SkipDelegate(Backdrop b){
     return BackdropUnlock.unlocked || !back.TryGetValue(b, out var br) || br.origvis;
   }
+  public static BlendState currentBlendstate = BlendState.AlphaBlend;
+  public static BackdropRenderer currentRenderer = null;
   [OnLoad.ILHook(typeof(BackdropRenderer), nameof(BackdropRenderer.Render))]
   static void SkipHook(ILContext ctx){
     ILCursor c = new(ctx);
@@ -183,6 +185,19 @@ public class BackdropCapturer{
       c.EmitDelegate(SkipDelegate);
       c.EmitBrfalse(target);
     } else DebugConsole.WriteFailure("Failed to add skip hook", true);
+
+    c = new(ctx);
+    c.EmitLdarg0();
+    c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentRenderer),Util.GoodBindingFlags));
+    while(c.TryGotoNext(MoveType.Before,itr=>itr.MatchStloc0())){
+      c.EmitDup();
+      c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentBlendstate),Util.GoodBindingFlags));
+    }
+    c = new(ctx);
+    while(c.TryGotoNext(MoveType.Before,itr=>itr.MatchRet())){
+      c.EmitLdarg0();
+      c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentRenderer),Util.GoodBindingFlags));
+    }
   }
   public static HookManager expensiveHooks = new(()=>{
     On.Celeste.Backdrop.IsVisible+=Hook;
