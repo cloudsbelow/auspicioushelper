@@ -88,7 +88,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
           Add(new AudioMangler(Audio.Play("event:/new_content/game/10_farewell/fusebox_hit_1"),0.15f));
           return DashCollisionResults.Rebound;
         }
-        return DashCollisionResults.NormalCollision;
+        return ((ITemplateChild)this).propagateDashhit(p,dir);
       };
     }
     base.addTo(scene);

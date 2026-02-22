@@ -371,8 +371,23 @@ public class TileOccluder:OnAnyRemoveComp{
     size = new(dat.Columns*cellW,dat.Rows*cellH);
     return this;
   }
+  public TileOccluder Build(MipGrid.Layer l){
+    int w=l.width*8;
+    int h=l.height*8;
+    topEdges = new(h,w,(int i, int j)=>l.collidePoint(new(j,i))&&!l.collidePoint(new(j,i-1)));
+    bottomEdges = new(h,w,(int i, int j)=>l.collidePoint(new(j,i))&&!l.collidePoint(new(j,i+1)));
+    leftEdges = new(w,h,(int i, int j)=>l.collidePoint(new(i,j))&&!l.collidePoint(new(i-1,j)));
+    rightEdges = new(w,h,(int i, int j)=>l.collidePoint(new(i,j))&&!l.collidePoint(new(i+1,j)));
+    size = new(w*cellW,h*cellH);
+    return this;
+  }
   public TileOccluder():base(true,true){
     hooks.enable();
+  }
+  public TileOccluder(Vector2 cellsize, Vector2 offset):this(){
+    cellW=cellsize.X;
+    cellH=cellsize.Y;
+    this.offset=offset;
   }
   public TileOccluder(TileOccluder copy):this(){
     topEdges = copy.topEdges;
@@ -380,9 +395,12 @@ public class TileOccluder:OnAnyRemoveComp{
     leftEdges = copy.leftEdges;
     rightEdges = copy.rightEdges;
     size = copy.size;
+    offset = copy.offset;
+    cellW = copy.cellW;
+    cellH = copy.cellH;
   }
-  const float cellW = 8;
-  const float cellH = 8;
+  float cellW = 8;
+  float cellH = 8;
   public void Occlude(LightingRenderer r, Vector3 atlasCenter, Color mask, Vector2 center, float rad){
     Vector2 pos = lpos;
     Vector2 del = center-pos;
@@ -501,7 +519,8 @@ public class TileOccluder:OnAnyRemoveComp{
     r.StartDrawingPrimitives();
   }
 
-  
+  public bool selfVis = true;
+  Vector2 offset=Vector2.Zero;
   Vector2 lpos;
   bool lvis=false;
   static List<FloatRect> rects = new();
@@ -516,8 +535,8 @@ public class TileOccluder:OnAnyRemoveComp{
     rects.Clear();
     occs.Clear();
     foreach(TileOccluder comp in l.Tracker.GetComponents<TileOccluder>()){
-      Vector2 epos = comp.Entity.Position;
-      bool nvis = comp.Entity.Visible;
+      Vector2 epos = comp.Entity.Position+comp.offset;
+      bool nvis = comp.Entity.Visible && comp.selfVis;
       FloatRect rNew = new(epos.X,epos.Y, comp.size.X,comp.size.Y);
       if(nvis){
         rects.Add(rNew);

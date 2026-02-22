@@ -7,21 +7,28 @@ using Celeste;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
-using CKey = (string, float, byte, bool, bool);
+using CKey = (string, float, byte, Microsoft.Xna.Framework.Vector2);
 namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/ArbitrarySolid")]
 [MapenterEv(nameof(precache))]
 public class ArbitraryShapeSolid:Solid{
   [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
-  static Dictionary<CKey, (Vector2, MipGrid)> cache = new();
+  static Dictionary<CKey, (Vector2, MipGrid, TileOccluder)> cache = new();
   MTexture imag;
   float rot;
   Vector2 scale;
   Color col;
+  static Vector2 getScale(EntityData d){
+    return new(
+      d.Float("scaleX",d.Bool("flipH",false)?-1:1), 
+      d.Float("scaleY",d.Bool("flipV",false)?-1:1)
+    );
+  }
   public ArbitraryShapeSolid(EntityData d, Vector2 o):base(d.Position+o,0,0,d.Bool("safe")){
-    scale = new Vector2(d.Bool("flipH",false)?-1:1,d.Bool("flipV",false)?-1:1);
+    scale = getScale(d);
     rot = Calc.DegToRad*d.Float("rotation",0);
-    Collider = MakeCollider(makeKey(d));
+    Collider = MakeCollider(makeKey(d), out var occluder);
+    if(d.Bool("occludeLight",true)) Add(new TileOccluder(occluder));
     Depth  = (int)d.Float("depth",-100);
     if(d.tryGetStr("image", out var str)){
       imag = GetTextureAtPath(str);
@@ -32,70 +39,43 @@ public class ArbitraryShapeSolid:Solid{
     if(GFX.Game.textures.ContainsKey(path)) return GFX.Game[path];
     else return GFX.Game.GetAtlasSubtextureFromAtlasAt(path, 0);
   }
-  static Collider precache(EntityData d)=>MakeCollider(makeKey(d));
+  static Collider precache(EntityData d)=>MakeCollider(makeKey(d), out var _);
   static CKey makeKey(EntityData d){
     string path = d.Attr("CustomColliderPath","");
     if(string.IsNullOrWhiteSpace(path)) path = d.Attr("image");
     return new(
-      path, d.Float("rotation",0), 
+      path, Calc.DegToRad*d.Float("rotation",0), 
       (byte)Math.Clamp((int)(d.Float("alphaCutoff",0.5f)*255),0,255), 
-      d.Bool("flipH",false), d.Bool("flipV",false)
+      getScale(d)
     );
   }
-  static Collider MakeCollider(CKey path){
+  static Collider MakeCollider(CKey path, out TileOccluder occluder){
     if(cache.TryGetValue(path,out var cmg)){
+      occluder=cmg.Item3;
       return new MiptileCollider(cmg.Item2,Vector2.One){Position=cmg.Item1};
     } else {
       MTexture tex = GetTextureAtPath(path.Item1);
-      Vector2 tlc = (tex.DrawOffset-tex.Center)/tex.ScaleFix;
-      var f = new FloatRect(tlc.X,tlc.Y,tex.ClipRect.Width,tex.ClipRect.Height)._flip(path.Item4,path.Item5);
-      bool[] dat = Util.TexData(tex, out int w, out int h).Map(x=>x.A>=path.Item3).Flip(w,path.Item4,path.Item5);
-      if(path.Item2!=0){
-        int amt = (int)Math.Round(path.Item2/90);
-        dat = dat.Rotate(4-amt, ref w, ref h);
-        f = f._rot90By(amt);
-      }
-      int gw = (w+8-1)/8;
-      int gh = (h+8-1)/8;
-      MipGrid.Layer l = new(gw, gh);
-      for(int bx=0; bx<gw; bx++) for(int by=0; by<gh; by++){
-        ulong block = 0;
-        ulong num = 1;
-        for(int ty=0; ty<8; ty++) for(int tx=0; tx<8; tx++){
-          int x = bx*8+tx; int y = by*8+ty;
-          if(x<w && y<h && dat[x+w*y]) block|=num;
-          num<<=1;
+      Vector2 textlc = (tex.DrawOffset-tex.Center)/tex.ScaleFix;
+      var f = new FloatRect(textlc.X,textlc.Y,tex.ClipRect.Width,tex.ClipRect.Height);
+      List<Vector2> corners = new(){f.tlc,f.trc,f.blc,f.brc};
+      corners.MapInplace(x=>(x*path.Item4).Rotate(path.Item2));
+      
+      Int2 tlc = Int2.Floor(corners.Reduce(Vector2.Min, Vector2.One*float.PositiveInfinity));
+      Int2 brc = Int2.Ceil(corners.Reduce(Vector2.Max, Vector2.One*float.NegativeInfinity));
+
+      bool[] dat = Util.TexData(tex, out int texw, out int texh).Map(x=>x.A>=path.Item3);
+      
+      MipGrid.Layer l = new((brc.x-tlc.x+8-1)/8, (brc.y-tlc.y+8-1)/8);
+      for(int x=tlc.x; x<brc.x; x++) for(int y=tlc.y; y<brc.y; y++){
+        Vector2 loc = (new Vector2(x,y)+Vector2.One/2).Rotate(-path.Item2)/path.Item4-textlc;
+        if(Util.InterpolateNearest(dat, texw, loc, Util.CpuEdgeSampleMode.defaul)){
+          l.SetPoint(true, new Int2(x,y)-tlc);
         }
-        l.SetBlock(block,bx,by);
-      }
-      MipGrid m = new(l);
-      cache.Add(path, new(f.tlc, m));
-      return new MiptileCollider(m,Vector2.One){Position = f.tlc};
-    }
-  }
-  [CustomEntity("auspicioushelper/ArbitraryDie")]
-  [MapenterEv(nameof(precache))]
-  public class ArbitraryShapeKillbox:Entity{
-    MTexture imag;
-    float rot;
-    Vector2 scale;
-    Color col;
-    static Collider precache(EntityData d)=>MakeCollider(makeKey(d));
-    public ArbitraryShapeKillbox(EntityData d, Vector2 o):base(d.Position+o){
-      scale = new Vector2(d.Bool("flipH",false)?-1:1,d.Bool("flipV",false)?-1:1);
-      rot = Calc.DegToRad*d.Float("rotation",0);
-      Collider = MakeCollider(makeKey(d));
-      Depth  = (int)d.Float("depth",-100);
-      if(d.tryGetStr("image", out var str)){
-        imag = GetTextureAtPath(str);
-      } else Visible =false;
-      col = Util.hexToColor(d.Attr("color","fff"));
-      Add(new PlayerCollider((p)=>p.Die(Vector2.Zero)));
-    }
-    public override void Render() {
-      base.Render();
-      if(imag == null) Visible=false;
-      else imag.DrawCentered(Position, col, scale, rot);
+      } 
+      MipGrid m=new(l);
+      var t=new TileOccluder(Vector2.One,tlc).Build(l);
+      cache.Add(path, new(tlc, m, occluder = t));
+      return new MiptileCollider(m,Vector2.One){Position = tlc};
     }
   }
   public override void Render() {
@@ -163,5 +143,32 @@ public class ArbitraryShapeSolid:Solid{
       entity.Collidable = collidable;
     }
     riders.Clear();
+  }
+
+
+  [CustomEntity("auspicioushelper/ArbitraryDie")]
+  [MapenterEv(nameof(precache))]
+  public class ArbitraryShapeKillbox:Entity{
+    MTexture imag;
+    float rot;
+    Vector2 scale;
+    Color col;
+    static Collider precache(EntityData d)=>MakeCollider(makeKey(d),out var _);
+    public ArbitraryShapeKillbox(EntityData d, Vector2 o):base(d.Position+o){
+      scale = new Vector2(d.Bool("flipH",false)?-1:1,d.Bool("flipV",false)?-1:1);
+      rot = Calc.DegToRad*d.Float("rotation",0);
+      Collider = MakeCollider(makeKey(d), out var _);
+      Depth  = (int)d.Float("depth",-100);
+      if(d.tryGetStr("image", out var str)){
+        imag = GetTextureAtPath(str);
+      } else Visible =false;
+      col = Util.hexToColor(d.Attr("color","fff"));
+      Add(new PlayerCollider((p)=>p.Die(Vector2.Zero)));
+    }
+    public override void Render() {
+      base.Render();
+      if(imag == null) Visible=false;
+      else imag.DrawCentered(Position, col, scale, rot);
+    }
   }
 }

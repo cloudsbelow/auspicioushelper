@@ -8,7 +8,7 @@ entity.depth = 2000
 entity.nodeLimits = {0,1}
 entity.nodeLineRenderType = "line"
 
-edge_types = {"loop","clamp","hide"}
+local edge_types = {"loop","clamp","hide"}
 entity.placements = {
   {
     name = "Channel Sprite",

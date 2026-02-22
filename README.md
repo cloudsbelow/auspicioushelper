@@ -11,3 +11,7 @@ portal naiive and block and transition
 coverRoom
 liftspeed in dt mod
 falling block rj
+
+dashhit stuff properly
+rainbow shader
+deferred material effect

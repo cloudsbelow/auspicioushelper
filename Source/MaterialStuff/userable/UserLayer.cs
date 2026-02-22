@@ -95,14 +95,20 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
     };
     return new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l);
   }  
+  bool IMaterialLayer.useMarkingEntity=>!backdropLayer||!noOrder;
+  bool noOrder=false;
+  public bool DeferLayerDraw=>noOrder;
   internal static UserLayer make(BinaryPacker.Element d){
+    string order = d.Attr("renderOrder");
     LayerFormat l = new LayerFormat{
       depth = d.AttrInt("renderOrder"),
       quadfirst = d.AttrBool("quadFirst"),
       alwaysRender = d.AttrBool("alwaysRender"),
       drawInScene = false,
     };
-    return new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l){backdropLayer=true};
+    return new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l){
+      backdropLayer=true, noOrder = string.IsNullOrWhiteSpace(order)||!int.TryParse(order, out int _)
+    };
   }
   public IFadingLayer.FadeTypes fadeTypeIn {get;set;} = IFadingLayer.FadeTypes.Linear;
   public IFadingLayer.FadeTypes fadeTypeOut {get;set;} = IFadingLayer.FadeTypes.Linear;
@@ -134,7 +140,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       else switch(p.Value.ToLower()){
         case "lv": case "level":
           info.independent = layerformat.independent=false;
-          textures.Add(new(idx,texture = ITexture.bgWrapper));
+          textures.Add(new(idx,texture = backdropLayer?ITexture.lvWrapper:ITexture.bgWrapper));
           break;
         case "bg": case "background":
           info.usesbg = layerformat.useBg=true;
@@ -168,6 +174,10 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
           break;
       }
       if(idx == 0) overrideFirstResource = texture;
+    }
+    if(backdropLayer && overrideFirstResource==null){
+      overrideFirstResource = ITexture.lvWrapper;
+      info.independent = layerformat.independent=false;
     }
   }
   public override void render(SpriteBatch sb, Camera c) {

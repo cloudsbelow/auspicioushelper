@@ -36,6 +36,20 @@ public static partial class Util{
     }
     return res;
   }
+  public enum CpuEdgeSampleMode{
+    defaul,clamp
+  }
+  public static T InterpolateNearest<T>(this T[] data, int w, Vector2 loc, CpuEdgeSampleMode mode=CpuEdgeSampleMode.defaul){
+    int h=data.Length/w;
+    Int2 sample = Int2.Floor(loc);
+    if(sample.x<0 || sample.x>=w || sample.y<0 || sample.y>=h){
+      switch(mode){
+        case CpuEdgeSampleMode.defaul: return default;
+        case CpuEdgeSampleMode.clamp: sample=Int2.Max(Int2.Min(sample,new Int2(w,h)),new Int2(0,0)); break;
+      }
+    }
+    return data[sample.x+w*sample.y];
+  }
   public static T[] Flip<T>(this T[] data, int w, bool flipH, bool flipV){
     T[] res = new T[data.Length];
     int h = data.Length/w;
@@ -237,4 +251,8 @@ public static partial class Util{
   public static float L1(this Vector2 v)=>Math.Abs(v.X)+Math.Abs(v.Y);
   public static float LInf(this Vector2 v)=>Math.Max(Math.Abs(v.X),Math.Abs(v.Y));
   public static Vector3 Expand(this Vector2 v, float n=0)=>new Vector3(v.X,v.Y ,n);
+  public static Vector2 Rotate(this Vector2 v, float r)=>new Vector2(
+    v.X*MathF.Cos(r)-v.Y*MathF.Sin(r),
+    v.X*MathF.Sin(r)+v.Y*MathF.Cos(r)
+  );
 }

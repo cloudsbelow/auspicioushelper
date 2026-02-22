@@ -14,6 +14,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 public interface IMaterialLayer{
   Entity markingEntity {get;set;}
+  bool useMarkingEntity=>true;
   bool enabled {get;set;}
   float depth {get;}
   RenderTarget2D outtex {get;}

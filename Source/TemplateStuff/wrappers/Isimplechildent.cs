@@ -94,7 +94,6 @@ internal class BasicPlatform:ITemplateChild{
   public virtual void relposTo(Vector2 loc, Vector2 liftspeed){
     if(p == null||p.Scene==null)return;
     if(lpos!=p.Position){
-      //DebugConsole.Write($"changing tpos {lpos} {p.Position}     {toffset} {toffset+p.Position-lpos}");
       toffset+=p.Position-lpos;
     }
     p.MoveTo(loc+toffset, liftspeed);
@@ -139,7 +138,11 @@ public class ChildMarker:Component,IFreeableComp{
     this.parent=parent;
   }
   public static ChildMarker Get(Entity e, Template parent){
-    if(e.Get<ChildMarker>() is not {} m) e.Add(m=new ChildMarker(parent));
+    if(e.Get<ChildMarker>() is not {} m){
+      e.Add(m=new ChildMarker(parent));
+      if(e is Platform p && p.OnDashCollide == null && !(p is DreamBlock))
+        p.OnDashCollide = (Player p, Vector2 dir)=>parent.OnDashCollide(p,dir);
+    }
     return m;
   }
   public bool propagatesTo(Template other){

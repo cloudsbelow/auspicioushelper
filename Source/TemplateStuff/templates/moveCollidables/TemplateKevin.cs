@@ -28,11 +28,11 @@ public class TemplateKevin:TemplateMoveCollidable{
   :base(d,offset+d.Position,depthoffset){
     OnDashCollide = (p,dir)=>{
       if(!detatched) disconnect();
-      if(locked || godir==dir) return DashCollisionResults.NormalCollision;
+      if(locked || godir==dir) return ((ITemplateChild)this).propagateDashhit(p,dir);
       bool flag=false;
       if(dir.X!=0) flag = dir.X<0?dirflags[1]:dirflags[3];
       if(dir.Y!=0) flag = dir.Y<0?dirflags[2]:dirflags[0];
-      if(!flag) return DashCollisionResults.NormalCollision;
+      if(!flag) return ((ITemplateChild)this).propagateDashhit(p,dir);
       if(returning) AddDirectionToStack(dir.X!=0? Axis.horizontal:Axis.vertical);
       if(current!=null)Remove(current);
       Add(current = new Coroutine(GoSequence(-dir)));

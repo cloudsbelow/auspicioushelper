@@ -100,7 +100,10 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
       }
       if(!flag) return; 
     }
-    if(layer!=null) foreach(var c in comps)c.SetStealUse(layer,false,false);
+    if(layer!=null){
+      foreach(var c in comps) c.SetStealUse(layer,false,false);
+      foreach(var c in GetChildren<Solid>(Propagation.Inside)) if(c.Get<TileOccluder>() is {} to)to.selfVis=true;
+    }
     there = State.there;
     prop|=Propagation.Inside;
     setVisColAct(true,true,true);
@@ -119,7 +122,10 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
           hoffset = 2;
           childRelposSafe();
         }
-        if(layer!=null) foreach(var c in comps)c.SetStealUse(layer,true,true);
+        if(layer!=null) foreach(var c in comps){
+          c.SetStealUse(layer,true,true);
+          if(c.Entity is Solid s && s.Get<TileOccluder>() is {} to) to.selfVis=false;
+        }
       }else if(paranoid){
         destroyChildren(false);
       }

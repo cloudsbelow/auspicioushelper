@@ -40,7 +40,8 @@ public class TemplateMoonblock:Template{
       dashease = 1;
       dashdir = ddir;
     }
-    return DashCollisionResults.NormalOverride;
+    var res = ((ITemplateChild)this).propagateDashhit(p,ddir);
+    return res==DashCollisionResults.NormalCollision?DashCollisionResults.NormalOverride:res;
   } 
   const float dashReturn = 1.5f;
   public override void Update() {

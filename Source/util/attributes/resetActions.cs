@@ -98,23 +98,25 @@ public static class ResetEvents{
     protected string methodStr;
     protected Type ty;
     protected Util.HookTarget mode;
+    protected Type[] types=null;
     public LazyHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal){
       methodStr=method;
       this.ty=ty;
       this.mode=mode;
     }
+    public LazyHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal, params Type[] spec):this(ty,method,mode)=>types=spec;
   }
   public class ILHook:LazyHook{
     public ILHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal):base(ty,method,mode){}
     public override Action apply(MethodInfo m){
-      if(OnLoad.ILHook.apply(mode, m, ty, methodStr) is not {} h) return null;
+      if(OnLoad.ILHook.apply(mode, m, ty, methodStr, types) is not {} h) return null;
       return h.Dispose;
     }
   }
   public class OnHook:LazyHook{
     public OnHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal):base(ty,method,mode){}
     public override Action apply(MethodInfo m){
-      if(OnLoad.OnHook.apply(mode, m, ty, methodStr) is not {} h) return null;
+      if(OnLoad.OnHook.apply(mode, m, ty, methodStr, types) is not {} h) return null;
       return h.Dispose;
     }
   }

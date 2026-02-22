@@ -18,7 +18,7 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
   [Flags]
   enum Result{
     Normal=1, Bounce=2, Rebound=4, Bumper=8,
-    Trigger=16,
+    Trigger=16, Pass = -1,Block = -2,
     NormalTrigger=Normal|Trigger, BounceTrigger=Bounce|Trigger, ReboundTrigger=Rebound|Trigger, BumperTrigger=Bumper|Trigger,
     BouceTrigger=BounceTrigger //typo compat
   }
@@ -68,13 +68,17 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
   public TemplateDashhitModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
     OnDashCollide = (Player p, Vector2 dir)=>{
+      Result d = res[dirToInt(getDir(dir))];
       if(!skip){
+        if(d == Result.Block) return DashCollisionResults.NormalCollision;
+        if(d == Result.Pass) return parent?.GetFromTree<TemplateDashhitModifier>(Propagation.DashHit)?.OnDashCollide(p,dir)??DashCollisionResults.NormalCollision;
+
         if(!string.IsNullOrWhiteSpace(echannel) && !thing) using(Util.WithRestore(ref thing, true)){
           foreach(TemplateDashhitModifier o in Scene.Tracker.GetEntities<TemplateDashhitModifier>()){
             if(checkEntanglement(o)) o.OnDashCollide(p,dir);
           }
         }
-        Result d = res[dirToInt(getDir(dir))];
+        
         if(d.HasFlag(Result.Trigger)) OnTrigger(new DashhitInfo(p,dir,this));
         if(alwaysLetThrough && !d.HasFlag(Result.Normal)) (this as ITemplateChild).propagateDashhit(p,dir);
         if(d.HasFlag(Result.Bumper)) {

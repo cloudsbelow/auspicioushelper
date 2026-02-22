@@ -101,6 +101,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
   bool allowTransition;
   string customVisualGroup;
   bool priority;
+  bool tryDashhit;
   public TemplateDreamblockModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateDreamblockModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
@@ -114,6 +115,12 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     allowTransition = d.Bool("allowTransition",false);
     customVisualGroup = d.Attr("customVisualGroup", "");
     priority = d.Bool("priority",true);
+    if(tryDashhit = d.Bool("tryDashhit",false)){
+      OnDashCollide = (Player p, Vector2 d)=>{
+        if(DreamCheckStart(p,d,this,false)) return DashCollisionResults.Ignore;
+        return ((ITemplateChild) this).propagateDashhit(p,d);
+      };
+    }
   }
   public override void addTo(Scene scene) {
     fake = Util.GetUninitializedEntWithComp<SentinalDb>();
@@ -222,10 +229,10 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     if(conserve) speed=p.Speed;
     return speed*(reverse? -1:1);
   }
-  bool DreamCheckStart(Player p, Vector2 dir, Entity from){
+  bool DreamCheckStart(Player p, Vector2 dir, Entity from, bool fromCollision=false){
     bool flag = dreaming && p.Inventory.DreamDash && p.DashAttacking && (
       (dir == Vector2.Zero&&p.DashDir!=Vector2.Zero) || Vector2.Dot(dir, p.DashDir)>0
-    );
+    ) && (!fromCollision || !tryDashhit);
     if(flag){
       speedSetter = this;
       p.StateMachine.State = Player.StDreamDash;
@@ -251,20 +258,6 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
   static void LevelTransThing(Player p){
     if(p.dreamBlock is SentinalDb d && d.parent.allowTransition){
       goto yes;
-    } else {
-      // foreach(DreamMarkerComponent c in p.Scene.Tracker.GetComponents<DreamMarkerComponent>()){
-      //   if(c.dbm.dreaming && !c.dbm.allowTransition && c.Entity.Collidable){
-      //     bool flag;
-      //     if(c.Collider!=null) flag = p.CollideCheck(c.Entity);
-      //     else{
-      //       Collider orig = c.Entity.Collider;
-      //       c.Entity.Collider=c.Collider;
-      //       flag = p.CollideCheck(c.Entity);
-      //       c.Entity.Collider=orig;
-      //     }
-      //     if(flag) goto yes;
-      //   }
-      // }
     }
     foreach(DreamTrans t in p.Scene.Tracker.GetEntities<DreamTrans>()) if(p.CollideCheck(t)) goto yes;
     return;
@@ -331,7 +324,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     if(!DDsh(p)){
       TemplateDreamblockModifier t = d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateDreamblockModifier>();
       while(t!=null){
-        if(t.dreaming && t.DreamCheckStart(p,d.Direction,d.Hit)) return;
+        if(t.dreaming && t.DreamCheckStart(p,d.Direction,d.Hit, true)) return;
         t = t.parent?.GetFromTree<TemplateDreamblockModifier>();
       }
       if(prioThing(p,d)) return;
@@ -342,7 +335,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     if(!DDsh(p)){
       TemplateDreamblockModifier t = d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateDreamblockModifier>();
       while(t!=null){
-        if(t.dreaming && t.DreamCheckStart(p,d.Direction,d.Hit)) return;
+        if(t.dreaming && t.DreamCheckStart(p,d.Direction,d.Hit, true)) return;
         t = t.parent?.GetFromTree<TemplateDreamblockModifier>();
       }
       if(prioThing(p,d)) return;

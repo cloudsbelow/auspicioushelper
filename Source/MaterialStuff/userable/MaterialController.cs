@@ -7,6 +7,8 @@ using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using System;
 using Celeste.Mod.Backdrops;
+using MonoMod.Cil;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -125,6 +127,7 @@ internal class MaterialController:Entity{
   public class MaterialBackdrop:Backdrop{
     string identifier;
     CachedUserMaterial u;
+    bool deferred=false;
     public void Readd(){
       loadedMats[identifier]=u;
       DebugConsole.Write("Reenabling",identifier);
@@ -148,6 +151,7 @@ internal class MaterialController:Entity{
         layer.identifier = identifier;
       }
       u=layer;
+      UseSpritebatch = !(deferred = u is UserLayer{DeferLayerDraw:true});
     }
     public override void Update(Scene scene) {
       base.Update(scene);
@@ -159,6 +163,12 @@ internal class MaterialController:Entity{
         MaterialPipe.removeLayer(u);
       }
     }
+    static BackdropRenderer rendering;
+    [OnLoad.ILHook(typeof(BackdropRenderer),nameof(BackdropRenderer.Render))]
+    static void Hook(ILContext ctx){
+      ILCursor c = new(ctx);
+      DebugConsole.DumpIl(c);
+    }
     public override void Render(Scene scene) {
       if(u==null) return;
       if(Visible && !u.enabled){
@@ -167,7 +177,12 @@ internal class MaterialController:Entity{
         else MaterialPipe.addAfterAction(()=>Update(scene));
         return;
       }
-      Draw.SpriteBatch.Draw(u.outtex,Vector2.Zero,Color.White);
+      if(deferred){
+        u.render();
+        MaterialPipe.gd.SetRenderTarget(GameplayBuffers.Level);
+        Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, null, rendering.Matrix);
+      }
+      else Draw.SpriteBatch.Draw(u.outtex,Vector2.Zero,Color.White);
     }
   }
 }

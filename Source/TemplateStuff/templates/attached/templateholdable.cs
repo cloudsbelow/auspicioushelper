@@ -7,8 +7,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
+using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Cil;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -24,10 +26,26 @@ public interface ICustomHoldableRelease{
     } else orig(s,force);
     releasing = null;
   }
+  static float ThrowDelegate(float orig, Player p){
+    if(p.Holding is not ICustomHoldableRelease h) return orig;
+    Vector2 speed = h.GetRecoil(p);
+    p.Speed.Y+=speed.Y;
+    return speed.X;
+  }
+  Vector2 GetRecoil(Player p)=>new (80,0);
+  static void ThrowHook(ILContext ctx){
+    ILCursor c = new(ctx);
+    if(c.TryGotoNextBestFit(MoveType.After, i=>i.MatchLdcR4(80), i=>i.MatchLdarg0())){
+      c.EmitDelegate(ThrowDelegate);
+      c.EmitLdarg0();
+    } else DebugConsole.WriteFailure("Could not add recoil hook", true);
+  }
   public static HookManager hooks = new(()=>{
     On.Celeste.Holdable.Release+=ReleaseHook;
+    IL.Celeste.Player.Throw += ThrowHook;
   },()=>{
     On.Celeste.Holdable.Release-=ReleaseHook;
+    IL.Celeste.Player.Throw -= ThrowHook;
   },auspicioushelperModule.OnEnterMap);
 }
 
@@ -63,7 +81,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   bool keepCollidableAlways = false;
   float playerfrac; float theofrac;
   string wallhitsound;
-  float wallhitKeepspeed;
+  float[] wallhitKeepspeed;
   float gravity;
   float friction;
   float terminalvel;
@@ -79,6 +97,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   float voidDieOffset = 100;
   float minHoldTimer = 0.35f;
   float[] customThrowspeeds;
+  Vector2 customRecoil;
   bool moveImmediately = true;
   bool hasReflection;
   float? neutralHolddelay = null;
@@ -116,7 +135,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     playerfrac = d.Float("player_momentum_weight",1);
     theofrac = d.Float("holdable_momentum_weight",0);
     wallhitsound = d.Attr("wallhitsound","event:/game/05_mirror_temple/crystaltheo_hit_side");
-    wallhitKeepspeed = d.Float("wallhit_speedretain",0.4f);
+    wallhitKeepspeed = Util.csparseflat(d.Attr("wallhit_speedretain",""),0.4f,0.6f);
     gravity = d.Float("gravity",800f);
     terminalvel = d.Float("terminal_velocity",200f);
     friction = d.Float("friction",350);
@@ -132,6 +151,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     hasReflection = d.Bool("mirrorReflection",false);
     SquishCallback = OnSquish2;
     customThrowspeeds = Util.csparseflat(d.Attr("customThrowspeeds"));
+    customRecoil = Util.toVec2(Util.csparseflat(d.Attr("customRecoil",""),80,0));
     Depth = -1;
     Add(Mysolids = new());
   }
@@ -229,6 +249,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     }
     if (!keepCollidableAlways) te.setCollidability(false);
   }
+  Vector2 ICustomHoldableRelease.GetRecoil(Player p)=>customRecoil;
   public bool replaceNormalRelease {get;}=false;
   void OnRelease(Vector2 force){
     Position = Position.Round();
@@ -307,16 +328,15 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       doneFail:
       done: ;
     }
-    Hold.cannotHoldTimer=force.X==0 && neutralHolddelay is {} neutralh? neutralh:Hold.cannotHoldDelay;
+    bool drop = force.X==0;
+    Hold.cannotHoldTimer=drop&& neutralHolddelay is {} neutralh? neutralh:Hold.cannotHoldDelay;
     Hold.Holder = null;
     Position=Position.Round();
     RemoveTag(Tags.Persistent);
     force = force*200f;
-    if (force.X != 0f && force.Y == 0f){
-      force.Y = -0.4f*200;
-    }
+    if (!drop && force.Y == 0f) force.Y = -0.4f*200;
     if(customThrowspeeds.Length>0) force.X = Math.Sign(force.X)*customThrowspeeds[0];
-    if(customThrowspeeds.Length>1 && force.X!=0) force.Y = -customThrowspeeds[1];
+    if(customThrowspeeds.Length>1 && !drop) force.Y = -customThrowspeeds[1];
     Speed = force;
     if (Speed != Vector2.Zero){
       noGravityTimer = 0.1f;
@@ -336,14 +356,14 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       (data.Hit as DashSwitch).OnDashCollide(null, Vector2.UnitX * MathF.Sign(Speed.X));
     }
     Audio.Play(wallhitsound, Position);
-    Speed.X *= -wallhitKeepspeed;
+    Speed.X *= -wallhitKeepspeed[0];
   }
   void OnCollideV(CollisionData data){
     if (data.Hit is DashSwitch){
       (data.Hit as DashSwitch).OnDashCollide(null, Vector2.UnitY * Math.Sign(Speed.Y));
     }
     Audio.Play(wallhitsound, Position);
-    if (Speed.Y > 140f && !(data.Hit is DashSwitch) && !dontFlingOff) Speed.Y*= -0.6f;
+    if (Speed.Y > 140f && !(data.Hit is DashSwitch) && !dontFlingOff) Speed.Y*= -wallhitKeepspeed[1];
     else Speed.Y=0;
   }
   bool resetting;
@@ -478,14 +498,14 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     if(flag) te.setCollidability(false);
   }
   bool inRelpos=false;
-  public static bool PickupHook(On.Celeste.Player.orig_Pickup orig, Player self, Holdable hold){
+  static bool PickupHook(On.Celeste.Player.orig_Pickup orig, Player self, Holdable hold){
     bool ret =  orig(self, hold);
     if(ret && hold.Entity is TemplateHoldable t){
       self.minHoldTimer = t.minHoldTimer;
     }
     return ret;
   }
-  public static bool MoveHHook(On.Celeste.Actor.orig_MoveHExact orig, Actor self, int amount, Collision cb, Solid pusher){
+  static bool MoveHHook(On.Celeste.Actor.orig_MoveHExact orig, Actor self, int amount, Collision cb, Solid pusher){
     //DebugConsole.Write($"HereH", self, amount, pusher, self.Scene.TimeActive, self.Position.X, jumpthruMoving);
     if(/*(pusher != null || jumpthruMoving>0) &&*/ self is TemplateHoldable s && s.te!=null){
       if(pusher?.Get<ChildMarker>()?.propagatesTo(s.te)??false) return false;
@@ -500,7 +520,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       return orig(self, amount, cb, pusher);
     }
   }
-  public static bool MoveVHook(On.Celeste.Actor.orig_MoveVExact orig, Actor self, int amount, Collision cb, Solid pusher){
+  static bool MoveVHook(On.Celeste.Actor.orig_MoveVExact orig, Actor self, int amount, Collision cb, Solid pusher){
     if(/*(pusher != null || jumpthruMoving>0) &&*/ self is TemplateHoldable s && s.te!=null){
       if(pusher?.Get<ChildMarker>()?.propagatesTo(s.te)??false) return false;
       bool flag = s.te.getSelfCol();
@@ -514,7 +534,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       return orig(self, amount, cb, pusher);
     }
   }
-  public static void PlayerUpdateHook(On.Celeste.Player.orig_Update orig, Player p){
+  static void PlayerUpdateHook(On.Celeste.Player.orig_Update orig, Player p){
     TemplateHoldable flag = null;
     if(p.Holding != null && p.Holding.Entity is TemplateHoldable th && th.keepCollidableAlways){
       th.te?.setCollidability(false);

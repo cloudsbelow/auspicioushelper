@@ -37,7 +37,7 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
     if(d.Bool("canbreak",true)){
       OnDashCollide = (Player p, Vector2 dir)=>{
         if (!candash && p.StateMachine.State != 5 && p.StateMachine.State != 10){
-          return DashCollisionResults.NormalCollision;
+          return ((ITemplateChild) this).propagateDashhit(p,dir);
         }
         using(new DebrisSource(p.Position, dir*40, high:75))breakBlock();
         return DashCollisionResults.Rebound;

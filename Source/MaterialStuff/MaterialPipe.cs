@@ -36,7 +36,9 @@ public static class MaterialPipe {
   static public IntRect clipBounds;
   public static Level renderingLevel; 
   static List<Action> afterRender = new();
+  static SamplerList samplers = new SamplerList().Add(1, SamplerState.PointClamp).Add(2, SamplerState.PointClamp);
   static public void addAfterAction(Action a)=>afterRender.Add(a);
+  [OnLoad.OnHook(typeof(GameplayRenderer),nameof(GameplayRenderer.Render))]
   public static void GameplayRender(On.Celeste.GameplayRenderer.orig_Render orig, GameplayRenderer self, Scene scene){
     orderFlipped = false;
     var camdim = ExtendedCameraIop.cameraSize();
@@ -66,36 +68,33 @@ public static class MaterialPipe {
       needsImmUpdate = false;
     }
     
-    gd.SamplerStates[1] = SamplerState.PointClamp;
-    gd.SamplerStates[2] = SamplerState.PointClamp;
-    foreach(IMaterialLayer l in layers){
-      if(l.markingEntity.Scene!=scene){
-        DebugConsole.Write("Weirdness occurred (should only happen from map reloading and debug menu use)");
-        l.markingEntity.RemoveSelf();
-        scene.Add(new LayerMarkingEntity(l));
-      }
-      if(l.usesbg && !orderFlipped && Engine.Instance.scene is Level v){
-        gd.SetRenderTarget(GameplayBuffers.Level);
-        gd.Clear(v.BackgroundColor);
-        v.Background.Render(v);
-        orderFlipped = true;
-        gd.SetRenderTarget(GameplayBuffers.Gameplay);
-        bgReorderer.enable();
-      }
-      if(l.independent){
-        if(l.checkdo()){
-          l.render();
-          l.diddraw = true;
+    using(samplers.Apply(gd)){
+      foreach(IMaterialLayer l in layers){
+        if(l.useMarkingEntity && l.markingEntity.Scene!=scene){
+          DebugConsole.Write("Weirdness occurred (should only happen from map reloading and debug menu use)");
+          l.markingEntity.RemoveSelf();
+          scene.Add(new LayerMarkingEntity(l));
         }
-        else l.diddraw = false;
+        if(l.usesbg && !orderFlipped && Engine.Instance.scene is Level v){
+          gd.SetRenderTarget(GameplayBuffers.Level);
+          gd.Clear(v.BackgroundColor);
+          v.Background.Render(v);
+          orderFlipped = true;
+          gd.SetRenderTarget(GameplayBuffers.Gameplay);
+        }
+        if(l.independent){
+          if(l.checkdo()){
+            l.render();
+            l.diddraw = true;
+          }
+          else l.diddraw = false;
+        }
       }
+      gd.SetRenderTarget(GameplayBuffers.Gameplay);
+      OverrideVisualComponent.Override(scene);
+      orig(self, scene);
+      OverrideVisualComponent.Restore(scene);
     }
-    gd.SetRenderTarget(GameplayBuffers.Gameplay);
-    OverrideVisualComponent.Override(scene);
-    orig(self, scene);
-    OverrideVisualComponent.Restore(scene);
-    gd.SamplerStates[1]=SamplerState.LinearClamp;
-    gd.SamplerStates[2]=SamplerState.LinearClamp;
     renderingLevel = null;
     end:
       if(afterRender.Count>0){
@@ -121,6 +120,7 @@ public static class MaterialPipe {
   [Import.SpeedrunToolIop.Static]
   static HashSet<IMaterialLayer> leaving = new();
   static Coroutine transroutine = null;
+  [OnLoad.OnHook(typeof(Level),nameof(Level.TransitionTo))]
   static void ontrans(On.Celeste.Level.orig_TransitionTo orig, Level self, LevelData next, Vector2 dir){
     camAt = 0;
     entering.Clear();
@@ -143,24 +143,19 @@ public static class MaterialPipe {
   static List<LayerMarkingEntity> blockedAddingEnt = new();
   public static void addLayer(IMaterialLayer l){
     if(!leaving.Remove(l))entering.Add(l);
-    if(l.enabled){
-      // if(!layers.Contains(l)){
-      //   DebugConsole.Write("Speedruntool badness happened");
-      //   removeLayer(l);
-      // }else return;
-      return;
-    }
+    if(l.enabled) return;
     l.enabled=true;
     toRemove.Remove(l);
-    if(l.markingEntity!=null) throw new Exception("Layer marking entities are leaking");
-    if(Engine.Instance.scene is Level lv)lv.Add(new LayerMarkingEntity(l));
-    else if(Engine.Instance.scene is LevelLoader ld) ld.Level.Add(new LayerMarkingEntity(l));
-    else{
-      DebugConsole.Write($"Dangerously adding layer {l} - this should only occur when reloading assets");
-      blockedAddingEnt.Add(new LayerMarkingEntity(l));
+    if(l.useMarkingEntity){
+      if(l.markingEntity!=null) throw new Exception("Layer marking entities are leaking");
+
+      if(Engine.Instance.scene is Level lv)lv.Add(new LayerMarkingEntity(l));
+      else if(Engine.Instance.scene is LevelLoader ld) ld.Level.Add(new LayerMarkingEntity(l));
+      else blockedAddingEnt.Add(new LayerMarkingEntity(l));
+
+      if(UpdateHook.inUpdate) UpdateHook.EnsureUpdateAny();
+      else needsImmUpdate = true;
     }
-    if(UpdateHook.inUpdate) UpdateHook.EnsureUpdateAny();
-    else needsImmUpdate = true;
     l.onEnable();
     if(layers.Contains(l)) return;
     dirty = true;
@@ -173,8 +168,10 @@ public static class MaterialPipe {
     toRemove.Add(l);
     l.enabled = false;
     l.onRemove();
-    l.markingEntity.RemoveSelf();
-    l.markingEntity=null;
+    if(l.useMarkingEntity){
+      l.markingEntity.RemoveSelf();
+      l.markingEntity=null;
+    }
     leaving.Remove(l);
     entering.Remove(l);
   }
@@ -191,6 +188,10 @@ public static class MaterialPipe {
     foreach(var l in layers) if(l is CachedUserMaterial c)  MaterialController.fixmat(c);
   }
 
+  public static bool backdropReorderDetour(){
+    return orderFlipped;
+  }
+  [OnLoad.ILHook(typeof(Level),nameof(Level.Render))]
   static void reorderBg(ILContext ctx){
     ILCursor c = new ILCursor(ctx);
     //DebugConsole.DumpIl(c,0,50); 
@@ -210,15 +211,12 @@ public static class MaterialPipe {
     bad:
     DebugConsole.WriteFailure($"Failed to add background reordering hook");
   }
-  [OnLoad]
-  public static void setup(){
-    dirty=true;
-    hooks.enable();
-  }
+  [OnLoad.OnHook(typeof(Player),"")]
   public static void playerCtorHook(On.Celeste.Player.orig_ctor orig, Player p, Vector2 pos, PlayerSpriteMode s){
     orig(p,pos,s);
     remLeaving();
   }
+  [OnLoad.OnHook(typeof(Level),nameof(Level.End))]
   public static void SceneEnd(On.Celeste.Level.orig_End orig, Level l){
     foreach(var v in layers) removeLayer(v);
     orig(l);
@@ -229,24 +227,4 @@ public static class MaterialPipe {
     toRemove.Clear();
     layers.Clear();
   }
-  static HookManager hooks = new HookManager(()=>{
-    On.Celeste.GameplayRenderer.Render += GameplayRender;
-    On.Celeste.Level.TransitionTo += ontrans;
-    On.Celeste.Player.ctor += playerCtorHook;
-    On.Celeste.Level.End+=SceneEnd;
-  }, void ()=>{
-    On.Celeste.GameplayRenderer.Render-= GameplayRender;
-    On.Celeste.Level.TransitionTo -= ontrans;
-    On.Celeste.Player.ctor -= playerCtorHook;
-    On.Celeste.Level.End-=SceneEnd;
-  });
-
-  public static bool backdropReorderDetour(){
-    return orderFlipped;
-  }
-  static HookManager bgReorderer = new HookManager(()=>{
-    IL.Celeste.Level.Render += reorderBg;
-  }, void ()=>{
-    IL.Celeste.Level.Render -= reorderBg;
-  }, auspicioushelperModule.OnEnterMap);
 }

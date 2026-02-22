@@ -75,13 +75,12 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
   public Template parent {get;set;}
   public Vector2 toffset {get;set;}
   public FloatRect bounds {get;set;}
-  TileOccluder occlude;
   public FgTiles(templateFiller t, Vector2 posoffset, int depthoffset):base(posoffset+t.data.offset, t.tiledata.fgt){
     toffset = t.data.offset;
     Depth+=depthoffset;
     TileHooks.hooks.enable();
     tileTypes = t.tiledata.fgt;
-    Add(occlude = new TileOccluder(t.tiledata.tileOcc));
+    Add(new TileOccluder(t.tiledata.tileOcc));
     OnDashCollide = (Player p, Vector2 dir)=>((ITemplateChild) this).propagateDashhit(p,dir);
     if(PartialTiles.usingPartialtiles){
       Collider = new MiptileCollider(t.tiledata.FgMipgrid, Vector2.One);
