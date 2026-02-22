@@ -81,23 +81,9 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
 
   public Vector2 getSpeed()=>sm?.getLiftspeed()??Vector2.Zero;
 
-
-  [ResetEvents.OnHook(typeof(Actor),nameof(Actor.MoveHExact))]
-  static bool Hook(On.Celeste.Actor.orig_MoveHExact orig, Actor s, int m, Collision col, Solid pusher){ 
+  static bool SetPortalOnHorizontal(Entity s, int m){
     var portals = s.Scene.Tracker.GetEntities<PortalFaceH>();
-    if(portals.Count==0) return orig(s,m,col,pusher);
-
-    if(pusher != null && s.Collider is PColliderH pch_ && !pch_.fixing &&
-      pch_.GetPrimaryRect(out var prim, out var alw) && (alw||!pusher.Collider.Collide(prim.munane()))
-    ){
-      if(pusher.Collider is Hitbox){
-        var f = pch_.GetSecondaryRect();
-        m=m+(int)(m<0? s.Right-f.right:s.Left-f.x);
-      }
-      if(pch_.flipH) m*=-1;
-      s.LiftSpeed = pch_.calcspeed(pusher.LiftSpeed,true);
-    }
-
+    if(portals.Count==0) return true;
     int dir = Math.Sign(m);
     Vector2 eloc = s.Position;
     if(s.Collider is Hitbox h){
@@ -116,9 +102,25 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
           closest = p;
         }
       }
-      if(minDist>=m*dir+PColliderH.margin) return orig(s,m,col,pusher);
-      s.Collider = new PColliderH(s,closest,closest.other);
+      if(minDist>=m*dir+PColliderH.margin) return true;
+      else s.Collider = new PColliderH(s,closest,closest.other);
     }
+    return false;
+  }
+  [ResetEvents.OnHook(typeof(Actor),nameof(Actor.MoveHExact))]
+  static bool Hook(On.Celeste.Actor.orig_MoveHExact orig, Actor s, int m, Collision col, Solid pusher){ 
+    if(pusher != null && s.Collider is PColliderH pch_ && !pch_.fixing &&
+      pch_.GetPrimaryRect(out var prim, out var alw) && (alw||!pusher.Collider.Collide(prim.munane()))
+    ){
+      if(pusher.Collider is Hitbox){
+        var f = pch_.GetSecondaryRect();
+        m=m+(int)(m<0? s.Right-f.right:s.Left-f.x);
+      }
+      if(pch_.flipH) m*=-1;
+      s.LiftSpeed = pch_.calcspeed(pusher.LiftSpeed,true);
+    }
+    if(SetPortalOnHorizontal(s,m)) orig(s,m,col,pusher);
+
     if(s.Collider is PColliderH pch){
       bool res = orig(s,m,col,pusher);
       if(s.Collider == pch) pch.Done();
@@ -126,6 +128,17 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
       return res;
     }
     return orig(s,m,col,pusher);
+  }
+  [ResetEvents.OnHook(typeof(Platform),nameof(Platform.MoveHExactCollideSolids))]
+  static bool Hook(On.Celeste.Platform.orig_MoveHExactCollideSolids orig, Platform s, int m, bool thruDashBlocks, Action<Vector2, Vector2, Platform> onCollide){
+    if(SetPortalOnHorizontal(s,m))orig(s,m,thruDashBlocks,onCollide);
+    if(s.Collider is PColliderH pch){
+      bool res = orig(s,m,thruDashBlocks,onCollide);
+      if(s.Collider == pch) pch.Done();
+      else if(s.Collider is PColliderH pcho) pcho.Done();
+      return res;
+    }
+    return orig(s,m,thruDashBlocks,onCollide);
   }
   public static bool fish;
   ref struct BlockPoint:IDisposable{
