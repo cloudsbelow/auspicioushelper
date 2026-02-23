@@ -7,11 +7,8 @@ Assembly references are not supported (except for stuff in the interop folder.) 
 todo
 watesr
 arbitrary shape rooms
-portal naiive and block and transition
-coverRoom
 liftspeed in dt mod
 falling block rj
 
-dashhit stuff properly
 rainbow shader
 deferred material effect

@@ -14,7 +14,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
   public TemplateFallingblock(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
 
   Vector2 falldir = Vector2.UnitY;
-  Vector2 basefalldir = Vector2.UnitY;
+  float basemaxspeed;
   string tch;
   string rch;
   string ImpactSfx = "event:/game/general/fallblock_impact";
@@ -29,19 +29,18 @@ public class TemplateFallingblock:TemplateMoveCollidable{
   float[] delays;
   public TemplateFallingblock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
-    basefalldir = d.Attr("direction") switch{
+    falldir = d.Attr("direction") switch{
       "down"=> Vector2.UnitY,
       "up"=>-Vector2.UnitY,
       "left"=>-Vector2.UnitX,
       "right"=>Vector2.UnitX,
       _=>Vector2.UnitX
     };
-    falldir = basefalldir;
     rch = d.Attr("reverseChannel");
     tch = d.Attr("triggerChannel");
     ImpactSfx = d.Attr("impact_sfx","event:/game/general/fallblock_impact");
     ShakeSfx = d.Attr("shake_sfx","event:/game/general/fallblock_shake");
-    maxspeed = d.Float("max_speed",130f);
+    basemaxspeed = maxspeed = d.Float("max_speed",130f);
     gravity = d.Float("gravity", 500);
     setTch = d.Bool("set_trigger_channel",false) && !string.IsNullOrWhiteSpace(tch);
     triggeredByRiding = d.Bool("triggeredByRiding",true);
@@ -132,10 +131,9 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       }));
     }
     if(!string.IsNullOrWhiteSpace(rch)){
-      if(ChannelState.readChannel(rch)!=0) falldir=-basefalldir;
       Add(new ChannelTracker(rch, (double val)=>{
-        falldir = val==0?basefalldir:-basefalldir;
-      }));
+        maxspeed = val==0?basemaxspeed:-basemaxspeed;
+      },true));
     }
   }
   bool triggerNextFrame;

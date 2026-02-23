@@ -12,7 +12,6 @@ entity.placements = {
   {
     name = "Arbitrary shape kill area",
     data = {
-      safe=false,
       image = "decals/9-core/fossil_a",
       CustomColliderPath = "",
       scaleX=1,

@@ -22,6 +22,7 @@ entity.placements = {
       useVisuals=true,
       allowTransition=false,
       tryDashhit=true,
+      sendDashhit=false,
     }
   }
 }

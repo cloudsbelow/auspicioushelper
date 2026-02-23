@@ -101,13 +101,13 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
   internal static UserLayer make(BinaryPacker.Element d){
     string order = d.Attr("renderOrder");
     LayerFormat l = new LayerFormat{
-      depth = d.AttrInt("renderOrder"),
+      depth = int.TryParse(order, out int orderNum)?orderNum:-1,
       quadfirst = d.AttrBool("quadFirst"),
       alwaysRender = d.AttrBool("alwaysRender"),
       drawInScene = false,
     };
-    return new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l){
-      backdropLayer=true, noOrder = string.IsNullOrWhiteSpace(order)||!int.TryParse(order, out int _)
+    return new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l, true){
+      noOrder = (string.IsNullOrWhiteSpace(order)||!int.TryParse(order, out int _))&&l.quadfirst
     };
   }
   public IFadingLayer.FadeTypes fadeTypeIn {get;set;} = IFadingLayer.FadeTypes.Linear;
@@ -115,7 +115,8 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
   int swapch=0;
   bool backdropLayer=false;
   bool IMaterialLayer.autoManageRemoval => !backdropLayer;
-  public UserLayer(string texstring, string paramstring, VirtualShaderList l, LayerFormat f):base(l,f){
+  public UserLayer(string texstring, string paramstring, VirtualShaderList l, LayerFormat f, bool isBackdrop=false):base(l,f){
+    backdropLayer=isBackdrop;
     SetupTextures(texstring);
     for(int i=0; i<swapch; i++) handles.Add(new RenderTargetPool.RenderTargetHandle(false));
     try{

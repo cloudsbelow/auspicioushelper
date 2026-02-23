@@ -102,6 +102,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
   string customVisualGroup;
   bool priority;
   bool tryDashhit;
+  bool sendDashhit;
   public TemplateDreamblockModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateDreamblockModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
@@ -121,6 +122,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
         return ((ITemplateChild) this).propagateDashhit(p,d);
       };
     }
+    sendDashhit = d.Bool("sendDashhit",false);
   }
   public override void addTo(Scene scene) {
     fake = Util.GetUninitializedEntWithComp<SentinalDb>();
@@ -243,6 +245,13 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
       p.dreamBlock = fake;
       fake.lastEntity = from;
       if(from?.Get<ChildMarker>()?.parent is { } entparent) p.LiftSpeed = entparent.gatheredLiftspeed;
+      if(sendDashhit){
+        if(dir.L1()==0){
+          dir = Vector2.UnitY*Math.Sign(p.Speed.Y);
+          if(Math.Abs(p.Speed.X)>=Math.Abs(p.Speed.Y)) dir = Vector2.UnitX*Math.Sign(p.Speed.X);
+        }
+        ((ITemplateChild) this).propagateDashhit(p,dir);
+      } 
     }
     return flag;
   }

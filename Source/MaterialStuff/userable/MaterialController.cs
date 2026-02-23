@@ -138,7 +138,7 @@ internal class MaterialController:Entity{
         identifier = e.Attr("passes","")+"###"+e.Attr("params","");
         if(!string.IsNullOrWhiteSpace(e.Attr("textures",""))) identifier+="###"+e.Attr("textures");
       }
-      bool reload = e.AttrBool("reload",false);
+      bool reload = true;//e.AttrBool("reload",false);
       if(e.Attr("passes","").Length == 0)return;
       if(reload && loadedMats.TryGetValue(identifier, out var l)){
         if(l.enabled) MaterialPipe.removeLayer(l);
@@ -163,12 +163,6 @@ internal class MaterialController:Entity{
         MaterialPipe.removeLayer(u);
       }
     }
-    static BackdropRenderer rendering;
-    [OnLoad.ILHook(typeof(BackdropRenderer),nameof(BackdropRenderer.Render))]
-    static void Hook(ILContext ctx){
-      ILCursor c = new(ctx);
-      DebugConsole.DumpIl(c);
-    }
     public override void Render(Scene scene) {
       if(u==null) return;
       if(Visible && !u.enabled){
@@ -180,9 +174,9 @@ internal class MaterialController:Entity{
       if(deferred){
         u.render();
         MaterialPipe.gd.SetRenderTarget(GameplayBuffers.Level);
-        Draw.SpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, null, rendering.Matrix);
+        BackdropCapturer.currentRenderer.StartSpritebatch(BackdropCapturer.currentBlendstate);
       }
-      else Draw.SpriteBatch.Draw(u.outtex,Vector2.Zero,Color.White);
+      Draw.SpriteBatch.Draw(u.outtex,Vector2.Zero,Color.White);
     }
   }
 }

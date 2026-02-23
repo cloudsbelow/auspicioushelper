@@ -82,6 +82,7 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
   public Vector2 getSpeed()=>sm?.getLiftspeed()??Vector2.Zero;
 
   static bool SetPortalOnHorizontal(Entity s, int m){
+    if(m==0) return s.Collider is not PColliderH;
     var portals = s.Scene.Tracker.GetEntities<PortalFaceH>();
     if(portals.Count==0) return true;
     int dir = Math.Sign(m);
@@ -119,7 +120,7 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
       if(pch_.flipH) m*=-1;
       s.LiftSpeed = pch_.calcspeed(pusher.LiftSpeed,true);
     }
-    if(SetPortalOnHorizontal(s,m)) orig(s,m,col,pusher);
+    if(SetPortalOnHorizontal(s,m)) return orig(s,m,col,pusher);
 
     if(s.Collider is PColliderH pch){
       bool res = orig(s,m,col,pusher);
@@ -131,8 +132,8 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
   }
   [ResetEvents.OnHook(typeof(Platform),nameof(Platform.MoveHExactCollideSolids))]
   static bool Hook(On.Celeste.Platform.orig_MoveHExactCollideSolids orig, Platform s, int m, bool thruDashBlocks, Action<Vector2, Vector2, Platform> onCollide){
-    if(SetPortalOnHorizontal(s,m))orig(s,m,thruDashBlocks,onCollide);
-    if(s.Collider is PColliderH pch){
+    if(SetPortalOnHorizontal(s,m)) return orig(s,m,thruDashBlocks,onCollide);
+    if(s.Collider is PColliderH pch) using(Util.WithRestore(ref inSolidCollideMove, true)){
       bool res = orig(s,m,thruDashBlocks,onCollide);
       if(s.Collider == pch) pch.Done();
       else if(s.Collider is PColliderH pcho) pcho.Done();
@@ -172,6 +173,22 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
       return res;
     } else return orig(s,m,c,pusher);
   }
+  [ResetEvents.OnHook(typeof(Platform),nameof(Platform.MoveVExactCollideSolids))]
+  static bool Hook(On.Celeste.Platform.orig_MoveVExactCollideSolids orig, Platform s, int m, bool thru, Action<Vector2, Vector2, Platform> onCollide){
+    if(s.Collider is PColliderH pch) using(Util.WithRestore(ref inSolidCollideMove, true)){
+      bool res;
+      if(m<0 && pch.distToTop<-m) using(new BlockPoint(pch.f1.Position)) res=orig(s,m,thru,onCollide);
+      else if(m>0 && pch.distToBottom<m) using(new BlockPoint(pch.f1.Position+pch.f1.height*Vector2.UnitY)) res=orig(s,m,thru,onCollide);
+      else return orig(s,m,thru,onCollide);
+      if(s.Collider == pch) pch.Done();
+      else if(s.Collider is PColliderH pcho) pcho.Done();
+      return res;
+    } else return orig(s,m,thru,onCollide);
+  }
+  static bool inSolidCollideMove;
+
+
+
   bool deadly;
   void MoveHExact(int amt){
     if(amt == 0) return;

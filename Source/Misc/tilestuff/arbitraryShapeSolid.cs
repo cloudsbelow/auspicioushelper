@@ -34,6 +34,7 @@ public class ArbitraryShapeSolid:Solid{
       imag = GetTextureAtPath(str);
     } else Visible =false;
     col = Util.hexToColor(d.Attr("color","fff"));
+    SurfaceSoundIndex = d.Int("soundIndex",8);
   }
   static MTexture GetTextureAtPath(string path){
     if(GFX.Game.textures.ContainsKey(path)) return GFX.Game[path];

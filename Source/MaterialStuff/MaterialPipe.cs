@@ -31,7 +31,7 @@ public static class MaterialPipe {
   public static bool dirty;
   public static GraphicsDevice gd;
   public static bool orderFlipped{get;private set;}
-  public static Camera camera;
+  public static Camera camera = new();
   static bool needsImmUpdate;
   static public IntRect clipBounds;
   public static Level renderingLevel; 

@@ -129,7 +129,6 @@ anyways i want to praise it more it is wonderful
     EntityID eid = new(ld.Name,d.ID);
     if(l?.Session?.DoNotLoad.Contains(eid)??false) return null;
     if(!parseMap.TryGetValue(d.Name,out var etype)){
-      DebugConsole.Write($"Encountered unknown {d.Name}");
       parseMap[d.Name] = etype = Types.initiallyerrors;
     }
     if(etype == Types.unable) return null;

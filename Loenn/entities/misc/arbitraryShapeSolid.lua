@@ -1,5 +1,6 @@
 local drawableSprite = require("structs.drawable_sprite")
 local utils = require("utils")
+local defaults = require("mods").requireFromPlugin("libraries.aelper_defaults")
 
 local entity = {}
 
@@ -14,6 +15,7 @@ entity.placements = {
     name = "Arbitrary shape solid",
     data = {
       safe=false,
+      soundIndex = 8,
       image = "decals/9-core/fossil_a",
       CustomColliderPath = "",
       scaleX=1,
@@ -26,6 +28,14 @@ entity.placements = {
     }
   }
 }
+entity.fieldInformation = {
+    soundIndex = {
+        fieldType = "integer",
+        options = defaults.soundIndices,
+        editable = false,
+    },
+}
+
 
 function entity.texture(room, entity)
   return entity.image

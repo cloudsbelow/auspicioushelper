@@ -70,7 +70,7 @@ public static class DebugConsole {
   public static void Write(string message, params object[] os){
     string str = message+" ";
     foreach(var o in os){
-      str+=(o==null?"NULL":o.ToString())+" ";
+      str+=(o==null?"NULL":o.ToString().RemovePrefix("Celeste.Mod.auspicioushelper."))+" ";
     }
     Write(str);
   }

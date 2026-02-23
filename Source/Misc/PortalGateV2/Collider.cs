@@ -222,8 +222,8 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     return (GetRects(out var r1, out var r2) && r2.CollideLine(a,b)) || r1.CollideLine(a,b);
   }
   public override void Render(Camera camera, Color color) {
-    if(GetRects(out var r1, out var r2)) Draw.HollowRect(r2.x, r2.y, r2.w, r2.h, color);
-    Draw.HollowRect(r1.x, r1.y, r1.w, r1.h, color);
+    if(GetRects(out var r1, out var r2)) Draw.HollowRect(r2.x, r2.y, r2.w, r2.h, Color.Orange);
+    Draw.HollowRect(r1.x, r1.y, r1.w, r1.h, Color.Orange);
   }
 
   ref struct CollideDetourLock:IDisposable{
@@ -331,6 +331,9 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
             s.RenderPosition = temp;
           }
         }
+      } else {
+        e.Position= Position;
+        e.Render();
       }
       e.Position = oldpos;
     }

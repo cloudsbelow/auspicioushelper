@@ -213,20 +213,18 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     if (s.Orientation == Spring.Orientations.Floor && Speed.Y >= 0f){
       Speed.X *= 0.5f;
       Speed.Y = -160f;
-      noGravityTimer = 0.15f;
+      noGravityTimer = SpringTracker.DownSpring(s)?0:0.15f;
       return true;
     }
     if (s.Orientation == Spring.Orientations.WallLeft && Speed.X <= 0f){
       MoveTowardsY(s.CenterY + 5f, 4f);
-      Speed.X = 220f;
-      Speed.Y = -80f;
+      Speed = new Vector2(220,-80);
       noGravityTimer = 0.1f;
       return true;
     }
     if (s.Orientation == Spring.Orientations.WallRight && Speed.X >= 0f){
       MoveTowardsY(s.CenterY + 5f, 4f);
-      Speed.X = -220f;
-      Speed.Y = -80f;
+      Speed = new Vector2(-220,-80);
       noGravityTimer = 0.1f;
       return true;
     }

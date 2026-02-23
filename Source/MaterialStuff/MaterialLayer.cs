@@ -170,13 +170,14 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
   }
   public virtual bool drawMaterials => layerformat.quadfirst || willdraw.Count!=0;
   public ITexture overrideFirstResource = null;
+  void FlushToremove(){
+    List<OverrideVisualComponent> nlist = new();
+    foreach(var o in willdraw) if(!toRemove.Contains(o))nlist.Add(o);
+    toRemove.Clear();
+    willdraw=nlist;
+  }
   public virtual void render(SpriteBatch sb, Camera c){
-    if(toRemove.Count>0){
-      List<OverrideVisualComponent> nlist = new();
-      foreach(var o in willdraw) if(!toRemove.Contains(o))nlist.Add(o);
-      toRemove.Clear();
-      willdraw=nlist;
-    }
+    if(toRemove.Count>0)FlushToremove();
     passes.setbaseparams();
     GraphicsDevice gd = MaterialPipe.gd;
     for(int i=0; i<passes.Count; i++){
@@ -204,6 +205,7 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
 
   HashSet<OverrideVisualComponent> toRemove = new();
   public void addEnt(OverrideVisualComponent o){
+    if(toRemove.Count>0) FlushToremove();
     if(toRemove.Remove(o))return;
     if(info.enabled){
       willdraw.Add(o); 

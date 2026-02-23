@@ -24,9 +24,6 @@ effect.fieldOrder = {
 }
 
 effect.fieldInformation = {
-    renderOrder = {
-        fieldType = "integer"
-    },
     passes = {
         fieldType = "list",
         elementDefault="null",

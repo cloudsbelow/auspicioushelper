@@ -101,15 +101,14 @@ public class TemplatePushblock:TemplateMoveCollidable{
         foreach(SpringTracker s in Scene.Tracker.GetComponents<SpringTracker>()){
           if(!exclude.Contains(s.Spring) && qe.Collide(new FloatRect(s.Entity))){
             s.Spring.BounceAnimate();
-            if(s.Spring.Orientation == Spring.Orientations.Floor){
-              speed.Y = -160f;
-            }
-            if(s.Spring.Orientation == Spring.Orientations.WallLeft){
-              speed.X = 160; speed.Y=-40;
-            }
-            if(s.Spring.Orientation == Spring.Orientations.WallRight){
-              speed.X = -160; speed.Y=-40;
-            }
+            Vector2 m = SpringTracker.Multiplier(s.Spring);
+            speed = SpringTracker.GetDir(s.Spring) switch {
+              SpringTracker.Dir.Right=>new Vector2(160,-40)*m,
+              SpringTracker.Dir.Left=>new Vector2(-160,-40)*m,
+              SpringTracker.Dir.Down=>new(speed.X*0.6f,160*m.Y),
+              SpringTracker.Dir.Up=>new(speed.X,-160*m.Y),
+              _=>speed,
+            };
             nophysicstime = giveNoPhysicsSpring;
           }
         }
