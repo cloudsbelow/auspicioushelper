@@ -80,7 +80,6 @@ public class OverrideVisualComponent:OnAnyRemoveComp, IFreeableComp{
     parents.RemoveAt(idx);
   }
   public void SetStealUse(IOverrideVisuals v, bool nsteal, bool nuse){
-    DebugConsole.Write("Set stealuse", Entity, v.ToString().RemovePrefix("Celeste.Mod.auspicioushelper."), nsteal, nuse);
     int idx = GetOverriderIdx(v, out var stolen);
     if(idx==-1) throw new Exception("StealUse set not in thing");
     var desc = parents[idx];
@@ -89,25 +88,13 @@ public class OverrideVisualComponent:OnAnyRemoveComp, IFreeableComp{
     desc.use=nuse;
     desc.steal=nsteal;
     parents[idx]=desc;
-    if(stolen) {
-      DebugConsole.Write("Return erarly stolen");
-      return;
-    }
+    if(stolen) return;
     //This overrider is 'active'
     if(origuse!=nuse){
-      if(nuse){
-        DebugConsole.Write("Addc",v);
-        desc.o.AddC(this);
-      }
-      else {
-        DebugConsole.Write("Removec",v);
-        desc.o.RemoveC(this);
-      }
+      if(nuse) desc.o.AddC(this);
+      else desc.o.RemoveC(this);
     } 
-    if(origsteal==nsteal) {
-      DebugConsole.Write("Return erarly equiv");
-      return;
-    }
+    if(origsteal==nsteal) return;
     //Overriders after this have their status change
     while(++idx<parents.Count){
       VisualOverrideDescr descr = parents[idx];

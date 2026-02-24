@@ -28,6 +28,7 @@ entity.placements = {
       throughDashblocks=true,
       customFallTiming="0.2,0.1,0.2",
       maxWaitTiming=0.4,
+      triggerOnImpact=true,
       
       _loenn_display_template = true,
     }

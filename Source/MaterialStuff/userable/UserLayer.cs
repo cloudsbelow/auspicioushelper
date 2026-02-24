@@ -98,7 +98,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
   bool IMaterialLayer.useMarkingEntity=>!backdropLayer||!noOrder;
   bool noOrder=false;
   public bool DeferLayerDraw=>noOrder;
-  internal static UserLayer make(BinaryPacker.Element d){
+  internal static UserLayer make(BinaryPacker.Element d, string ident){
     string order = d.Attr("renderOrder");
     LayerFormat l = new LayerFormat{
       depth = int.TryParse(order, out int orderNum)?orderNum:-1,
@@ -107,7 +107,8 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       drawInScene = false,
     };
     return new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l, true){
-      noOrder = (string.IsNullOrWhiteSpace(order)||!int.TryParse(order, out int _))&&l.quadfirst
+      noOrder = (string.IsNullOrWhiteSpace(order)||!int.TryParse(order, out int _))&&l.quadfirst,
+      identifier = ident
     };
   }
   public IFadingLayer.FadeTypes fadeTypeIn {get;set;} = IFadingLayer.FadeTypes.Linear;

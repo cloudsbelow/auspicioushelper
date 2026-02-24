@@ -236,6 +236,10 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
       (dir == Vector2.Zero&&p.DashDir!=Vector2.Zero) || Vector2.Dot(dir, p.DashDir)>0
     ) && (!fromCollision || !tryDashhit);
     if(flag){
+      if(dir.L1()==0){
+        dir = Vector2.UnitY*Math.Sign(p.Speed.Y);
+        if(Math.Abs(p.Speed.X)>=Math.Abs(p.Speed.Y)) dir = Vector2.UnitX*Math.Sign(p.Speed.X);
+      }
       speedSetter = this;
       p.StateMachine.State = Player.StDreamDash;
       speedSetter = null;
@@ -245,13 +249,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
       p.dreamBlock = fake;
       fake.lastEntity = from;
       if(from?.Get<ChildMarker>()?.parent is { } entparent) p.LiftSpeed = entparent.gatheredLiftspeed;
-      if(sendDashhit){
-        if(dir.L1()==0){
-          dir = Vector2.UnitY*Math.Sign(p.Speed.Y);
-          if(Math.Abs(p.Speed.X)>=Math.Abs(p.Speed.Y)) dir = Vector2.UnitX*Math.Sign(p.Speed.X);
-        }
-        ((ITemplateChild) this).propagateDashhit(p,dir);
-      } 
+      if(sendDashhit) ((ITemplateChild) this).propagateDashhit(p,dir);
     }
     return flag;
   }

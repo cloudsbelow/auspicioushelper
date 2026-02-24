@@ -344,16 +344,18 @@ public static class ChannelState{
     Dictionary<string, Tuple<string, double>> toDo = new();
     public AdvancedSetter(string str){
       foreach(var v in Util.kvparseflat(str)){
-        if(v.Value.Length == 0) DebugConsole.WriteFailure($"No set parameter for {v.Key}",true);
         Tuple<string,double> n=null;
-        if(v.Value[0]=='@') n = new(v.Value.Substring(1),0);
+        if(string.IsNullOrWhiteSpace(v.Value)) n = new(null,1);
+        else if(v.Value[0]=='@') n = new(v.Value.Substring(1),0);
         else if(double.TryParse(v.Value, out var ival)) n=new(null,ival);
         else DebugConsole.WriteFailure("No operation defined for thing");
         if(!toDo.TryAdd(v.Key,n)) DebugConsole.WriteFailure("Duplicate key; forbidden");
       }
     }
     public void Apply(){
-      foreach(var v in toDo) SetChannel(v.Key,v.Value.Item1 is {} str? readChannel(str) : v.Value.Item2);
+      foreach(var v in toDo){
+        SetChannel(v.Key,v.Value.Item1 is {} str? readChannel(str) : v.Value.Item2);
+      }
     }
   }
 

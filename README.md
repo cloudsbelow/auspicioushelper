@@ -8,7 +8,3 @@ todo
 watesr
 arbitrary shape rooms
 liftspeed in dt mod
-falling block rj
-
-rainbow shader
-deferred material effect

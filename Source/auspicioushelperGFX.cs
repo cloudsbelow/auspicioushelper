@@ -34,6 +34,7 @@ public static class auspicioushelperGFX {
       DebugConsole.WriteFailure("Failed to fetch shader at Effects/"+v.path);
     } else try{
       v.shader = new Effect(graphicsDeviceService.GraphicsDevice, asset.Data);
+      v.fixBaseparams();
       // try {
       //   ModAsset qasset = Everest.Content.Get(Util.concatPaths("Effects",v.path)+"_quiet.cso",true);
       //   if(qasset!=null) v.quiet = new Effect(graphicsDeviceService.GraphicsDevice, qasset.Data);

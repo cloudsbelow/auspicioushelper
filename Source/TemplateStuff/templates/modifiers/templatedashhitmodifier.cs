@@ -37,8 +37,9 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
   bool refillStamina = false;
   public void OnTrigger(TriggerInfo s) {
     //DebugConsole.Write("dashed", s, s?.entity, refillDashesOnTrigger);
-    if(s.shouldTrigger && (refillDashesOnTrigger>0||refillStamina)){
-      if(((s.entity as Player)??(alwaysRefill?UpdateHook.cachedPlayer:null)) is Player p){
+    if(!TriggerInfo.TestPass(s,this)) return;
+    if(refillDashesOnTrigger>0||refillStamina){
+      if(((s?.entity as Player)??(alwaysRefill?UpdateHook.cachedPlayer:null)) is Player p){
         p.Dashes = Math.Max(p.Dashes,refillDashesOnTrigger);
         if(refillStamina) p.RefillStamina();
       }

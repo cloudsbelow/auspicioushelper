@@ -27,6 +27,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
   float waitTimer=0;
   float waitTime=0;
   float[] delays;
+  bool triggerOnImpact;
   public TemplateFallingblock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
     falldir = d.Attr("direction") switch{
@@ -46,12 +47,13 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     triggeredByRiding = d.Bool("triggeredByRiding",true);
     delays = Util.csparseflat(d.Attr("customFallTiming",""),0.25f,0.1f,-1);
     waitTimer = waitTime = d.Float("maxWaitTiming",0);
+    triggerOnImpact = d.Bool("triggerOnImpact",false);
 
     Add(new Coroutine(Sequence()));
     if(setTch)Add(upd = new UpdateHook());
   }
   IEnumerator Sequence(){
-    float speed;
+    float speed=0;
     bool first = true;
     while((!triggeredByRiding || !hasPlayerRider()) && !triggered){
       yield return null;
@@ -60,7 +62,6 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     disconnect();
     //emancipate();
     parent?.GetFromTree<IRemovableContainer>()?.RemoveChild(this);
-    DebugConsole.Write("Delay", delays[0]);
     shake(delays[0]+waitTime);
     Audio.Play(ShakeSfx,Position);
     yield return delays[0];
@@ -69,8 +70,8 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       yield return null;
     }
     trying:
-      Query qs = getq(falldir);
-      if(TestMove(qs, 1, falldir)){
+      Query qs = getq(falldir*Math.Sign(maxspeed));
+      if(TestMove(qs, 1, falldir*Math.Sign(maxspeed))){
         speed = 0;
         if(!first){
           shake(delays[1]+waitTime);
@@ -103,6 +104,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       if(res){
         ownLiftspeed = Vector2.Zero;
         Audio.Play(ImpactSfx,Position);
+        if(triggerOnImpact)parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new TriggerInfo.EntInfo("fallingBlock",this,true));
         if(delays[2]>=0){
           shake(delays[2]);
           yield return delays[2];
@@ -112,7 +114,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       else goto falling;
     removing:
       yield return null;
-      Vector2 fds = falldir;
+      Vector2 fds = falldir*Math.Sign(maxspeed);
       for(int i=0; i<40; i++){
         speed = Calc.Approach(speed,160,500*Engine.DeltaTime);
         Position+=fds*speed*Engine.DeltaTime;

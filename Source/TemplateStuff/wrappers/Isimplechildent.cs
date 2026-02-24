@@ -141,7 +141,9 @@ public class ChildMarker:Component,IFreeableComp{
     if(e.Get<ChildMarker>() is not {} m){
       e.Add(m=new ChildMarker(parent));
       if(e is Platform p && p.OnDashCollide == null && !(p is DreamBlock))
-        p.OnDashCollide = (Player p, Vector2 dir)=>parent.OnDashCollide(p,dir);
+        p.OnDashCollide = (Player p, Vector2 dir)=>{
+          return parent.OnDashCollide is {} a?a(p,dir):((ITemplateChild) parent).propagateDashhit(p,dir);
+        };
     }
     return m;
   }

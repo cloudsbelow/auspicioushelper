@@ -146,7 +146,7 @@ public static partial class Util{
   static Dictionary<char,char> escape = new Dictionary<char, char>{
     {'{','}'}, {'[',']'}, {'(',')'},
   };
-  public static Dictionary<string,string> kvparseflat(string str, bool strip=false, bool stripout=false){
+  public static Dictionary<string,string> kvparseflat(string str, bool strip=false, bool stripout=false, bool assumeValue=false){
     if(strip) str=stripEnclosure(str);
     Stack<char> unescaped = new Stack<char>();
     var o = new Dictionary<string,string>();
@@ -154,16 +154,46 @@ public static partial class Util{
     string v="";
     int idx=0;
     bool escapeNext = false;
-    parsekey:
-      if(idx>=str.Length) return o;
-      if(str[idx] == ':'){
-        idx++;goto parsevalue;
+    parsekey:{
+      if((idx>=str.Length || (str[idx]==',' && assumeValue)) && unescaped.Count==0){
+        if(idx>=str.Length && string.IsNullOrWhiteSpace(k)) return o;
+        idx++; goto fent;
       }
-      else{
+      if(str[idx] == ':' && unescaped.Count==0){
+        idx++; goto parsevalue;
+      }
+      if(idx >= str.Length){
+        DebugConsole.WriteFailure("PARSE ERROR: "+str);
+        return o;
+      }
+      if(escape.TryGetValue(str[idx], out var esc)){
+        unescaped.Push(esc);
         k+=str[idx]; idx++; goto parsekey;
       }
+      if(unescaped.Count>0 && unescaped.Peek()==str[idx]){
+        unescaped.Pop(); 
+        k+=str[idx]; idx++; goto parsekey;
+      }
+      if(str[idx]=='"'){
+        k+=str[idx]; idx++; goto parsestringkey;
+      }
+      k+=str[idx]; idx++; goto parsekey;
+    }
 
-    parsevalue:
+    parsestringkey:
+      if(idx == str.Length){
+        DebugConsole.WriteFailure("PARSE ERROR: "+str);
+      }
+      if(escapeNext){
+        escapeNext = false; 
+        k+=str[idx]; idx++; goto parsestringkey;
+      }
+      if(str[idx] == '"'){
+        k+=str[idx]; idx++; goto parsekey;
+      }
+      k+=str[idx]; idx++; goto parsestringkey;
+
+    parsevalue:{
       if((idx >= str.Length||str[idx] == ',') && unescaped.Count ==0){
         idx++; goto fent;
       }
@@ -183,6 +213,7 @@ public static partial class Util{
         v+=str[idx]; idx++; goto parsestring;
       }
       v+=str[idx]; idx++; goto parsevalue;
+    }
 
     parsestring:
       if(idx == str.Length){
@@ -199,7 +230,7 @@ public static partial class Util{
 
     fent:
       bool flag;
-      if(stripout) flag=o.TryAdd(k.Trim(),stripEnclosure(v.Trim()));
+      if(stripout) flag=o.TryAdd(stripEnclosure(k.Trim()),stripEnclosure(v.Trim()));
       else flag = o.TryAdd(k.Trim(),v.Trim());
       if(!flag) DebugConsole.Write($"Parsed dictionary has two identical keys {k}:\n {str}");
       k=""; v="";
@@ -266,16 +297,41 @@ public static partial class Util{
     return vm;
   }
   public static string stripEnclosure(string str){
-    if(str == "") return "";
-    if(str[0] == '\"' && str[str.Length-1] == '\"') return str.Substring(1,str.Length-2);
-    if(escape.TryGetValue(str[0],out var esc)){
-      if(str[str.Length-1]==esc)return str.Substring(1,str.Length-2);
-      else {
-        DebugConsole.WriteFailure("Enclosing characters not symmetric: "+str);
-        return str;
+    if(string.IsNullOrEmpty(str)) return str;
+    if(!(str[0]!='\"' && str[^1]=='\"' && str.Length>1) && !escape.ContainsKey(str[0])) return str;
+
+    Stack<char> unescaped = new Stack<char>();
+    int idx=0;
+    bool escapeNext = false;
+    parsevalue:
+      if(idx >= str.Length && unescaped.Count==0){
+        return str.Substring(1,str.Length-2);
       }
-    }
-    return str;
+      if((idx!=0 && unescaped.Count == 0) || idx >= str.Length) return str;
+
+      if(escape.TryGetValue(str[idx], out var esc)){
+        unescaped.Push(esc);
+        idx++; goto parsevalue;
+      }
+      if(unescaped.Count>0 && unescaped.Peek()==str[idx]){
+        unescaped.Pop(); 
+        idx++; goto parsevalue;
+      }
+      if(str[idx]=='"'){
+        idx++; goto parsestring;
+      }
+      idx++; goto parsevalue;
+
+    parsestring:
+      if(idx >= str.Length) return str;
+      if(escapeNext){
+        escapeNext = false; 
+        idx++; goto parsestring;
+      }
+      if(str[idx] == '"'){
+        idx++; goto parsevalue;
+      }
+      idx++; goto parsestring;
   }
   public static float[] csparseflat(string str){
     if(string.IsNullOrWhiteSpace(str)) return [];

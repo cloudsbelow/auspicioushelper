@@ -30,6 +30,8 @@ public static class MaterialPipe {
   }
   public static bool dirty;
   public static GraphicsDevice gd;
+  [ResetEvents.RunOn(ResetEvents.RunTimes.OnReload)]
+  static void setGd()=>gd=Engine.Instance.GraphicsDevice;
   public static bool orderFlipped{get;private set;}
   public static Camera camera = new();
   static bool needsImmUpdate;

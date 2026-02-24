@@ -19,7 +19,7 @@ entity.placements = {
       flipGravity=false,
       color_hex="ffffffaa",
       attached=false,
-      giveRCB = true,
+      giveRCB = false,
       instant_camera =false,
       depth = -9998,
     }

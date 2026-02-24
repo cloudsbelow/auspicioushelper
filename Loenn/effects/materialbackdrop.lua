@@ -14,13 +14,12 @@ effect.defaultData = {
     renderOrder="",
     quadFirst=false,
     alwaysRender=true,
-    reload=false
 }
 
 effect.fieldOrder = {
     "only", "exclude", "flag", "notflag",
     "passes", "params", "textures", "identifier",
-    "renderOrder", "quadFirst", "alwaysRender", "reload"
+    "renderOrder", "quadFirst", "alwaysRender"
 }
 
 effect.fieldInformation = {

@@ -173,6 +173,7 @@ public class BackdropCapturer{
   }
   public static BlendState currentBlendstate = BlendState.AlphaBlend;
   public static BackdropRenderer currentRenderer = null;
+  //public static RenderTargetBinding[] currentTarget = null;
   [OnLoad.ILHook(typeof(BackdropRenderer), nameof(BackdropRenderer.Render))]
   static void SkipHook(ILContext ctx){
     ILCursor c = new(ctx);
@@ -191,6 +192,9 @@ public class BackdropCapturer{
     c = new(ctx);
     c.EmitLdarg0();
     c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentRenderer),Util.GoodBindingFlags));
+    // c.EmitLdsfld(typeof(MaterialPipe).GetField(nameof(MaterialPipe.gd),Util.GoodBindingFlags));
+    // c.EmitCallvirt(typeof(GraphicsDevice).GetMethod(nameof(GraphicsDevice.GetRenderTargets)));
+    // c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentTarget),Util.GoodBindingFlags));
     while(c.TryGotoNext(MoveType.Before,itr=>itr.MatchStloc0())){
       c.EmitDup();
       c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentBlendstate),Util.GoodBindingFlags));
@@ -200,6 +204,8 @@ public class BackdropCapturer{
     while(c.TryGotoNext(MoveType.Before,itr=>itr.MatchRet())){
       c.EmitLdnull();
       c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentRenderer),Util.GoodBindingFlags));
+      // c.EmitLdnull();
+      // c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentTarget),Util.GoodBindingFlags));
       c.Index++;
     }
   }

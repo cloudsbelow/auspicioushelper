@@ -80,7 +80,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   float delay;
   bool log;
   Util.Trie blockManager;
-  string setCh;
   ChannelState.AdvancedSetter adv = null;
   bool seekersTrigger = false;
   bool throwablesTrigger = false;
@@ -124,8 +123,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       blockManager.Add(s);
     }
     log = d.Bool("log",false);
-    if(d.Bool("useAdvancedSetch") && !string.IsNullOrWhiteSpace(d.Attr("setChannel",""))) adv = new(d.Attr("setChannel",""));
-    else setCh = d.Attr("setChannel","");
+    if(!string.IsNullOrWhiteSpace(d.Attr("setChannel",""))) adv = new(d.Attr("setChannel",""));
     OnDashCollide = handleDash;
     skipCh = d.Attr("skipChannel","");
   }
@@ -188,7 +186,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       if(passTrigger)triggerParent.OnTrigger(sm);
     } else modifierParent?.OnTrigger(sm);
     end:
-      if(!string.IsNullOrWhiteSpace(setCh) && TriggerInfo.Test(sm)) ChannelState.SetChannel(setCh,1);
       adv?.Apply();
   }
   public void OnTrigger(TriggerInfo sm){
