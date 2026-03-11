@@ -70,7 +70,7 @@ public static class DebugConsole {
   public static void Write(string message, params object[] os){
     string str = message+" ";
     foreach(var o in os){
-      str+=(o==null?"NULL":o.ToString())+" ";
+      str+=(o==null?"NULL":o.ToString().RemovePrefix("Celeste.Mod.auspicioushelper."))+" ";
     }
     Write(str);
   }
@@ -153,6 +153,6 @@ public static class DebugConsole {
   [Command("auspdebug_playerloc","Print player world coordinates")]
   public static void PrintPlayerloc(){
     if(Engine.Instance.scene.Tracker.GetEntity<Player>() is {} p)
-    Engine.Commands.Log($"Player at {{x:{p.X}, y:{p.Y}}}");
+    Engine.Commands.Log($"Player at {{x:{p.X}, y:{p.Y}}} with collider {new FloatRect(p)}");
   }
 }

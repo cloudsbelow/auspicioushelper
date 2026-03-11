@@ -19,7 +19,6 @@ public class lavasandwichAligner:Entity{
     usedinscene = null;
     hooks.enable();
     Depth=1;
-    DebugConsole.Write("Constructed aligner");
   }
   public override void Render(){
     base.Render();

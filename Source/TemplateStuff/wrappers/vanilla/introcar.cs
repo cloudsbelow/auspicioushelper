@@ -58,6 +58,7 @@ public class IntroCarW:IntroCar, ISimpleEnt{
 
 class CrumbleBlockW:CrumblePlatform, ISimpleEnt{
   TemplateDisappearer.vcaTracker vca = new();
+  Template.Propagation ITemplateChild.prop => Template.Propagation.Shake | Template.Propagation.Riding;
   bool ownCollidable=true;
   public Template parent {get;set;}
   public Vector2 toffset {get;set;}
@@ -79,6 +80,7 @@ class CrumbleBlockW:CrumblePlatform, ISimpleEnt{
     vca.Align(vis,col,act);
     vca.Apply(this, ocol:ownCollidable);
   }
+  bool ITemplateChild.hasPlayerRider()=>HasPlayerRider();
   public IEnumerator NewSequence(){
     while (true)
     {

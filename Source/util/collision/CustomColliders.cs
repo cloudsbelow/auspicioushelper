@@ -103,7 +103,12 @@ public sealed class MiptileCollider:Grid{
     return grid;
   }
   public override void Render(Camera camera, Color color) {
-    Draw.HollowRect(AbsoluteX, AbsoluteY, Width, Height, color);
+    Draw.HollowRect(tlc.X, tlc.Y, Width, Height, color);
+    var rbounds = new FloatRect(tlc.X,tlc.Y,Width,Height)._intersect(MaterialPipe.clipBounds);
+    for(int y=0; y<rbounds.h; y++) for(int x=0; x<rbounds.w; x++){
+      Vector2 point = rbounds.tlc+new Int2(x,y);
+      if(Collide(point))Draw.HollowRect(point,1,1,(Color.Yellow.ToVector4()/6).toColor());
+    }
   }
 }
 

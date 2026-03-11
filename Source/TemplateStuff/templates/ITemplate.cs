@@ -454,6 +454,11 @@ public class Template:Entity, ITemplateChild{
     if(parent != null) return parent.GetFromTree<T>();
     return default(T);
   }
+  public T GetFromTree<T>(Propagation p){
+    if(this is T a) return a;
+    if(parent != null && (prop&p)==p) return parent.GetFromTree<T>();
+    return default(T);
+  }
   public interface IRegisterEnts{}
   public virtual void RegisterEnts(List<Entity> l){}
   public void AddNewEnts(List<Entity> l){

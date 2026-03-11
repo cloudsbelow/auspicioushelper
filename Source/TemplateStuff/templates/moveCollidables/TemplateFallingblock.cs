@@ -14,7 +14,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
   public TemplateFallingblock(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
 
   Vector2 falldir = Vector2.UnitY;
-  Vector2 basefalldir = Vector2.UnitY;
+  float basemaxspeed;
   string tch;
   string rch;
   string ImpactSfx = "event:/game/general/fallblock_impact";
@@ -27,32 +27,33 @@ public class TemplateFallingblock:TemplateMoveCollidable{
   float waitTimer=0;
   float waitTime=0;
   float[] delays;
+  bool triggerOnImpact;
   public TemplateFallingblock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
-    basefalldir = d.Attr("direction") switch{
+    falldir = d.Attr("direction") switch{
       "down"=> Vector2.UnitY,
       "up"=>-Vector2.UnitY,
       "left"=>-Vector2.UnitX,
       "right"=>Vector2.UnitX,
       _=>Vector2.UnitX
     };
-    falldir = basefalldir;
     rch = d.Attr("reverseChannel");
     tch = d.Attr("triggerChannel");
     ImpactSfx = d.Attr("impact_sfx","event:/game/general/fallblock_impact");
     ShakeSfx = d.Attr("shake_sfx","event:/game/general/fallblock_shake");
-    maxspeed = d.Float("max_speed",130f);
+    basemaxspeed = maxspeed = d.Float("max_speed",130f);
     gravity = d.Float("gravity", 500);
     setTch = d.Bool("set_trigger_channel",false) && !string.IsNullOrWhiteSpace(tch);
     triggeredByRiding = d.Bool("triggeredByRiding",true);
     delays = Util.csparseflat(d.Attr("customFallTiming",""),0.25f,0.1f,-1);
     waitTimer = waitTime = d.Float("maxWaitTiming",0);
+    triggerOnImpact = d.Bool("triggerOnImpact",false);
 
     Add(new Coroutine(Sequence()));
     if(setTch)Add(upd = new UpdateHook());
   }
   IEnumerator Sequence(){
-    float speed;
+    float speed=0;
     bool first = true;
     while((!triggeredByRiding || !hasPlayerRider()) && !triggered){
       yield return null;
@@ -61,7 +62,6 @@ public class TemplateFallingblock:TemplateMoveCollidable{
     disconnect();
     //emancipate();
     parent?.GetFromTree<IRemovableContainer>()?.RemoveChild(this);
-    DebugConsole.Write("Delay", delays[0]);
     shake(delays[0]+waitTime);
     Audio.Play(ShakeSfx,Position);
     yield return delays[0];
@@ -70,8 +70,8 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       yield return null;
     }
     trying:
-      Query qs = getq(falldir);
-      if(TestMove(qs, 1, falldir)){
+      Query qs = getq(falldir*Math.Sign(maxspeed));
+      if(TestMove(qs, 1, falldir*Math.Sign(maxspeed))){
         speed = 0;
         if(!first){
           shake(delays[1]+waitTime);
@@ -104,6 +104,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       if(res){
         ownLiftspeed = Vector2.Zero;
         Audio.Play(ImpactSfx,Position);
+        if(triggerOnImpact)parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new TriggerInfo.EntInfo("fallingBlock",this,true));
         if(delays[2]>=0){
           shake(delays[2]);
           yield return delays[2];
@@ -113,7 +114,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       else goto falling;
     removing:
       yield return null;
-      Vector2 fds = falldir;
+      Vector2 fds = falldir*Math.Sign(maxspeed);
       for(int i=0; i<40; i++){
         speed = Calc.Approach(speed,160,500*Engine.DeltaTime);
         Position+=fds*speed*Engine.DeltaTime;
@@ -132,10 +133,9 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       }));
     }
     if(!string.IsNullOrWhiteSpace(rch)){
-      if(ChannelState.readChannel(rch)!=0) falldir=-basefalldir;
       Add(new ChannelTracker(rch, (double val)=>{
-        falldir = val==0?basefalldir:-basefalldir;
-      }));
+        maxspeed = val==0?basemaxspeed:-basemaxspeed;
+      },true));
     }
   }
   bool triggerNextFrame;

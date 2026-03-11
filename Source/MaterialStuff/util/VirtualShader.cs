@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
@@ -17,16 +18,28 @@ public class VirtualShader{
   internal int cacheNum;
   internal string path;
   Dictionary<string,object> grrr = new();
+  uint baseParamvals=0;
   public VirtualShader(string path){
     cacheNum = -1;
     this.path=path;
   }
+  static readonly string[] baseVals = {"time","Time","cpos","CamPos","pscale","Dimensions","quiet"};
   public void setBaseparams(){
     var p = shader.Parameters;
-    p["cpos"]?.SetValue(MaterialPipe.camera.Position);
-    p["pscale"]?.SetValue(RenderTargetPool.pixelSize);
-    p["time"]?.SetValue(((Engine.Scene as Level)?.TimeActive??0)+2);
-    p["quiet"]?.SetValue(Settings.Instance.DisableFlashes? 1f:0f);
+    uint b = baseParamvals;
+    while(b!=0){
+      int idx = System.Numerics.BitOperations.TrailingZeroCount(b);
+      b = b&(b-1);
+      switch(idx){
+        case 0: p["time"].SetValue(((Engine.Scene as Level)?.TimeActive??0)+2); break;
+        case 1: p["Time"].SetValue(((Engine.Scene as Level)?.TimeActive??0)+2); break;
+        case 2: p["cpos"].SetValue(MaterialPipe.camera.Position); break;
+        case 3: p["CamPos"].SetValue(MaterialPipe.camera.Position); break;
+        case 4: p["pscale"].SetValue(RenderTargetPool.pixelSize); break;
+        case 5: p["Dimensions"].SetValue(RenderTargetPool.size); break;
+        case 6: p["quiet"].SetValue(Settings.Instance.DisableFlashes? 1f:0f); break;
+      };
+    }
   }
   public void setparamvalex(string key, bool t) {
     shader.Parameters[key]?.SetValue(t);
@@ -52,6 +65,16 @@ public class VirtualShader{
     shader.Parameters[key]?.SetValue(t);
     grrr[key] = t;
   }
+  public void fixBaseparams(){
+    baseParamvals = 0;
+    if(shader==null) return ;
+    var p=shader.Parameters;
+    for(int i=0; i<baseVals.Length; i++){
+      if(p[baseVals[i]]!=null){
+        baseParamvals |= (1u<<i);
+      }
+    }
+  }
   public static implicit operator Effect(VirtualShader v){
     if(v==null || v.shader == null) return null;
     if(v.cacheNum != auspicioushelperModule.CACHENUM) {
@@ -66,6 +89,7 @@ public class VirtualShader{
           case Vector2 v2: v.setparamvalex(k,v2); break;
         }
       }
+      v.fixBaseparams();
     }
     return v.shader;
   }

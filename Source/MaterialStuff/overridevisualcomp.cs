@@ -91,7 +91,7 @@ public class OverrideVisualComponent:OnAnyRemoveComp, IFreeableComp{
     if(stolen) return;
     //This overrider is 'active'
     if(origuse!=nuse){
-      if(nuse)desc.o.AddC(this);
+      if(nuse) desc.o.AddC(this);
       else desc.o.RemoveC(this);
     } 
     if(origsteal==nsteal) return;

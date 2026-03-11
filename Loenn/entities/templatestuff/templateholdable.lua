@@ -28,7 +28,7 @@ entity.placements = {
       player_momentum_weight=1.0,
       holdable_momentum_weight=0.0,
       wallhitsound="event:/game/05_mirror_temple/crystaltheo_hit_side",
-      wallhit_speedretain=0.4,
+      wallhit_speedretain="0.4",
       gravity=800,
       terminal_velocity=200,
       friction =350,
@@ -43,6 +43,7 @@ entity.placements = {
       minHoldTimer = 0.35,
       customThrowspeeds = "",
       mirrorReflection = true,
+      customRecoil = "",
       
       _loenn_display_template = true,
     }

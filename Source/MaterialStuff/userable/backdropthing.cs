@@ -118,12 +118,14 @@ public class BackdropCapturer{
         no:
           b.Visible=false;
       }
-      renderer.Backdrops = captured;
-      renderer.BeforeRender(MaterialPipe.renderingLevel);
-      MaterialPipe.gd.SetRenderTarget(tex);
-      MaterialPipe.gd.Clear(Color.Transparent);
-      using(new BackdropUnlock())renderer.Render(MaterialPipe.renderingLevel);
-      renderer.Backdrops = null;
+      using(Util.WithRestore(ref GameplayBuffers.Level.Target, tex)){
+        renderer.Backdrops = captured;
+        renderer.BeforeRender(MaterialPipe.renderingLevel);
+        MaterialPipe.gd.SetRenderTarget(tex);
+        MaterialPipe.gd.Clear(Color.Transparent);
+        using(new BackdropUnlock())renderer.Render(MaterialPipe.renderingLevel);
+        renderer.Backdrops = null;
+      }
       for(int i=0; i<captured.Count; i++) captured[i].Visible=oldvis[i];
     } 
     public void onEnable(){
@@ -171,6 +173,7 @@ public class BackdropCapturer{
   }
   public static BlendState currentBlendstate = BlendState.AlphaBlend;
   public static BackdropRenderer currentRenderer = null;
+  //public static RenderTargetBinding[] currentTarget = null;
   [OnLoad.ILHook(typeof(BackdropRenderer), nameof(BackdropRenderer.Render))]
   static void SkipHook(ILContext ctx){
     ILCursor c = new(ctx);
@@ -189,14 +192,21 @@ public class BackdropCapturer{
     c = new(ctx);
     c.EmitLdarg0();
     c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentRenderer),Util.GoodBindingFlags));
+    // c.EmitLdsfld(typeof(MaterialPipe).GetField(nameof(MaterialPipe.gd),Util.GoodBindingFlags));
+    // c.EmitCallvirt(typeof(GraphicsDevice).GetMethod(nameof(GraphicsDevice.GetRenderTargets)));
+    // c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentTarget),Util.GoodBindingFlags));
     while(c.TryGotoNext(MoveType.Before,itr=>itr.MatchStloc0())){
       c.EmitDup();
       c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentBlendstate),Util.GoodBindingFlags));
+      c.Index++;
     }
     c = new(ctx);
     while(c.TryGotoNext(MoveType.Before,itr=>itr.MatchRet())){
-      c.EmitLdarg0();
+      c.EmitLdnull();
       c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentRenderer),Util.GoodBindingFlags));
+      // c.EmitLdnull();
+      // c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentTarget),Util.GoodBindingFlags));
+      c.Index++;
     }
   }
   public static HookManager expensiveHooks = new(()=>{

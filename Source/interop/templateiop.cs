@@ -104,9 +104,11 @@ public static class TemplateIopExp{
   }
   public static void triggerTemplate(Entity target, Entity source){
     if(target is Template te) new ExternInfo(source).PassTo(te);
+    else if(target.Get<ChildMarker>()?.parent is Template t) new ExternInfo(source).PassTo(t);
   }
   public static DashCollisionResults registerDashhit(Entity target, Player p, Vector2 dir){
     if(target is Template te) return te.dashHit(p,dir);
+    if(target.Get<ChildMarker>() is {} cm) return cm.parent.OnDashCollide(p,dir);
     return DashCollisionResults.NormalCollision;
   }
   public static void registerPlatform(Entity template, Platform solid){

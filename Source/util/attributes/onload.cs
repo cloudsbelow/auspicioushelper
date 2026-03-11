@@ -23,24 +23,20 @@ public class OnLoad:Attribute{
     string methodStr;
     Type ty;
     Util.HookTarget mode;
+    Type[] types=null;
     public ILHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal){
       methodStr=method;
       this.ty=ty;
       this.mode=mode;
     }
-    internal static MonoMod.RuntimeDetour.ILHook apply(Util.HookTarget mode, MethodInfo m, Type ty, string methodStr){
+    public ILHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal, params Type[] spec):this(ty,method,mode)=>types=spec;
+    internal static MonoMod.RuntimeDetour.ILHook apply(Util.HookTarget mode, MethodInfo m, Type ty, string methodStr, Type[] spec = null){
       if(mode == Util.HookTarget.Placeholder) return null;
       var p = m.GetParameters();
       if(p.Length!=1 || p[0].ParameterType!=typeof(ILContext) || !m.IsStatic){
         DebugConsole.WriteFailure($"ILHook attr {m} on {ty}.{methodStr} illegal",true);
       }
-      MethodInfo methodbase = mode switch {
-        Util.HookTarget.Normal=>ty.GetMethod(methodStr, Util.GoodBindingFlags),
-        Util.HookTarget.Coroutine=>ty.GetMethod(methodStr, Util.GoodBindingFlags)?.GetStateMachineTarget(),
-        Util.HookTarget.PropGet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetGetMethod(),
-        Util.HookTarget.PropSet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetSetMethod(),
-        _=>null
-      };
+      MethodBase methodbase = Util.GetMethod(ty,methodStr,mode,spec);
       if(methodbase == null){
         DebugConsole.WriteFailure($"Could not add hook to nonexistent method {ty}.{methodStr} ({mode})",true);
         return null;
@@ -48,7 +44,7 @@ public class OnLoad:Attribute{
       return new MonoMod.RuntimeDetour.ILHook(methodbase, (ILContext ctx)=>m.Invoke(null,[ctx]));
     }
     public override void Apply(MethodInfo m){
-      var hook = apply(mode,m,ty,methodStr);
+      var hook = apply(mode,m,ty,methodStr,types);
       if(hook == null) return;
       HookManager.cleanupActions.enroll(new ScheduledAction(hook.Dispose, $"dispose ILHOOK<{ty}> {methodStr}"));
     }
@@ -57,25 +53,21 @@ public class OnLoad:Attribute{
     string methodStr;
     Type ty;
     Util.HookTarget mode;
+    Type[] types=null;
     public OnHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal){
       methodStr=method;
       this.ty=ty;
       this.mode=mode;
     }
-    internal static Hook apply(Util.HookTarget mode, MethodInfo m, Type ty, string methodStr){
+    public OnHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal, params Type[] spec):this(ty,method,mode)=>types=spec;
+    internal static Hook apply(Util.HookTarget mode, MethodInfo m, Type ty, string methodStr, Type[] spec=null){
       if(mode == Util.HookTarget.Placeholder) return null;
       //DebugConsole.Write($"doing on hook on {ty}.{methodStr} ({mode}) via",m);
       var p = m.GetParameters();
       if(!m.IsStatic){
         DebugConsole.WriteFailure($"On hook attr {m} on {ty}.{methodStr} illegal",true);
       }
-      MethodInfo methodbase = mode switch {
-        Util.HookTarget.Normal=>ty.GetMethod(methodStr, Util.GoodBindingFlags),
-        Util.HookTarget.Coroutine=>ty.GetMethod(methodStr, Util.GoodBindingFlags)?.GetStateMachineTarget(),
-        Util.HookTarget.PropGet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetGetMethod(true),
-        Util.HookTarget.PropSet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetSetMethod(true),
-        _=>null
-      };
+      MethodBase methodbase = Util.GetMethod(ty,methodStr,mode,spec);
       if(methodbase == null){
         DebugConsole.WriteFailure($"Could not add hook to nonexistent method {ty}.{methodStr} ({mode})",true);
         return null;
@@ -87,7 +79,7 @@ public class OnLoad:Attribute{
       }
     }
     public override void Apply(MethodInfo m){
-      var hook = apply(mode,m,ty,methodStr);
+      var hook = apply(mode,m,ty,methodStr,types);
       if(hook == null) return;
       HookManager.cleanupActions.enroll(new ScheduledAction(hook.Dispose, $"dispose ONHOOK<{ty}> {methodStr}"));
     }
@@ -138,5 +130,20 @@ public class OnLoad:Attribute{
 public partial class Util{
   public enum HookTarget{
     Normal, Coroutine, PropGet, PropSet, Placeholder
+  }
+  public static MethodBase GetMethod(Type ty, string methodStr, HookTarget mode, Type[] types){
+    if(methodStr == "") return types==null?ty.GetConstructors()[0]:ty.GetConstructor(Util.GoodBindingFlags,types);
+    if(types!=null) return mode switch{
+      HookTarget.Normal=>ty.GetMethod(methodStr, Util.GoodBindingFlags, types),
+      HookTarget.Coroutine=>ty.GetMethod(methodStr, Util.GoodBindingFlags, types)?.GetStateMachineTarget(),
+      _=>null
+    }; 
+    else return mode switch {
+      HookTarget.Normal=>ty.GetMethod(methodStr, Util.GoodBindingFlags),
+      HookTarget.Coroutine=>ty.GetMethod(methodStr, Util.GoodBindingFlags)?.GetStateMachineTarget(),
+      HookTarget.PropGet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetGetMethod(true),
+      HookTarget.PropSet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetSetMethod(true),
+      _=>null
+    };
   }
 }

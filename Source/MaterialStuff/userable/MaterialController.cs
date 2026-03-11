@@ -7,6 +7,8 @@ using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using System;
 using Celeste.Mod.Backdrops;
+using MonoMod.Cil;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -125,29 +127,32 @@ internal class MaterialController:Entity{
   public class MaterialBackdrop:Backdrop{
     string identifier;
     CachedUserMaterial u;
+    bool deferred=false;
     public void Readd(){
       loadedMats[identifier]=u;
       DebugConsole.Write("Reenabling",identifier);
     }
+    static int autocountcount = 0;
     public MaterialBackdrop(BinaryPacker.Element e){
       identifier=e.Attr("identifier");
+      bool noIdent=false;
       if(string.IsNullOrWhiteSpace(identifier)){
-        identifier = e.Attr("passes","")+"###"+e.Attr("params","");
-        if(!string.IsNullOrWhiteSpace(e.Attr("textures",""))) identifier+="###"+e.Attr("textures");
+        identifier = e.Attr("passes","")+"###"+(++autocountcount);
+        noIdent=true;
       }
-      bool reload = e.AttrBool("reload",false);
       if(e.Attr("passes","").Length == 0)return;
-      if(reload && loadedMats.TryGetValue(identifier, out var l)){
+      if(!noIdent && loadedMats.TryGetValue(identifier, out var l)){
         if(l.enabled) MaterialPipe.removeLayer(l);
         loadedMats.Remove(identifier);
       }
       DebugConsole.Write($"Loading material backdrop from {e.Attr("passes","")} as {identifier}");
-      if(!loadedMats.TryGetValue(identifier, out var layer)){
-        layer = UserLayer.make(e);
+
+      CachedUserMaterial layer = UserLayer.make(e,identifier);
+      if(!noIdent) {
         loadedMats[identifier]=layer;
-        layer.identifier = identifier;
       }
       u=layer;
+      UseSpritebatch = !(deferred = u is UserLayer{DeferLayerDraw:true});
     }
     public override void Update(Scene scene) {
       base.Update(scene);
@@ -166,6 +171,11 @@ internal class MaterialController:Entity{
         if(MaterialPipe.renderingLevel == null)Update(scene);
         else MaterialPipe.addAfterAction(()=>Update(scene));
         return;
+      }
+      if(deferred){
+        u.render();
+        MaterialPipe.gd.SetRenderTarget(GameplayBuffers.Level);
+        BackdropCapturer.currentRenderer.StartSpritebatch(BackdropCapturer.currentBlendstate);
       }
       Draw.SpriteBatch.Draw(u.outtex,Vector2.Zero,Color.White);
     }

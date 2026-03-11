@@ -25,8 +25,11 @@ def makecg(cg_fn, filename="colorgrade.png"):
 def dred(r, g, b):
     lum = 0.3*r + 0.6*g + 0.1*b
     
-    return np.array([lum,lum,lum])
+    lcol =  np.array([lum,lum,lum])
+    rcol = np.array([r,0,0])
+    redness = max([min([r-g,r-b]),0])
+    return rcol*redness+lcol*(1-redness)
 
 
 if __name__ == "__main__":
-    makecg(dred, "ld_dred.png")
+    makecg(dred, "redonly.png")

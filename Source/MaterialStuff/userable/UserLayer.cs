@@ -95,21 +95,29 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
     };
     return new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l);
   }  
-  internal static UserLayer make(BinaryPacker.Element d){
+  bool IMaterialLayer.useMarkingEntity=>!backdropLayer||!noOrder;
+  bool noOrder=false;
+  public bool DeferLayerDraw=>noOrder;
+  internal static UserLayer make(BinaryPacker.Element d, string ident){
+    string order = d.Attr("renderOrder");
     LayerFormat l = new LayerFormat{
-      depth = d.AttrInt("renderOrder"),
+      depth = int.TryParse(order, out int orderNum)?orderNum:-1,
       quadfirst = d.AttrBool("quadFirst"),
       alwaysRender = d.AttrBool("alwaysRender"),
       drawInScene = false,
     };
-    return new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l){backdropLayer=true};
+    return new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l, true){
+      noOrder = (string.IsNullOrWhiteSpace(order)||!int.TryParse(order, out int _))&&l.quadfirst,
+      identifier = ident
+    };
   }
   public IFadingLayer.FadeTypes fadeTypeIn {get;set;} = IFadingLayer.FadeTypes.Linear;
   public IFadingLayer.FadeTypes fadeTypeOut {get;set;} = IFadingLayer.FadeTypes.Linear;
   int swapch=0;
   bool backdropLayer=false;
   bool IMaterialLayer.autoManageRemoval => !backdropLayer;
-  public UserLayer(string texstring, string paramstring, VirtualShaderList l, LayerFormat f):base(l,f){
+  public UserLayer(string texstring, string paramstring, VirtualShaderList l, LayerFormat f, bool isBackdrop=false):base(l,f){
+    backdropLayer=isBackdrop;
     SetupTextures(texstring);
     for(int i=0; i<swapch; i++) handles.Add(new RenderTargetPool.RenderTargetHandle(false));
     try{
@@ -134,7 +142,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       else switch(p.Value.ToLower()){
         case "lv": case "level":
           info.independent = layerformat.independent=false;
-          textures.Add(new(idx,texture = ITexture.bgWrapper));
+          textures.Add(new(idx,texture = backdropLayer?ITexture.lvWrapper:ITexture.bgWrapper));
           break;
         case "bg": case "background":
           info.usesbg = layerformat.useBg=true;
@@ -168,6 +176,10 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
           break;
       }
       if(idx == 0) overrideFirstResource = texture;
+    }
+    if(backdropLayer && overrideFirstResource==null){
+      overrideFirstResource = ITexture.lvWrapper;
+      info.independent = layerformat.independent=false;
     }
   }
   public override void render(SpriteBatch sb, Camera c) {

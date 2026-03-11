@@ -87,6 +87,14 @@ public class MipGrid{
         else SetBlock(orig&~mask,x,y);
       }
     }
+    public void SetPoint(bool val, Int2 loc){
+      if(loc.x<0 || loc.y<0 || loc.x>=width*blockw || loc.y>=height*blockh) return;
+      Int2 bdim = new Int2(blockw, blockh);
+      Int2 blk = loc/bdim;
+      Int2 tpos = loc-blk*bdim;
+      ulong mask = 1ul<<(tpos.x+8*tpos.y);
+      SetBlock((getBlock(blk.x,blk.y) & ~mask)|(val?mask:0ul),blk.x,blk.y);
+    }
     public Layer BuildParent(){
       Layer o = new Layer((width+blockw-1)/blockw, (height+blockh-1)/blockh);
       if(d!=null){
@@ -366,7 +374,7 @@ public class MipGrid{
     Int2 rtlc = (otlc>>leveldenom)-offset;
     Int2 rbrc = ((obrc+(1<<leveldenom)-1)>>leveldenom)-offset;
     if(rbrc.x<=0 || rbrc.y<=0 || rtlc.x>=blockw || rtlc.y>=blockh) return 0;
-    if(rtlc.x<=0 && rtlc.y<=0 && rbrc.x>=blockw && rbrc.y>=blockh) return 1;
+    if(rtlc.x<=0 && rtlc.y<=0 && rbrc.x>=blockw && rbrc.y>=blockh) return FULL;
     int x1 = Math.Clamp((int) rtlc.x,0,blockw-1);
     int y1 = Math.Clamp((int) rtlc.y,0,blockh-1);
     int x2 = Math.Clamp((int) rbrc.x,1,blockw);

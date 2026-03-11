@@ -25,4 +25,13 @@ public class SpringTracker:Component{
   }
   public static bool DownSpring(Spring s)=>FrosthelperSpring.IsCeilingSpring is {} a? a(s):false;
   public static Vector2 Multiplier(Spring s)=>FrosthelperSpring.GetSpringSpeedMultiplier is {} a?a(s):Vector2.One;
+  public enum Dir{
+    Up,Down,Left,Right
+  }
+  public static Dir GetDir(Spring s)=>DownSpring(s)?Dir.Down : s.Orientation switch {
+    Spring.Orientations.Floor=>Dir.Up,
+    Spring.Orientations.WallLeft=>Dir.Right,
+    Spring.Orientations.WallRight=>Dir.Left,
+    _=>Dir.Up
+  };
 }

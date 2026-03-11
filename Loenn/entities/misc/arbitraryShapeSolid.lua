@@ -1,5 +1,6 @@
 local drawableSprite = require("structs.drawable_sprite")
 local utils = require("utils")
+local defaults = require("mods").requireFromPlugin("libraries.aelper_defaults")
 
 local entity = {}
 
@@ -14,28 +15,36 @@ entity.placements = {
     name = "Arbitrary shape solid",
     data = {
       safe=false,
+      soundIndex = 8,
       image = "decals/9-core/fossil_a",
       CustomColliderPath = "",
-      flipH=false,
-      flipV=false,
+      scaleX=1,
+      scaleY=1,
       color="fff",
       rotation=0,
       depth=-100,
       alphaCutoff=0.5,
+      occludeLight=true,
     }
   }
 }
 entity.fieldInformation = {
-    rotation = {
-      options = rotations,
-      editable = false,
-    }
-  }
+    soundIndex = {
+        fieldType = "integer",
+        options = defaults.soundIndices,
+        editable = false,
+    },
+}
+
+
 function entity.texture(room, entity)
   return entity.image
 end
 function entity.scale(room, entity)
-  return {entity.flipH and -1 or 1,entity.flipV and -1 or 1} -- flip horizontally
+  return {
+    entity.scaleX or (entity.flipH and -1) or 1,
+    entity.scaleY or (entity.flipV and -1) or 1
+  }
 end
 function entity.rotation(room, entity)
   return math.rad(entity.rotation or 0) -- flip horizontally
@@ -45,10 +54,10 @@ function entity.depth(room,entity)
 end
 function entity.flip(room, entity, horizontal, vertical)
   if vertical then
-    entity.flipV = not entity.flipV
+    entity.scaleY = -(entity.scaleY or 1)
   end
   if horizontal then
-    entity.flipH = not entity.flipH
+    entity.scaleX = -(entity.scaleX or 1)
   end
   return true
 end

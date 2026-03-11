@@ -30,7 +30,7 @@ internal class PartialTiles{
       }
       DebugConsole.Write($"Setting up PartialTiles for {(tileset.HasAttribute("displayName")?tileset.Attr("displayName"):tileset.Attr("path"))}");
       usingPartialtiles = true;
-      PixelLeniencyTrigger.hooks.enable();
+      ResetEvents.LazyEnable(typeof(PixelLeniencyTrigger));
     } else {
       tex = (ttex = null);
     }

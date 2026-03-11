@@ -11,22 +11,18 @@ effect.defaultData = {
     passes="null",
     params="",
     textures="",
-    renderOrder=-1000000,
+    renderOrder="",
     quadFirst=false,
     alwaysRender=true,
-    reload=false
 }
 
 effect.fieldOrder = {
     "only", "exclude", "flag", "notflag",
     "passes", "params", "textures", "identifier",
-    "renderOrder", "quadFirst", "alwaysRender", "reload"
+    "renderOrder", "quadFirst", "alwaysRender"
 }
 
 effect.fieldInformation = {
-    renderOrder = {
-        fieldType = "integer"
-    },
     passes = {
         fieldType = "list",
         elementDefault="null",

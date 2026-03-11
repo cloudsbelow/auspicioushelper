@@ -85,10 +85,14 @@ public abstract class ITexture{
       return GameplayBuffers.Level;
     }}
   }
-  public static BgWrapper bgWrapper = new BgWrapper();
+  public class LevelWrapper:ITexture{
+    public override Texture2D tex=>GameplayBuffers.Level;
+  }
   public class GpWrapper:ITexture{
     public override Texture2D tex=>GameplayBuffers.Gameplay;
   }
+  public static BgWrapper bgWrapper = new BgWrapper();
+  public static LevelWrapper lvWrapper = new LevelWrapper();
   public static GpWrapper gpWrapper = new GpWrapper();
 }
 

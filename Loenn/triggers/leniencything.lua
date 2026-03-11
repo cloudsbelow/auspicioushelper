@@ -15,6 +15,8 @@ entity.placements = {
       maxGroundedStep = 2,
       maxStepSlope = 1,
       neededFallDist = 2,
+      snapDownAmount = 1,
+      alwaysForceSlip = true,
       onlyWhenInside=true,
       setOnAwake=false,
     }
@@ -29,6 +31,9 @@ entity.fieldInformation = {
     fieldType="integer"
   },
   maxGroundedStep = {
+    fieldType="integer"
+  },
+  snapDownAmount = {
     fieldType="integer"
   }
 }

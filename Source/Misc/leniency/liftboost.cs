@@ -14,7 +14,6 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/LiftspeedTrigger")]
 public class LiftspeedThing:Trigger{
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReset)]
   [Import.SpeedrunToolIop.Static]
   static LinkedList<Settings> overRules = new();
   [Import.SpeedrunToolIop.Static]
@@ -50,7 +49,6 @@ public class LiftspeedThing:Trigger{
   }
   public static void FixRules(){
     appliedRules = overRules.Count>0?overRules.First.Value:defaultRules;
-    DebugConsole.Write("Rules:",appliedRules);
   }
   public override void OnEnter(Player player) {
     base.OnEnter(player);

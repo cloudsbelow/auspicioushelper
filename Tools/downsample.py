@@ -27,50 +27,17 @@ import matplotlib.pyplot as plt
 #   filtered_freq = freq * lp
 #   return np.fft.ifft2(np.fft.ifftshift(filtered_freq)).real[fac//2::fac,fac//2::fac]
 
-basepath = 'Tools/img/raads'
+basepath = 'Tools/img/downleft'
 
 test = iio.imread(basepath+".png")
 out = np.zeros_like(test)
-s = set()
 
-print(out.shape)
-center = (109.5, 116.5)
-for row in range(test.shape[0]):
-  for col in range(test.shape[1]):
-    s.add(tuple([x for x in test[row,col]]))
-    c = test[row,col]
-    o = np.zeros(4)
-    dy = row-center[0]
-    dx = col-center[1]
-    r = np.sqrt(dx*dx+dy*dy)
-
-    if c[0]==255 and c[1]==255 and c[2]==255 and r>104:
-      continue
-
-    if  r>=105:
-      pass
-    elif r>=103.5:
-      opacity = 1-(r-103.5)/1.5
-      out[row,col]=opacity*c
-    else:
-      out[row,col]=c
-      continue
-    
-    if row>105 and row<158 and col<30 and r>103.5:
-      out[row,col]=o
-      opacity = 0
-      if c[0]>c[1] and c[0]>c[2]:
-        opacity = 1-(c[0]-237)/(255-237)
-      if c[0]<c[1] and c[0]<c[2]:
-        opacity = 1-(c[1]-241)/(255-241)
-      if opacity != 0:
-        out[row,col] = c*opacity
-
-print("fish")
-print("fish")
-print("fish")
-for i in range(17,24):
-  out[154,i] = test[154,i]
+out[:,:,3]=255-np.clip((test[:,:,1].astype(np.float32)*255)/240,0,255).astype(np.uint8)
+la = [0]*256
+for x in out:
+  for y in x:
+    la[y[3]]+=1
+print(la)
 
 plt.imsave(basepath+"_out.png", out)
 plt.show()
