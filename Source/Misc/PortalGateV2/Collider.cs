@@ -12,7 +12,7 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
-public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollision{
+public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollision,ColliderWrapper{
   public PortalFaceH f1;
   public PortalFaceH f2;
   public bool flipV;
@@ -22,6 +22,12 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
   Hitbox orig;
   //prevent wallbounces
   public const float margin = 5;
+  Collider ColliderWrapper.wrapped=>orig;
+  Collider ColliderWrapper.interceptReplace(Monocle.Collider o){
+    if(o is PColliderH or null) return o;
+    if(o is Hitbox h) return new PColliderH(this,h);
+    throw new Exception("Tried to set collider to illegal value inside portal. Ask clouds about compat");
+  }
   public PColliderH(Entity wrap, PortalFaceH f1, PortalFaceH f2){
     this.f1=f1; this.f2=f2;
     flipV = f1.flipped!=f2.flipped;
@@ -44,7 +50,7 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     orig.Removed();
   }
   void End(){
-    using(new CollideDetourLock()) Entity.Collider = orig;
+    using(new ColliderWrapper.CollideDetourLock()) Entity.Collider = orig;
   }
   public Vector2 calcspeed(Vector2 speed, bool fromOtherside=false){
     Vector2 rel = speed-(fromOtherside?f2:f1).getSpeed();
@@ -110,7 +116,7 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     }
 
     if(Entity is Actor a && flipV && GelperIop.SetActorGravity!=null){
-      using(new CollideDetourLock()) Entity.Collider = orig;
+      using(new ColliderWrapper.CollideDetourLock()) Entity.Collider = orig;
       GelperIop.SetActorGravity(a,2,1);
       orig = a.Collider as Hitbox;
       if(orig == null) throw new Exception("hum");
@@ -128,7 +134,9 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     if(dontEnforce) return;
     if(p.Collider is PColliderH pch && pch.GetPrimaryRect(out var r, out bool w)){
       if(w) return;
-      using(new CollideDetourLock()) p.Collider = new Hitbox(r.w, r.h, r.x-p.Position.X, r.y-p.Position.Y);
+      using(new ColliderWrapper.CollideDetourLock()){ 
+        p.Collider = new Hitbox(r.w, r.h, r.x-p.Position.X, r.y-p.Position.Y);
+      }
       orig(l,p);
       p.Collider = pch;
     } else orig(l,p);
@@ -225,55 +233,6 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     if(GetRects(out var r1, out var r2)) Draw.HollowRect(r2.x, r2.y, r2.w, r2.h, color);
     Draw.HollowRect(r1.x, r1.y, r1.w, r1.h, color);
   }
-
-  ref struct CollideDetourLock:IDisposable{
-    static bool active;
-    public CollideDetourLock(){active=true;}
-    void IDisposable.Dispose()=>active=false;
-    public static bool IsLocked=>active;
-  }
-  [ResetEvents.OnHook(typeof(Entity),nameof(Entity.Collider),Util.HookTarget.PropSet)]
-  static void SetColliderDetour(Action<Entity, Collider> orig, Entity e, Collider c){
-    if(!CollideDetourLock.IsLocked && e.Collider is PColliderH pch && c is not PColliderH and not null){
-      if(c is not Hitbox h){
-        DebugConsole.Write("Wrong wrong wrong",c);
-        throw new Exception("Tried to set collider to illegal value inside portal. Ask clouds about compat");
-      }
-      e.Collider = new PColliderH(pch, h);
-    } else orig(e,c);
-  }
-  static Collider fixCollider(Collider toFix){
-    if(toFix is not PColliderH p) return toFix;
-    return p.orig;
-  }
-  [ResetEvents.ILHook(typeof(Player),nameof(Player.Ducking),Util.HookTarget.PropGet)]
-  [ResetEvents.ILHook(typeof(Player),nameof(Player.orig_Update))]
-  static void FixEqHook(ILContext ctx){
-    ILCursor c = new(ctx);
-    int n=0;
-    while(c.TryGotoNextBestFit(MoveType.Before,
-      itr=>itr.MatchLdarg0(),
-      itr=>itr.MatchCall<Entity>("get_Collider"),
-      itr=>itr.MatchCeq()||itr.MatchBeq(out var l)
-    )){
-      c.GotoNextBestFit(MoveType.After,itr=>itr.MatchLdarg0(), itr=>itr.MatchCall<Entity>("get_Collider"));
-      n++;
-      c.EmitDelegate(fixCollider);
-    }
-    if(n!=2) DebugConsole.WriteFailure("The slothful ILHook design failed. Tell clouds to be more rigorous if you encounter this",true);
-  }
-  [ResetEvents.OnHook(typeof(Holdable),nameof(Holdable.Update))]
-  static void adjust(On.Celeste.Holdable.orig_Update orig, Holdable h){
-    if(h.IsHeld && h.Holder.Collider is PColliderH pch){
-      if(h.Entity.Collider is Hitbox hb) h.Entity.Collider = new PColliderH(h.Entity,pch.f1,pch.f2);
-      if(h.Entity.Collider is PColliderH pch_){
-        pch_.f1=pch.f1;
-        pch_.f2=pch.f2;
-      }
-    }
-    orig(h);
-  }
-
 
   public class Othersider:Entity{
     Entity e;

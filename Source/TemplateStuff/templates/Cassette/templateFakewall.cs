@@ -16,32 +16,17 @@ namespace Celeste.Mod.auspicioushelper;
 class FadeMaterialLayer:BasicMaterialLayer,IMaterialLayer{
   public float _alpha = 1;
   public float alpha => _alpha;
-  List<Entity> todraw;
-  public override bool drawMaterials=>true; 
-  public FadeMaterialLayer(List<Entity> things, int depth):base([null],depth){
-    todraw = things;
-    todraw.Sort(EntityList.CompareDepth);
-  }
-  public override void rasterMats(SpriteBatch sb, Camera c){
-    SpriteBatch origsb = Draw.SpriteBatch;
-    Draw.SpriteBatch = sb;
-    foreach(Entity e in todraw)e.Render();
-    Draw.SpriteBatch = origsb;
-  }
-  public override bool checkdo(){
-    return todraw.Count>0;
-  }
+  public FadeMaterialLayer(int depth):base([null],depth){}
 }
 
-
-
 [CustomEntity("auspicioushelper/TemplateFakewall")]
-public class TemplateFakewall:TemplateDisappearer{
+public class TemplateFakewall:TemplateDisappearer, Template.IRegisterEnts{
   bool freeze;
   bool dontOnTransitionInto;
   int ddepth;
   float fadespeed;
   bool persistent = true;
+  bool caveMode;
   public TemplateFakewall(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateFakewall(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
@@ -50,6 +35,7 @@ public class TemplateFakewall:TemplateDisappearer{
     ddepth = d.Int("disappear_depth",-13000);
     fadespeed = d.Float("fade_speed",1);
     persistent = d.Bool("persistent",true);
+    caveMode = d.Bool("caveMode",false);
   }
   public override void addTo(Scene scene){
     if(auspicioushelperModule.Session.brokenTempaltes.Contains(fullpath) && persistent){
@@ -71,22 +57,51 @@ public class TemplateFakewall:TemplateDisappearer{
     }
   }
   bool disappearing = false;
+  FadeMaterialLayer caveLayer;
   public override void Update(){
     base.Update();
-    if(disappearing) return;
     Player p = Scene.Tracker.GetEntity<Player>();
-    if(p!=null && !p.Dead && hasInside(p)){
-      Add(new Coroutine(disappearSequence()));
+    if(caveMode){
+      if(p!=null && !p.Dead && hasInside(p)){
+        if(caveLayer == null){
+          caveLayer = new(ddepth);
+          foreach(var e in GetChildren<Entity>()){
+            OverrideVisualComponent.Get(e).AddToOverride(new(caveLayer,-20000,true,true));
+          }
+          MaterialPipe.addLayer(caveLayer);
+        }
+        caveLayer._alpha = Calc.Approach(caveLayer._alpha,0,fadespeed*Engine.DeltaTime);
+      } else if(caveLayer!=null){
+        caveLayer._alpha = Calc.Approach(caveLayer._alpha,1,fadespeed*Engine.DeltaTime);
+        if(caveLayer._alpha == 1){
+          foreach(var e in GetChildren<Entity>()){
+            OverrideVisualComponent.Get(e).RemoveFromOverride(caveLayer);
+          }
+          MaterialPipe.removeLayer(caveLayer);
+          caveLayer=null;
+        }
+      }
+    } else {
+      if(disappearing) return;
+      if(p!=null && !p.Dead && hasInside(p)){
+        Add(new Coroutine(disappearSequence()));
+      }
+    }
+  }
+  public override void RegisterEnts(List<Entity> l) {
+    base.RegisterEnts(l);
+    if(caveLayer!=null) foreach(Entity e in l){
+      OverrideVisualComponent.Get(e).AddToOverride(new(caveLayer, -20000, true,true));
     }
   }
   IEnumerator disappearSequence(){
     disappearing = true;
     Audio.Play("event:/game/general/secret_revealed", Position);
     auspicioushelperModule.Session.brokenTempaltes.Add(fullpath);
-    List<Entity> c = new();
-    AddAllChildren(c);
-    setVisCol(false,false);
-    FadeMaterialLayer f = new FadeMaterialLayer(c,ddepth);
+    FadeMaterialLayer f = caveLayer = new FadeMaterialLayer(ddepth);
+    foreach(var e in GetChildren<Entity>()){
+      OverrideVisualComponent.Get(e).AddToOverride(new(f,-20000,true,true));
+    }
     MaterialPipe.addLayer(f);
     yield return null;
     while((f._alpha = f._alpha-Engine.DeltaTime*fadespeed*1)>0){

@@ -20,6 +20,7 @@ entity.placements = {
       translucent = false,
       no_visuals = false,
       useVanillaMistiming = false,
+      useListeners = true,
     }
   }
 }

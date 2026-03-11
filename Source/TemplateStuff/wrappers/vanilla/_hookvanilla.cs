@@ -4,7 +4,11 @@ using System.Collections.Generic;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Cil;
 using MonoMod.Utils;
+using Celeste.Mod.Helpers;
+using Mono.Cecil.Cil;
+using FgOver = Celeste.Mod.auspicioushelper.Wrappers.FgTiles.OverlayStack;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -126,6 +130,28 @@ public static class HookVanilla{
       toffset = toffset+(wrapped.Position-lpos);
       wrapped.Position = loc+toffset;
       lpos = wrapped.Position;
+    }
+  }
+  [OnLoad.ILHook(typeof(DashBlock),nameof(DashBlock.Awake))]
+  [OnLoad.ILHook(typeof(FakeWall),nameof(FakeWall.Awake))]
+  static void HookBlend(ILContext ctx){
+    ILCursor c = new(ctx);
+    VariableDefinition v = c.Body.AddVariable();
+    if(c.TryGotoNextBestFit(MoveType.After,
+      itr=>itr.MatchCallvirt<Autotiler>(nameof(Autotiler.GenerateOverlay))
+    )){
+      ILCursor d=new(c);
+      c.EmitDelegate(FgTiles.GetOverlayStack);
+      c.EmitDup();
+      c.EmitStloc(v);
+      c.EmitBrfalse(c.Next);
+      for(int i=0; i<5; i++)c.EmitPop();
+      foreach(var str in new string[]{
+        nameof(FgOver.x),nameof(FgOver.y),nameof(FgOver.w),nameof(FgOver.h),nameof(FgOver.ttypes)
+      }){
+        c.EmitLdloc(v);
+        c.EmitLdfld(typeof(FgOver).GetField(str));
+      }
     }
   }
 }

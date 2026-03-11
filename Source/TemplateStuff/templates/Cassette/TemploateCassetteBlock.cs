@@ -52,6 +52,16 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
       if(gone)setChVal(0);
     }
   }
+  public override void Awake(Scene scene) {
+    base.Awake(scene);
+    if(doBoost && ChannelState.checkClean(channel)){
+      Add(new ChannelTracker(channel+TemplateCassetteManager.WillToggleSuffix,x=>{
+        if(x==0 || hoffset==1) return;
+        hoffset=1;
+        childRelposSafe();
+      },true));
+    }
+  }
   const float fakeshake=0.2f;
   public override Vector2? getShakeVector(float n) {
     float time = fakeshake-n;

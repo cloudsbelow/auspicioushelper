@@ -183,7 +183,7 @@ public static class MaterialPipe {
   public static void onDie(Player p){
     foreach(var l in layers) if(l.autoManageRemoval)leaving.Add(l);
   }
-  public static void remLeaving(){
+  static void remLeaving(){
     foreach(IMaterialLayer l in leaving) removeLayer(l);
     leaving.Clear();
   }

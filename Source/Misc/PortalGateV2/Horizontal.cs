@@ -265,6 +265,18 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
     if(oldCollidable is {} val) sm.Platform.Collidable=val; 
   }
 
+
+  [ResetEvents.OnHook(typeof(Holdable),nameof(Holdable.Update))]
+  static void adjust(On.Celeste.Holdable.orig_Update orig, Holdable h){
+    if(h.IsHeld && h.Holder.Collider is PColliderH pch){
+      if(h.Entity.Collider is Hitbox hb) h.Entity.Collider = new PColliderH(h.Entity,pch.f1,pch.f2);
+      if(h.Entity.Collider is PColliderH pch_){
+        pch_.f1=pch.f1;
+        pch_.f2=pch.f2;
+      }
+    }
+    orig(h);
+  }
   public override string ToString()=>$"portalFace:{{{(facingRight?"Right":"Left")} {Position} {height}}}";
 
 
@@ -284,7 +296,7 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
       e1.other = e2;
       e2.other = e1;
       l.Add([e1,e2]);
-      ResetEvents.LazyEnable(typeof(PortalFaceH),typeof(PColliderH));
+      ResetEvents.LazyEnable(typeof(PortalFaceH),typeof(ColliderWrapper));
 
       if(fakeSolid?.Scene != null && fakeSolid.Scene!=l){
         fakeSolid.RemoveSelf();

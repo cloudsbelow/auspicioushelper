@@ -39,6 +39,22 @@ public class TemplateCassetteManager:Entity{
       return this;
     }
   }
+  public const string WillToggleSuffix = "_willToggle";
+  [TrackedAs(typeof(CassetteListener))]
+  class AutoListener:CassetteListener{
+    string ch;
+    Modes? lastMode=null;
+    public AutoListener(string channel,int index):base(index)=>ch=channel;
+    public override void Update() {
+      if(lastMode==Mode) return;
+      lastMode = Mode;
+      ChannelState.SetChannel(ch,Mode==Modes.Enabled||Mode==Modes.WillDisable?1:0);
+      if(ChannelState.checkClean(ch)){
+        bool willToggle=Mode==Modes.WillDisable||Mode==Modes.WillEnable;
+        ChannelState.SetChannel(ch+WillToggleSuffix,willToggle?1:0);
+      }
+    }
+  }
   List<Tuple<float,timingDesc>> timings = new List<Tuple<float, timingDesc>>();
   timingDesc ini;
   timingDesc deini;
@@ -91,6 +107,8 @@ public class TemplateCassetteManager:Entity{
       bool usevanilla = !d.Bool("simple_style",false);
       bool opaque = !d.Bool("translucent",false);
       bool tint = d.Bool("tintActive",false);
+      visualOnly = d.Bool("visual_only",false);
+      bool useListeners = d.Bool("useListeners",false) && !visualOnly;
       for(int i=0; i<4; i++){
         string ch = d.Attr("channel_"+(i+1).ToString());
         if(string.IsNullOrWhiteSpace(ch)) continue;
@@ -102,8 +120,9 @@ public class TemplateCassetteManager:Entity{
           _=>"{color:#fff, x:0.3,y:1.2}"
         };
         channels[i] = ch;
+        if(useListeners) Add(new AutoListener(ch,i));
       }
-      visualOnly = d.Bool("visual_only",false);
+      visualOnly |= useListeners;
       if(d.Bool("useVanillaMistiming", false)) Depth = 10;
     }
     inimaterials();

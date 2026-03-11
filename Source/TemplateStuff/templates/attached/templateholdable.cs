@@ -144,6 +144,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     if(ext!=null) te.setTemplate(ext);
     te.addTo(s);
   }
+  public templateFiller getTemplate=>te?.t??ext??(MarkedRoomParser.getTemplate(d.Attr("template"),null,Scene,out var f)?f:null);
   BirdTutorialGui tutorialGui=null;
   IEnumerator tutorialRoutine(){
     yield return 0.25f;
