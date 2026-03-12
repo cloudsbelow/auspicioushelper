@@ -216,15 +216,4 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
     else if(col<0) DisableStaticMovers();
   }
   public Vector2 lastShake {get;set;} = Vector2.Zero;
-  public class OverlayStack{
-    public int x,y,w,h;
-    public VirtualMap<char> ttypes;
-  }
-  public static OverlayStack GetOverlayStack(Entity e){
-    if(e.Get<ChildMarker>() is not {} cm || cm.parent.fgt is not {} f) return null;
-    Int2 ttlc = Int2.Round((e.Position-f.Position)/8); 
-    return new OverlayStack(){
-      x=ttlc.x,y=ttlc.y,w=(int)e.Width/8,h=(int)e.Height/8, ttypes=f.tileTypes
-    };
-  }
 }

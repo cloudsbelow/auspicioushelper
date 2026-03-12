@@ -75,6 +75,9 @@ public struct IntRect{
   public static IntRect fromCenter(Int2 center, int radius){
     return new IntRect(center.x-radius, center.y+radius, radius*2, radius*2);
   }
+  public static IntRect fromTlc(Int2 tlc, Int2 size){
+    return new(tlc.x,tlc.y,size.x,size.y);
+  }
   public static implicit operator IntRect(Rectangle r){
     return new(r.X,r.Y,r.Width,r.Height);
   }
@@ -124,6 +127,11 @@ public struct IntRect{
     var f = copy();
     f.expandV(a);
     return f;
+  }
+  public IntRect _intersect(IntRect o){
+    var c1 = Int2.Max(tlc,o.tlc);
+    var c2 = Int2.Min(brc, o.brc);
+    return fromCorners(c1,c2);
   }
   public static implicit operator FloatRect(IntRect o)=>new FloatRect(o.x,o.y,o.w,o.h); 
 }

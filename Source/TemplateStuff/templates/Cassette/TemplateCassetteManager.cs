@@ -44,7 +44,10 @@ public class TemplateCassetteManager:Entity{
   class AutoListener:CassetteListener{
     string ch;
     Modes? lastMode=null;
-    public AutoListener(string channel,int index):base(index)=>ch=channel;
+    public AutoListener(string channel,int index):base(index){
+      ch=channel;
+      Active = true;
+    }
     public override void Update() {
       if(lastMode==Mode) return;
       lastMode = Mode;

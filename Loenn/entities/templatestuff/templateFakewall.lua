@@ -18,6 +18,7 @@ entity.placements = {
       disappear_depth = -13000,
       fade_speed = 1,
       persistent = true,
+      caveMode = false,
       
       _loenn_display_template = true,
     }

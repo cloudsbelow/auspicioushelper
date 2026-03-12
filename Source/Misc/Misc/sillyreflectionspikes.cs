@@ -32,8 +32,6 @@ public class CustomSpikes : Entity{
   bool fixOwnSpeed;
   LiftspeedSm sm;
   Template parent;
-  Vector2 ls;
-  float speedRetainTime;
   public CustomSpikes(EntityData data, Vector2 offset)
     : base(data.Position+offset)
   {
@@ -71,13 +69,9 @@ public class CustomSpikes : Entity{
       OnShake = (Vector2 amount)=>imageOffset+=amount,
       SolidChecker = IsRiding,
       JumpThruChecker = IsRiding,
-      OnEnable = ()=>Active=(Visible=(Collidable=false)),
+      OnEnable = ()=>Active=(Visible=(Collidable=true)),
       OnDisable = ()=>Active=(Visible=(Collidable=false)),
-      OnMoveOther=(Vector2 amount)=>{
-        Position+=amount;
-        ls = sm.Platform.LiftSpeed;
-        speedRetainTime = Engine.DeltaTime+0.001f;
-      }
+      OnMoveOther = amount=>Position+=amount
     });
     
     List<MTexture> subtex = GFX.Game.GetAtlasSubtextures($"danger/spikes/{data.Attr("type")}_{Direction.ToString().ToLower()}");
@@ -114,13 +108,6 @@ public class CustomSpikes : Entity{
       Position += imageOffset;
       base.Render();
       Position = position;
-    }
-  }
-  public override void Update() {
-    base.Update();
-    if(speedRetainTime>0){
-      speedRetainTime-=Engine.DeltaTime;
-      if(speedRetainTime<=0) ls=Vector2.Zero;
     }
   }
   public void OnCollide(Player p){

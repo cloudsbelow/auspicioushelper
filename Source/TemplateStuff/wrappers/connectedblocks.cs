@@ -144,7 +144,7 @@ public class ConnectedBlocks:Entity{
         Vector2 pos = pair.Key+levelOffset;
         f.data.offset = minimum-pos;
         Vector2? forcepos = pair.Value.Name=="auspicioushelper/TemplateBehaviorChain"&&pair.Value.Bool("forceOwnPosition",false)?pair.Key:null;
-        TemplateBehaviorChain.Chain chain = new(f, new List<EntityData>(){pair.Value,InplaceTemplateWrapper.creationDat}, null, forcepos); 
+        TemplateBehaviorChain.Chain chain = new(f, new List<EntityData>(){pair.Value}, null, forcepos); 
         var first = chain.NextEnt();
         if(first == null) throw new Exception("idk shouldn't be possible");
         if(Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
@@ -229,51 +229,6 @@ public class ConnectedBlocks:Entity{
   public class InplaceFiller:templateFiller{
     internal FgTiles saved = null;
     public InplaceFiller(Int2 tlc, Int2 size):base(tlc,size){}
-  }
-  public class InplaceTemplateWrapper:Template{
-    public InplaceTemplateWrapper(Vector2 position):base(position, 0){
-    }
-    public override void addTo(Scene scene) {
-      if(t is not InplaceFiller tf) throw new Exception("how");
-      /*if(useKeep){
-        if(tf.saved is {} z){
-          base.addTo(scene);
-          restoreEnt(z);
-          fgt=z;
-          z.parentChangeStat(1,1,1);
-          z.Add(new ChildMarker(this));
-        } else {
-          base.addTo(scene);
-          tf.fgt = null;
-          tf.Fgt = null;
-        }
-      } else {*/
-        base.addTo(scene);
-      //}
-    }
-    TemplateDisappearer.vcaTracker vca = new();
-    public override void parentChangeStat(int vis, int col, int act) {
-      base.parentChangeStat(vis, col, act);
-      vca.Align(vis,col,act);
-    }
-    public override void destroy(bool particles) {
-      /*if(useKeep && fgt is {} z){
-        fgt.parentChangeStat(vca.Visible?-1:0,vca.Collidable?-1:0,vca.Active?-1:0);
-        z.fakeDestroy();
-        ((IChildShaker) z).OnShakeFrame(Vector2.Zero);
-        children.Remove(fgt);
-        if(t is not InplaceFiller tf) throw new Exception("how");
-        tf.saved=z;
-        List<IFreeableComp> l = new();
-        foreach(var v in z.Components) if(v is IFreeableComp fc) l.Add(fc); 
-        foreach(var v in l) v.Free();
-      }*/
-      base.destroy(particles);
-    }
-    public static EntityData creationDat=>new EntityData(){
-      Name = "auspicioushelper/ConnectedBlockHolder",
-      Position = Vector2.Zero
-    };
   }
   
   public ref struct PaddingLock:IDisposable{

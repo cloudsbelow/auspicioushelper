@@ -99,16 +99,21 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
     Audio.Play("event:/game/general/passage_closed_behind", Position);
     List<Entity> c = new();
     AddAllChildren(c);
-    setVisColAct(false,ucol,uact);
+    setVisColAct(uvis,ucol,uact);
     if(!uvis) yield break;
-    FadeMaterialLayer f = new FadeMaterialLayer(c,8000);
+    FadeMaterialLayer f = new FadeMaterialLayer(8000);
+    foreach(var e in GetChildren<Entity>()){
+      OverrideVisualComponent.Get(e).AddToOverride(new(f,-20000,true,true));
+    }
     f._alpha=0;
     MaterialPipe.addLayer(f);
     yield return null;
     while((f._alpha = f._alpha+Engine.DeltaTime)<1){
       yield return null;
     }
+    foreach(var e in GetChildren<Entity>()){
+      OverrideVisualComponent.Get(e).RemoveFromOverride(f);
+    }
     MaterialPipe.removeLayer(f);
-    setVisibility(true);
   }
 }

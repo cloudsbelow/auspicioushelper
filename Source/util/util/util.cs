@@ -438,6 +438,17 @@ public static partial class Util{
     public RingBuffer(T[] dat)=>items=dat;
     public RingBuffer(int capacity):this(new T[capacity]){}
   }
+  public ref struct FiniteStack<T>{
+    Span<T> items;
+    int top=-1;
+    public ref T Top=>ref items[top];
+    public bool Empty=>top==-1;
+    public void Push(T item)=>items[++top]=item;
+    public T Pop()=>items[top--];
+    public void Emplace()=>top++;
+    public FiniteStack(Span<T> dat)=>items=dat;
+    public FiniteStack(int capacity):this(new T[capacity]){}
+  }
   public class MultiDisposable:IDisposable{
     List<IDisposable> toDispose=null;
     public IDisposable Add(IDisposable d){

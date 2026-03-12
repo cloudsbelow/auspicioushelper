@@ -221,6 +221,7 @@ public static partial class Util{
     ApplyEasing(easing, pre, out derivative);
     return Approach(val,target,amount*derivative);
   }
+  public static float EaseApproach(Easings easing, float v, float targ, float a,float tol = 0.001f)=>EaseApproach(easing,v,targ,a,out var _,tol);
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float EaseOutApproach(Easings easing, float val, float target, float amount, out float derivative, float tolerence = 0.001f){
     derivative = 0;

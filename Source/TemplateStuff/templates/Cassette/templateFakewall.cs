@@ -33,9 +33,9 @@ public class TemplateFakewall:TemplateDisappearer, Template.IRegisterEnts{
     freeze = d.Bool("freeze",false);
     dontOnTransitionInto = d.Bool("dontOnTransitionInto");
     ddepth = d.Int("disappear_depth",-13000);
-    fadespeed = d.Float("fade_speed",1);
     persistent = d.Bool("persistent",true);
     caveMode = d.Bool("caveMode",false);
+    fadespeed = d.Float("fade_speed",1);
   }
   public override void addTo(Scene scene){
     if(auspicioushelperModule.Session.brokenTempaltes.Contains(fullpath) && persistent){
@@ -65,14 +65,14 @@ public class TemplateFakewall:TemplateDisappearer, Template.IRegisterEnts{
       if(p!=null && !p.Dead && hasInside(p)){
         if(caveLayer == null){
           caveLayer = new(ddepth);
+          MaterialPipe.addLayer(caveLayer);
           foreach(var e in GetChildren<Entity>()){
             OverrideVisualComponent.Get(e).AddToOverride(new(caveLayer,-20000,true,true));
           }
-          MaterialPipe.addLayer(caveLayer);
         }
-        caveLayer._alpha = Calc.Approach(caveLayer._alpha,0,fadespeed*Engine.DeltaTime);
+        caveLayer._alpha = Util.EaseApproach(Util.Easings.QuadIn, caveLayer._alpha,0,fadespeed*Engine.DeltaTime*2);
       } else if(caveLayer!=null){
-        caveLayer._alpha = Calc.Approach(caveLayer._alpha,1,fadespeed*Engine.DeltaTime);
+        caveLayer._alpha = Util.EaseApproach(Util.Easings.QuadOut, caveLayer._alpha,1,fadespeed*Engine.DeltaTime*2);
         if(caveLayer._alpha == 1){
           foreach(var e in GetChildren<Entity>()){
             OverrideVisualComponent.Get(e).RemoveFromOverride(caveLayer);
@@ -94,20 +94,23 @@ public class TemplateFakewall:TemplateDisappearer, Template.IRegisterEnts{
       OverrideVisualComponent.Get(e).AddToOverride(new(caveLayer, -20000, true,true));
     }
   }
+  public static bool printprint=false;
   IEnumerator disappearSequence(){
     disappearing = true;
+    printprint=true;
     Audio.Play("event:/game/general/secret_revealed", Position);
     auspicioushelperModule.Session.brokenTempaltes.Add(fullpath);
     FadeMaterialLayer f = caveLayer = new FadeMaterialLayer(ddepth);
+    MaterialPipe.addLayer(f);
     foreach(var e in GetChildren<Entity>()){
       OverrideVisualComponent.Get(e).AddToOverride(new(f,-20000,true,true));
     }
-    MaterialPipe.addLayer(f);
     yield return null;
     while((f._alpha = f._alpha-Engine.DeltaTime*fadespeed*1)>0){
       yield return null;
     }
     MaterialPipe.removeLayer(f);
     destroy(false);
+    printprint=false;
   }
 }

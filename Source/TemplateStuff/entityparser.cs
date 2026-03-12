@@ -34,8 +34,8 @@ public static class EntityParser{
     parseMap[name] = t;
     loaders[name] = loader;
   }
-  internal static void clarify(List<string> names, Types t, Level.EntityLoader loader){
-    foreach(var name in names) clarify(name, t, loader);
+  internal static void clarify(List<string> names, Types t, Level.EntityLoader loader, bool trusted = false){
+    foreach(var name in names) clarify(name, t, loader, trusted);
   }
   static Dictionary<string,Func<Level,LevelData,Vector2,EntityData,Component>> cloaders = new();
   static HashSet<string> permittedExamples = ["auspicioushelper/ChannelMover"];
@@ -270,8 +270,10 @@ anyways i want to praise it more it is wonderful
     clarify("introCar", Types.unwrapped, static (l,d,o,e)=>new IntroCarW(e,o));
     clarify("crumbleBlock", Types.unwrapped, static (l,d,o,e)=>new CrumbleBlockW(e,o));
     clarify("cassetteBlock", Types.unwrapped, static (l,d,o,e)=>new CassetteW(e,o, new EntityID(d.Name,e.ID)));
-    clarify(ConnectedBlocks.InplaceTemplateWrapper.creationDat.Name, Types.unwrapped, static (l,d,o,e)=>{
-      return new ConnectedBlocks.InplaceTemplateWrapper(e.Position+o);
+    clarify(["auspicioushelper/ConnectedBlocks","auspicioushelper/ConnectedBlocksBg","auspicioushelper/ConnectedContainer"],
+    Types.unable,(l,d,o,e)=>{
+      DebugConsole.MakePostcard("Hi! Sorrysorrysorry you can't use connected tiles in template rooms yet.");
+      return null;
     },true);
     defaultModdedSetup();
     foreach(string s in new string[]{"iceBlock","fireBarrier","FrostHelper/CustomFireBarrier"}){

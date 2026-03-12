@@ -41,6 +41,7 @@ public class auspicioushelperModuleSession : EverestModuleSession {
     }
     public Vector2 loc;
     public string level;
+    public Dictionary<string,string> infos = new();
     public RespawnType ty;
     public RespawnData(){}
     public RespawnData(RespawnType t = RespawnType.Basic){

@@ -13,7 +13,9 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/CampfireRespawn")] 
 public class CampfireThing:Entity{
   public class CampfireData:auspicioushelperModuleSession.RespawnData{
-    public CampfireData():base(RespawnType.CampfireRespawn){}
+    public CampfireData(string ev):base(RespawnType.CampfireRespawn){
+      if(ev.HasContent()) infos.Add("sfx",ev);
+    }
     public Vector2 floc;
   }
   class AppearCutscene:CutsceneEntity{
@@ -41,7 +43,7 @@ public class CampfireThing:Entity{
       if(!fromRespawn){
         c.playingCutscene=false;
         level.Session.RespawnPoint=p.Position;
-        auspicioushelperModule.Session.respDat = new CampfireData(){
+        auspicioushelperModule.Session.respDat = new CampfireData(c.respawnEvent){
           level=level.Session.Level, loc=p.Position, floc=Position
         };
         auspicioushelperModule.Session.save();
@@ -88,10 +90,12 @@ public class CampfireThing:Entity{
   float duckTime;
   string channel;
   bool disableNormal=true;
+  string respawnEvent;
   public CampfireThing(EntityData d, Vector2 o):base(d.Position+o){
     duckTime = d.Float("duckTime",2);
     channel = d.tryGetStr("channel",out var s)?s:null;
     disableNormal = d.Bool("disableNormal",true);
+    respawnEvent = d.Attr("customRespawnSFX","");
   }
   bool playingCutscene = false;
   float timer;
@@ -100,7 +104,7 @@ public class CampfireThing:Entity{
       Session s = (scene as Level).Session;
       Vector2 orig = s.LevelData.Spawns.ClosestTo(scene.Tracker.GetEntity<Player>().Position);
       DebugConsole.Write("session lev",s.Level,s.LevelData.Name);
-      auspicioushelperModule.Session.respDat = new CampfireData(){
+      auspicioushelperModule.Session.respDat = new CampfireData(respawnEvent){
         loc = orig, floc = orig+8*Vector2.UnitX, level = s.Level
       };
     }
@@ -118,7 +122,8 @@ public class CampfireThing:Entity{
   }
   public static void Callback(Level s, auspicioushelperModuleSession.RespawnData r){
     Vector2 floc = (r is CampfireData d)? d.floc:r.loc;
-    var ev = Audio.Play("event:/char/badeline/appear",floc);
+    DebugConsole.Write("auyd",r.infos?.TryGetValue("sfx",out var f)??false?f:"NONE");
+    var ev = Audio.Play(r.infos?.TryGetValue("sfx",out var e)??false? e:"event:/char/badeline/appear",floc);
     ev.setVolume(0.5f);
     s.Add(new AppearCutscene(floc));
   }

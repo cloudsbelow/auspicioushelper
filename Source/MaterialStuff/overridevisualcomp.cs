@@ -127,6 +127,7 @@ public class OverrideVisualComponent:OnAnyRemoveComp, IFreeableComp{
   public virtual void renderMaterial(IMaterialLayer l, Camera c){
     if(ovis && Entity.Scene!=null)Entity.Render();
   }
+  public bool checkRenderStatus=>ovis && Entity.Scene!=null;
   public static Dictionary<Type,Func<Entity,OverrideVisualComponent>> custom = new();
   public class PatchedRenderComp:OverrideVisualComponent{
     public Action render;

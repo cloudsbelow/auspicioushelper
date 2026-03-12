@@ -8,7 +8,8 @@ using MonoMod.Cil;
 using MonoMod.Utils;
 using Celeste.Mod.Helpers;
 using Mono.Cecil.Cil;
-using FgOver = Celeste.Mod.auspicioushelper.Wrappers.FgTiles.OverlayStack;
+using FgOver = Celeste.Mod.auspicioushelper.templateFiller.PaddedMap.OverlayStack;
+using Mono.Cecil;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -133,18 +134,22 @@ public static class HookVanilla{
     }
   }
   [OnLoad.ILHook(typeof(DashBlock),nameof(DashBlock.Awake))]
-  [OnLoad.ILHook(typeof(FakeWall),nameof(FakeWall.Awake))]
+  [OnLoad.ILHook(typeof(FakeWall),nameof(FakeWall.Added))]
+  [OnLoad.ILHook(typeof(CoverupWall),nameof(CoverupWall.Added))]
+  [OnLoad.ILHook(typeof(ExitBlock),nameof(ExitBlock.Added))]
   static void HookBlend(ILContext ctx){
     ILCursor c = new(ctx);
-    VariableDefinition v = c.Body.AddVariable();
-    if(c.TryGotoNextBestFit(MoveType.After,
+    VariableDefinition v = new(ctx.Import(typeof(FgOver)));
+    c.Body.Variables.Add(v);
+    if(c.TryGotoNextBestFit(MoveType.Before,
       itr=>itr.MatchCallvirt<Autotiler>(nameof(Autotiler.GenerateOverlay))
     )){
-      ILCursor d=new(c);
-      c.EmitDelegate(FgTiles.GetOverlayStack);
+      var skip = c.DefineLabel();
+      c.EmitLdarg0();
+      c.EmitDelegate(templateFiller.PaddedMap.GetOverlayStack);
       c.EmitDup();
-      c.EmitStloc(v);
-      c.EmitBrfalse(c.Next);
+      c.EmitStloc(v);    
+      c.EmitBrfalse(skip);
       for(int i=0; i<5; i++)c.EmitPop();
       foreach(var str in new string[]{
         nameof(FgOver.x),nameof(FgOver.y),nameof(FgOver.w),nameof(FgOver.h),nameof(FgOver.ttypes)
@@ -152,6 +157,7 @@ public static class HookVanilla{
         c.EmitLdloc(v);
         c.EmitLdfld(typeof(FgOver).GetField(str));
       }
-    }
+      c.MarkLabel(skip);
+    } else DebugConsole.WriteFailure("Could not add tile overlay blend hook",true);
   }
 }

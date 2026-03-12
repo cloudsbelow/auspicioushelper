@@ -511,7 +511,7 @@ public class MipGrid{
     for(int i=0; i<FloatVec.Count; i++) s+=v[i]+" ";
     return s;
   }
-  static ulong MakeCircleMask(int blockx, int blocky, Vector2 loc, float rad, int level){
+  public static ulong MakeCircleMask(int blockx, int blocky, Vector2 loc, float rad, int level){
     float ldenom = 1<<(level*3); 
     rad = rad/ldenom;
     loc = loc/ldenom - new Vector2(blockx*8, blocky*8);

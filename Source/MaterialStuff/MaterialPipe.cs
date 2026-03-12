@@ -71,6 +71,7 @@ public static class MaterialPipe {
     }
     
     using(samplers.Apply(gd)){
+      OverrideVisualComponent.Override(scene);
       foreach(IMaterialLayer l in layers){
         if(l.useMarkingEntity && l.markingEntity.Scene!=scene){
           DebugConsole.Write("Weirdness occurred (should only happen from map reloading and debug menu use)");
@@ -93,7 +94,6 @@ public static class MaterialPipe {
         }
       }
       gd.SetRenderTarget(GameplayBuffers.Gameplay);
-      OverrideVisualComponent.Override(scene);
       orig(self, scene);
       OverrideVisualComponent.Restore(scene);
     }

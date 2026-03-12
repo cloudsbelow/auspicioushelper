@@ -118,6 +118,48 @@ public class templateFiller{
       intercept = this;
     }
   } 
+  internal class PaddedMap{
+    internal VirtualMap<char> b;
+    VirtualMap<char> safe=null;
+    Int2 pad=Int2.Zero;
+    Int2 size=Int2.Zero;
+    public int xPad=>pad.x;
+    public int yPad=>pad.y;
+    static Int2 ndim=>new(66,9);
+    public PaddedMap(VirtualMap<char> orig){
+      b=orig;
+      size = b==null?Int2.Zero:new(orig.Columns,orig.Rows);
+    }
+    public OverlayStack MakeSafeFor(Int2 loc, Int2 span){
+      var npad = ndim-loc;
+      var nsize = loc+span+1;
+      if(Int2.Max(pad,npad)!=pad || Int2.Max(size,nsize)!=size || safe==null){
+        pad = Int2.Max(pad,npad);
+        size = Int2.Max(size, nsize);
+        safe = new(pad.x+size.x,pad.y+size.y);
+        if(b!=null) for(int xx=0; xx<b.Columns; xx++) for(int yy=0; yy<b.Rows; yy++){
+          safe[pad.x+xx,pad.y+yy]=b[xx,yy];
+        }
+      }
+      return new(){
+        x=loc.x+pad.x, y=loc.y+pad.y, w=span.x, h=span.y, ttypes=safe
+      };
+    }
+    public class OverlayStack{
+      public int x,y,w,h;
+      public VirtualMap<char> ttypes;
+    }
+    public static OverlayStack GetOverlayStack(Entity e){
+      if(e.Get<ChildMarker>()?.parent is not {} p) return null;
+      var pm = p.t.tiledata.getPaddedmap();
+      int w = (int)e.Width/8;
+      int h = (int)e.Height/8;
+      if(p.fgt==null) return pm.MakeSafeFor(new(0,0),new(w,h));
+      var offset = Int2.Round((e.Position-p.Position-p.t.data.offset)/8);
+      return pm.MakeSafeFor(offset,new(w,h));
+    }
+  }
+  static PaddedMap defaultMap=>new PaddedMap(null);
   internal class TileData {
     public Rectangle tr;
     public VirtualMap<char> fgt;
@@ -129,6 +171,12 @@ public class templateFiller{
     public TileView Bgt = null;
     public Vector2 tiletlc;
     public TileOccluder tileOcc  = null;
+    PaddedMap _pmap;
+    internal PaddedMap getPaddedmap(){
+      if(fgt==null) return defaultMap;
+      if(_pmap==null || _pmap.b!=fgt) _pmap = new(fgt);
+      return _pmap; 
+    }
     public TileData(Vector2 tileoffset, Rectangle tilerect){
       this.tr = tilerect;
       tiletlc = tileoffset;

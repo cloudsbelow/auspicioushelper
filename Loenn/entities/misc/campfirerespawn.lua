@@ -16,6 +16,7 @@ entity.placements = {
       duckTime=2,
       channel="",
       disableNormal=true,
+      customRespawnSFX=""
     }
   }
 }
