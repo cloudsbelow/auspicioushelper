@@ -7,7 +7,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [Tracked(true)]
-public class OverrideVisualComponent:OnAnyRemoveComp, IFreeableComp{
+public class OverrideVisualComponent:OnAnyRemoveComp{
   public struct VisualOverrideDescr{
     public IOverrideVisuals o;
     public short order;

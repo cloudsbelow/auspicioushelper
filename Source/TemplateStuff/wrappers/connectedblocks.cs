@@ -91,8 +91,10 @@ public class ConnectedBlocks:Entity{
         minimum = Int2.Min(minimum, t.Item1.tlc);
         maximum = Int2.Max(maximum, t.Item1.brc);
       }
-      VirtualMap<char> fgd = new(maximum.x-minimum.x+2*padding,maximum.y-minimum.y+2*padding,'0');
-      VirtualMap<char> bgd = new(maximum.x-minimum.x+2*padding,maximum.y-minimum.y+2*padding,'0');
+      
+      Int2 size = (maximum-minimum)/8+2*padding;
+      VirtualMap<char> fgd = new(size.x,size.y,'0');
+      VirtualMap<char> bgd = new(size.x,size.y,'0');
       QuickCollider<ConnectedBlocks> qcl = new();
       var l = MipGrid.Layer.fromAreasize((maximum-minimum).x,(maximum-minimum).y);
       foreach(var t in things){
@@ -207,6 +209,26 @@ public class ConnectedBlocks:Entity{
       UpdateHook.EnsureUpdateAny();
     }
   }
+
+  void Collect(templateFiller t, string focus){
+    List<(IntRect,char)> things = new();
+    t.data.ChildEntities.RemoveAll(e=>{
+      if(e.Name!=focus) return false;
+      IntRect ir = new((int)e.Position.X,(int)e.Position.Y,e.Width,e.Height);
+      things.Add((ir, e.Attr("tiletype","0").FirstOrDefault()));
+      return true;
+    });
+    Int2 min = things.ReduceMapI(a=>a.Item1.tlc,Int2.Min);
+    Int2 max = things.ReduceMapI(a=>a.Item1.brc,Int2.Max);
+    Int2 size = (max-min-1)/8+1+2*padding;
+    VirtualMap<char> dat = new(size.x,size.y,'0');
+    foreach(var r in things) FillRect(dat,r.Item1.tlc,r.Item1.brc,r.Item2);
+    templateFiller.TileView view = new();
+  }
+
+
+
+
   public interface IShouldntInduct{}
   public static void addAllSms(Entity e, Util.OrderedSet<Entity> all){
     if(all.Contains(e) || e is IShouldntInduct) return;
@@ -295,8 +317,4 @@ class DecalMarker:Component{
     return;
     bad: DebugConsole.WriteFailure("Could not add decal marking hook",true);
   }
-}
-
-public interface IFreeableComp{
-  void Free()=>((Component)this).Entity?.Remove((Component)this);
 }

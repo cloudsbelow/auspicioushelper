@@ -131,7 +131,7 @@ internal class BasicPlatform:ITemplateChild{
   }
 }
 
-public class ChildMarker:Component,IFreeableComp{
+public class ChildMarker:Component{
   public Template parent;
   public object data;
   protected ChildMarker(Template parent):base(false,false){
@@ -150,6 +150,5 @@ public class ChildMarker:Component,IFreeableComp{
   public bool propagatesTo(Template other){
     return ((ITemplateChild) parent).propagatesTo(other)!=Template.Propagation.None;
   }
-  void IFreeableComp.Free()=>Entity.Remove(this);
   public void Trigger(TriggerInfo t)=>parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(t);
 }

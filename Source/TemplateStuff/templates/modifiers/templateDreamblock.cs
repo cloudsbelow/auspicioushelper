@@ -48,7 +48,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     public override string category=> $"Dream/{exiting}/{dir.X},{dir.Y}";
   }
   [Tracked]
-  public class DreamMarkerComponent:Component,IFreeableComp{
+  public class DreamMarkerComponent:Component{
     public Collider Collider;
     public TemplateDreamblockModifier dbm;
     public DreamMarkerComponent(TemplateDreamblockModifier t, Collider c = null):base(false,false){

@@ -102,11 +102,11 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
     setVisColAct(uvis,ucol,uact);
     if(!uvis) yield break;
     FadeMaterialLayer f = new FadeMaterialLayer(8000);
+    MaterialPipe.addLayer(f);
     foreach(var e in GetChildren<Entity>()){
       OverrideVisualComponent.Get(e).AddToOverride(new(f,-20000,true,true));
     }
     f._alpha=0;
-    MaterialPipe.addLayer(f);
     yield return null;
     while((f._alpha = f._alpha+Engine.DeltaTime)<1){
       yield return null;
