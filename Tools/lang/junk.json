@@ -1,0 +1,57 @@
+{
+    "entities.auspicioushelper/ConnectedContainer": {
+        "name": "Connected Container",
+        "description": "Container for entities and decals to be added to roomless templates (place empty template entity overlapping)",
+        "placements": {
+            "filterEntities": "Whitelist or blacklist for entities. Whitelist if getEntities is false, blacklist if it is true. Should be a list of entity names (found in top of the entity box) with the format [modname]/[entityname]. Can use a * for fuzzy matching - for example, *Platform",
+            "filterDecals": "Similar to the filterEntities box. Uses the decal texture. Can use * for fuzzy matching - for example 4-cliffside/wood*",
+            "getEntities": "Whether the default behavior for entities should be to include them in the template",
+            "getDecals": "Whether the default behavior for decals should be to include them in the template",
+            "excludeSolids": "Whether to exclude solids, even if getEntities is checked (can be overriden by whitelisting in filterEntities)",
+            "excludeTriggers": "Whether to exclude triggers, even if getEntities is checked (can be overriden by whitelisting in filterEntities)"
+        }
+    },
+    "entities.auspicioushelper/ConnectedBlocksBg": {
+        "name": "Connected Background Tiles",
+        "description": "Background tiles that connect and can be used in roomless templates (place empty template entity overlapping)",
+        "placements": {
+            "tiletype": ""
+        }
+    },
+    "entities.auspicioushelper/ConnectedBlocks": {
+        "name": "Connected Foreground Tiles",
+        "description": "Foreground tiles that connect and can be used in roomless templates (place empty template entity overlapping)",
+        "placements": {
+            "tiletype": ""
+        }
+    },
+    "entities.auspicioushelper/CustomRefill": {
+        "name": "",
+        "description": "Fancy refill with some extra options",
+        "placements": {
+            "respawnTimer": "in seconds",
+            "oneUse": "",
+            "twoDash": "",
+            "triggering": "Whether collecting this refill should trigger templates it is a part of",
+            "useOnPickup": "Whether to always use this refill if it is in a template that gets picked up",
+            "useOnRelease": "Whether to always use this refill when in a template that is thrown",
+            "numRefresh": "Number of times this refill will respawn. Leave blank or negative for unlimited use.",
+            "depth": ""
+        }
+    },
+    "entities.auspicioushelper/spinner": {
+        "name": "Recolorable Spinner",
+        "description": "Lots of recoloring options",
+        "placements": {
+            "customColor": "Multiplicative color tint",
+            "depth": "",
+            "makeFiller": "Whether to make connections to other spinners",
+            "numDebris": "Number of shards to create when in a template that gets destroyed",
+            "dreamThru": "Whether to kill the player if the player is in a dream state (allows dreamblocks to go through this spinner)",
+            "neverClip": "Render as one image. Will get rid of gaps around solids.",
+            "color": "Base color to use",
+            "fancy": "Fancy recoloring option. See wiki for details. For example (000,fff)->(fff,000)",
+            "border": "Border color. Can be transparent for borderless spinners."
+        }
+    }
+}

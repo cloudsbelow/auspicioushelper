@@ -23,6 +23,8 @@ entity.placements = {
       allowTransition=false,
       tryDashhit=true,
       sendDashhit=false,
+      
+      _loenn_display_template = true,
     }
   }
 }

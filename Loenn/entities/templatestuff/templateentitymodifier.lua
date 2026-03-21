@@ -19,7 +19,9 @@ entity.placements = {
       shakeChannel="",
       allowCustomSpeed=false,
       log = false,
-      only = ""
+      only = "",
+      
+      _loenn_display_template = true,
     }
   }
 }

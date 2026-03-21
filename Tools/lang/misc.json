@@ -1,0 +1,184 @@
+{
+    "entities.auspicioushelper/Anti0fZone": {
+        "name": "Anti 0f Zone",
+        "description": "Prevents certain zero-frameable inputs from happening while inside this entity",
+        "placements": {
+            "holdables": "Pick up holdables on the first possible pixel",
+            "player_colliders": "Hit player colliders on the first possible pixel (if speed or number of dashes changes, will stop your movement)",
+            "always_walljumpcheck": [
+                "Check Unsolid Walljumps",
+                "Check for walljumps off of non-solids each pixel (needed if using sideways jumpthrus) (slow; only use in the area directly around the jumpthru)"
+            ],
+            "triggers": "Hit triggers on the first possible pixel",
+            "solids": "Perform walljumps/cornerjumps on first possible pixel (prevents missing cornerboost speed when buffering)",
+            "cover_whole_room": "Makes this entity cover the whole room"
+        }
+    },
+    "entities.auspicioushelper/ArbitraryDie": {
+        "name": "",
+        "description": "Kill area with the shape of a specified image",
+        "placements": {
+            "image": "Image to use as visuals and collider shape",
+            "CustomColliderPath": "Override the above image for only the collider",
+            "scaleX": "",
+            "scaleY": "",
+            "color": "Multiplicative tint color",
+            "rotation": "",
+            "depth": "",
+            "alphaCutoff": "Pixels whose alpha is higher than this value will be collidable"
+        }
+    },
+    "entities.auspicioushelper/ArbitrarySolid": {
+        "name": "",
+        "description": "Solid with the exact shape of a specified image. Suggested to use with pixel leniency trigger",
+        "placements": {
+            "safe": "If berries can be collected while standing here",
+            "soundIndex": "",
+            "image": "Image to use as visuals and collider shape",
+            "CustomColliderPath": "Override the above image for only the collider",
+            "scaleX": "",
+            "scaleY": "",
+            "color": "Multiplicative tint color",
+            "rotation": "",
+            "depth": "",
+            "alphaCutoff": "Pixels whose alpha is higher than this value will be collidable",
+            "occludeLight": "Whether this entitiy casts shadows (only the solid pixels). Relatively optimized; no need to worry about lag if there are not hundreds of these entities"
+        }
+    },
+    "entities.auspicioushelper/BeamBlocker": {
+        "name": "Beam Blocker",
+        "description": "Stops  Spiral Boss Beam from going through this entity, similar to a wall",
+        "placements": {}
+    },
+    "entities.auspicioushelper/CampfireRespawn": {
+        "name": "",
+        "description": "Sets a respawn point on any safe ground if you hold duck long enough",
+        "placements": {
+            "duckTime": "How long you must duck to activate the campfire",
+            "channel": "Decrement this channel by 1 with each use. When it is 0, the campfire can no longer be used.",
+            "disableNormal": "Do not change your respawn when transitioning rooms",
+            "customRespawnSFX": "SFX to use when respawning"
+        }
+    },
+    "entities.auspicioushelper/CassetteFixerThing": {
+        "name": "",
+        "description": "Fixes the bug where cassettes can appear one pixel higher/lower if dying when they are in the 'willchange' state",
+        "placements": {}
+    },
+    "entities.auspicioushelper/SillySpikes": {
+        "name": "Relative Spikes",
+        "description": "Spikes with recoloring options and options to fix common speed issues with spikes. With all options enabled, the spikes will kill you only if your velocity 'relative' to them is not moving away",
+        "placements": {
+            "type": "",
+            "direction": "",
+            "fancy": "Fancy recoloring option. See wiki for details. For example (000,fff)->(fff,000)",
+            "tint": "Multiplicative tint color",
+            "dreamThru": "Lets you move through these spikes in a dream state (dreamblocks will go through these)",
+            "dashThru": "Lets you dash through spikes",
+            "useOwnSpeed": "Whether to use this spike's own speed (from anything it may be attached to) when deciding whether to kill the player",
+            "fixPickup": "Stopping due to picking up a holdable while overlapping the spikes won't be deadly",
+            "fixDash": "Stopping due to starting a dash while overlapping the spikes won't be deadly",
+            "fixOnBlock": "Standing still on a block moving through these spikes won't be deadly if the block is moving in the right direction",
+            "canAttach": "Whether this entity attaches to solids"
+        }
+    },
+    "entities.auspicioushelper/DecalRecolor": {
+        "name": "",
+        "description": "Controller to recolor decals non-multiplicatively",
+        "placements": {
+            "scope": "",
+            "texture": "Textures to recolor. Can use fancy matching with *",
+            "recolor": "Fancy recoloring option. See wiki for details. For example (000,fff)->(fff,000)"
+        }
+    },
+    "entities.auspicioushelper/DieWater": {
+        "name": "Die Water",
+        "description": "Water that uhm. uh. kills you",
+        "placements": {}
+    },
+    "entities.auspicioushelper/enclorse": {
+        "name": "",
+        "description": "Enclosable horse",
+        "placements": {
+            "channel": "Channel to set when enclosed",
+            "resettable": "Whether to unset the channel when you unenclose the horse"
+        }
+    },
+    "entities.auspicioushelper/MaterialApplier": {
+        "name": "",
+        "description": "For adding entities to shader layers",
+        "placements": {
+            "can_be_ID_path": "Keep this checked always.",
+            "identifier": "The entity ID path of the entity you want to include (found after ID: at the top of the loenn entity menu). Use 'player' for the player, 'fg' for foreground tiles and 'bg' for background tiles.",
+            "materialLayer": "Identifier of the layer to add the entity to",
+            "dontNormalRender": "Turn off normal rendering for this entity while in operation",
+            "toggleChannel": "Channel to toggle between modified/original rendering",
+            "priority": "The priority of this layer. Used when putting this entity in multiple layers simultaneously to decide which it appears in. (don't normal render will stop this item from rendering in lower priority layers as well as in normal usage)"
+        }
+    },
+    "entities.auspicioushelper/MaterialController": {
+        "name": "Material Controller",
+        "description": "Adds a shader pass to the level. Somewhat complicated; heavily encouraged to read materials section on wiki before usage",
+        "placements": {
+            "passes": "Effect passes used in the shader (consecutively)",
+            "identifier": "Shorthand for shader (only share identifiers for COMPLETELY IDENTICAL materials)",
+            "params": "Paramaters to pass to the shader",
+            "textures": "Textures to pass to the shader",
+            "depth": "The level at which the layer is added to the scene",
+            "Fade_in": "How to fade in during transitions",
+            "fadeOut": "How to fade out during transitions",
+            "quadFirst": "See wiki for explanation",
+            "always": "Whether to render even if the layer contains no entities (useful for styleground/fullscreen operations)",
+            "drawInScene": "Whether to render this layer (if unchecked, can still be chained in other layers)",
+            "reload": "Reload the effect whenever this entity is added (use for debugging)"
+        }
+    },
+    "entities.auspicioushelper/PortalGateH": {
+        "name": "Portal Gate (Horizontal)",
+        "description": "A portal that slices entities that are halfway though it",
+        "placements": {
+            "right_facing_f0": [
+                "Portal 1 Facing Right",
+                "If the first portal should face right"
+            ],
+            "right_facing_f1": [
+                "Portal 2 Facing Right",
+                "If the second portal should face right"
+            ],
+            "flipGravity": "",
+            "color_hex": "The portal color",
+            "attached": "If the portals are attached to solids",
+            "giveRCB": [
+                "Gives Reverse Corner Boost",
+                "Whether the portal should give reverse corner boost on exiting portal"
+            ],
+            "instant_camera": "Switch the camera when moving through the portals to keep the player at the same screen position",
+            "depth": ""
+        }
+    },
+    "entities.auspicioushelper/SpiralBossBeam": {
+        "name": "Spiral Boss Beam",
+        "description": "A Boss Beam that rotates",
+        "placements": {
+            "start_angle": "The starting angle in radians",
+            "speed": "The rotation speed in radians/sec",
+            "depth": ""
+        }
+    },
+    "entities.auspicioushelper/TrackedCassette": {
+        "name": "Tracked Cassette",
+        "description": "A customizable cassette",
+        "placements": {
+            "dont_unlock_bside": [
+                "Don't Unlock B-Side",
+                "Whether to unlock the B-Side on collect"
+            ],
+            "use_raw_message": "Whether to use the raw text in \"message\" or try and translate it",
+            "--always_show": "",
+            "message": "The message to display on collect",
+            "identifier": "A unique identifier for this cassette",
+            "flag": "The flag to set on collect",
+            "line_width": "How wide the cassette collect message should be"
+        }
+    }
+}

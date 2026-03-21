@@ -11,6 +11,7 @@ using System.Net.Mime;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using Celeste.Mod.auspicioushelper.Import;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
@@ -239,6 +240,10 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
       if(dir.L1()==0){
         dir = Vector2.UnitY*Math.Sign(p.Speed.Y);
         if(Math.Abs(p.Speed.X)>=Math.Abs(p.Speed.Y)) dir = Vector2.UnitX*Math.Sign(p.Speed.X);
+      }
+      if(CommunalHelperIop.CommunalHelperImports.HasDreamTunnelDash is {} f && f()){
+        p.Die(p.Speed);
+        return false;
       }
       speedSetter = this;
       p.StateMachine.State = Player.StDreamDash;

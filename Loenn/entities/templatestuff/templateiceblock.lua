@@ -20,6 +20,7 @@ entity.placements = {
       ridingTriggers=true,
       disconnect=true,
       quiet=0,
+      _loenn_display_template = true,
     }
   }
 }

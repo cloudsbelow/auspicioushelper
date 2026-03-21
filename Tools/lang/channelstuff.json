@@ -1,0 +1,227 @@
+{
+    "entities.auspicioushelper/ChannelBooster": {
+        "name": "Channel Booster",
+        "description": "A booster that can only be entered depending on its given channel",
+        "placements": {
+            "state0": [
+                "Inactive State",
+                "How the booster should behave when inactive/even"
+            ],
+            "state1": [
+                "Active State",
+                "How the booster should behave when active/odd"
+            ],
+            "triggerTemplates": "Whether entering this bubble will trigger parent templates",
+            "give_liftspeed": "Whether to give a riding player liftspeed when in moving templates",
+            "channel": "The channel to listen to",
+            "self_activating": "Should the given channel toggle when the player exits the booster",
+            "state0_customsprite": "Should match vanilla sprite layout",
+            "state1_customsprite": "Should match vanilla sprite layout",
+            "quantumJank": "it needs to be preserved for backwards compat."
+        }
+    },
+    "entities.auspicioushelper/ChannelClearController": {
+        "name": "",
+        "description": "Entity that manages channel resetting when constructed in a room",
+        "placements": {
+            "channel": "Sets this singular channel to the specified value",
+            "value": "Set the channel to this value",
+            "clear_all": "Completely reset all channel values to 0",
+            "clear_prefix": "Set all channel values with this prefix to 0",
+            "advanced": ""
+        }
+    },
+    "entities.auspicioushelper/CollisionCounter": {
+        "name": "",
+        "description": "Count the number of collisions between entities in two groups",
+        "placements": {
+            "groupA": "List of entity ID paths in group A",
+            "groupB": "List of entity ID paths in group B",
+            "onlyCollidableA": "Only collidable entities in A will have their collisions count",
+            "onlyCollidableB": "Only collidable entities in B will have their collisions count",
+            "channel": "The channel to set when collisions have been counted"
+        }
+    },
+    "entities.auspicioushelper/FinderCollider": {
+        "name": "",
+        "description": "Change an entity's collider when a channel is set. Will not be stable for entities such as the player that frequently change their collider on their own. Does not need to be in same room as targeted entity.",
+        "placements": {
+            "path": "Entity ID path to target",
+            "channel": "Channel to listen to. If left blank, will change the channel on spawn only.",
+            "collider": "New collider to set. Format is collidertype:[parameters] such as rect:[-8,-8,16,16] for a 16-wide centered rectangle"
+        }
+    },
+    "entities.auspicioushelper/channelTemplateMover": {
+        "name": "",
+        "description": "Move the nearest unrooted template. An unrooted template either has no parent or is disconnected from its parent's movement.",
+        "placements": {
+            "activateChannel": "Will start the sequence when this channel is set. Multiple sequences can run at the same time.",
+            "shakeTime": "How long to shake before movement starts",
+            "arrivalShake": "How long to shake when arriving at the destination",
+            "moveTime": "The time it takes to move",
+            "easing": "The easing to use when moving",
+            "relative": "If checked, the entity will move as if this entity was placed directly on top of it (with the node similarly shifted)",
+            "log": "Whether to log various statistics."
+        }
+    },
+    "entities.auspicioushelper/ChannelHotColdWatcher": {
+        "name": "",
+        "description": "Set a channel based on the core mode",
+        "placements": {
+            "channel": "The channel to set",
+            "Hot_value": "the value to set in hot mode",
+            "Cold_value": "the value to set in chilly mode"
+        }
+    },
+    "entities.auspicioushelper/ChannelJelly": {
+        "name": "",
+        "description": "A jellyfish that changes state based on channel",
+        "placements": {
+            "state0": "The state to use when the channel is even",
+            "state1": "The state to use when the channel is odd",
+            "channel": "The channel to watch"
+        }
+    },
+    "entities.auspicioushelper/ChannelMathController": {
+        "name": "",
+        "description": "Run compiled expressions on channels, flags and entity states. Reccomended to read the wiki, read the compiler, get a PHD, and hit the modder",
+        "placements": {
+            "compiled_operations": "Encoded compiled operations, gotten from the compiler website",
+            "run_immediately": "Run immediately when a watched channel changes. This can very easily cause infinite loops and is not reccomended unless you know what you are doing.",
+            "custom_polling_rate": "If defined, will run the code every X frames. If not defined, will run whenever a channel that is being used in an expression updates.",
+            "multi_type": "Behavior to use when starting a script when the script is already running",
+            "activation_cond": "When to try to start scripts",
+            "debug": "Whether to print debug information to the auspicioushelper debug console (windows only)",
+            "notifying_override": "List of channels that override the usual watched channels as a starting condition",
+            "run_when_awake": "",
+            "only_run_for_nonzero": "Won't run when notifying channels change to set to zero"
+        }
+    },
+    "entities.auspicioushelper/ChannelPlayerWatcher": {
+        "name": "",
+        "description": "Watch the player and set a channel when various conditions are met",
+        "placements": {
+            "channel": "Channel to set",
+            "valueWhenMissing": "Value to set when player is dead",
+            "mode": "",
+            "custom": "Perform reflection, getting all fields in this list successively and trying to cast to double. Kinda cursed"
+        }
+    },
+    "entities.auspicioushelper/ChannelReflector": {
+        "name": "",
+        "description": "Very cursed. Only use if you understand what 'reflector' means here.",
+        "placements": {
+            "path": "Entity ID to watch",
+            "channel": "Channel to set",
+            "logAccessible": "Log all available values of the class that can be used at the tail of the access list as the next step",
+            "valueIfNull": "If a null is ever encountered, will set the channel to this value.",
+            "access": "List of fields to successively access. Attempts to cast the last to a double to set the channel"
+        }
+    },
+    "entities.auspicioushelper/ChannelSprite": {
+        "name": "",
+        "description": "Sprite that can display animations defined in Sprites.xml based on a channel. Check auspicioushelper's Sprites.xml for an example setup.",
+        "placements": {
+            "channel": "the channel to watch",
+            "attached": "Whether to attach the entity to solids",
+            "edge_type": "How to pick the case when the channel is less than zero or greater than cases-1",
+            "xml_spritename": "name of the XML sprite",
+            "cases": "number of cases defined in XML",
+            "depth": "it's what you would expect from this field",
+            "materialIdentifiers": ""
+        }
+    },
+    "entities.auspicioushelper/ChannelSwitch": {
+        "name": "",
+        "description": "Core switch that actually toggles channels",
+        "placements": {
+            "channel": "Channel to set",
+            "on_only": "Only triggerable in the on state",
+            "off_only": "Only triggerable in the off state",
+            "player_toggle": "Whether the player can hit",
+            "throwable_toggle": "Whether throwables can hit",
+            "seeker_toggle": "Whether seekers can hit",
+            "on_value": "Value to set when on",
+            "off_value": "Value to set when off",
+            "cooldown": "Cooldown for hitting this particular switch (the channel itself is not constrained)",
+            "onSfx": "",
+            "offSfx": "",
+            "dieSfx": "",
+            "switchsprite": "Define the sprite so that it matches vanilla format."
+        }
+    },
+    "entities.auspicioushelper/ChannelTheo": {
+        "name": "",
+        "description": "I got peer pressured into making this on my third day of modding (it was fun though). Jank.",
+        "placements": {
+            "channel": "When nonzero, used the cursed behavior",
+            "switch_thrown_momentum": "Player and holdable switch momentum when throwing",
+            "swap_thrown_positions": "Switch positions with holdable dangerously when throwing(may clip player)",
+            "swap_thrown_positions_nodie": "Don't clip player into wall when switching positions",
+            "player_momentum_weight": "When grabbed, how much the final player velocity should use the player's velocity",
+            "theo_momentum_weight": "When grabbed, how much the final player velocity should use Theo's velocity"
+        }
+    },
+    "entities.auspicioushelper/ChannelTriggerTrigger": {
+        "name": "",
+        "description": "Trigger the (smallest area) trigger at a certain area",
+        "placements": {
+            "channel": "Channel to watch. If the entity has nodes, setting the channel to n triggers the smallest trigger at the n'th node, with 0 corresponding to the main entity. If no nodes are present, any non-0 channel value will trigger the overlapping trigger",
+            "delay": "in seconds"
+        }
+    },
+    "entities.auspicioushelper/SpriteAnimChain": {
+        "name": "",
+        "description": "This is an entity for emptynoise(tollab) and is not supported in other contexts",
+        "placements": {
+            "depth": "",
+            "seconds_per_node": "",
+            "addfreq": "",
+            "stack_ends": "",
+            "tangent_freq": "",
+            "tangent_magnitude": "",
+            "atlas_directory": "",
+            "loop": ""
+        }
+    },
+    "entities.auspicioushelper/ConditionalStrawb": {
+        "name": "",
+        "description": "Conditional strawberry that does not increase map strawberry count. Winged strawberry flies to the node when specified. Must be collected in conditional strawb collect trigger",
+        "placements": {
+            "strawberry_id": "Name of the strawberry to use in collect triggers",
+            "appear_channel": "Channel to check whether strawberry should appear",
+            "appear_roomenter_only": "Only check the appearance channel when entering the room (i'm not sure unchecking this works; never tested)",
+            "fly_channel": "Channel to watch for flying away",
+            "nodeSelectorCh": "Channel selecting which node the strawberry flies to when scared. If not listed, will be 1 if a node exists.",
+            "deathless": "Act like a golden, returning to this strawberry's initial room when you die with it",
+            "flyOnDashNormal": "Fly away like normal strawberry on dash",
+            "flyOnDashFollower": "Fly away if you dash while holding the strawberry",
+            "persist_on_death": "The strawberry will stick around even if you die",
+            "sprites": "The sprites to use for this. Currently not working, will fix later."
+        }
+    },
+    "entities.auspicioushelper/ConditionalStrawbTracked": {
+        "name": "",
+        "description": "Conditional strawberry that adds to the map's strawberry count. Winged strawberry flies to the node when specified. Must be collected in conditional strawb collect trigger",
+        "placements": {
+            "strawberry_id": "Name of the strawberry to use in collect triggers",
+            "appear_channel": "Channel to check whether strawberry should appear",
+            "appear_roomenter_only": "Only check the appearance channel when entering the room (i'm not sure unchecking this works; never tested)",
+            "fly_channel": "Channel to watch for flying away",
+            "nodeSelectorCh": "Channel selecting which node the strawberry flies to when scared. If not listed, will be 1 if a node exists.",
+            "deathless": "Act like a golden, returning to this strawberry's initial room when you die with it",
+            "flyOnDashNormal": "Fly away like normal strawberry on dash",
+            "flyOnDashFollower": "Fly away if you dash while holding the strawberry",
+            "persist_on_death": "The strawberry will stick around even if you die",
+            "sprites": "The sprites to use for this."
+        }
+    },
+    "entities.auspicioushelper/ChannelToFlag": {
+        "name": "",
+        "description": "This is a paranoia entity for people who don't trust the @ prefix to always work due to weird inlining or weird design choices by other mods",
+        "placements": {
+            "channel": "the channel to read",
+            "flag": "the flag to set"
+        }
+    }
+}

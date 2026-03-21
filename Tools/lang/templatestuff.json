@@ -1,0 +1,575 @@
+{
+    "entities.auspicioushelper/EvilPackedTemplateRoom": {
+        "name": "",
+        "description": "It's evil",
+        "placements": {
+            "EncodedRooms": "There's a 'pack template rooms to log' mod option. This will log a string. If you paste that string here, you can delete the original rooms if this template is in the room with the things using those rooms. Can be used between maps."
+        }
+    },
+    "entities.auspicioushelper/FinderDepth": {
+        "name": "",
+        "description": "Change the depth of targeted entities",
+        "placements": {
+            "path": "A list of entity ID paths (the number next to ID: in loenn topbar)",
+            "depth": "The new depths these entities should have"
+        }
+    },
+    "entities.auspicioushelper/EntityMarkingFlag": {
+        "name": "Entity Marker",
+        "description": "Finds an entity by ID and assigns it a string id. Add to a zztemplates room.",
+        "placements": {
+            "path": "The entity ID",
+            "identifier": "The unique identifier to give the entity, when found"
+        }
+    },
+    "entities.auspicioushelper/TemplateFillerSwitcher": {
+        "name": "",
+        "description": "Switch between various template fillers. Should be placed in a template room and used like a normal template",
+        "placements": {
+            "template_name": "The filler name (analogous to regular template filler)",
+            "channel": "If using channel selection mode, selects the filler at the index of the channel's current value",
+            "SelectionMode": "Various modes",
+            "LoopResetMode": "How to reset loop mode - i.e. whether to share the loops between all instances in a room or not",
+            "templates": "List of template strings to use. "
+        }
+    },
+    "entities.auspicioushelper/TemplateCassetteColor": {
+        "name": "",
+        "description": "Set up custom visuals for a single cassette layer.",
+        "placements": {
+            "tintActive": "Tint color of active entites",
+            "simpleStyle": "Whether to use reduced border style",
+            "activeDepth": "The depth of active entities",
+            "channels": "Apply this visual setting to all listed channels",
+            "fgSaturation": "How saturated the foreground is (reduces tint influence)",
+            "color": "The base color. Setting this automatically sets all other color parameters to reasonable values if you leave them unset.",
+            "inactiveDepth": "The depth of 'off' cassette shadows",
+            "patternAngle": "The angle of the pattern",
+            "patternScale": "The size of each stripe in the pattern",
+            "patternOffset": "Offset of the pattern in worldspace",
+            "patternWeight": "How thick the 'active' bands are in the pattern",
+            "borderColor": "The border color",
+            "innerColor": "The inside color"
+        }
+    },
+    "entities.auspicioushelper/TemplateCassetteManagerSimple": {
+        "name": "",
+        "description": "Manage template cassette block visuals and timings simply in one entity. Just give channels and provide the matching channels in the cassette blocks.",
+        "placements": {
+            "channel_1": "Corresponds to the 'blue' cassette blocks",
+            "channel_2": "Corresponds to the 'purple' cassette blocks",
+            "channel_3": "Corresponds to the 'green' cassette blocks",
+            "channel_4": "Corresponds to the 'yellow' cassette blocks",
+            "simple_style": "Render a narrower border",
+            "visual_only": "While setting up visuals on the listed channels, will not set the channels itself.",
+            "tintActive": "Whether to tint activated cassette blocks.",
+            "translucent": "Make the area between stripes see-through",
+            "no_visuals": "Change the channels along with vanilla cassette timings without setting up visuals",
+            "useVanillaMistiming": "Vanilla sometimes activates blocks the frame after the click plays. this replicates that.",
+            "useListeners": "Uses cassette listeners. Better for compatability."
+        }
+    },
+    "entities.auspicioushelper/CustomDreamlayer": {
+        "name": "",
+        "description": "Setup custom visual settings for tempalte dreamblocks. Global per map; does not need to be in same room.",
+        "placements": {
+            "color_0": "Specifies color of stars in the dreamblock",
+            "color_1": "Specifies color of stars in the dreamblock",
+            "color_2": "Specifies color of stars in the dreamblock",
+            "color_3": "Specifies color of stars in the dreamblock",
+            "color_4": "Specifies color of stars in the dreamblock",
+            "color_5": "Specifies color of stars in the dreamblock",
+            "depth": "Depth the dreamblocks will render at",
+            "identifier": "The identifier to use in 'custom dreamlayer' boxes. Set to 'normal' or 'reverse' to change the default graphics for dreamblock modifiers without an identifier.",
+            "density": "The density of stars in the dreamblock.",
+            "contentAlpha": "The alpha of the original entities.",
+            "edgeColor": "The color of the borders of the effect",
+            "insideColor": "The color of the interior of the dreamblock."
+        }
+    },
+    "entities.auspicioushelper/templateFiller": {
+        "name": "Template Filler",
+        "description": "Place this entity so that it's covering your desired group of objects, and then it can be used as a template (make sure the room name starts with \"zztemplates-\")",
+        "placements": {
+            "template_name": "The name of this template. When using this template, specify it like <roomname>/<templatename>, assuming this template is placed in a room named \"zztemplates-<roomname>\"",
+            "oldTemplateName": ""
+        }
+    },
+    "entities.auspicioushelper/templateholdable": {
+        "name": "Template Holdable",
+        "description": "A holdable that can be made with a template",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "cannot_hold_timer": "How long one must wait before being allowed to pick up this entity after dropping it",
+            "Holdable_collider_expand": "How much the holdable collider should extend from the base. Can specify up to 4 options seperated with commas - specifying 1 will set all sides to that amount, 2 will set the top and bottom to the first and left and right to the second, etc...",
+            "slowfall": "like a jelly",
+            "slowrun": "Does the holdable encumber?",
+            "always_collidable": "Whether this should collide with other actors even when it is being held (will not collide with the holder)",
+            "player_momentum_weight": "When grabbed, how much the final player velocity should use the player's velocity",
+            "holdable_momentum_weight": "When grabbed, how much the final player velocity should use the holdable's velocity",
+            "wallhitsound": "sound to play when hitting walls or floor",
+            "wallhit_speedretain": "When hitting walls, how much speed to retain",
+            "gravity": "How quickly to approach terminal velocity",
+            "terminal_velocity": "Max falling speed",
+            "friction": "Air friction",
+            "die_to_barrier": "Die to seeker barriers",
+            "respawning": "Whether this respawns.",
+            "dontFlingOff": "When liftspeed stops or becomes pointed downwards, whether this holdable should be flung",
+            "respawnDelay": "Time it takes to respawn",
+            "start_floating": "Yea like if it starts floating",
+            "dangerous": "Whether to crush things like hearts",
+            "voidDieOffset": "How far below the screen the bottom of the collider must be for this to die",
+            "tutorial": "Show grabbing tutorial",
+            "minHoldTimer": "Minimum time this holdable must be held before becoming throwable",
+            "customThrowspeeds": "The speed this item is thrown at. Can give two values for X and Y.",
+            "mirrorReflection": "Whether this template has a mirror reflection.",
+            "customRecoil": "The recoil throwing this template causes. Can pass an X and Y value.",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/MaterialTemplate": {
+        "name": "",
+        "description": "A template that can be drawn to material layers",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "dontNormalRender": "Don't render stuff in this template in the normal gameplay render step",
+            "identifier": [
+                "Layer identifier",
+                "The layer to draw entities in this template to"
+            ],
+            "collidable": "If unchecked, items in the template will be purely visual",
+            "channel": "Render as normal when this is set",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateBehaviorChain": {
+        "name": "",
+        "description": "An easy way to apply attributes from multiple template types to one template",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "forceOwnPosition": "Use this template's position as the root position of any noded templates. Good for more intuitive node layouts. The entity position of those templates will be completely ignored when checked.",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateBlock": {
+        "name": "Template Breakable Block",
+        "description": "A static block that can be made with a template",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "only_redbubble_or_summit_launch": "If the template can only be broken when in a red bubble or summit launching",
+            "persistent": "If the template will respawn after being broken",
+            "canbreak": "Whether or not you can dash into this template to break it",
+            "breaksfx": "The sound effect to play when this template is broken",
+            "triggerable": "Break from trigger events",
+            "triggerOnBreak": "Trigger parents when broken",
+            "breakableByBlocks": "Whether this block will be broken by templates with the 'through dashblocks' option",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ],
+            "visible": "Whether the template is visible or not",
+            "collidable": "Whether the template is collidable or not",
+            "active": "Whether the template will update or not",
+            "propagateRiding": "Whether to pass player riders to parent template in compound templates",
+            "propagateShaking": "Whether shake this block when the parent shakes when in compound template",
+            "exitBlockBehavior": "Behave like an exit block"
+        }
+    },
+    "entities.auspicioushelper/TemplateCassetteBlock": {
+        "name": "Template Cassette Block",
+        "description": "A cassette block that can be made with a template",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "channel": "Will be present when channel is nonzero; also used for rendering.",
+            "freeze": "Whether or not this template's entities should update when inactive",
+            "do_boost": "bounces the template up when activates (jank)",
+            "refreshEntsAlways": "Every time the cassette spawns, will make new entities. The old ones get destroyed.",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateChannelmover": {
+        "name": "Template Channelmover",
+        "description": "A template that moves between two nodes based on a channel",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "channel": "The channel to listen to. When this channel is active/odd, this template moves to the end node. (To use a flag, prefix the flag with a $)",
+            "move_time": "How long in seconds it takes to move from one node to the other",
+            "asymmetry": "What to divide the return speed by (ex. move_time=2 and asymmetry=4, return move speed is 0.5sec)",
+            "easing": "The easing to use along this line",
+            "spline": "The spline type to use. Linear types move in straight lines. The catmull variants curve smoothly between nodes with sharp edges at knots (created by stacking two nodes on the same pixel)",
+            "lastNodeIsKnot": "Make the last node a knot even if it is not stacked. Can be disabled to allow for crooked paths on the last segment of a looping path. Having it on results in more intuitive behavior for new users.",
+            "allowFraction": "Allows you to specify decimal targets to move to specific positions between two knots",
+            "complete": "Whether the template must complete its movement to a knot before reversing direction",
+            "alternateEasing": "Whether easing should apply symmetrically",
+            "shake": "Whether this will shake upon reaching a knot.",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateBelt": {
+        "name": "",
+        "description": "Make a conveyer belt of entities",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "speed": "The speed of items on the belt, in segments/second",
+            "numPerSegment": "How many items are spawned per segment in the belt naturally. More items can be spawned via setting the channel.",
+            "initialOffset": "The initial offset items in the belt should have.",
+            "loop": "whether to make the belt loop (will cause the same items to circulate endlessly instead of being destroyed/recreated)",
+            "spline": "The spline type to use. Linear types move in straight lines. The catmull variants curve smoothly between nodes with sharp edges at knots (created by stacking two nodes on the same pixel)",
+            "easing": "per-segment easing to use",
+            "lastNodeIsKnot": "Make the last node a knot even if it is not stacked. Can be disabled to allow for crooked paths on the last segment of a looping path. Having it on results in more intuitive behavior for new users.",
+            "channel": "Spawn an item at the start of the belt every time the channel is set to a nonzero value.",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateDashhitModifier": {
+        "name": "",
+        "description": "Modify the behavior performed when dashing into the various sides of this block",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "skipChannel": "Ignores this template when set, behaving in a manner as if it were not here",
+            "Left": "to send triggering events, pick the Trigger variety here",
+            "Right": "to send triggering events, pick the Trigger variety here",
+            "Up": "to send triggering events, pick the Trigger variety here",
+            "Down": "to send triggering events, pick the Trigger variety here",
+            "refillOptions": "give a number to restore that many dashes, and an 's' to restore stamina",
+            "alwaysPropegate": "Whether to send dashhits further down the chain after use",
+            "entanglementId": "Dashhit entanglement. It's scary.",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateDreamblockModifier": {
+        "name": "",
+        "description": "Turn contained entities into dreamblocks that can be dreamed through.",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "triggerOnEnter": "Whether to trigger this template when entering it from a non-dream state",
+            "triggerOnLeave": "Whether to trigger this template when exiting the dream state from it",
+            "normalChannel": "Entities in the template will behave/look normal when this channel is nonzero",
+            "customVisualGroup": "Specifies a custom visual group, to be used with the custom dreamlayer entity.",
+            "reverse": "Reverse dreamblock gameplay.",
+            "conserve": "Speed conserving gameplay.",
+            "useVisuals": "Uncheck to make items inside appear as normal with no shader.",
+            "allowTransition": "Allows room transitions to start while dreaming in this block.",
+            "tryDashhit": "Attempts to resolve dashhit events of children before entering the block. Certain entities will stop you from using the dreamblock.",
+            "sendDashhit": "Send a dashhit event to parent templates when entering this block.",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateEntityModifier": {
+        "name": "",
+        "description": "Modify the visibility/collidability/activity of contained entities",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "activeChannel": "If a channel is provided, contained entities will only be active when this channel is nonzero. The allowCustomSpeed checkbox allows non boolan speeds",
+            "collidableChannel": "If a channel is provided, contained entities will only be collidable when this channel is nonzero",
+            "visibleChannel": "If a channel is provided, contained entities will only be visible when this channel is nonzero.",
+            "shakeChannel": "If a channel is provided, setting it will cause contained entities to shake.",
+            "allowCustomSpeed": "If checked, can set the active channel to non boolean values. Entities inside will run at these numerical speeds. For example, setting the active channel to 0.5 will cause all contained entities to run at half speed.",
+            "log": "Log the entity types contained",
+            "only": "Only affects entities of the given type (found in the top bar of loenn entity menu, i.e. [modname]/[entityname])",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateFakewall": {
+        "name": "Template Fake Wall",
+        "description": "A fake wall that can be made with a template",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "freeze": "If this template's entities should update or not",
+            "dontOnTransitionInto": [
+                "Don't Transition Into",
+                "Whether this template should play the disappearing animation or not if the player transitions into this entity"
+            ],
+            "disappear_depth": "The depth of this template as it's disappearing",
+            "fade_speed": "How fast this template disappears. (It takes 1/fadespeed seconds)",
+            "persistent": "Whether clearing this template permanantly stops it from appearing after respawn.",
+            "caveMode": "The items in this template will reappear when you no longer overlap them.",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateFallingblock": {
+        "name": "Template Falling Block",
+        "description": "A falling block that can be made with a template. All interior solids collide with world.",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "direction": "The direction to fall in",
+            "reverseChannel": "If this channel is NOT 0, fall in the reverse direction",
+            "triggerChannel": "If this channel is NOT 0, make the template fall automatically",
+            "gravity": "How fast this template should accelerate (vanilla is 500)",
+            "max_speed": "The maximum speed this template should fall (vanilla is 160)",
+            "impact_sfx": "The sound to play when this template hits the ground",
+            "shake_sfx": "The sound to play when this template gets triggered",
+            "set_trigger_channel": "Set this channel to 1 when triggered",
+            "hitJumpthrus": "Whether jumpthrus should block this entity's movement. Works for sideways and upsidedown jumpthrus (and regular).",
+            "triggeredByRiding": "Whether riding triggers the fall sequence",
+            "throughDashblocks": "Whether to move through breakable blocks like dashblocks or breakable template blocks",
+            "customFallTiming": "A list of numbers. First number is delay after being triggered for first fall. Second is the delay used when support under the block is removed. The third is a cooldown started after impacting the ground.",
+            "maxWaitTiming": "How long the block delays falling when the player is grabbing it",
+            "triggerOnImpact": "Send a trigger event to parents when impacting the ground",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateGluable": {
+        "name": "",
+        "description": "Attach a template to the movement of an entity",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "glue_to_identifier": "The entity ID path to glue to. The number found after the ID: in loenn. Can also specify 'player' to glue to player.",
+            "maxSpeed": "The maximum speed this template can approach its target position with",
+            "constraint": "Constrain the entity's movement. For spline options, you must add nodes. Will get as close as possible to the entity without violating its constraint (i.e. changing X in an onlyY constraint or leaving the spline in a spline constraint)",
+            "setProgressChannel": "Currently unimplemented TODO", 
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateIceblock": {
+        "name": "",
+        "description": "Core ice block-esque template",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "sinkTime": "How long it will sink for",
+            "sinkDist": "How far it will sink during its sink time",
+            "respawnTime": "How long it takes to respawn",
+            "triggerable": "Whether it will start sinking when triggered by child events",
+            "ridingTriggers": "Whether riding this entity triggers it",
+            "disconnect": "Whether to disconnect this template's movement from its parent when it starts sinking",
+            "quiet": "Various options to mute certain sounds. Can have value from 0-7 with each number muting a different variety of sounds. 7 mutes all.",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateKevin": {
+        "name": "",
+        "description": "A kevin block that can be made with a template",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "maxspeed": "The top speed of this template",
+            "acceleration": "The acceleration of this template",
+            "returnSpeed": "The return speed of this template",
+            "leniency": "Max corner correction amount",
+            "left": "Whether you can hit the left side",
+            "right": "Whether you can hit the right side",
+            "top": "Whether you can hit the top side",
+            "bottom": "Whether you can hit the bottom side",
+            "returning": "",
+            "ImpactSfx": "",
+            "StartSfx": "",
+            "hitJumpthrus": "Whether jumpthrus should block this entity's movement. Works for sideways and upsidedown jumpthrus (and regular).",
+            "throughDashblocks": "Whether to move through breakable blocks like dashblocks or breakable template blocks",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateCloud": {
+        "name": "",
+        "description": "Make a template act like a cloud. Not sponsored. Ive never even used it in a map.",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "fragile": "Whether to shatter at the end of the cloud boost thing",
+            "respawnTime": "The time it takes for the cloud to respawn",
+            "cloudDir": "If one value is specified, the vertical span of the cloud. If two values are specified, the first will be used for how much the cloud should move sideways (and the second for verticality)",
+            "fromRiding": "Whether riding this cloud triggers it",
+            "noDoubleBoost": "Disables double cloudboosts (jumping in coyote after the cloud has shattered) only important for clouds with horizontal direction."
+        }
+    },
+    "entities.auspicioushelper/TemplateMoonblock": {
+        "name": "Template Moon Block",
+        "description": "A moon block that can be made with a template",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "drift_frequency": "How fast the template bobs up and down",
+            "drift_amplitude": "How much distance the template bobs up and down",
+            "sink_amount": "How much distance the template sinks",
+            "sink_speed": "How fast the template sinks when stood on or grabbed",
+            "dash_influence": "How far a dash will push this block",
+            "startphase": "The floating phase this template should start on, in radians",
+            "useCustomStartphase": "If this template should start its floating on some certain phase. Check this if \"Start Phase\" is specified"
+        }
+    },
+    "entities.auspicioushelper/TemplateMoveblock": {
+        "name": "Template Move Block",
+        "description": "A move block that can be made with a template",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "direction": "The direction to move in",
+            "uncollidable_blocks": "Even uncollidable blocks in this template will stop the block's movement when hitting something",
+            "speed": "The speed this template will move at",
+            "acceleration": "How fast this template will accelerate to its top speed",
+            "respawning": "Whether or not this template will respawn",
+            "respawn_timer": "How long it takes this template to respawn",
+            "Max_stuck": "How long this template can be stuck before it breaks",
+            "cansteer": "If the player can steer this template",
+            "movesfx": "The sound to play while this template is moving",
+            "arrow_texture": "Texture source to use. Should have subtextures 0-7, rotated as shown.",
+            "decal_depth": "Depth of the arrow graphics. Affected by depthoffset",
+            "decal_colors": "Takes two colors, the arrow color when moving and when still.",
+            "max_leniency": "The maximum amount of pixels this template can corner correct to avoid being stuck",
+            "hitJumpthrus": "Whether jumpthrus should block this entity's movement. Works for sideways and upsidedown jumpthrus (and regular).",
+            "throughDashblocks": "Whether to move through breakable blocks like dashblocks or breakable template blocks",
+            "triggerFromRiding": "Whether riding this template should trigger it (otherwise some trigger modified event must be used)",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplatePushBlock": {
+        "name": "Template Push Block",
+        "description": "A block that can be pushed with dashes or springs. Full world collision.",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "NoPhysicsTime": "Gravity and drag disabled for this time period after dash hit",
+            "speedFromDash": "Speed gained when player dashes into this block",
+            "horizontalDrag": "How qukcly horizontal speed bleeds off",
+            "movementLeniency": "Will corner correct movement by up to this amount",
+            "startDisconnected": "Will immedately fall and not move with attached parent template",
+            "hitSprings": "Whether to be sprung by springs",
+            "alwaysDrag": "Don't have no physics times",
+            "terminalVelocity": "Fastest downward speed",
+            "gravity": "How quickly to approach terminal velocity. Can be thought of as vertical drag biased around a nonzero value.",
+            "BounceStrengthFromWall": "When hitting a wall, how much speed to recoil back with",
+            "ownSpringRecoil": "Speed gotten when entity uses a spring attached to this block (newton's third law)",
+            "ImpactSfx": "SOund to play when hits something",
+            "hitJumpthrus": "Whether jumpthrus should block this entity's movement. Works for sideways and upsidedown jumpthrus (and regular).",
+            "throughDashblocks": "Whether to move through breakable blocks like dashblocks or breakable template blocks",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateStaticmover": {
+        "name": "Template Staticmover",
+        "description": "Attach a template to an existing solid",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "channel": "The cassette material channel used for displaying this while inactive. If left blank, the template will be destroyed and remade every time the attached block enables/disables",
+            "ridingTrigger": "Whether riding this template should trigger what it is attached to (a-la spring on arrow block)",
+            "EnableUnrooted": "Whether this template can display without being attached to anything",
+            "conveyRiding": "Whether riding this template should count as riding what it is attached to",
+            "triggerAsRiding": "When triggered, will cause the platform it is attached to to register a rider, which is useful for compat with entities that have not implemented a triggered function.",
+            "attachToJumpthru": "Whether to attach to jumpthrus",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateSwapblock": {
+        "name": "Template Swap Block",
+        "description": "A swap block that can be made with a template",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "max_speed": "The top speed of this template when it's swapping",
+            "max_return_speed": "The speed of this template when it's returning",
+            "returning": "If this template should act like a vanilla swap block or a toggle swap block",
+            "spline": "The spline type to use. Linear types move in straight lines. The catmull variants curve smoothly between nodes with sharp edges at knots (created by stacking two nodes on the same pixel)",
+            "lastNodeIsKnot": "Make the last node a knot even if it is not stacked. Can be disabled to allow for crooked paths on the last segment of a looping path. Having it on results in more intuitive behavior for new users.",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateTemplate": {
+        "name": "",
+        "description": "Replace all occurances of various {KEY}'s in child entities with a new value",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "replacements": "List of replacements to make. Specify replacements as KEY:Replacement or KEY. If no replacement is specified, a unique string will be generated. For example FISH:salmon,TIME will cause 'I ate {FISH} at {TIME}' to become 'I ate salmon at !24#9@1'",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateTriggerModifier": {
+        "name": "",
+        "description": "A template wrapper that changes the way parent templates recieve trigger events from children",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "advancedTouchOptions": "Touch events in this list will have the opposite behavior to triggerOnTouch. Works as either blacklist or whitelist.",
+            "triggerOnTouch": "Trigger when player touches, jumps off of, etc",
+            "channel": "When this channel is set to a nonzero value, trigger the template",
+            "setChannel": "Set this channel when this template is triggered. Can be given advanced input; a:3,b:@c[*2] sets channel a to 3 and channel b to twice the value of channel c. ",
+            "skipChannel": "When this channel is set, triggering events will pass over this template without being modified",
+            "propagateRiding": "Child zipmovers/falling blocks will trigger from this being stood on",
+            "propagateDashHit": "Whether dashhits go through this template",
+            "propagateTrigger": "Whether to pass trigger events to parents",
+            "hideTrigger": "Whether to hide trigger events (preventing parents from triggering.) Events are unhidden at next trigger modifier",
+            "blockTrigger": "Block all triggers",
+            "seekersTrigger": "",
+            "holdablesTrigger": "",
+            "delay": "Delay all trigger events by this amount.",
+            "blockFilter": "Works as a comma seperated white/blacklist. Trigger categories on this list have opposite behavior to the blockTrigger box. Can end strings with * for fuzzy matching",
+            "log": "Log any trigger types to the debug console. Used to determine what to put in white/blacklist",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateZipmover": {
+        "name": "Template Zip Mover",
+        "description": "A zip mover that can be made with a template. Supports multiple nodes and multiple stops. To add a stop use two stacked nodes",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "return_type": "The behavior this template has when reaching the last node",
+            "activation_type": "How this template is activated",
+            "channel": "Channel to use for grouped template zipmover movement (all zipmovers on the same channel trigger eachother)",
+            "propegateRiding": "Whether to tell parent templates if this has a rider",
+            "spline": "The spline type to use. Linear types move in straight lines. The catmull variants curve smoothly between nodes with sharp edges at knots (created by stacking two nodes on the same pixel)",
+            "lastNodeIsKnot": "Make the last node a knot even if it is not stacked. Can be disabled to allow for crooked paths on the last segment of a looping path. Having it on results in more intuitive behavior for new users.",
+            "speed": "How fast to move. The outgoing journey will take 1/speed seconds.",
+            "returnSpeed": "How fast to return. The return will take 1/returnSpeed seconds.",
+            "easing": "Easing function to use when outgoing",
+            "returnEasing": "Easing to use when returning",
+            "outgoingSound": "",
+            "returningSound": "",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    }
+}
