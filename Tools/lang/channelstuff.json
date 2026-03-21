@@ -91,7 +91,7 @@
             "custom_polling_rate": "If defined, will run the code every X frames. If not defined, will run whenever a channel that is being used in an expression updates.",
             "multi_type": "Behavior to use when starting a script when the script is already running",
             "activation_cond": "When to try to start scripts",
-            "debug": "Whether to print debug information to the auspicioushelper debug console (windows only)",
+            "debug": "Whether to print debug information to the current debugging view",
             "notifying_override": "List of channels that override the usual watched channels as a starting condition",
             "run_when_awake": "",
             "only_run_for_nonzero": "Won't run when notifying channels change to set to zero"

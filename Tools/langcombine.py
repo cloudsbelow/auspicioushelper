@@ -4,7 +4,7 @@ import os
 import json
 
 ROOT_DIR = "./Tools/lang"         # directory containing subdirectories with json files
-OUTPUT_LANG = "./Tools/lang/enparseugh.lang"
+OUTPUT_LANG = "./Tools/text/enparseugh.lang"
 
 
 # ----------------------------

@@ -350,7 +350,7 @@
             "glue_to_identifier": "The entity ID path to glue to. The number found after the ID: in loenn. Can also specify 'player' to glue to player.",
             "maxSpeed": "The maximum speed this template can approach its target position with",
             "constraint": "Constrain the entity's movement. For spline options, you must add nodes. Will get as close as possible to the entity without violating its constraint (i.e. changing X in an onlyY constraint or leaving the spline in a spline constraint)",
-            "setProgressChannel": "Currently unimplemented TODO", 
+            "setProgressChannel": "Currently unimplemented TODO",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]

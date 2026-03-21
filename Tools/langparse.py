@@ -2,13 +2,7 @@ import os
 import re
 import json
 
-# ----------------------------
-# CONFIG
-# ----------------------------
-TARGET = "templatestuff"
-LUA_DIR = "./Loenn/entities/"+TARGET          # directory with lua files
 LANG_FILE = "./Loenn/lang/en_gb.lang"        # existing lang file (optional)
-OUTPUT_FILE = "./Tools/lang/"+TARGET+".json"
 
 
 # ----------------------------
@@ -134,23 +128,23 @@ force = {
     "hitJumpthrus":"Whether jumpthrus should block this entity's movement. Works for sideways and upsidedown jumpthrus (and regular)."
 }
 
-def generate():
+def generate(out_path, lua_dir, isTrigger=False):
     lang = parse_lang_file(LANG_FILE)
 
     result = {}
-    if os.path.exists(OUTPUT_FILE):
-        with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
+    if os.path.exists(out_path):
+        with open(out_path, "r", encoding="utf-8") as f:
             try:
                 result = json.load(f)
             except json.JSONDecodeError:
                 print("[WARNING] Existing JSON invalid, starting fresh")
                 result = {}
 
-    for filename in os.listdir(LUA_DIR):
+    for filename in os.listdir(lua_dir):
         if not filename.endswith(".lua"):
             continue
 
-        path = os.path.join(LUA_DIR, filename)
+        path = os.path.join(lua_dir, filename)
 
         parsed = parse_lua_file(path)
         if not parsed:
@@ -158,7 +152,7 @@ def generate():
 
         entity_name, attributes = parsed
 
-        entity_key = f"entities.{entity_name}"
+        entity_key = f"entities.{entity_name}" if not isTrigger else f"triggers.{entity_name}"
 
         entity_obj = result.get(entity_key, {})
 
@@ -189,11 +183,16 @@ def generate():
         result[entity_key] = entity_obj
 
     # --- write output ---
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+    with open(out_path, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=4, ensure_ascii=False)
 
-    print(f"Done. Wrote {OUTPUT_FILE}")
+    print(f"Done. Wrote {out_path}")
 
 
 if __name__ == "__main__":
-    generate()
+    toParse = [
+        "junk", "misc", "channelstuff", "templatestuff"
+    ]
+    for str in toParse:
+        generate("./Tools/lang/"+str+".json","./Loenn/entities/"+str)
+    generate("./Tools/lang/triggers.json","./Loenn/triggers", True)

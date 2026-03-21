@@ -57,6 +57,13 @@ public class ArbitraryShapeSolid:Solid{
       return new MiptileCollider(cmg.Item2,Vector2.One){Position=cmg.Item1};
     } else {
       MTexture tex = GetTextureAtPath(path.Item1);
+      if(tex==null){
+        DebugConsole.WriteFailure("Could not get image at "+path.Item1.ToString(),true);
+        occluder = null;
+        DebugConsole.MakePostcard($"Could not get image at {path.Item1}."+
+          " Image in arbitrary shape entity should be an image path rooted in Graphics/Atlases/Gameplay/");
+        return new Hitbox(0,0);
+      }
       Vector2 textlc = (tex.DrawOffset-tex.Center)/tex.ScaleFix;
       var f = new FloatRect(textlc.X,textlc.Y,tex.ClipRect.Width,tex.ClipRect.Height);
       List<Vector2> corners = new(){f.tlc,f.trc,f.blc,f.brc};

@@ -1,0 +1,118 @@
+{
+    "triggers.auspicioushelper/FadeChannelTrigger": {
+        "name": "",
+        "description": "Fade between two channel values depending on player position in the trigger",
+        "placements": {
+            "from": "From value to fade from",
+            "to": "To value to fade from",
+            "positionMode": "",
+            "onlyOnce": "Remove this trigger after it is exited for the first time",
+            "channel": "The channel to change",
+            "activeChannel": "If specified, the trigger will do nothing if this channel is zero"
+        }
+    },
+    "triggers.auspicioushelper/ChannelMathTrigger": {
+        "name": "",
+        "description": "Like the channel math controller, but as a trigger that attempts to run when entered.",
+        "placements": {
+            "compiled_operations": "Encoded compiled operations, gotten from the compiler website",
+            "multi_type": "Behavior to use when starting a script when the script is already running",
+            "activation_cond": "When to try to start scripts",
+            "debug": "Whether to print debug information to the current debugging view",
+            "run_when_awake": "Run script on room load"
+        }
+    },
+    "triggers.auspicioushelper/ChannelPlayerTrigger": {
+        "name": "Channel Player Trigger",
+        "description": "Modifies a given channel when a player interacts with this trigger",
+        "placements": {
+            "channel": "The channel to modify",
+            "value": "The value to use when modifying the channel",
+            "op": "The operation to use when modifying the channel",
+            "action": "What player action will trigger this",
+            "only_once": "If this should only trigger once",
+            "advanced": "Set channels in a more advanced way. Given a list of channels to set/expression for value pairs such as  'a:3,b:@c[*2]' which sets channel a to 3 and channel b to twice the value of channel c. If using a channel in an expression, it must be prepended with @. If using a number, no prefix is needed.",
+            "everywhere": "Make the trigger cover the whole room"
+        }
+    },
+    "triggers.auspicioushelper/ConditionalStrawbCollectTrigger": {
+        "name": "Conditional Strawberry Collection Trigger",
+        "description": "Forces the collection of a specific strawberry",
+        "placements": {
+            "strawberry_id": [
+                "Conditional Strawberry ID",
+                "Conditional strawberries with this strawberry name will be collected here"
+            ],
+            "playerOnSafeGround": "Player must be on safe ground to collect the berry"
+        }
+    },
+    "triggers.auspicioushelper/DreamTransitionEnabler": {
+        "name": "",
+        "description": "Enable room transitions while in the dream state.",
+        "placements": {
+            "assistSmuggle": "If this trigger is inside a template, will allow the player to enter the template dreamblock slightly before touching it if having just picked up a holdable for a smuggle. Kinda jank and boutique, not reccomended unless you know exactly what you are doing.",
+            "prioTemplateDreamblocks": "When inside this trigger, will always enter template dreamblocks that are flush with a wall that would otherwise stop the player."
+        }
+    },
+    "triggers.auspicioushelper/HoldableReleaseTrigger": {
+        "name": "Release Holdable Trigger",
+        "description": "Set holdable timer to 0, allowing immediate release",
+        "placements": {
+            "force_throw": "Whether the player should throw the item or just drop it",
+            "only_once": "If this should only trigger once"
+        }
+    },
+    "triggers.auspicioushelper/leniencything": {
+        "name": "",
+        "description": "Make movement more natural around detailed solid shapes.",
+        "placements": {
+            "staticSlip": "How wide a ledge (in pixels) the player will slip off when standing still",
+            "fallingSlip": "How wide a ledge (in pixels) the player will slip off when falling onto it",
+            "maxGroundedStep": "The largest vertical step the player will walk up without collision",
+            "maxStepSlope": "The maximum slope of the grounded step that can be taken",
+            "neededFallDist": "The amount the player must be able to fall in order to trigger slips",
+            "snapDownAmount": "The maximum distance (in pixels) to snap the player down when walking on a smooth surface that lowers by some small number of pixels",
+            "alwaysForceSlip": "Force the player to slip even when they are holding directionally towards the wall",
+            "onlyWhenInside": "Only apply movement patches while the player is inside this trigger",
+            "setOnAwake": "Apply these settings on room load"
+        }
+    },
+    "triggers.auspicioushelper/LiftspeedTrigger": {
+        "name": "",
+        "description": "Trigger that affects liftspeed and multiboost for more consistency when the player is inside",
+        "placements": {
+            "dontGiveLiftspeed": "Disable the player from getting liftspeed when inside",
+            "disableMultiboost": "Consume liftspeed whenever it is used, disabling multiboosts",
+            "gracetimeMultiplier": "Multiplier to apply to the length of time for which liftspeed can be used after being granted",
+            "speedMultiplier": "Multiplier to apply to any liftspeed given to a player while active",
+            "coverRoom": "Make the trigger cover the whole room"
+        }
+    },
+    "triggers.auspicioushelper/PersistentChangeRespawn": {
+        "name": "",
+        "description": "A change respawn trigger whose assignment will not be overwritten on room transition. Must enter a normal change respawn trigger to break the persistance and restore normal transition-respawn behavior",
+        "placements": {}
+    },
+    "triggers.auspicioushelper/RedbubbleSpeed": {
+        "name": "",
+        "description": "Change the speed of redbubbles used inside this trigger",
+        "placements": {
+            "newSpeed": "The new speed that the player should have when using a redbubble in this trigger"
+        }
+    },
+    "triggers.auspicioushelper/triggerparenttrigger": {
+        "name": "",
+        "description": "Used in templates. When activated, will trigger its parent template",
+        "placements": {
+            "onEnter": "whether to trigger when entered",
+            "onLeave": "whether to trigger when left"
+        }
+    },
+    "triggers.auspicioushelper/Downtrans": {
+        "name": "",
+        "description": "Override the room's 'disable down transition' metadata setting while inside",
+        "placements": {
+            "disabled": "Whether down transitions are disabled in this trigger."
+        }
+    }
+}

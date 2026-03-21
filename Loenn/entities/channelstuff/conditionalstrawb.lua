@@ -17,7 +17,7 @@ entity.placements = {
       appear_roomenter_only = true,
 
       fly_channel="",
-      nodeSelectorChannel = "",
+      nodeSelectorCh = "",
 
       deathless=false,
       flyOnDashNormal=false,

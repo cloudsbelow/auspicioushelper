@@ -18,7 +18,7 @@
         "name": "",
         "description": "Kill area with the shape of a specified image",
         "placements": {
-            "image": "Image to use as visuals and collider shape",
+            "image": "Image to use as visuals and collider shape. Rooted in Graphics/Atlases/Gameplay/ (i.e. if using decal texture, decals/ must be added in front of the texture path used in the decal)",
             "CustomColliderPath": "Override the above image for only the collider",
             "scaleX": "",
             "scaleY": "",
@@ -30,11 +30,11 @@
     },
     "entities.auspicioushelper/ArbitrarySolid": {
         "name": "",
-        "description": "Solid with the exact shape of a specified image. Suggested to use with pixel leniency trigger",
+        "description": "Solid with the exact shape of a specified image. Suggested to use with pixel leniency trigger. ",
         "placements": {
             "safe": "If berries can be collected while standing here",
             "soundIndex": "",
-            "image": "Image to use as visuals and collider shape",
+            "image": "Image to use as visuals and collider shape. Rooted in Graphics/Atlases/Gameplay/ (i.e. if using decal texture, decals/ must be added in front of the texture path used in the decal)",
             "CustomColliderPath": "Override the above image for only the collider",
             "scaleX": "",
             "scaleY": "",
