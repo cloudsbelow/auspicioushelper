@@ -14,10 +14,13 @@ namespace Celeste.Mod.auspicioushelper;
 public class Enclorse:Entity{
   string channel;
   Sprite sprite;
+  bool resettable;
+  bool triggered;
   public Enclorse(EntityData d, Vector2 o):base(d.Position+o){
     channel = d.Attr("channel","enclosed_horse");
     Add(new NeedsAcceleratorComp(OnTree));
     Add(sprite = GFX.SpriteBank.Create("auspicioushelper_horse"));
+    resettable = d.Bool("resettable",false);
     //sprite.Play("no");
     DebugConsole.Write("Here");
     Collider = new Hitbox(16,16,-8,-8);
@@ -69,13 +72,21 @@ public class Enclorse:Entity{
     return;
     completed:
       if(iturns>=4){
+        if(triggered) return;
+        triggered = true;
         ChannelState.SetChannel(channel,1);
         sprite.Play("yes");
         Audio.Play("event:/game/07_summit/checkpoint_confetti");
         Celeste.Freeze(0.05f);
         Add(new Coroutine(RotateRoutine()));
         (Engine.Instance.scene as Level).Flash(Color.Green*0.4f);
-        Remove(Get<NeedsAcceleratorComp>());
+        if(!resettable) Remove(Get<NeedsAcceleratorComp>());
+      } else if(resettable && triggered){
+        triggered = false;
+        ChannelState.SetChannel(channel,0);
+        (Engine.Instance.scene as Level).Flash(Color.Red*0.4f);
+        Celeste.Freeze(0.05f);
+        sprite.Play("no");
       }
   }
   IEnumerator RotateRoutine(){

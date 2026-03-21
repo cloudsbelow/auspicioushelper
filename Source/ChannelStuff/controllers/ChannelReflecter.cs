@@ -17,7 +17,7 @@ namespace Celeste.Mod.auspicioushelper;
 public class ChannelReflecter:Entity{
   static void Search(EntityData d){
     var ident = d.Attr("path");
-    Finder.watch(ident,x=>FoundEntity.addIdent(x,ident));
+    Finder.enqueueIdent(ident);
   }
   string ident;
   string channel;

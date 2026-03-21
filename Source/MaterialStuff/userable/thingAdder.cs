@@ -14,7 +14,7 @@ public class MaterialAdder:Entity{
 
   static void Search(EntityData d){
     if(d.Bool("can_be_ID_path",true)) foreach(var i in Util.listparseflat(d.Attr("identifier"))){
-      Finder.watch(i,(e)=>FoundEntity.addIdent(e,i));
+      Finder.enqueueIdent(i);
     }
   }
   List<OverrideVisualComponent> comps  =new();

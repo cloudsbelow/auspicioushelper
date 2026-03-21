@@ -5,7 +5,6 @@ local entity = {}
 
 entity.name = "auspicioushelper/DecalRecolor"
 entity.depth = -11000
-entity.nodeLimits = {0,1}
 
 local scopeSizes = {"wholeMap","wholeRoom","areaOnly (WIP)"}
 

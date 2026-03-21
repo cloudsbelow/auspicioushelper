@@ -17,9 +17,10 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
   }
   [Flags]
   enum Result{
-    Normal=1, Bounce=2, Rebound=4, Bumper=8,
-    Trigger=16, Pass = -1,Block = -2,
-    NormalTrigger=Normal|Trigger, BounceTrigger=Bounce|Trigger, ReboundTrigger=Rebound|Trigger, BumperTrigger=Bumper|Trigger,
+    Normal=1, Bounce=2, Rebound=4, Bumper=8, Reflect=16,
+    Trigger=64, Pass = -1,Block = -2,
+    NormalTrigger=Normal|Trigger, BounceTrigger=Bounce|Trigger, ReboundTrigger=Rebound|Trigger, 
+    BumperTrigger=Bumper|Trigger, ReflectTrigger=Reflect|Trigger,
     BouceTrigger=BounceTrigger //typo compat
   }
   static Dir getDir(Vector2 v){
@@ -79,9 +80,14 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
             if(checkEntanglement(o)) o.OnDashCollide(p,dir);
           }
         }
-        
         if(d.HasFlag(Result.Trigger)) OnTrigger(new DashhitInfo(p,dir,this));
-        if(alwaysLetThrough && !d.HasFlag(Result.Normal)) (this as ITemplateChild).propagateDashhit(p,dir);
+        if(!d.HasFlag(Result.Normal)){
+          var old = p.Collider;
+          p.Collider=p.hurtbox;
+          foreach(PlayerCollider c in p.Scene.Tracker.GetComponents<PlayerCollider>()) if(c.Check(p) && p.Dead) break;
+          p.Collider=old;
+          if(alwaysLetThrough) (this as ITemplateChild).propagateDashhit(p,dir);
+        }
         if(d.HasFlag(Result.Bumper)) {
           p.ExplodeLaunch(p.Center+dir*6,false,false);
           Audio.Play("event:/game/09_core/pinballbumper_hit", p.Position);
@@ -89,6 +95,10 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
         }
         if(d.HasFlag(Result.Rebound)) return DashCollisionResults.Rebound;
         if(d.HasFlag(Result.Bounce)) return DashCollisionResults.Bounce;
+        if(d.HasFlag(Result.Reflect)){
+          p.Speed-=2*dir*p.Speed;
+          return DashCollisionResults.Ignore;
+        }
       }
       return (this as ITemplateChild).propagateDashhit(p,dir);
     };

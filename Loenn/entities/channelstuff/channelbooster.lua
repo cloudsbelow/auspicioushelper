@@ -18,6 +18,7 @@ channelBooster.placements = {
       self_activating = false,
       state0_customsprite = "",
       state1_customsprite = "",
+      quantumJank = false,
     }
   }
 }

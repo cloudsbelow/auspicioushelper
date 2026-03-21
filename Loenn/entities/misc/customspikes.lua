@@ -6,7 +6,6 @@ local entity = {}
 
 entity.name = "auspicioushelper/SillySpikes"
 entity.depth = 2000
-entity.nodeLimits = {0,1}
 entity.nodeLineRenderType = "line"
 
 local rotations = {"up","down","left","right"}

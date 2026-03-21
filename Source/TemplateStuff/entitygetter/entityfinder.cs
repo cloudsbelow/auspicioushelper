@@ -34,6 +34,13 @@ public static class Finder{
       "Please remember to format your path to match: \\d+(/\\d+)*");
     }
   }
+  static HashSet<(string,string)> waiting=new();
+  public static void enqueueIdent(string path, string ident=null){
+    ident??=path;
+    if(waiting.Contains((path,ident))) return;
+    waiting.Add((path,ident));
+    watch(path,e=>FoundEntity.addIdent(e,path));
+  }
   static void StartingLoad(EntityData d){
     last = null; finding = null;
     if(flagged.TryGetValue(d.ID.ToString(), out var ident)) finding = ident;

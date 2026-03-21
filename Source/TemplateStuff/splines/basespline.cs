@@ -40,6 +40,10 @@ public abstract class Spline{
     knotindices = k.ToArray();
     st = s.ToArray();
     segments = this.knotindices.Length;
+    if(nodes.Length==1){
+      using(Util.WithRestore(ref DebugConsole.alwaysWrite,true))DebugConsole.LogFullStackTrace();
+      DebugConsole.MakePostcard("Tried to make a spline with no nodes. Make sure your entity has at least one non-overlapping node. See log for more.");
+    }
   }
   public abstract Vector2 getPos(float t);
   const float finitedif=0.01f;
@@ -77,6 +81,12 @@ public abstract class Spline{
     }
     throw new Exception("Bad spline");
   }
+  public class DotSpline:Spline{
+    public DotSpline():base(){
+      segments=2;
+    }
+    public override Vector2 getPos(float loc)=>Vector2.Zero;
+  }
 }
 
 public class SplineAccessor{
@@ -105,6 +115,101 @@ public class SplineAccessor{
     if(keepMod) this.t=Util.SafeMod(newt,numsegs);
     else this.t=newt;
     pos = spline.getPos(t)+offset;
+  }
+  //assumes low is in [0,numsegs), high>0
+  float refineClosest(Vector2 point, float low, float high){
+    for(int i=1; i<23; i++){ //float precision
+      float exS = (high-low+numsegs)%numsegs;
+      float midpoint = (low+exS/2)%numsegs;
+      Vector2 loc = spline.getPos(midpoint, out Vector2 tang)+offset;
+      if(exS*tang.LInf()<0.5f) return midpoint;
+      float step = Math.Sign(Vector2.Dot(point-loc,tang));
+
+      if(step==0) return midpoint;
+      if(step<0){
+        high=midpoint;
+      } else low=midpoint;
+    }
+    DebugConsole.Write("Convergence not reached");
+    return (high+low)/2;
+  }
+  public float closestPoint(Vector2 point, bool arange=true){
+    float best=(spline.getPos(0)+offset-point).LengthSquared();
+    float bidx=0;
+    for(float i=0.05f; i<this.spline.segments-(arange?1:0); i+=0.05f){
+      float d=(spline.getPos(i)+offset-point).LengthSquared();
+      if(d<best){
+        best = d;
+        bidx = i;
+      }
+    }
+    byte clamp = (byte)((bidx==0?1:0)|(bidx==this.spline.segments-1?2:0));
+    float low = bidx==0&&arange? 0 : Util.SafeMod(bidx-0.05f,numsegs);
+    return refineClosest(point, low, bidx+0.05f);
+  }
+  public Vector2 setToClosest(Vector2 point, bool arange=true){
+    set(closestPoint(point,arange));
+    return pos;
+  }
+  public float approach(Vector2 point, float clampLow, float clampHigh, float maxDist, out float signedDist, float maxStep=8){
+    float exL = Util.SafeMod(t-clampLow,numsegs);
+    float exS = Util.SafeMod(clampHigh-clampLow,numsegs);
+    if(exL>exS){
+      if(exL-exS>=(numsegs-exS)/2){
+        t=clampLow;
+        exL = 0;
+      } else t=clampHigh;
+    }
+    int dir = t==clampLow?-1:(t==clampHigh?1:0);
+    Vector2 loc = posFromDir(t, dir, out Vector2 tang)+offset;
+    signedDist = 0;
+
+    int sign = Math.Sign(Vector2.Dot(point-loc,tang));
+    if(sign==0) return 0;
+    float exH = Util.SafeMod(clampHigh-t,numsegs);
+    float canMoveT = sign>0? exH:exL;
+    if(canMoveT==0) return 0;
+    float stepSize = Math.Min(maxStep,maxDist/8);
+    float traveled = 0;
+    float cur = 0, last=0;
+    Vector2 lastLoc;
+    bool flag=true;
+    while(flag){
+      last = cur;
+      lastLoc = loc;
+      if(traveled+stepSize>=maxDist){
+        stepSize = maxDist-traveled;
+        flag=false;
+      }
+      cur+=stepSize/Math.Max(0.1f,tang.Length());
+      if(cur>=canMoveT){
+        cur=canMoveT;
+        flag=false;
+      } 
+      //DebugConsole.Write("Iter", cur, last, flag, stepSize);
+      loc = spline.getPos(Util.SafeMod(t+cur*sign,numsegs), out tang)+offset;
+      if(sign*Math.Sign(Vector2.Dot(point-loc,tang))<0){
+        float newt = refineClosest(point,
+          Util.SafeMod(sign>0? (t+last) : (t-cur), numsegs),
+          Util.SafeMod(sign>0? (t+cur) : (t-last), numsegs));
+        cur = last+Util.SafeMod(sign>0?
+          (newt-t-last):(t-last-newt)
+        ,numsegs);
+        flag=false;
+        loc = spline.getPos(Util.SafeMod(t+cur*sign,numsegs), out tang)+offset;
+      }
+      traveled+=(loc-lastLoc).Length();
+    }
+    signedDist = traveled*sign;
+    setSidedFromDir(Util.SafeMod(t+cur*sign,numsegs),sign);
+    return cur;
+  }
+  Vector2 posFromDir(float newt, int arrivalDir, out Vector2 tang){
+    if(Math.Floor(newt)!=newt || arrivalDir==0) return spline.getPos(newt,out tang);
+    else {
+      spline.getPos(Util.SafeMod(t-0.0005f*arrivalDir,numsegs), out tang);
+      return spline.getPos(newt,out Vector2 _);
+    }
   }
   public void setSidedFromDir(float newt, int arrivalDir){
     if(Math.Floor(newt) != newt || !getderiv){
@@ -176,6 +281,11 @@ public class SplineEntity:Entity{
       ctrType = dat.Enum<Types>("spline",Types.invalid);
     }else if(!string.IsNullOrEmpty(dat.Attr("spline"))){
       if(Spline.splines.TryGetValue(dat.Attr("spline"), out var spline)) return spline;
+    }
+    if(dat.Nodes==null || dat.Nodes.Length<1){
+      DebugConsole.MakePostcard("Trying to make a spline with no nodes! (bad)");
+      using(Util.WithRestore(ref DebugConsole.alwaysWrite,true))DebugConsole.LogFullStackTrace();
+      return new Spline.DotSpline();
     }
     switch(ctrType){
       case Types.simpleLinear:{

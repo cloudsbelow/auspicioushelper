@@ -5,7 +5,6 @@ local entity = {}
 
 entity.name = "auspicioushelper/Anti0fZone"
 entity.depth = -11000
-entity.nodeLimits = {0,1}
 
 entity.placements = {
   {

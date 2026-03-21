@@ -10,7 +10,8 @@ entity.placements = {
   {
     name = "enclorse",
     data = {
-      channel="enclosed_horse"
+      channel="enclosed_horse",
+      resettable = false,
     }
   }
 }

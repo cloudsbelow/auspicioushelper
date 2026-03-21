@@ -5,7 +5,6 @@ local entity = {}
 
 entity.name = "auspicioushelper/ArbitraryDie"
 entity.depth = 2000
-entity.nodeLimits = {0,1}
 entity.nodeLineRenderType = "line"
 
 entity.placements = {

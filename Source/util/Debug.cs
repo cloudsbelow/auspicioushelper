@@ -60,6 +60,9 @@ public static class DebugConsole {
         if(!dontWrite) Logger.Info("AuspiciousDebug",message);
         break;
     }
+    if(alwaysWrite && auspicioushelperModule.Settings.DebugConsoleMode!=auspicioushelperModuleSettings.DebugMode.LogTxtPollute){
+      Logger.Info("AuspiciousDebug",message);
+    }
   }
   public static void Write(string message, object o){
     Write(message+" "+(o==null?"NULL":o.ToString()));
@@ -128,6 +131,7 @@ public static class DebugConsole {
     public PassingException(string s):base(s){}
   }
   static bool dontWrite=false;
+  public static bool alwaysWrite=false;
   public static void WriteFailure(string s, bool alwayserror=false){
     using(new Util.AutoRestore<bool>(ref dontWrite, true))Write(s);
     Logger.Error("auspicioushelper",s);

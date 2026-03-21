@@ -32,8 +32,10 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
     Vector2 poffset=insideplayer!=null?insideplayer.ExactPosition-Position:Vector2.Zero;
     if(!BoostingPlayer && sprite!=null && sprite.CurrentAnimationID != "pop") Position = npos;
     if(insideplayer!=null && !insideplayer.Dead){
-      insideplayer.MoveTowardsX(npos.X+poffset.X,100);
-      insideplayer.MoveTowardsY(npos.Y+poffset.Y,100);
+      if(quantum){
+        insideplayer.MoveTowardsX(npos.X+poffset.X,100);
+        insideplayer.MoveTowardsY(npos.Y+poffset.Y,100);
+      }
       insideplayer.boostTarget = npos;
       if(givels)insideplayer.LiftSpeed = liftspeed;
     }
@@ -83,6 +85,8 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
   private ParticleType particleType;
   private float respawnTimer;
   private float cannotUseTimer;
+  bool quantum = true;
+  bool IBooster.autoMove => !quantum;
   public bool BoostingPlayer { get; private set; }
 
   public enum BoosterType {
@@ -149,6 +153,7 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
     id=idctr++;
     trigger = data.Bool("triggerTemplates",false);
     givels = data.Bool("give_liftspeed",false);
+    quantum = data.Bool("quantumJank",true);
   }
   public override void Added(Scene scene)
   {
@@ -238,7 +243,8 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
       skipNext = false;
       if(!BoostingPlayer) return;
     }
-    Audio.Play("event:/game/04_cliffside/greenbooster_end", sprite.RenderPosition);
+    Audio.Play(redType?"event:/game/05_mirror_temple/redbooster_end":
+      "event:/game/04_cliffside/greenbooster_end", sprite.RenderPosition);
     sprite.Play("pop");
     loopingSfx.Stop();
     cannotUseTimer = 0f;
@@ -253,6 +259,12 @@ public class ChannelBooster : Entity, ICustomMatRender, ISimpleEnt, IBooster{
       base.Tag = 0;
     }
     insideplayer=null;
+  }
+  void IBooster.PlayerReplaces() {
+    if(!quantum){
+      DebugConsole.Write("Prevented quantum behavior");
+      insideplayer = null;
+    }
   }
   public void Respawn(bool remanifest, bool change){
     sprite.Position = Vector2.Zero;

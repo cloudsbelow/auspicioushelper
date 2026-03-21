@@ -110,8 +110,7 @@ public class FoundEntity:OnAnyRemoveComp{
   [CustomloadEntity]
   public class MarkingFlag:Entity{
     static void Search(EntityData d){
-      //Finder.watch(d.Attr("path"),d.Attr("identifier"));
-      Finder.watch(d.Attr("path"),(e)=>addIdent(e,d.Attr("identifier")));
+      Finder.enqueueIdent(d.Attr("path"),d.Attr("identifier"));
     }
   }
 }

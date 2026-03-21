@@ -6,7 +6,6 @@ local entity = {}
 
 entity.name = "auspicioushelper/ArbitrarySolid"
 entity.depth = 2000
-entity.nodeLimits = {0,1}
 entity.nodeLineRenderType = "line"
 
 local rotations = {0,90,180,270}
