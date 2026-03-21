@@ -11,6 +11,7 @@ using System.Reflection;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
+using Celeste.Mod.Registry;
 using FMOD;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -38,6 +39,12 @@ public class ConnectedBlocks:Entity{
     } else if((excludeSolids && e is Solid) || (excludeTriggers && e is Trigger)){
       return e.SourceData?.Name is {} sn && (permittedEnts?.GetOrDefault(sn)??false);
     } else return e.SourceData?.Name is {} s && (permittedEnts?.GetOrDefault(s)??false)!=allEnts;
+  }
+  bool permits(string s, bool decal, bool solid, bool trigger){
+    if(decal)return allDecals!=permittedDecals?.GetOrDefault(s);
+    if((excludeSolids && solid) || (excludeTriggers && trigger)){
+      return permittedEnts?.GetOrDefault(s)??false;
+    } else return (permittedEnts?.GetOrDefault(s)??false)!=allEnts;
   }
   enum Category {
     fgt, bgt, ent
@@ -96,7 +103,7 @@ public class ConnectedBlocks:Entity{
       VirtualMap<char> fgd = new(size.x,size.y,'0');
       VirtualMap<char> bgd = new(size.x,size.y,'0');
       QuickCollider<ConnectedBlocks> qcl = new();
-      var l = MipGrid.Layer.fromAreasize((maximum-minimum).x,(maximum-minimum).y);
+      var l = MipGrid.Layer.fromAreasize(size.x,size.y);
       foreach(var t in things){
         Int2 dloc = (t.Item1.tlc-minimum)/8;
         Int2 hloc = (t.Item1.brc-minimum)/8;
@@ -209,21 +216,85 @@ public class ConnectedBlocks:Entity{
       UpdateHook.EnsureUpdateAny();
     }
   }
-
-  void Collect(templateFiller t, string focus){
-    List<(IntRect,char)> things = new();
+  static readonly List<string> allNames = new(){
+    "auspicioushelper/ConnectedBlocks", 
+    "auspicioushelper/ConnectedBlocksBg", 
+    "auspicioushelper/ConnectedContainer"
+  };
+  static void Process(templateFiller t){
+    HashSet<EntityData> used = new();
+    List<(IntRect,EntityData, int)> allThings=new();
+    int idx=0;
     t.data.ChildEntities.RemoveAll(e=>{
-      if(e.Name!=focus) return false;
-      IntRect ir = new((int)e.Position.X,(int)e.Position.Y,e.Width,e.Height);
-      things.Add((ir, e.Attr("tiletype","0").FirstOrDefault()));
+      if(!allNames.Contains(e.Name)) return false;
+      allThings.Add(new(new((int)e.Position.X,(int)e.Position.Y,e.Width,e.Height),e,idx++));
       return true;
     });
-    Int2 min = things.ReduceMapI(a=>a.Item1.tlc,Int2.Min);
-    Int2 max = things.ReduceMapI(a=>a.Item1.brc,Int2.Max);
-    Int2 size = (max-min-1)/8+1+2*padding;
-    VirtualMap<char> dat = new(size.x,size.y,'0');
-    foreach(var r in things) FillRect(dat,r.Item1.tlc,r.Item1.brc,r.Item2);
-    templateFiller.TileView view = new();
+    while(allThings.Count>0){
+      List<(IntRect,EntityData, int)> things = new();
+      idx=0;
+      things.Add(allThings[^1]);
+      allThings.RemoveAt(allThings.Count-1);
+      while(idx<things.Count){
+        int nidx=things.Count;
+        allThings.RemoveAll(x=>{
+          for(int i=idx; i<nidx; i++) if(things[i].Item1.CollideIr(x.Item1)){
+            things.Add(x);
+            return true;
+          }
+          return false;
+        });
+        idx=nidx;
+      }
+
+      Int2 min = things.ReduceMapI(a=>a.Item1.tlc,Int2.Min);
+      Int2 max = things.ReduceMapI(a=>a.Item1.brc,Int2.Max);
+      Int2 size = (max-min)/8+2*padding;
+      things.Sort((a,b)=>b.Item3-a.Item3);
+      VirtualMap<char> fgd = new(size.x,size.y,'0');
+      VirtualMap<char> bgd = new(size.x,size.y,'0');
+      bool usefg=false;
+      bool usebg=false;
+      QuickCollider<ConnectedBlocks> qcl = new();
+      var l = MipGrid.Layer.fromAreasize(size.x,size.y);
+      foreach(var a in things){
+        Category c = Category.fgt;
+        if(a.Item2.Name.EndsWith("Bg"))c = Category.bgt;
+        else if(a.Item2.Name.EndsWith("er")) c=Category.ent;
+        Int2 dloc = (a.Item1.tlc-min)/8;
+        Int2 hloc = (a.Item1.brc-min)/8;
+        l.SetRect(true,dloc,hloc);
+        char tid = a.Item2.Attr("tiletype","0").FirstOrDefault();
+        switch(c){
+          case Category.fgt:FillRect(fgd, dloc+padding, hloc+padding,tid); usefg=true;break;
+          case Category.bgt:FillRect(bgd, dloc+padding, hloc+padding,tid); usebg=true;break;
+          case Category.ent: qcl.Add(new(a.Item2,Vector2.Zero),a.Item1); break;
+        }
+      }
+      List<EntityData> ents = new();
+      t.data.ChildEntities.RemoveAll(x=>{
+        var types = EntityRegistry.GetKnownTypesFromSid(x.Name);
+        bool solid = types.Any(a=>a.IsAssignableTo(typeof(Solid)));
+        bool trigger = types.Any(a=>a.IsAssignableTo(typeof(Trigger)));
+        foreach(var b in qcl.TestPoint(x.Position)){
+          if(b.permits(x.Name,false,solid,trigger)){
+            ents.Add(x);
+            return true;
+          }
+        }
+        return false;
+      });
+      List<DecalData> decals = new();
+      t.data.decals.RemoveAll(x=>{
+        foreach(var b in qcl.TestPoint(x.Position)){
+          if(b.permits(x.Texture,true,false,false)){
+            decals.Add(x);
+            return true;
+          }
+        }
+        return false;
+      });
+    }
   }
 
 

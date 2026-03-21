@@ -271,16 +271,16 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     yes:
       var l = p.level;
       var b = p.level.Bounds;
-      if(p.Right>b.Right && l.Session.MapData.GetAt(new Vector2(p.Right,p.CenterY)) is LevelData){
+      if(p.Right>b.Right && l.Session.MapData.GetAt(new Vector2(p.Right,p.CenterY)) is LevelData ld1 && ld1.Spawns.Count>0){
         p.Left=b.Right+1;
         l.NextLevel(p.Position,Vector2.One);
-      }else if(p.Left<b.Left && l.Session.MapData.GetAt(new Vector2(p.Left,p.CenterY)) is LevelData){
+      }else if(p.Left<b.Left && l.Session.MapData.GetAt(new Vector2(p.Left,p.CenterY)) is LevelData ld2 && ld2.Spawns.Count>0){
         p.Right=b.Left-1;
         l.NextLevel(p.Position,Vector2.One);      
-      }else if(p.Bottom>b.Bottom && l.Session.MapData.GetAt(new Vector2(p.CenterX,p.Bottom)) is LevelData){
+      }else if(p.Bottom>b.Bottom && l.Session.MapData.GetAt(new Vector2(p.CenterX,p.Bottom)) is LevelData ld3 && ld3.Spawns.Count>0){
         p.Top=b.Bottom+1;
         l.NextLevel(p.Position,Vector2.One);      
-      }else if(p.Top<b.Top && l.Session.MapData.GetAt(new Vector2(p.CenterX,p.Top)) is LevelData){
+      }else if(p.Top<b.Top && l.Session.MapData.GetAt(new Vector2(p.CenterX,p.Top)) is LevelData ld4 && ld4.Spawns.Count>0){
         p.Bottom=b.Top-1;
         l.NextLevel(p.Position,Vector2.One);      
       }
