@@ -182,7 +182,7 @@ entities.auspicioushelper/ChannelToFlag.attributes.description.flag=the flag to 
 ##############
 
 # auspicioushelper/ConnectedContainer
-entities.auspicioushelper/ConnectedContainer.placements.name.main=Connected Container
+entities.auspicioushelper/ConnectedContainer.placements.name.main=Connected Container (template)
 entities.auspicioushelper/ConnectedContainer.placements.description.main=Container for entities and decals to be added to roomless templates (place empty template entity overlapping)
 entities.auspicioushelper/ConnectedContainer.attributes.description.filterEntities=Whitelist or blacklist for entities. Whitelist if getEntities is false, blacklist if it is true. Should be a list of entity names (found in top of the entity box) with the format [modname]/[entityname]. Can use a * for fuzzy matching - for example, *Platform
 entities.auspicioushelper/ConnectedContainer.attributes.description.filterDecals=Similar to the filterEntities box. Uses the decal texture. Can use * for fuzzy matching - for example 4-cliffside/wood*
@@ -192,11 +192,11 @@ entities.auspicioushelper/ConnectedContainer.attributes.description.excludeSolid
 entities.auspicioushelper/ConnectedContainer.attributes.description.excludeTriggers=Whether to exclude triggers, even if getEntities is checked (can be overriden by whitelisting in filterEntities)
 
 # auspicioushelper/ConnectedBlocksBg
-entities.auspicioushelper/ConnectedBlocksBg.placements.name.main=Connected Background Tiles
+entities.auspicioushelper/ConnectedBlocksBg.placements.name.main=Connected Bg Tiles (template)
 entities.auspicioushelper/ConnectedBlocksBg.placements.description.main=Background tiles that connect and can be used in roomless templates (place empty template entity overlapping)
 
 # auspicioushelper/ConnectedBlocks
-entities.auspicioushelper/ConnectedBlocks.placements.name.main=Connected Foreground Tiles
+entities.auspicioushelper/ConnectedBlocks.placements.name.main=Connected Fg Tiles (template)
 entities.auspicioushelper/ConnectedBlocks.placements.description.main=Foreground tiles that connect and can be used in roomless templates (place empty template entity overlapping)
 
 # auspicioushelper/CustomRefill
@@ -470,7 +470,6 @@ entities.auspicioushelper/TemplateBehaviorChain.attributes.description.forceOwnP
 entities.auspicioushelper/TemplateBehaviorChain.attributes.name._loenn_display_template=[LÖNN] Display Template
 
 # auspicioushelper/TemplateBlock
-entities.auspicioushelper/TemplateBlock.placements.name.main=Template Breakable Block
 entities.auspicioushelper/TemplateBlock.placements.description.main=A static block that can be made with a template
 entities.auspicioushelper/TemplateBlock.attributes.description.template=The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.
 entities.auspicioushelper/TemplateBlock.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
@@ -659,7 +658,7 @@ entities.auspicioushelper/TemplateCloud.attributes.description.fromRiding=Whethe
 entities.auspicioushelper/TemplateCloud.attributes.description.noDoubleBoost=Disables double cloudboosts (jumping in coyote after the cloud has shattered) only important for clouds with horizontal direction.
 
 # auspicioushelper/TemplateMoonblock
-entities.auspicioushelper/TemplateMoonblock.placements.name.main=Template Moon Block
+entities.auspicioushelper/TemplateMoonblock.placements.name.main=Template Moonblock
 entities.auspicioushelper/TemplateMoonblock.placements.description.main=A moon block that can be made with a template
 entities.auspicioushelper/TemplateMoonblock.attributes.description.template=The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.
 entities.auspicioushelper/TemplateMoonblock.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
@@ -672,7 +671,7 @@ entities.auspicioushelper/TemplateMoonblock.attributes.description.startphase=Th
 entities.auspicioushelper/TemplateMoonblock.attributes.description.useCustomStartphase=If this template should start its floating on some certain phase. Check this if "Start Phase" is specified
 
 # auspicioushelper/TemplateMoveblock
-entities.auspicioushelper/TemplateMoveblock.placements.name.main=Template Move Block
+entities.auspicioushelper/TemplateMoveblock.placements.name.main=Template Moveblock
 entities.auspicioushelper/TemplateMoveblock.placements.description.main=A move block that can be made with a template
 entities.auspicioushelper/TemplateMoveblock.attributes.description.template=The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.
 entities.auspicioushelper/TemplateMoveblock.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
@@ -729,7 +728,7 @@ entities.auspicioushelper/TemplateStaticmover.attributes.description.attachToJum
 entities.auspicioushelper/TemplateStaticmover.attributes.name._loenn_display_template=[LÖNN] Display Template
 
 # auspicioushelper/TemplateSwapblock
-entities.auspicioushelper/TemplateSwapblock.placements.name.main=Template Swap Block
+entities.auspicioushelper/TemplateSwapblock.placements.name.main=Template Swapblock
 entities.auspicioushelper/TemplateSwapblock.placements.description.main=A swap block that can be made with a template
 entities.auspicioushelper/TemplateSwapblock.attributes.description.template=The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.
 entities.auspicioushelper/TemplateSwapblock.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
@@ -767,7 +766,7 @@ entities.auspicioushelper/TemplateTriggerModifier.attributes.description.log=Log
 entities.auspicioushelper/TemplateTriggerModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
 
 # auspicioushelper/TemplateZipmover
-entities.auspicioushelper/TemplateZipmover.placements.name.main=Template Zip Mover
+entities.auspicioushelper/TemplateZipmover.placements.name.main=Template Zipmover
 entities.auspicioushelper/TemplateZipmover.placements.description.main=A zip mover that can be made with a template. Supports multiple nodes and multiple stops. To add a stop use two stacked nodes
 entities.auspicioushelper/TemplateZipmover.attributes.description.template=The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.
 entities.auspicioushelper/TemplateZipmover.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
@@ -867,5 +866,4 @@ triggers.auspicioushelper/triggerparenttrigger.attributes.description.onLeave=wh
 # auspicioushelper/Downtrans
 triggers.auspicioushelper/Downtrans.placements.description.main=Override the room's 'disable down transition' metadata setting while inside
 triggers.auspicioushelper/Downtrans.attributes.description.disabled=Whether down transitions are disabled in this trigger.
-
 

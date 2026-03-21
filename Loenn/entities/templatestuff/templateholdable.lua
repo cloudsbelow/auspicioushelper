@@ -14,7 +14,7 @@ entity.nodeLineRenderType = "none"
 
 entity.placements = {
   {
-    name = "Template Holdable",
+    name = "main",
     data = {
       width = 8,
       height = 8,

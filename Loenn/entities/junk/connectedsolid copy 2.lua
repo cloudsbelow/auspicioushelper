@@ -9,7 +9,7 @@ entity.depth = 2000
 
 entity.placements = {
   {
-    name = "Connected Container (Template)",
+    name = "main",
     data = {
         width = 8,
         height = 8,

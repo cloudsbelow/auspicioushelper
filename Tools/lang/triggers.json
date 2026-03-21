@@ -1,6 +1,5 @@
 {
     "triggers.auspicioushelper/FadeChannelTrigger": {
-        "name": "",
         "description": "Fade between two channel values depending on player position in the trigger",
         "placements": {
             "from": "From value to fade from",
@@ -12,7 +11,6 @@
         }
     },
     "triggers.auspicioushelper/ChannelMathTrigger": {
-        "name": "",
         "description": "Like the channel math controller, but as a trigger that attempts to run when entered.",
         "placements": {
             "compiled_operations": "Encoded compiled operations, gotten from the compiler website",
@@ -47,7 +45,6 @@
         }
     },
     "triggers.auspicioushelper/DreamTransitionEnabler": {
-        "name": "",
         "description": "Enable room transitions while in the dream state.",
         "placements": {
             "assistSmuggle": "If this trigger is inside a template, will allow the player to enter the template dreamblock slightly before touching it if having just picked up a holdable for a smuggle. Kinda jank and boutique, not reccomended unless you know exactly what you are doing.",
@@ -63,7 +60,6 @@
         }
     },
     "triggers.auspicioushelper/leniencything": {
-        "name": "",
         "description": "Make movement more natural around detailed solid shapes.",
         "placements": {
             "staticSlip": "How wide a ledge (in pixels) the player will slip off when standing still",
@@ -78,7 +74,6 @@
         }
     },
     "triggers.auspicioushelper/LiftspeedTrigger": {
-        "name": "",
         "description": "Trigger that affects liftspeed and multiboost for more consistency when the player is inside",
         "placements": {
             "dontGiveLiftspeed": "Disable the player from getting liftspeed when inside",
@@ -89,19 +84,16 @@
         }
     },
     "triggers.auspicioushelper/PersistentChangeRespawn": {
-        "name": "",
         "description": "A change respawn trigger whose assignment will not be overwritten on room transition. Must enter a normal change respawn trigger to break the persistance and restore normal transition-respawn behavior",
         "placements": {}
     },
     "triggers.auspicioushelper/RedbubbleSpeed": {
-        "name": "",
         "description": "Change the speed of redbubbles used inside this trigger",
         "placements": {
             "newSpeed": "The new speed that the player should have when using a redbubble in this trigger"
         }
     },
     "triggers.auspicioushelper/triggerparenttrigger": {
-        "name": "",
         "description": "Used in templates. When activated, will trigger its parent template",
         "placements": {
             "onEnter": "whether to trigger when entered",
@@ -109,7 +101,6 @@
         }
     },
     "triggers.auspicioushelper/Downtrans": {
-        "name": "",
         "description": "Override the room's 'disable down transition' metadata setting while inside",
         "placements": {
             "disabled": "Whether down transitions are disabled in this trigger."

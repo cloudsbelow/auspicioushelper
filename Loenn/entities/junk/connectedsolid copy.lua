@@ -7,7 +7,7 @@ entity.depth = 10000
 
 function entity.placements()
     return {
-        name = "connected background tiles (template)",
+        name = "main",
         data = {
             tiletype = fakeTilesHelper.getPlacementMaterial("3","tilesBg"),
             width = 8,

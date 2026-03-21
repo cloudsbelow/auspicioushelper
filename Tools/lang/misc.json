@@ -15,7 +15,6 @@
         }
     },
     "entities.auspicioushelper/ArbitraryDie": {
-        "name": "",
         "description": "Kill area with the shape of a specified image",
         "placements": {
             "image": "Image to use as visuals and collider shape. Rooted in Graphics/Atlases/Gameplay/ (i.e. if using decal texture, decals/ must be added in front of the texture path used in the decal)",
@@ -29,7 +28,6 @@
         }
     },
     "entities.auspicioushelper/ArbitrarySolid": {
-        "name": "",
         "description": "Solid with the exact shape of a specified image. Suggested to use with pixel leniency trigger. ",
         "placements": {
             "safe": "If berries can be collected while standing here",
@@ -51,7 +49,6 @@
         "placements": {}
     },
     "entities.auspicioushelper/CampfireRespawn": {
-        "name": "",
         "description": "Sets a respawn point on any safe ground if you hold duck long enough",
         "placements": {
             "duckTime": "How long you must duck to activate the campfire",
@@ -61,7 +58,6 @@
         }
     },
     "entities.auspicioushelper/CassetteFixerThing": {
-        "name": "",
         "description": "Fixes the bug where cassettes can appear one pixel higher/lower if dying when they are in the 'willchange' state",
         "placements": {}
     },
@@ -83,7 +79,6 @@
         }
     },
     "entities.auspicioushelper/DecalRecolor": {
-        "name": "",
         "description": "Controller to recolor decals non-multiplicatively",
         "placements": {
             "scope": "",
@@ -97,7 +92,6 @@
         "placements": {}
     },
     "entities.auspicioushelper/enclorse": {
-        "name": "",
         "description": "Enclosable horse",
         "placements": {
             "channel": "Channel to set when enclosed",
@@ -105,7 +99,6 @@
         }
     },
     "entities.auspicioushelper/MaterialApplier": {
-        "name": "",
         "description": "For adding entities to shader layers",
         "placements": {
             "can_be_ID_path": "Keep this checked always.",

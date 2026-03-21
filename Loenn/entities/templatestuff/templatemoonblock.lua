@@ -9,7 +9,7 @@ entity.depth = -13000
 
 entity.placements = {
   {
-    name = "Template Moonblock",
+    name = "main",
     data = {
       template = "",
       depthoffset=0,

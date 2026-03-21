@@ -36,6 +36,7 @@ def parse_lua_file(path):
         lines = f.readlines()
 
     entity_name = None
+    placement_name = None
     in_data = False
     brace_depth = 0
     attributes = []
@@ -43,6 +44,7 @@ def parse_lua_file(path):
     for line in lines:
         stripped = line.strip()
 
+        
         # --- extract name ---
         if ".name" in stripped and "=" in stripped:
             match = re.search(r'=\s*"([^"]+)"', stripped)
@@ -51,6 +53,11 @@ def parse_lua_file(path):
             match = re.search(r'=\s*aelperLib.register_template_name\("([^"]+)"\)', stripped)
             if match:
                 entity_name = match.group(1)
+        else:
+            match =  re.search(r'\s*name\s*=\s*"([^"]+)"', stripped)
+            if match:
+                placement_name = match.group(1)
+        
 
         # --- detect start of data block ---
         if "data = {" in stripped:
@@ -78,7 +85,7 @@ def parse_lua_file(path):
     if not attributes:
         print(f"[WARNING] No attributes found in {path}")
 
-    return entity_name, attributes
+    return entity_name, placement_name, attributes
 
 
 # ----------------------------
@@ -128,6 +135,9 @@ force = {
     "hitJumpthrus":"Whether jumpthrus should block this entity's movement. Works for sideways and upsidedown jumpthrus (and regular)."
 }
 
+def noneOrEmpty(string):
+    return string is None or string==""
+
 def generate(out_path, lua_dir, isTrigger=False):
     lang = parse_lang_file(LANG_FILE)
 
@@ -150,15 +160,24 @@ def generate(out_path, lua_dir, isTrigger=False):
         if not parsed:
             continue
 
-        entity_name, attributes = parsed
+        entity_name, placement_name, attributes = parsed
 
         entity_key = f"entities.{entity_name}" if not isTrigger else f"triggers.{entity_name}"
 
         entity_obj = result.get(entity_key, {})
 
         # --- name / description ---
-        if not entity_obj.get("name"):
-            entity_obj["name"] = resolve_basic(lang, f"{entity_key}.placements.name.main")
+        langName = resolve_basic(lang, f"{entity_key}.placements.name.main")
+        if placement_name!="main":
+            if(langName is not None and langName != ""):
+                print(f"{entity_key} has a lang file name despite placement name not being main")
+            if not noneOrEmpty(entity_obj.get("name")):
+                print(f"{entity_key} has a key in the existing json despite placement name not being main")
+            elif entity_obj.get("name") == "":
+                print(f"pop unneeded name from {entity_key}")
+                entity_obj.pop("name")
+        elif not entity_obj.get("name"):
+            entity_obj["name"] = langName
 
         if not entity_obj.get("description"):
             entity_obj["description"] = resolve_basic(lang, f"{entity_key}.placements.description.main")

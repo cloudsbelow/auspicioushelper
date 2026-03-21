@@ -1,6 +1,6 @@
 {
     "entities.auspicioushelper/ConnectedContainer": {
-        "name": "Connected Container",
+        "name": "Connected Container (template)",
         "description": "Container for entities and decals to be added to roomless templates (place empty template entity overlapping)",
         "placements": {
             "filterEntities": "Whitelist or blacklist for entities. Whitelist if getEntities is false, blacklist if it is true. Should be a list of entity names (found in top of the entity box) with the format [modname]/[entityname]. Can use a * for fuzzy matching - for example, *Platform",
@@ -12,21 +12,20 @@
         }
     },
     "entities.auspicioushelper/ConnectedBlocksBg": {
-        "name": "Connected Background Tiles",
+        "name": "Connected Bg Tiles (template)",
         "description": "Background tiles that connect and can be used in roomless templates (place empty template entity overlapping)",
         "placements": {
             "tiletype": ""
         }
     },
     "entities.auspicioushelper/ConnectedBlocks": {
-        "name": "Connected Foreground Tiles",
+        "name": "Connected Fg Tiles (template)",
         "description": "Foreground tiles that connect and can be used in roomless templates (place empty template entity overlapping)",
         "placements": {
             "tiletype": ""
         }
     },
     "entities.auspicioushelper/CustomRefill": {
-        "name": "",
         "description": "Fancy refill with some extra options",
         "placements": {
             "respawnTimer": "in seconds",

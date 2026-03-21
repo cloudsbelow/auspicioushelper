@@ -1,13 +1,11 @@
 {
     "entities.auspicioushelper/EvilPackedTemplateRoom": {
-        "name": "",
         "description": "It's evil",
         "placements": {
             "EncodedRooms": "There's a 'pack template rooms to log' mod option. This will log a string. If you paste that string here, you can delete the original rooms if this template is in the room with the things using those rooms. Can be used between maps."
         }
     },
     "entities.auspicioushelper/FinderDepth": {
-        "name": "",
         "description": "Change the depth of targeted entities",
         "placements": {
             "path": "A list of entity ID paths (the number next to ID: in loenn topbar)",
@@ -23,7 +21,6 @@
         }
     },
     "entities.auspicioushelper/TemplateFillerSwitcher": {
-        "name": "",
         "description": "Switch between various template fillers. Should be placed in a template room and used like a normal template",
         "placements": {
             "template_name": "The filler name (analogous to regular template filler)",
@@ -34,7 +31,6 @@
         }
     },
     "entities.auspicioushelper/TemplateCassetteColor": {
-        "name": "",
         "description": "Set up custom visuals for a single cassette layer.",
         "placements": {
             "tintActive": "Tint color of active entites",
@@ -53,7 +49,6 @@
         }
     },
     "entities.auspicioushelper/TemplateCassetteManagerSimple": {
-        "name": "",
         "description": "Manage template cassette block visuals and timings simply in one entity. Just give channels and provide the matching channels in the cassette blocks.",
         "placements": {
             "channel_1": "Corresponds to the 'blue' cassette blocks",
@@ -70,7 +65,6 @@
         }
     },
     "entities.auspicioushelper/CustomDreamlayer": {
-        "name": "",
         "description": "Setup custom visual settings for tempalte dreamblocks. Global per map; does not need to be in same room.",
         "placements": {
             "color_0": "Specifies color of stars in the dreamblock",
@@ -131,7 +125,6 @@
         }
     },
     "entities.auspicioushelper/MaterialTemplate": {
-        "name": "",
         "description": "A template that can be drawn to material layers",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -149,7 +142,6 @@
         }
     },
     "entities.auspicioushelper/TemplateBehaviorChain": {
-        "name": "",
         "description": "An easy way to apply attributes from multiple template types to one template",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -160,7 +152,6 @@
         }
     },
     "entities.auspicioushelper/TemplateBlock": {
-        "name": "Template Breakable Block",
         "description": "A static block that can be made with a template",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -220,7 +211,6 @@
         }
     },
     "entities.auspicioushelper/TemplateBelt": {
-        "name": "",
         "description": "Make a conveyer belt of entities",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -239,7 +229,6 @@
         }
     },
     "entities.auspicioushelper/TemplateDashhitModifier": {
-        "name": "",
         "description": "Modify the behavior performed when dashing into the various sides of this block",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -258,7 +247,6 @@
         }
     },
     "entities.auspicioushelper/TemplateDreamblockModifier": {
-        "name": "",
         "description": "Turn contained entities into dreamblocks that can be dreamed through.",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -279,7 +267,6 @@
         }
     },
     "entities.auspicioushelper/TemplateEntityModifier": {
-        "name": "",
         "description": "Modify the visibility/collidability/activity of contained entities",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -342,7 +329,6 @@
         }
     },
     "entities.auspicioushelper/TemplateGluable": {
-        "name": "",
         "description": "Attach a template to the movement of an entity",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -357,7 +343,6 @@
         }
     },
     "entities.auspicioushelper/TemplateIceblock": {
-        "name": "",
         "description": "Core ice block-esque template",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -375,7 +360,6 @@
         }
     },
     "entities.auspicioushelper/TemplateKevin": {
-        "name": "",
         "description": "A kevin block that can be made with a template",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -399,7 +383,6 @@
         }
     },
     "entities.auspicioushelper/TemplateCloud": {
-        "name": "",
         "description": "Make a template act like a cloud. Not sponsored. Ive never even used it in a map.",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -412,7 +395,7 @@
         }
     },
     "entities.auspicioushelper/TemplateMoonblock": {
-        "name": "Template Moon Block",
+        "name": "Template Moonblock",
         "description": "A moon block that can be made with a template",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -427,7 +410,7 @@
         }
     },
     "entities.auspicioushelper/TemplateMoveblock": {
-        "name": "Template Move Block",
+        "name": "Template Moveblock",
         "description": "A move block that can be made with a template",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -496,7 +479,7 @@
         }
     },
     "entities.auspicioushelper/TemplateSwapblock": {
-        "name": "Template Swap Block",
+        "name": "Template Swapblock",
         "description": "A swap block that can be made with a template",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -512,7 +495,6 @@
         }
     },
     "entities.auspicioushelper/TemplateTemplate": {
-        "name": "",
         "description": "Replace all occurances of various {KEY}'s in child entities with a new value",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -524,7 +506,6 @@
         }
     },
     "entities.auspicioushelper/TemplateTriggerModifier": {
-        "name": "",
         "description": "A template wrapper that changes the way parent templates recieve trigger events from children",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
@@ -550,7 +531,7 @@
         }
     },
     "entities.auspicioushelper/TemplateZipmover": {
-        "name": "Template Zip Mover",
+        "name": "Template Zipmover",
         "description": "A zip mover that can be made with a template. Supports multiple nodes and multiple stops. To add a stop use two stacked nodes",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",

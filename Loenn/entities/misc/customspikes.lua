@@ -18,7 +18,7 @@ local spikeTypes = {
 
 entity.placements = {
   {
-    name = "relative spikes",
+    name = "main",
     data = {
       type = "reflection",
       direction = "up",

@@ -21,7 +21,6 @@
         }
     },
     "entities.auspicioushelper/ChannelClearController": {
-        "name": "",
         "description": "Entity that manages channel resetting when constructed in a room",
         "placements": {
             "channel": "Sets this singular channel to the specified value",
@@ -32,7 +31,6 @@
         }
     },
     "entities.auspicioushelper/CollisionCounter": {
-        "name": "",
         "description": "Count the number of collisions between entities in two groups",
         "placements": {
             "groupA": "List of entity ID paths in group A",
@@ -43,7 +41,6 @@
         }
     },
     "entities.auspicioushelper/FinderCollider": {
-        "name": "",
         "description": "Change an entity's collider when a channel is set. Will not be stable for entities such as the player that frequently change their collider on their own. Does not need to be in same room as targeted entity.",
         "placements": {
             "path": "Entity ID path to target",
@@ -52,7 +49,6 @@
         }
     },
     "entities.auspicioushelper/channelTemplateMover": {
-        "name": "",
         "description": "Move the nearest unrooted template. An unrooted template either has no parent or is disconnected from its parent's movement.",
         "placements": {
             "activateChannel": "Will start the sequence when this channel is set. Multiple sequences can run at the same time.",
@@ -65,7 +61,6 @@
         }
     },
     "entities.auspicioushelper/ChannelHotColdWatcher": {
-        "name": "",
         "description": "Set a channel based on the core mode",
         "placements": {
             "channel": "The channel to set",
@@ -74,7 +69,6 @@
         }
     },
     "entities.auspicioushelper/ChannelJelly": {
-        "name": "",
         "description": "A jellyfish that changes state based on channel",
         "placements": {
             "state0": "The state to use when the channel is even",
@@ -83,7 +77,6 @@
         }
     },
     "entities.auspicioushelper/ChannelMathController": {
-        "name": "",
         "description": "Run compiled expressions on channels, flags and entity states. Reccomended to read the wiki, read the compiler, get a PHD, and hit the modder",
         "placements": {
             "compiled_operations": "Encoded compiled operations, gotten from the compiler website",
@@ -98,7 +91,6 @@
         }
     },
     "entities.auspicioushelper/ChannelPlayerWatcher": {
-        "name": "",
         "description": "Watch the player and set a channel when various conditions are met",
         "placements": {
             "channel": "Channel to set",
@@ -108,7 +100,6 @@
         }
     },
     "entities.auspicioushelper/ChannelReflector": {
-        "name": "",
         "description": "Very cursed. Only use if you understand what 'reflector' means here.",
         "placements": {
             "path": "Entity ID to watch",
@@ -119,7 +110,6 @@
         }
     },
     "entities.auspicioushelper/ChannelSprite": {
-        "name": "",
         "description": "Sprite that can display animations defined in Sprites.xml based on a channel. Check auspicioushelper's Sprites.xml for an example setup.",
         "placements": {
             "channel": "the channel to watch",
@@ -132,7 +122,6 @@
         }
     },
     "entities.auspicioushelper/ChannelSwitch": {
-        "name": "",
         "description": "Core switch that actually toggles channels",
         "placements": {
             "channel": "Channel to set",
@@ -151,7 +140,6 @@
         }
     },
     "entities.auspicioushelper/ChannelTheo": {
-        "name": "",
         "description": "I got peer pressured into making this on my third day of modding (it was fun though). Jank.",
         "placements": {
             "channel": "When nonzero, used the cursed behavior",
@@ -163,7 +151,6 @@
         }
     },
     "entities.auspicioushelper/ChannelTriggerTrigger": {
-        "name": "",
         "description": "Trigger the (smallest area) trigger at a certain area",
         "placements": {
             "channel": "Channel to watch. If the entity has nodes, setting the channel to n triggers the smallest trigger at the n'th node, with 0 corresponding to the main entity. If no nodes are present, any non-0 channel value will trigger the overlapping trigger",
@@ -171,7 +158,6 @@
         }
     },
     "entities.auspicioushelper/SpriteAnimChain": {
-        "name": "",
         "description": "This is an entity for emptynoise(tollab) and is not supported in other contexts",
         "placements": {
             "depth": "",
@@ -185,7 +171,6 @@
         }
     },
     "entities.auspicioushelper/ConditionalStrawb": {
-        "name": "",
         "description": "Conditional strawberry that does not increase map strawberry count. Winged strawberry flies to the node when specified. Must be collected in conditional strawb collect trigger",
         "placements": {
             "strawberry_id": "Name of the strawberry to use in collect triggers",
@@ -201,7 +186,6 @@
         }
     },
     "entities.auspicioushelper/ConditionalStrawbTracked": {
-        "name": "",
         "description": "Conditional strawberry that adds to the map's strawberry count. Winged strawberry flies to the node when specified. Must be collected in conditional strawb collect trigger",
         "placements": {
             "strawberry_id": "Name of the strawberry to use in collect triggers",
@@ -217,7 +201,6 @@
         }
     },
     "entities.auspicioushelper/ChannelToFlag": {
-        "name": "",
         "description": "This is a paranoia entity for people who don't trust the @ prefix to always work due to weird inlining or weird design choices by other mods",
         "placements": {
             "channel": "the channel to read",

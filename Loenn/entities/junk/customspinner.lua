@@ -11,7 +11,7 @@ entity.depth = 2000
 
 entity.placements = {
   {
-    name = "Recolorable spinner",
+    name = "main",
     data = {
       customColor = "ffffff",
       depth = -8500,
