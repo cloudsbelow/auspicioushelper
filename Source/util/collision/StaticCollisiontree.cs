@@ -99,4 +99,9 @@ public class QuickCollider<T>{
     if(!bounds.CollideFr(test)) yield break;
     foreach(var i in items) if(i.Item1.CollideFr(test)) yield return i.Item2;
   }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public IEnumerable<T> TestPoint(Vector2 test){
+    if(!bounds.CollidePoint(test)) yield break;
+    foreach(var i in items) if(i.Item1.CollidePoint(test)) yield return i.Item2;
+  }
 }
