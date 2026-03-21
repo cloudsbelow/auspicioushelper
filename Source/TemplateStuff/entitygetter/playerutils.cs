@@ -14,8 +14,9 @@ public static class PlayerHelper{
     if(UpdateHook.cachedPlayer is not { } p) return null;
     switch(p.StateMachine.state){
       case Player.StBoost:
-        if(IBooster.CurrentBooster(p) is IBooster b && !b.autoMove){
-          return null;
+        if(IBooster.CurrentBooster(p) is IBooster b){
+          if(b.autoMove) return b as Entity;
+          else return null;
         } else return p.CurrentBooster;
       case Player.StDreamDash:
         if(p.dreamBlock is TemplateDreamblockModifier.SentinalDb sdb){

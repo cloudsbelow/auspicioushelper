@@ -96,7 +96,9 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
         if(d.HasFlag(Result.Rebound)) return DashCollisionResults.Rebound;
         if(d.HasFlag(Result.Bounce)) return DashCollisionResults.Bounce;
         if(d.HasFlag(Result.Reflect)){
-          p.Speed-=2*dir*p.Speed;
+          p.Speed-=2*dir*dir*p.Speed;
+          p.DashDir-=2*dir*dir*p.DashDir;
+          if(p.StateMachine.State==Player.StDash)p.StateMachine.State=Player.StNormal;
           return DashCollisionResults.Ignore;
         }
       }

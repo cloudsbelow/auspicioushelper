@@ -52,7 +52,7 @@ public class LiftspeedSm:StaticMover{
     }
     public LiftspeedHelper(){}
   }
-  LiftspeedHelper ls;
+  LiftspeedHelper ls = new();
   public Vector2 getLiftspeed()=>ls.getLiftspeed(parent);
   public Template parent;
   public Action<Vector2> OnMoveOther;

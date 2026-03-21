@@ -20,6 +20,7 @@ entity.placements = {
       EnableUnrooted = false,
       conveyRiding = false,
       triggerAsRiding = false,
+      attachToJumpthru = false,
       
       _loenn_display_template = true,
     }

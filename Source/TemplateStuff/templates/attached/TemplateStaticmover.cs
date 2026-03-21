@@ -62,6 +62,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   bool ridingTrigger;
   bool enableUnrooted = false;
   bool conveyRiding = false;
+  bool attachToJt = false;
   bool convertTriggering;
   bool firstZeroAfter;
   int hasTrigger=0;
@@ -74,6 +75,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     enableUnrooted = d.Bool("EnableUnrooted",false);
     conveyRiding = d.Bool("conveyRiding",false);
     convertTriggering = d.Bool("triggerAsRiding",false);
+    attachToJt = d.Bool("attachToJumpthru",false);
     hooks.enable();
     StaticmoverLock.hooks.enable();
     Add(new BeforeAfterRender(()=>{
@@ -144,6 +146,18 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
         }
         return true;
       },
+      JumpThruChecker=attachToJt?(JumpThru j)=>{
+        bool check = !doNot.Contains(j) && 
+          j.CollidePoint(Position+smoffset+Vector2.UnitY) && 
+          !j.CollidePoint(Position+smoffset-Vector2.UnitY);
+        if(!check) return false;
+        if(!j.Collidable){
+          setVisCol(layer!=null,false);
+          cachedCol =false;
+          if(layer!=null)foreach(var c in comps)c.SetStealUse(layer,true,true);
+        }
+        return true;
+      }:null,
       OnDestroy=()=>{
         setCollidability(false);
         destroy(true);
@@ -173,13 +187,19 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
       Remove(sm);
       return;
     }
-    if(sm.Platform == null){
-      foreach(Solid s in Scene.Tracker.GetEntities<Solid>()){
-        if(sm.SolidChecker(s)){
-          s.staticMovers.Add(sm);
-          sm.Platform=s;
-          sm.OnAttach(s);
-        }
+    if(sm.Platform == null) foreach(Solid s in Scene.Tracker.GetEntities<Solid>()){
+      if(sm.SolidChecker(s)){
+        s.staticMovers.Add(sm);
+        sm.Platform=s;
+        sm.OnAttach(s);
+        break;
+      }
+    }
+    if(attachToJt && sm.Platform == null) foreach(JumpThru j in Scene.Tracker.GetEntities<JumpThru>()){
+      if(sm.JumpThruChecker(j)){
+        j.staticMovers.Add(sm);
+        sm.Platform=j;
+        sm.OnAttach(j);
       }
     }
   }
