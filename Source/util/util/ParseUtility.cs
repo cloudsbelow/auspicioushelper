@@ -335,10 +335,10 @@ public static partial class Util{
   }
   public static float[] csparseflat(string str){
     if(string.IsNullOrWhiteSpace(str)) return [];
-    return str.Split(",").Select(s=>{
+    return str.Split(",").Map(s=>{
       float.TryParse(s, out var l);
       return l;
-    }).ToArray();
+    });
   }
   public static float[] csparseflat(string str, params float[] defaults){
     if(string.IsNullOrWhiteSpace(str)) return defaults;
@@ -351,10 +351,10 @@ public static partial class Util{
   }
   public static int[] ciparseflat(string str){
     if(string.IsNullOrWhiteSpace(str)) return [];
-    return str.Split(",").Select(s=>{
+    return str.Split(",").Map(s=>{
       int.TryParse(s, out var l);
       return l;
-    }).ToArray();
+    });
   }
   public static float[] toArray(Vector2 x)=>new float[]{x.X,x.Y};
   public static float[] toArray(Vector3 x)=>new float[]{x.X,x.Y,x.Z};
@@ -363,8 +363,8 @@ public static partial class Util{
   public static string nullIfEmpty(string s)=>string.IsNullOrWhiteSpace(s)?null:s;
 
   public static string sideBySide(List<string> strs, string seperator = " "){
-    List<string[]> sp = strs.Select(s=>s.Split('\n')).ToList();
-    List<int> widths = sp.Select(l=>l.Max(s=>s.Length)).ToList();
+    List<string[]> sp = strs.Map(s=>s.Split('\n'));
+    List<int> widths = sp.Map(l=>l.Max(s=>s.Length));
     int lines = sp.Max(l=>l.Length);
     string res = "";
     for(int i=0; i<lines; i++){

@@ -1,6 +1,7 @@
 
 
 
+using System;
 using System.Linq;
 using Celeste;
 using Celeste.Mod.auspicioushelper;
@@ -12,15 +13,13 @@ namespace Celeste.Mod.auspicioushelper;
 public class TemplateInstanceable:Template{
   public TemplateInstanceable(EntityData data, Vector2 pos, int depthoffset):base(data,pos,depthoffset){}
   public int numInstances {get; private set;} = 0;
-  public bool useDisappearer = false;
-  public Template addInstance(Vector2 offset, templateFiller template=null){
+  public Template addInstance(Vector2 offset, templateFiller template=null, Func<Vector2,Template> templateCtor=null){
     template = template??t;
     Template res;
-    using(new Template.ChainLock())addEnt(res=useDisappearer?new TemplateDisappearer(offset+virtLoc){
-      t=template, ownidpath=numInstances++.ToString()
-    }:new Template(offset+virtLoc){
-      t=template, ownidpath=numInstances++.ToString()
-    });
+    using(new Template.ChainLock()) res = templateCtor==null? new Template(offset+virtLoc):templateCtor(offset+virtLoc);
+    res.t=template;
+    res.ownidpath=numInstances++.ToString();
+    addEnt(res);
     if(addingScene==null){
       AddNewEnts(res.GetChildren<Entity>());
     }
@@ -35,20 +34,6 @@ public class TemplateInstanceable:Template{
     makeInitialInstances();
     scene.Add(this);
     addingScene = null;
-  }
-}
-
-[CustomEntity("auspicioushelper/TemplateInstancer")]
-public sealed class TemplateInstancer:TemplateInstanceable{
-  Vector2[] nodes;
-  public TemplateInstancer(EntityData d, Vector2 o):this(d,o,d.Int("depthoffset",0)){}
-  public TemplateInstancer(EntityData d, Vector2 o, int depthoffset)
-  :base(d,o+d.Position,depthoffset){
-    nodes = (d.Nodes??[]).Select(x=>x-d.Position).ToArray();
-  }
-  public override void makeInitialInstances() {
-    base.makeInitialInstances();
-    foreach(Vector2 n in nodes) addInstance(n);
   }
 }
 

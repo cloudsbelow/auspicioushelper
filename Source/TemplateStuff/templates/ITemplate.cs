@@ -254,6 +254,7 @@ public class Template:Entity, ITemplateChild{
     if(basicents != null)basicents.sceneadd(scene);
     scene.Add(this);
   }
+  public bool hasDeclaredTemplate=>t!=null||Util.HasContent(templateStr);
   public override void Added(Scene scene){
     bool flag = string.IsNullOrWhiteSpace(templateStr) && t==null;
     if(parent == null && !flag && !expanded){
@@ -266,6 +267,7 @@ public class Template:Entity, ITemplateChild{
       return;
     }
   }
+  public void origAdded(Scene scene)=>base.Added(scene);
   public void AddBasicEnt(Entity e, Vector2 offset){
     if(basicents == null){
       basicents = new Wrappers.BasicMultient(this);

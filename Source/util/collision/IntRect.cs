@@ -26,6 +26,7 @@ public struct IntRect{
   public Int2 brc=>new Int2(x+w,y+h);
   public Int2 trc=>new Int2(x+w,y);
   public Int2 blc=>new Int2(x,y+h);
+  static public IntRect empty=>new(10000000,10000000,-20000000,-20000000);
   public Vector2 center {
     get=>new Vector2(x+w/2,y+h/2);
   }
@@ -133,5 +134,8 @@ public struct IntRect{
     var c2 = Int2.Min(brc, o.brc);
     return fromCorners(c1,c2);
   }
+  public IntRect union_(Int2 point)=>fromCorners(Int2.Min(point,tlc),Int2.Max(point,brc));
+  public IntRect union_(IntRect o)=>fromCorners(Int2.Min(o.tlc,tlc),Int2.Max(o.brc,brc));
+  
   public static implicit operator FloatRect(IntRect o)=>new FloatRect(o.x,o.y,o.w,o.h); 
 }
