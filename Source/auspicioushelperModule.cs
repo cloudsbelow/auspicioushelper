@@ -76,21 +76,24 @@ public class auspicioushelperModule : EverestModule {
 
   [ResetEvents.NullOn(ResetEvents.RunTimes.OnExit)]
   public static bool InFolderMod;
+  static void SetFoldermod(Session s){
+    try{
+      InFolderMod = s?.MapData?.Filename!=null && 
+        Path.Combine("Maps",s.MapData.Filename) is {} fpath && 
+        Everest.Content.Get(fpath)?.Source?.Mod is {} Mod && 
+        !string.IsNullOrWhiteSpace(Mod.PathDirectory);
+    }catch(Exception){
+      DebugConsole.Write($"Entering nonexistent area");
+    }
+  }
   static void OnEnter(Session session){
     OnExitMap.run();
     OnReset.run();
     OnNewScreen.run();
     OnReloadMap.run();
     OnEnterMap.run();
-    try{
-      InFolderMod = session?.MapData?.Filename!=null && 
-        Path.Combine("Maps",session.MapData.Filename) is {} fpath && 
-        Everest.Content.Get(fpath)?.Source?.Mod is {} Mod && 
-        !string.IsNullOrWhiteSpace(Mod.PathDirectory);
-    }catch(Exception){
-      DebugConsole.Write($"Entering nonexistent area");
-    }
 
+    SetFoldermod(session);
     DebugConsole.Write($"\n\nEntering Map! Folder mod: {InFolderMod}");
     try{
       if(session?.MapData!=null){
@@ -117,7 +120,9 @@ public class auspicioushelperModule : EverestModule {
     try {
       ChannelState.unwatchAll();
       if(Engine.Instance.scene is LevelLoader l){
-        DebugConsole.Write("\n\nReloading Map!");
+        SetFoldermod(l.Level.Session);
+        DebugConsole.Write("\n\nReloading Map! In foldermod: ",InFolderMod);
+        if(InFolderMod && Settings.ExtraMappingUtils.KillSessiondonotload) l.Level.Session.DoNotLoad?.Clear();
         OnReloadMap.run();
         MapenterEv.Run(l.Level.Session.MapData);
         MarkedRoomParser.parseMapdata(l.Level.Session.MapData);

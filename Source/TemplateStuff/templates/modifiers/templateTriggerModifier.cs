@@ -186,7 +186,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       if(passTrigger)triggerParent.OnTrigger(sm);
     } else modifierParent?.OnTrigger(sm);
     end:
-      adv?.Apply();
+      if(TriggerInfo.Test(sm)) adv?.Apply();
   }
   public void OnTrigger(TriggerInfo sm){
     if(skip){

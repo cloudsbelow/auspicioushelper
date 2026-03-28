@@ -169,6 +169,7 @@ def generate(out_path, lua_dir, isTrigger=False):
         # --- name / description ---
         langName = resolve_basic(lang, f"{entity_key}.placements.name.main")
         if placement_name!="main":
+            entity_obj["p_name"] = placement_name
             if(langName is not None and langName != ""):
                 print(f"{entity_key} has a lang file name despite placement name not being main")
             if not noneOrEmpty(entity_obj.get("name")):

@@ -205,10 +205,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     public static VirtualShaderList cuseffect = new VirtualShaderList{
       null,auspicioushelperGFX.LoadShader("misc/customdream")
     };
-    bool reverse;
-    public DreamRenderer(bool reverse):base(reverse?reveffect:effect,-11001){
-      this.reverse=reverse;
-    }
+    public DreamRenderer(bool reverse):base(reverse?reveffect:effect,-11001){}
     public override void onRemove() {
       base.onRemove();
       if(revrender == this) revrender = null;
@@ -233,15 +230,18 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     return speed*(reverse? -1:1);
   }
   bool DreamCheckStart(Player p, Vector2 dir, Entity from, bool fromCollision=false){
-    bool flag = dreaming && p.Inventory.DreamDash && p.DashAttacking && (
-      (dir == Vector2.Zero&&p.DashDir!=Vector2.Zero) || Vector2.Dot(dir, p.DashDir)>0
-    ) && (!fromCollision || !tryDashhit);
+    bool dc = (dir == Vector2.Zero&&p.DashDir!=Vector2.Zero) || Vector2.Dot(dir, p.DashDir)>0;
+    if(dc && (CommunalHelperIop.DreamTunnelDashAttacking()||CommunalHelperIop.InTunnel(p))){
+      p.Die(p.Speed);
+      return false;
+    }
+    bool flag = dreaming && p.Inventory.DreamDash && p.DashAttacking && dc && (!fromCollision || !tryDashhit);
     if(flag){
       if(dir.L1()==0){
         dir = Vector2.UnitY*Math.Sign(p.Speed.Y);
         if(Math.Abs(p.Speed.X)>=Math.Abs(p.Speed.Y)) dir = Vector2.UnitX*Math.Sign(p.Speed.X);
       }
-      if(CommunalHelperIop.CommunalHelperImports.HasDreamTunnelDash is {} f && f()){
+      if(CommunalHelperIop.DreamTunnelDashAttacking()){
         p.Die(p.Speed);
         return false;
       }

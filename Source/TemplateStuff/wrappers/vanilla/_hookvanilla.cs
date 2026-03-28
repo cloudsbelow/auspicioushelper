@@ -133,6 +133,7 @@ public static class HookVanilla{
       lpos = wrapped.Position;
     }
   }
+  static FgOver thing;
   [OnLoad.ILHook(typeof(DashBlock),nameof(DashBlock.Awake))]
   [OnLoad.ILHook(typeof(FakeWall),nameof(FakeWall.Added))]
   [OnLoad.ILHook(typeof(CoverupWall),nameof(CoverupWall.Added))]
@@ -144,20 +145,8 @@ public static class HookVanilla{
     if(c.TryGotoNextBestFit(MoveType.Before,
       itr=>itr.MatchCallvirt<Autotiler>(nameof(Autotiler.GenerateOverlay))
     )){
-      var skip = c.DefineLabel();
       c.EmitLdarg0();
-      c.EmitDelegate(templateFiller.PaddedMap.GetOverlayStack);
-      c.EmitDup();
-      c.EmitStloc(v);    
-      c.EmitBrfalse(skip);
-      for(int i=0; i<5; i++)c.EmitPop();
-      foreach(var str in new string[]{
-        nameof(FgOver.x),nameof(FgOver.y),nameof(FgOver.w),nameof(FgOver.h),nameof(FgOver.ttypes)
-      }){
-        c.EmitLdloc(v);
-        c.EmitLdfld(typeof(FgOver).GetField(str));
-      }
-      c.MarkLabel(skip);
+      c.EmitDelegate(templateFiller.PaddedMap.SetupOverlay);
     } else DebugConsole.WriteFailure("Could not add tile overlay blend hook",true);
   }
 }

@@ -28,7 +28,8 @@
             "clear_all": "Completely reset all channel values to 0",
             "clear_prefix": "Set all channel values with this prefix to 0",
             "advanced": ""
-        }
+        },
+        "p_name": "Channel Clear Controller"
     },
     "entities.auspicioushelper/CollisionCounter": {
         "description": "Count the number of collisions between entities in two groups",
@@ -38,7 +39,8 @@
             "onlyCollidableA": "Only collidable entities in A will have their collisions count",
             "onlyCollidableB": "Only collidable entities in B will have their collisions count",
             "channel": "The channel to set when collisions have been counted"
-        }
+        },
+        "p_name": "channel collision counter"
     },
     "entities.auspicioushelper/FinderCollider": {
         "description": "Change an entity's collider when a channel is set. Will not be stable for entities such as the player that frequently change their collider on their own. Does not need to be in same room as targeted entity.",
@@ -46,7 +48,8 @@
             "path": "Entity ID path to target",
             "channel": "Channel to listen to. If left blank, will change the channel on spawn only.",
             "collider": "New collider to set. Format is collidertype:[parameters] such as rect:[-8,-8,16,16] for a 16-wide centered rectangle"
-        }
+        },
+        "p_name": "channel collider swapper"
     },
     "entities.auspicioushelper/channelTemplateMover": {
         "description": "Move the nearest unrooted template. An unrooted template either has no parent or is disconnected from its parent's movement.",
@@ -58,7 +61,8 @@
             "easing": "The easing to use when moving",
             "relative": "If checked, the entity will move as if this entity was placed directly on top of it (with the node similarly shifted)",
             "log": "Whether to log various statistics."
-        }
+        },
+        "p_name": "channel template gate mover"
     },
     "entities.auspicioushelper/ChannelHotColdWatcher": {
         "description": "Set a channel based on the core mode",
@@ -66,7 +70,8 @@
             "channel": "The channel to set",
             "Hot_value": "the value to set in hot mode",
             "Cold_value": "the value to set in chilly mode"
-        }
+        },
+        "p_name": "Channel Coremode Watcher"
     },
     "entities.auspicioushelper/ChannelJelly": {
         "description": "A jellyfish that changes state based on channel",
@@ -74,7 +79,8 @@
             "state0": "The state to use when the channel is even",
             "state1": "The state to use when the channel is odd",
             "channel": "The channel to watch"
-        }
+        },
+        "p_name": "Channel Jelly"
     },
     "entities.auspicioushelper/ChannelMathController": {
         "description": "Run compiled expressions on channels, flags and entity states. Reccomended to read the wiki, read the compiler, get a PHD, and hit the modder",
@@ -88,7 +94,8 @@
             "notifying_override": "List of channels that override the usual watched channels as a starting condition",
             "run_when_awake": "",
             "only_run_for_nonzero": "Won't run when notifying channels change to set to zero"
-        }
+        },
+        "p_name": "Channel Math Controller"
     },
     "entities.auspicioushelper/ChannelPlayerWatcher": {
         "description": "Watch the player and set a channel when various conditions are met",
@@ -97,7 +104,8 @@
             "valueWhenMissing": "Value to set when player is dead",
             "mode": "",
             "custom": "Perform reflection, getting all fields in this list successively and trying to cast to double. Kinda cursed"
-        }
+        },
+        "p_name": "Channel Player Watcher"
     },
     "entities.auspicioushelper/ChannelReflector": {
         "description": "Very cursed. Only use if you understand what 'reflector' means here.",
@@ -107,7 +115,8 @@
             "logAccessible": "Log all available values of the class that can be used at the tail of the access list as the next step",
             "valueIfNull": "If a null is ever encountered, will set the channel to this value.",
             "access": "List of fields to successively access. Attempts to cast the last to a double to set the channel"
-        }
+        },
+        "p_name": "channel reflector"
     },
     "entities.auspicioushelper/ChannelSprite": {
         "description": "Sprite that can display animations defined in Sprites.xml based on a channel. Check auspicioushelper's Sprites.xml for an example setup.",
@@ -119,7 +128,8 @@
             "cases": "number of cases defined in XML",
             "depth": "it's what you would expect from this field",
             "materialIdentifiers": ""
-        }
+        },
+        "p_name": "auspicioushelper_example1"
     },
     "entities.auspicioushelper/ChannelSwitch": {
         "description": "Core switch that actually toggles channels",
@@ -137,7 +147,8 @@
             "offSfx": "",
             "dieSfx": "",
             "switchsprite": "Define the sprite so that it matches vanilla format."
-        }
+        },
+        "p_name": "Channel Switch"
     },
     "entities.auspicioushelper/ChannelTheo": {
         "description": "I got peer pressured into making this on my third day of modding (it was fun though). Jank.",
@@ -148,14 +159,16 @@
             "swap_thrown_positions_nodie": "Don't clip player into wall when switching positions",
             "player_momentum_weight": "When grabbed, how much the final player velocity should use the player's velocity",
             "theo_momentum_weight": "When grabbed, how much the final player velocity should use Theo's velocity"
-        }
+        },
+        "p_name": "Channel Theo"
     },
     "entities.auspicioushelper/ChannelTriggerTrigger": {
         "description": "Trigger the (smallest area) trigger at a certain area",
         "placements": {
             "channel": "Channel to watch. If the entity has nodes, setting the channel to n triggers the smallest trigger at the n'th node, with 0 corresponding to the main entity. If no nodes are present, any non-0 channel value will trigger the overlapping trigger",
             "delay": "in seconds"
-        }
+        },
+        "p_name": "Activator (on channel)"
     },
     "entities.auspicioushelper/SpriteAnimChain": {
         "description": "This is an entity for emptynoise(tollab) and is not supported in other contexts",
@@ -168,7 +181,8 @@
             "tangent_magnitude": "",
             "atlas_directory": "",
             "loop": ""
-        }
+        },
+        "p_name": "Channel VFX spritechain"
     },
     "entities.auspicioushelper/ConditionalStrawb": {
         "description": "Conditional strawberry that does not increase map strawberry count. Winged strawberry flies to the node when specified. Must be collected in conditional strawb collect trigger",
@@ -183,7 +197,8 @@
             "flyOnDashFollower": "Fly away if you dash while holding the strawberry",
             "persist_on_death": "The strawberry will stick around even if you die",
             "sprites": "The sprites to use for this. Currently not working, will fix later."
-        }
+        },
+        "p_name": "Conditional Strawberry"
     },
     "entities.auspicioushelper/ConditionalStrawbTracked": {
         "description": "Conditional strawberry that adds to the map's strawberry count. Winged strawberry flies to the node when specified. Must be collected in conditional strawb collect trigger",
@@ -198,13 +213,15 @@
             "flyOnDashFollower": "Fly away if you dash while holding the strawberry",
             "persist_on_death": "The strawberry will stick around even if you die",
             "sprites": "The sprites to use for this."
-        }
+        },
+        "p_name": "Conditional Strawberry (Tracked)"
     },
     "entities.auspicioushelper/ChannelToFlag": {
         "description": "This is a paranoia entity for people who don't trust the @ prefix to always work due to weird inlining or weird design choices by other mods",
         "placements": {
             "channel": "the channel to read",
             "flag": "the flag to set"
-        }
+        },
+        "p_name": "Channel Flag Setter"
     }
 }

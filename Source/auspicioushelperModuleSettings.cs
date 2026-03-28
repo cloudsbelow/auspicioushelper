@@ -91,4 +91,12 @@ public class auspicioushelperModuleSettings : EverestModuleSettings {
       menu.Add(makePressHandler("",i));
     }
   }
+
+  [SettingSubMenu]
+  public class ExtraUtilsMenu{
+    [SettingSubText("Clear sessiondonotload on reloads from loenn. Ugh.")]
+    public bool KillSessiondonotload {get;set;}
+  }
+  [SettingSubText("Toggles for extra mapping QOL options")]
+  public ExtraUtilsMenu ExtraMappingUtils {get;set;} = new();
 }

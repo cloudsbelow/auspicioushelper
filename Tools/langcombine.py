@@ -27,11 +27,12 @@ def format_entity_header(entity_name):
 def emit_basic(entity_key, entity_obj, lines):
     name = entity_obj.get("name", "")
     desc = entity_obj.get("description", "")
+    p_name = entity_obj["p_name"] if "p_name" in entity_obj else "main"
 
     if name:
         lines.append(f"{entity_key}.placements.name.main={name}")
     if desc:
-        lines.append(f"{entity_key}.placements.description.main={desc}")
+        lines.append(f"{entity_key}.placements.description.{p_name}={desc}")
 
 
 def emit_attributes(entity_key, placements, lines):
@@ -49,8 +50,7 @@ def emit_attributes(entity_key, placements, lines):
             if value:
                 lines.append(f"{desc_key}={value}")
 
-    if placements:
-        lines.append("")
+    lines.append("")
 
 
 # ----------------------------

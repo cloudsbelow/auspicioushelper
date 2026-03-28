@@ -11,6 +11,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using MonoMod.RuntimeDetour;
+using MonoMod.Cil;
+using Celeste.Mod.Helpers;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -76,7 +78,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     conveyRiding = d.Bool("conveyRiding",false);
     convertTriggering = d.Bool("triggerAsRiding",false);
     attachToJt = d.Bool("attachToJumpthru",false);
-    hooks.enable();
+    ResetEvents.LazyEnable(typeof(TemplateStaticmover));
     StaticmoverLock.hooks.enable();
     Add(new BeforeAfterRender(()=>{
       if(this.ownShakeVec == Vector2.Zero){
@@ -241,44 +243,39 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   }
   bool cachedCol = true;
 
-  static bool MoveHPlatHook(On.Celeste.Platform.orig_MoveHExactCollideSolids orig, Platform p, 
-    int moveH, bool thruDashBlocks, Action<Vector2, Vector2, Platform> onCollide
-  ){
+  static void DisableSms(Platform p){
     foreach(StaticMover s in p.staticMovers){
       if(s.Entity is TemplateStaticmover s_){
         s_.cachedCol = s_.getSelfCol();
         s_.setCollidability(false);
       } 
     }
-    bool res = orig(p, moveH, thruDashBlocks, onCollide);
+  }
+  static void EnablewSms(Platform p){
     foreach(StaticMover s in p.staticMovers){
       if(s.Entity is TemplateStaticmover s_){
         s_.setCollidability(s_.cachedCol);
       } 
     }
-    return res;
   }
-  static bool MoveVPlatHook(On.Celeste.Platform.orig_MoveVExactCollideSolids orig, Platform p, 
-    int moveH, bool thruDashBlocks, Action<Vector2, Vector2, Platform> onCollide
-  ){
-    foreach(StaticMover s in p.staticMovers){
-      if(s.Entity is TemplateStaticmover s_){
-        s_.cachedCol = s_.getSelfCol();
-        s_.setCollidability(false);
-      } 
+  [ResetEvents.ILHook(typeof(Platform),nameof(Platform.MoveVExactCollideSolids))]
+  [ResetEvents.ILHook(typeof(Platform),nameof(Platform.MoveHExactCollideSolids))]
+  static void CollideSolidsIL(ILContext ctx){
+    ILCursor c = new(ctx);
+    c.EmitLdarg0();
+    c.EmitDelegate(DisableSms);
+    if(c.TryGotoNextBestFit(MoveType.Before,
+      itr=>itr.MatchCallvirt<Platform>(nameof(Platform.MoveHExact))||
+           itr.MatchCallvirt<Platform>(nameof(Platform.MoveVExact))
+    )){
+      c.EmitLdarg0();
+      c.EmitDelegate(EnablewSms);
+      return;
     }
-    bool res = orig(p, moveH, thruDashBlocks, onCollide);
-    foreach(StaticMover s in p.staticMovers){
-      if(s.Entity is TemplateStaticmover s_){
-        s_.setCollidability(s_.cachedCol);
-      } 
-    }
-    return res;
+    DebugConsole.WriteFailure("Could not add moveCollideSolid hook",true);
   }
-  static Player Hook(On.Celeste.Solid.orig_GetPlayerRider orig, Solid s){
-    var p = orig(s);
-    if(p!=null) return p;
-    foreach(StaticMover sm in s.staticMovers) if(sm.Entity is TemplateStaticmover tsm){
+  static Player getRider(Platform p){
+    foreach(StaticMover sm in p.staticMovers) if(sm.Entity is TemplateStaticmover tsm){
       if(tsm.conveyRiding && tsm.hasPlayerRider()) return UpdateHook.cachedPlayer;
       if(tsm.hasTrigger>0){
         tsm.hasTrigger = 0;
@@ -287,18 +284,13 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     } 
     return null;
   }
+  [ResetEvents.OnHook(typeof(Solid),nameof(Solid.GetPlayerRider))]
+  static Player Hook(On.Celeste.Solid.orig_GetPlayerRider orig, Solid s)=>orig(s)??getRider(s);
+  
+  [ResetEvents.OnHook(typeof(JumpThru),nameof(JumpThru.GetPlayerRider))]
+  static Player Hook(On.Celeste.JumpThru.orig_GetPlayerRider orig, JumpThru j)=>orig(j)??getRider(j);
   public override void destroy(bool particles){
     base.destroy(particles);
     shouldDie = true;
   }
-  static HookManager hooks = new HookManager(()=>{
-    On.Celeste.Platform.MoveHExactCollideSolids += MoveHPlatHook;
-    On.Celeste.Platform.MoveVExactCollideSolids += MoveVPlatHook;
-    On.Celeste.Solid.GetPlayerRider += Hook;
-  },()=>{
-    On.Celeste.Platform.MoveHExactCollideSolids -= MoveHPlatHook;
-    On.Celeste.Platform.MoveVExactCollideSolids -= MoveVPlatHook;
-    On.Celeste.Solid.GetPlayerRider -= Hook;
-
-  },auspicioushelperModule.OnEnterMap);
 }

@@ -36,7 +36,8 @@
             "useOnRelease": "Whether to always use this refill when in a template that is thrown",
             "numRefresh": "Number of times this refill will respawn. Leave blank or negative for unlimited use.",
             "depth": ""
-        }
+        },
+        "p_name": "(Another) custom refill"
     },
     "entities.auspicioushelper/spinner": {
         "name": "Recolorable Spinner",

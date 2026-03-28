@@ -147,7 +147,7 @@ public static class ResetEvents{
     if(!LLstuff.TryGetValue(t, out var h)){
       List<Action> onDispose = new();
       LLstuff[t] = h = new(()=>{
-        foreach(MethodInfo m in t.GetMethods(Util.GoodBindingFlags)) if(m.IsStatic){
+        foreach(MethodInfo m in t.GetMethods(Util.StaticBindingFlags)) if(m.IsStatic){
           foreach(var attr in m.GetCustomAttributes<LazyThing>()) if(attr.apply(m) is {} g) onDispose.Add(g);
         }
       },()=>{

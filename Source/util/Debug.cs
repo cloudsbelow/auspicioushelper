@@ -157,6 +157,6 @@ public static class DebugConsole {
   [Command("auspdebug_playerloc","Print player world coordinates")]
   public static void PrintPlayerloc(){
     if(Engine.Instance.scene.Tracker.GetEntity<Player>() is {} p)
-    Engine.Commands.Log($"Player at {{x:{p.X}, y:{p.Y}}} with collider {new FloatRect(p)}");
+    Engine.Commands.Log($"Player at {{x:{p.X}, y:{p.Y}}} with collider {new FloatRect(p)} and state {p.StateMachine.State}");
   }
 }

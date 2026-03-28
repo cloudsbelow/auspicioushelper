@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using Monocle;
+using MonoMod.Cil;
 
 namespace Celeste.Mod.auspicioushelper;
 [Tracked]
@@ -35,5 +36,30 @@ public class BeforeAfterRender:Component{
       if(c.a!=null) c.a();
     }
     foreach(var f in postafter) f();
+  }
+}
+
+public class DepthOffsetManager:Component{
+  int offset;
+  public static void ApplyOffset(Entity e, int offset){
+    if(e.Get<DepthOffsetManager>() is not {} d) e.Add(d=new());
+    d.offset+=offset;
+  }
+  public static void ApplyRoot(Entity e, int root){
+    if(e.Get<DepthOffsetManager>() is not {} d) e.Add(d=new());
+    d.offset = root-(e.Depth-d.offset);
+  }
+  public DepthOffsetManager():base(false,false){}
+  static int depthWithOffset(Entity e, int orig){
+    if(e.Get<DepthOffsetManager>() is {} d) return orig+d.offset;
+    return orig;
+  }
+  [OnLoad.ILHook(typeof(Entity),nameof(Entity.Depth),Util.HookTarget.PropSet)]
+  static void Hook(ILContext ctx){
+    var c = new ILCursor(ctx);
+    c.EmitLdarg0();
+    c.EmitLdarg1();
+    c.EmitDelegate(depthWithOffset);
+    c.EmitStarg(1);
   }
 }

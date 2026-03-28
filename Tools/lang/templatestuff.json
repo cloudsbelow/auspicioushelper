@@ -3,14 +3,16 @@
         "description": "It's evil",
         "placements": {
             "EncodedRooms": "There's a 'pack template rooms to log' mod option. This will log a string. If you paste that string here, you can delete the original rooms if this template is in the room with the things using those rooms. Can be used between maps."
-        }
+        },
+        "p_name": "Evil packed template rooms (evil)"
     },
     "entities.auspicioushelper/FinderDepth": {
         "description": "Change the depth of targeted entities",
         "placements": {
             "path": "A list of entity ID paths (the number next to ID: in loenn topbar)",
             "depth": "The new depths these entities should have"
-        }
+        },
+        "p_name": "id based depth thing"
     },
     "entities.auspicioushelper/EntityMarkingFlag": {
         "name": "Entity Marker",
@@ -28,7 +30,8 @@
             "SelectionMode": "Various modes",
             "LoopResetMode": "How to reset loop mode - i.e. whether to share the loops between all instances in a room or not",
             "templates": "List of template strings to use. "
-        }
+        },
+        "p_name": "Template Filler Switcher"
     },
     "entities.auspicioushelper/TemplateCassetteColor": {
         "description": "Set up custom visuals for a single cassette layer.",
@@ -46,7 +49,8 @@
             "patternWeight": "How thick the 'active' bands are in the pattern",
             "borderColor": "The border color",
             "innerColor": "The inside color"
-        }
+        },
+        "p_name": "Template Cassette Colorer"
     },
     "entities.auspicioushelper/TemplateCassetteManagerSimple": {
         "description": "Manage template cassette block visuals and timings simply in one entity. Just give channels and provide the matching channels in the cassette blocks.",
@@ -62,7 +66,8 @@
             "no_visuals": "Change the channels along with vanilla cassette timings without setting up visuals",
             "useVanillaMistiming": "Vanilla sometimes activates blocks the frame after the click plays. this replicates that.",
             "useListeners": "Uses cassette listeners. Better for compatability."
-        }
+        },
+        "p_name": "Template Cassette Manager (simple)"
     },
     "entities.auspicioushelper/CustomDreamlayer": {
         "description": "Setup custom visual settings for tempalte dreamblocks. Global per map; does not need to be in same room.",
@@ -79,7 +84,8 @@
             "contentAlpha": "The alpha of the original entities.",
             "edgeColor": "The color of the borders of the effect",
             "insideColor": "The color of the interior of the dreamblock."
-        }
+        },
+        "p_name": "Dream visual settings"
     },
     "entities.auspicioushelper/templateFiller": {
         "name": "Template Filler",
@@ -139,7 +145,8 @@
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]
-        }
+        },
+        "p_name": "Material Template"
     },
     "entities.auspicioushelper/TemplateBehaviorChain": {
         "description": "An easy way to apply attributes from multiple template types to one template",
@@ -149,7 +156,8 @@
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]
-        }
+        },
+        "p_name": "Template Behavior Chain"
     },
     "entities.auspicioushelper/TemplateBlock": {
         "description": "A static block that can be made with a template",
@@ -172,7 +180,8 @@
             "propagateRiding": "Whether to pass player riders to parent template in compound templates",
             "propagateShaking": "Whether shake this block when the parent shakes when in compound template",
             "exitBlockBehavior": "Behave like an exit block"
-        }
+        },
+        "p_name": "Template Block (Triggerable)"
     },
     "entities.auspicioushelper/TemplateCassetteBlock": {
         "name": "Template Cassette Block",
@@ -226,7 +235,8 @@
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]
-        }
+        },
+        "p_name": "Template Belt"
     },
     "entities.auspicioushelper/TemplateDashhitModifier": {
         "description": "Modify the behavior performed when dashing into the various sides of this block",
@@ -244,7 +254,8 @@
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]
-        }
+        },
+        "p_name": "Template Dashhit Modifier"
     },
     "entities.auspicioushelper/TemplateDreamblockModifier": {
         "description": "Turn contained entities into dreamblocks that can be dreamed through.",
@@ -264,7 +275,8 @@
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]
-        }
+        },
+        "p_name": "Template Dreamblock Modifier"
     },
     "entities.auspicioushelper/TemplateEntityModifier": {
         "description": "Modify the visibility/collidability/activity of contained entities",
@@ -281,7 +293,8 @@
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]
-        }
+        },
+        "p_name": "Template Entity Modifier"
     },
     "entities.auspicioushelper/TemplateFakewall": {
         "name": "Template Fake Wall",
@@ -340,7 +353,8 @@
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]
-        }
+        },
+        "p_name": "Template Gluable"
     },
     "entities.auspicioushelper/TemplateIceblock": {
         "description": "Core ice block-esque template",
@@ -357,7 +371,8 @@
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]
-        }
+        },
+        "p_name": "Template Iceblock"
     },
     "entities.auspicioushelper/TemplateKevin": {
         "description": "A kevin block that can be made with a template",
@@ -380,7 +395,8 @@
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]
-        }
+        },
+        "p_name": "Template Kevin"
     },
     "entities.auspicioushelper/TemplateCloud": {
         "description": "Make a template act like a cloud. Not sponsored. Ive never even used it in a map.",
@@ -392,7 +408,8 @@
             "cloudDir": "If one value is specified, the vertical span of the cloud. If two values are specified, the first will be used for how much the cloud should move sideways (and the second for verticality)",
             "fromRiding": "Whether riding this cloud triggers it",
             "noDoubleBoost": "Disables double cloudboosts (jumping in coyote after the cloud has shattered) only important for clouds with horizontal direction."
-        }
+        },
+        "p_name": "Template Cloud"
     },
     "entities.auspicioushelper/TemplateMoonblock": {
         "name": "Template Moonblock",
@@ -503,7 +520,8 @@
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]
-        }
+        },
+        "p_name": "Template Template"
     },
     "entities.auspicioushelper/TemplateTriggerModifier": {
         "description": "A template wrapper that changes the way parent templates recieve trigger events from children",
@@ -528,7 +546,8 @@
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]
-        }
+        },
+        "p_name": "Template Trigger Modifier"
     },
     "entities.auspicioushelper/TemplateZipmover": {
         "name": "Template Zipmover",
@@ -548,6 +567,17 @@
             "returnEasing": "Easing to use when returning",
             "outgoingSound": "",
             "returningSound": "",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateDisplacer": {
+        "p_name": "Template Displacer",
+        "description": "",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]

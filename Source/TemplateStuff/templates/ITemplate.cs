@@ -99,6 +99,9 @@ public class Template:Entity, ITemplateChild{
     public ChainLock(){ctr++;}
     void IDisposable.Dispose()=>ctr--;
   }
+  protected virtual void EmptySetup(EntityData data){
+    TemplateBehaviorChain.AddEmptyTemplate(data);
+  }
   /// <summary>
   /// WARNING: by the time templates are constructed, the entitydata
   /// position has already been added to pos. 
@@ -114,7 +117,7 @@ public class Template:Entity, ITemplateChild{
     this.ownidpath=getOwnID(data);
     MovementLock.skiphooks.enable();
     if(string.IsNullOrEmpty(templateStr) && !ChainLock.locked){
-      TemplateBehaviorChain.AddEmptyTemplate(data);
+      EmptySetup(data);
     }
   }
   public Template(Vector2 pos, int depthoffset=0):base(pos){
@@ -255,6 +258,7 @@ public class Template:Entity, ITemplateChild{
     scene.Add(this);
   }
   public bool hasDeclaredTemplate=>t!=null||Util.HasContent(templateStr);
+  public bool emptyaable=>parent==null && string.IsNullOrWhiteSpace(templateStr);
   public override void Added(Scene scene){
     bool flag = string.IsNullOrWhiteSpace(templateStr) && t==null;
     if(parent == null && !flag && !expanded){

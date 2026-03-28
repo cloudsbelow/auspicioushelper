@@ -269,6 +269,7 @@ public static partial class Util{
   readonly static Func<object,object> cloneFunc = instanceFunc<object>(typeof(object),"MemberwiseClone");
   public static T shallowCopy<T>(T thing)=>(T)cloneFunc(thing);
   public const BindingFlags GoodBindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance;
+  public const BindingFlags StaticBindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.DeclaredOnly;
   public static T GetUninitializedEntWithComp<T>() where T:Entity{
     T x = (T)RuntimeHelpers.GetUninitializedObject(typeof(T));
     x.Components = new(x);

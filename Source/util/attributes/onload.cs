@@ -105,7 +105,7 @@ public class OnLoad:Attribute{
   public static void Run(){
     MethodInfo hookm = typeof(HookManager).GetMethod(nameof(HookManager.enable));
     foreach(var t in typeof(auspicioushelperModule).Assembly.GetTypesSafe()){
-      foreach(FieldInfo f in t.GetFields(Util.GoodBindingFlags)){
+      foreach(FieldInfo f in t.GetFields(Util.GoodBindingFlags | BindingFlags.DeclaredOnly)){
         foreach(var c in f.GetCustomAttributes<OnLoad>()){
           if(c is CustomOnload custom) custom.Apply(f);
           else if(!f.IsStatic || f.FieldType!=typeof(HookManager)){
@@ -115,7 +115,7 @@ public class OnLoad:Attribute{
           }
         }
       }
-      foreach(MethodInfo m in t.GetMethods(Util.GoodBindingFlags)){
+      foreach(MethodInfo m in t.GetMethods(Util.GoodBindingFlags | BindingFlags.DeclaredOnly)){
         foreach(var attr in m.GetCustomAttributes<OnLoad>()){
           if(attr is CustomOnload c) c.Apply(m);
           else if(!m.IsStatic || m.GetParameters().Length!=0){ 

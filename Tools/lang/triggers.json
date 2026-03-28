@@ -8,7 +8,8 @@
             "onlyOnce": "Remove this trigger after it is exited for the first time",
             "channel": "The channel to change",
             "activeChannel": "If specified, the trigger will do nothing if this channel is zero"
-        }
+        },
+        "p_name": "channel fade"
     },
     "triggers.auspicioushelper/ChannelMathTrigger": {
         "description": "Like the channel math controller, but as a trigger that attempts to run when entered.",
@@ -18,7 +19,8 @@
             "activation_cond": "When to try to start scripts",
             "debug": "Whether to print debug information to the current debugging view",
             "run_when_awake": "Run script on room load"
-        }
+        },
+        "p_name": "Channel Math Controller"
     },
     "triggers.auspicioushelper/ChannelPlayerTrigger": {
         "name": "Channel Player Trigger",
@@ -49,7 +51,8 @@
         "placements": {
             "assistSmuggle": "If this trigger is inside a template, will allow the player to enter the template dreamblock slightly before touching it if having just picked up a holdable for a smuggle. Kinda jank and boutique, not reccomended unless you know exactly what you are doing.",
             "prioTemplateDreamblocks": "When inside this trigger, will always enter template dreamblocks that are flush with a wall that would otherwise stop the player."
-        }
+        },
+        "p_name": "Dream Transition Enabler"
     },
     "triggers.auspicioushelper/HoldableReleaseTrigger": {
         "name": "Release Holdable Trigger",
@@ -71,7 +74,8 @@
             "alwaysForceSlip": "Force the player to slip even when they are holding directionally towards the wall",
             "onlyWhenInside": "Only apply movement patches while the player is inside this trigger",
             "setOnAwake": "Apply these settings on room load"
-        }
+        },
+        "p_name": "Pixel leniency slipping thing"
     },
     "triggers.auspicioushelper/LiftspeedTrigger": {
         "description": "Trigger that affects liftspeed and multiboost for more consistency when the player is inside",
@@ -81,29 +85,34 @@
             "gracetimeMultiplier": "Multiplier to apply to the length of time for which liftspeed can be used after being granted",
             "speedMultiplier": "Multiplier to apply to any liftspeed given to a player while active",
             "coverRoom": "Make the trigger cover the whole room"
-        }
+        },
+        "p_name": "liftspeed configurator"
     },
     "triggers.auspicioushelper/PersistentChangeRespawn": {
         "description": "A change respawn trigger whose assignment will not be overwritten on room transition. Must enter a normal change respawn trigger to break the persistance and restore normal transition-respawn behavior",
-        "placements": {}
+        "placements": {},
+        "p_name": "persistent change respawn"
     },
     "triggers.auspicioushelper/RedbubbleSpeed": {
         "description": "Change the speed of redbubbles used inside this trigger",
         "placements": {
             "newSpeed": "The new speed that the player should have when using a redbubble in this trigger"
-        }
+        },
+        "p_name": "redbubble speed modifier"
     },
     "triggers.auspicioushelper/triggerparenttrigger": {
         "description": "Used in templates. When activated, will trigger its parent template",
         "placements": {
             "onEnter": "whether to trigger when entered",
             "onLeave": "whether to trigger when left"
-        }
+        },
+        "p_name": "Trigger Parent Trigger"
     },
     "triggers.auspicioushelper/Downtrans": {
         "description": "Override the room's 'disable down transition' metadata setting while inside",
         "placements": {
             "disabled": "Whether down transitions are disabled in this trigger."
-        }
+        },
+        "p_name": "Down transition overrider"
     }
 }

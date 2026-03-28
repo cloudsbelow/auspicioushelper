@@ -25,7 +25,8 @@
             "rotation": "",
             "depth": "",
             "alphaCutoff": "Pixels whose alpha is higher than this value will be collidable"
-        }
+        },
+        "p_name": "Arbitrary shape kill area"
     },
     "entities.auspicioushelper/ArbitrarySolid": {
         "description": "Solid with the exact shape of a specified image. Suggested to use with pixel leniency trigger. ",
@@ -41,7 +42,8 @@
             "depth": "",
             "alphaCutoff": "Pixels whose alpha is higher than this value will be collidable",
             "occludeLight": "Whether this entitiy casts shadows (only the solid pixels). Relatively optimized; no need to worry about lag if there are not hundreds of these entities"
-        }
+        },
+        "p_name": "Arbitrary shape solid"
     },
     "entities.auspicioushelper/BeamBlocker": {
         "name": "Beam Blocker",
@@ -55,11 +57,13 @@
             "channel": "Decrement this channel by 1 with each use. When it is 0, the campfire can no longer be used.",
             "disableNormal": "Do not change your respawn when transitioning rooms",
             "customRespawnSFX": "SFX to use when respawning"
-        }
+        },
+        "p_name": "Campfire Respawn Controller"
     },
     "entities.auspicioushelper/CassetteFixerThing": {
         "description": "Fixes the bug where cassettes can appear one pixel higher/lower if dying when they are in the 'willchange' state",
-        "placements": {}
+        "placements": {},
+        "p_name": "Cassette block fixing thing idk"
     },
     "entities.auspicioushelper/SillySpikes": {
         "name": "Relative Spikes",
@@ -84,7 +88,8 @@
             "scope": "",
             "texture": "Textures to recolor. Can use fancy matching with *",
             "recolor": "Fancy recoloring option. See wiki for details. For example (000,fff)->(fff,000)"
-        }
+        },
+        "p_name": "Decal recolor controller"
     },
     "entities.auspicioushelper/DieWater": {
         "name": "Die Water",
@@ -96,7 +101,8 @@
         "placements": {
             "channel": "Channel to set when enclosed",
             "resettable": "Whether to unset the channel when you unenclose the horse"
-        }
+        },
+        "p_name": "enclorse"
     },
     "entities.auspicioushelper/MaterialApplier": {
         "description": "For adding entities to shader layers",
@@ -107,7 +113,8 @@
             "dontNormalRender": "Turn off normal rendering for this entity while in operation",
             "toggleChannel": "Channel to toggle between modified/original rendering",
             "priority": "The priority of this layer. Used when putting this entity in multiple layers simultaneously to decide which it appears in. (don't normal render will stop this item from rendering in lower priority layers as well as in normal usage)"
-        }
+        },
+        "p_name": "Material Applier"
     },
     "entities.auspicioushelper/MaterialController": {
         "name": "Material Controller",

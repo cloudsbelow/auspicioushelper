@@ -115,6 +115,7 @@ public class templateFiller{
       intercept = this;
     }
   } 
+  //there's history for this class being as dumb as it is. you don't want to know it.
   internal class PaddedMap{
     internal VirtualMap<char> b;
     VirtualMap<char> safe=null;
@@ -122,7 +123,7 @@ public class templateFiller{
     Int2 size=Int2.Zero;
     public int xPad=>pad.x;
     public int yPad=>pad.y;
-    static Int2 ndim=>new(66,9);
+    static Int2 ndim=>new(8,8);
     public PaddedMap(VirtualMap<char> orig){
       b=orig;
       size = b==null?Int2.Zero:new(orig.Columns,orig.Rows);
@@ -146,14 +147,32 @@ public class templateFiller{
       public int x,y,w,h;
       public VirtualMap<char> ttypes;
     }
-    public static OverlayStack GetOverlayStack(Entity e){
-      if(e.Get<ChildMarker>()?.parent is not {} p) return null;
+    static OverlayStack lastOver=null;
+    public static void SetupOverlay(Entity e){
+      if(e.Get<ChildMarker>()?.parent is not {} p) return;
       var pm = p.t.tiledata.getPaddedmap();
       int w = (int)e.Width/8;
       int h = (int)e.Height/8;
-      if(p.fgt==null) return pm.MakeSafeFor(new(0,0),new(w,h));
-      var offset = Int2.Round((e.Position-p.Position-p.t.data.offset)/8);
-      return pm.MakeSafeFor(offset,new(w,h));
+      if(p.fgt==null) lastOver = pm.MakeSafeFor(new(0,0),new(w,h));
+      else {
+        var offset = Int2.Round((e.Position-p.Position-p.t.data.offset)/8);
+        lastOver = pm.MakeSafeFor(offset,new(w,h));
+      }
+    }
+    [OnLoad.OnHook(typeof(Autotiler),nameof(Autotiler.GenerateOverlay))]
+    static Autotiler.Generated Hook(
+      On.Celeste.Autotiler.orig_GenerateOverlay orig, Autotiler self, 
+      char id, int x, int y, int tilesX, int tilesY, VirtualMap<char> mapData
+    ){
+      if(lastOver == null) return orig(self,id,x,y,tilesX,tilesY,mapData);
+      else {
+        var old = self.LevelBounds;
+        self.LevelBounds = new(){new Rectangle(0,0,lastOver.x+lastOver.w+8,lastOver.y+lastOver.h+8)};
+        var res = orig(self,id,lastOver.x,lastOver.y,lastOver.w,lastOver.h,lastOver.ttypes);
+        self.LevelBounds = old;
+        lastOver = null;
+        return res;
+      }
     }
   }
   static PaddedMap defaultMap=>new PaddedMap(null);
@@ -162,6 +181,7 @@ public class templateFiller{
     public VirtualMap<char> fgt;
     public VirtualMap<char> bgt;
     public bool created = false;
+    public bool createStatically = false;
     public TileView Fgt = null;
     public MipGrid FgMipgrid;
     public MipGrid lowresGrid;
@@ -181,6 +201,11 @@ public class templateFiller{
     public void initDynamic(Level l){
       if(created) return;
       created = true;
+      if(createStatically) using(new ConnectedBlocks.PaddingLock()){
+        //initStatic(new SolidTiles)
+        return;
+      }
+
       if(fgt!=null){
         SolidTiles st = l.SolidTiles;
         Int2 sto = Int2.Round((tiletlc-st.Position)/8);
@@ -268,7 +293,9 @@ public class templateFiller{
   }
   public void AddTilesTo(Template tem, Scene s){
     if(tiledata == null) return;
-    tiledata.initDynamic(s as Level);
+    if(!tiledata.created){
+      tiledata.initDynamic(s as Level);  
+    }
     if(tiledata.Fgt != null){
       tiledata.Fgt.InterceptNext();
       tem.addEnt(tem.fgt = new FgTiles(this, tem.roundLoc, tem.depthoffset));

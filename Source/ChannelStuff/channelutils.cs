@@ -248,7 +248,7 @@ public static class ChannelState{
     ch=Util.removeWhitespace(ch);
     if(ch.Length == 0 || !checkClean(ch)) return;
     SetChannelRaw(ch,state);
-    if(!fromInterop && ch.Length>0){
+    if(!fromInterop && ch.Length>0 && !lockCross){
       if(ch[0]=='$')(Engine.Instance.scene as Level)?.Session.SetFlag(ch.Substring(1),state!=0);
       if(ch[0]=='#')(Engine.Instance.scene as Level)?.Session.SetCounter(ch.Substring(1),(int)state);
       if(ch[0]=='?')(Engine.Instance.scene as Level)?.Session.SetSlider(ch.Substring(1),(int)state);
@@ -291,6 +291,7 @@ public static class ChannelState{
     } else {
       channelStates.TryAdd(ch,0);
     }
+    TemplateTemplate.addBlame(ch,TemplateTemplate.Loc.Channel);
     return channelStates[ch];
   }
   public static void unwatchTemporary(){
@@ -301,11 +302,11 @@ public static class ChannelState{
       else toRemove.Add(pair.Key);
     }
     foreach(var ch in toRemove) watching.Remove(ch);
-    List<string> toRemoveCh = new();
-    foreach(var (k,v) in channelStates){
-      if(k.Contains(TemplateTemplate.randomChar) && !watching.ContainsKey(k)) toRemoveCh.Add(k);
-    }
-    foreach(var ch in toRemoveCh) channelStates.Remove(ch);
+    // List<string> toRemoveCh = new();
+    // foreach(var (k,v) in channelStates){
+    //   if(k.Contains(TemplateTemplate.randomChar) && !watching.ContainsKey(k)) toRemoveCh.Add(k);
+    // }
+    // foreach(var ch in toRemoveCh) channelStates.Remove(ch);
   }
   static Queue<string> ToForceRemove = new();
   static bool removing;
@@ -376,28 +377,26 @@ public static class ChannelState{
       channelStates[pair.Key] = pair.Value;
     }
   }
+  internal static bool lockCross = false; 
   [OnLoad.OnHook(typeof(Session),nameof(Session.SetFlag))]
   static void Hook(On.Celeste.Session.orig_SetFlag orig, Session s, string f, bool v){
     orig(s,f,v);
-    if(channelStates.ContainsKey('$'+f)) SetChannel('$'+f,v?1:0,true);
+    if(v) TemplateTemplate.addBlame(f,TemplateTemplate.Loc.Flag);
+    if(!lockCross && channelStates.ContainsKey('$'+f)) SetChannel('$'+f,v?1:0,true);
   }
   [OnLoad.OnHook(typeof(Session),nameof(Session.GetFlag))]
   static bool Hook(On.Celeste.Session.orig_GetFlag orig, Session s, string f){
-    if(string.IsNullOrEmpty(f) || f[0]!='@' || (s?.Flags?.Contains(f)??false)) return orig(s,f);
-    return readChannel(f.Substring(1))!=0;
+    return orig(s,f) || (!string.IsNullOrEmpty(f) && f[0]=='@' && readChannel(f.Substring(1))!=0);
   }
+  [OnLoad.EverestEvent(typeof(Everest.Events.Session),nameof(Everest.Events.Session.OnSliderChanged))]
   static void SliderChange(Session s, Session.Slider l, float? nval){
     if(channelStates.ContainsKey('?'+l.Name)) SetChannel('?'+l.Name, nval??0,true);
   }
-  [OnLoad]
-  static HookManager sliderHooks=new(
-    ()=>{Everest.Events.Session.OnSliderChanged+=SliderChange;},
-    ()=>{Everest.Events.Session.OnSliderChanged-=SliderChange;}
-  );
   [OnLoad.OnHook(typeof(Session),nameof(Session.SetCounter))]
   static void Hook(On.Celeste.Session.orig_SetCounter orig, Session s, string f, int n){
     orig(s,f,n);
-    if(channelStates.ContainsKey('#'+f)) SetChannel('#'+f,n,true);
+    TemplateTemplate.addBlame(f,TemplateTemplate.Loc.Counter);
+    if(!lockCross && channelStates.ContainsKey('#'+f)) SetChannel('#'+f,n,true);
   }
   [OnLoad.OnHook(typeof(Session),nameof(Session.GetCounter))]
   static int Hook(On.Celeste.Session.orig_GetCounter orig, Session s, string f){
