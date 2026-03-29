@@ -228,7 +228,6 @@ public class templateFiller{
       created = true;
       if(fgt!=null){
         Int2 sto = Int2.Round((tiletlc-solid.Position)/8);
-        DebugConsole.Write("ssiakjhdsakjd",sto,tiletlc,solid.Position);
         if(PartialTiles.usingPartialtiles) SetMipgrid(solid, sto, new(tr.Width,tr.Height));
         Fgt = new(); 
         Fgt.Fill(solid.Tiles, solid.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);

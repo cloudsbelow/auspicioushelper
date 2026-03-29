@@ -33,7 +33,7 @@ public class ConnectedBlocks:Entity{
   bool excludeSolids;
   bool excludeTriggers;
   bool permits(Entity e){
-    if(e is ConnectedBlocks or TemplateHoldable || e is Template t && t.t==null) return false;
+    if(e is ConnectedBlocks or TemplateHoldable || e is Template t && !t.hasDeclaredTemplate) return false;
     if(e is Decal d){
       return d.Get<DecalMarker>() is DecalMarker dm && allDecals!=permittedDecals?.GetOrDefault(dm.texstr);
     } else if((excludeSolids && e is Solid) || (excludeTriggers && e is Trigger)){
@@ -75,54 +75,65 @@ public class ConnectedBlocks:Entity{
     for(int i=tlc.x; i<brc.x; i++) for(int j=tlc.y; j<brc.y; j++) m.orig_set_Item(i,j,v);
   }
   public const int padding = 1;
-  public override void Awake(Scene scene) {
-    base.Awake(scene);
-    if(!used){
-      used = true;
-      MaddiesIop.hooks.enable();
-      List<(IntRect,char,ConnectedBlocks)> things = [new(new(this),tid,this)];
-      search:
-        foreach(ConnectedBlocks c in Scene.Tracker.GetEntities<ConnectedBlocks>()){
-          if(c.used) continue;
-          IntRect r = new(c);
-          foreach(var t in things) if(t.Item1.CollideIr(r)){
-            things.Add(new(r,c.tid,c));
-            c.used = true;
-            goto search;
+  static void processScene(Scene scene, Vector2 levelOffset){
+    MaddiesIop.hooks.enable();
+    List<(IntRect,ConnectedBlocks)> allThings = new();
+    foreach(ConnectedBlocks c in scene.Tracker.GetEntities<ConnectedBlocks>()) if(!c.used){
+      allThings.Add(new(new(c),c));
+      c.used=true;
+    }
+
+    List<(Vector2, TemplateDisplacer.DisplacerData,int)> displacers = new();
+    List<(templateFiller,MiptileCollider,int)> cbs = new();
+    List<Action> onCompletion = new();
+    HashSet<Entity> toRemove = new();
+    while(allThings.Count>0){
+      List<(IntRect,ConnectedBlocks)> things = new();
+      int idx=0;
+      things.Add(allThings[^1]);
+      allThings.RemoveAt(allThings.Count-1);
+      while(idx<things.Count){
+        int nidx=things.Count;
+        allThings.RemoveAll(x=>{
+          for(int i=idx; i<nidx; i++) if(things[i].Item1.CollideIr(x.Item1)){
+            things.Add(x);
+            return true;
           }
-        }
-      things.Sort((x,y)=>y.Item3.actualDepth.CompareTo(x.Item3.actualDepth));
-      Int2 minimum = Int2.Round(Position);
-      Int2 maximum = Int2.Round(Position);
-      foreach(var t in things){
-        minimum = Int2.Min(minimum, t.Item1.tlc);
-        maximum = Int2.Max(maximum, t.Item1.brc);
-      }
-      
-      Int2 size = (maximum-minimum)/8+2*padding;
+          return false;
+        });
+        idx=nidx;
+      } //
+
+      Int2 min = things.ReduceMapI(a=>a.Item1.tlc,Int2.Min);
+      Int2 max = things.ReduceMapI(a=>a.Item1.brc,Int2.Max);
+      Int2 size = (max-min)/8+2*padding;
+      things.Sort((x,y)=>y.Item2.actualDepth.CompareTo(x.Item2.actualDepth));
       VirtualMap<char> fgd = new(size.x,size.y,'0');
       VirtualMap<char> bgd = new(size.x,size.y,'0');
       QuickCollider<ConnectedBlocks> qcl = new();
-      var l = MipGrid.Layer.fromAreasize(size.x,size.y);
-      foreach(var t in things){
-        Int2 dloc = (t.Item1.tlc-minimum)/8;
-        Int2 hloc = (t.Item1.brc-minimum)/8;
-        switch(t.Item3.c){
-          case Category.fgt: FillRect(fgd, dloc+padding, hloc+padding,t.Item2); break;
-          case Category.bgt: FillRect(bgd, dloc+padding, hloc+padding,t.Item2); break;
-          case Category.ent: qcl.Add(t.Item3,t.Item1); break;
-        }
-        l.SetRect(true,dloc,hloc);
+      var layer = MipGrid.Layer.fromAreasize(size.x,size.y);
+      int displacersUsed=1;
+      foreach(var a in things){
+        Int2 dloc = (a.Item1.tlc-min)/8;
+        Int2 hloc = (a.Item1.brc-min)/8;
+        layer.SetRect(true,dloc,hloc);
+        switch(a.Item2.c){
+          case Category.fgt: FillRect(fgd, dloc+padding, hloc+padding, a.Item2.tid);break;
+          case Category.bgt: FillRect(bgd, dloc+padding, hloc+padding, a.Item2.tid);break;
+          case Category.ent: qcl.Add(a.Item2,a.Item1); break;
+        } 
       }
+
       SolidTiles s=null;
       BackgroundTiles b=null;
-      InplaceFiller f = new(Int2.Zero+Int2.One*8*padding,maximum-minimum);
+      templateFiller f = new(Int2.Zero+Int2.One*8*padding,max-min);
       f.setRoomdat((scene as Level).Session.LevelData);
       f.tiledata.setTiles(fgd);
       f.tiledata.setTiles(bgd,false);
       if(f.tiledata.fgt!=null)using(new PaddingLock()) s=new(Vector2.Zero, fgd);
       if(f.tiledata.bgt!=null)using(new PaddingLock()) b=new(Vector2.Zero, bgd);
       f.tiledata.initStatic(s,b);
+
       Util.OrderedSet<Entity> all = new();
       foreach(Entity e in scene){
         foreach(var t in qcl.Test(new(e))) if(t.permits(e)){
@@ -131,76 +142,88 @@ public class ConnectedBlocks:Entity{
         } 
       }
       if(s!=null){
-        s.Position+=minimum-Int2.One*8*padding;
+        s.Position+=min-Int2.One*8*padding;
         foreach (StaticMover smover in scene.Tracker.GetComponents<StaticMover>()){
           if (smover.Platform == null && smover.IsRiding(s))addAllSms(smover.Entity,all);
         }
       }
-      MiptileCollider checker = new(l, Vector2.One*8, minimum, true);
+      RemChildren(all,min,levelOffset,f,toRemove);
+
+      EntityData hit = null;
+      MiptileCollider checker = new(layer, Vector2.One*8, min, true);
       List<KeyValuePair<Vector2, EntityData>> holds = new();
-      foreach(var pair in TemplateBehaviorChain.mainRoom){
-        if(checker.collideFr(FloatRect.fromRadius(pair.Key+levelOffset,Vector2.One))) holds.Add(pair);
-      }
-      if(holds.Count>1 && auspicioushelperModule.InFolderMod){
-        string erroring = "Connected tiles covered with more than one template entity. Cannot decide which to use! " +
-          "For multiple behaviors, use chains.";
-        foreach(var pair in holds) erroring+=$"{{n}}({pair.Key.X}, {pair.Key.Y}): {pair.Value.Name.RemovePrefix("auspicioushelper/")}";
-        DebugConsole.MakePostcard(erroring);
-      }
-      List<(TemplateDisplacer, int)> with = new();
-      foreach(TemplateDisplacer td in Scene.Tracker.GetEntities<TemplateDisplacer>()) if(td.emptyaable){
-        if(!checker.collideFrOffset(td.bounds,td.Position)) continue;
-        Vector2 nodeoffset = td.Position-td.origpos;
-        for(int i=0; i<td.nodes.Length; i++) if(checker.Collide(td.nodes[i]+nodeoffset)){
-          with.Add((td,i));
-        }
-      }
-      if(holds.Count!=0){
-        var pair = holds[0];
-        RemChildren(all,minimum,f, with);
-        Vector2 pos = pair.Key+levelOffset;
-        f.data.offset = minimum-pos;
-        Vector2? forcepos = pair.Value.Name=="auspicioushelper/TemplateBehaviorChain"&&pair.Value.Bool("forceOwnPosition",false)?pair.Key:null;
-        TemplateBehaviorChain.Chain chain = new(f, new List<EntityData>(){pair.Value}, null, forcepos); 
-        var first = chain.NextEnt();
-        if(first == null) throw new Exception("idk shouldn't be possible");
-        if(first is TemplateDisplacer.TDataIn a){
-          if(!a.disp.TryGetTarget(out var targ)) throw new Exception("Weakref is too weak ig");
-          targ.setFiller(f);
-          goto end;
-        }else if(Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
-          Level lv = scene as Level;
-          Entity e;
-          using(new Template.ChainLock()) e = loader(lv,lv.Session.LevelData,pos-first.Position,first);
-          if(e is Template te){
-            te.t = chain.NextFiller();
-            lv.Add(e);
-            UpdateHook.EnsureUpdateAny();
-            goto end;
+      foreach(var (k,v) in TemplateBehaviorChain.mainRoom){
+        if(checker.collideFr(FloatRect.fromRadius(k+levelOffset,Vector2.One))){
+          if(hit == null) hit = v;
+          else if(auspicioushelperModule.InFolderMod){
+            string erroring = "Connected tiles covered with more than one template entity. Cannot decide which to use! " +
+              "For multiple behaviors, use chains.";
+            foreach(var pair in holds) erroring+=$"{{n}}({pair.Key.X}, {pair.Key.Y}): {pair.Value.Name.RemovePrefix("auspicioushelper/")}";
+            DebugConsole.MakePostcard(erroring);
           }
-          throw new Exception($"your chained entity is not a template? how did u do this? {e}");
         }
       }
-      foreach(TemplateHoldable hold in scene.Tracker.GetEntities<TemplateHoldable>()){
+      if(hit==null) foreach(TemplateHoldable hold in scene.Tracker.GetEntities<TemplateHoldable>()){
         if(hold.isCreated || !string.IsNullOrWhiteSpace(hold.d.Attr("template",""))) continue;
         if(checker.collideFr(new(hold))){
-          RemChildren(all,minimum,f, with);
-          f.data.offset = minimum-(hold.Position+hold.Offset);
-          hold.makeExternally(f);
-          goto end;
+          f.data.offset = min-(hold.Position+hold.Offset);
+          onCompletion.Add(()=>hold.makeExternally(f));
+          cbs.Add(new(f,checker,-1));
+          goto endSingle;
         }
       }
-      if(s!=null){
-        Scene.Add(s);
-        s.Add(new TileOccluder().Build(fgd));
+      hit??=new EntityData(){Name=EntityParser.TemplateEmptyName,Position=min-levelOffset,Values=new()};
+      f.data.offset = (min-levelOffset)-hit.Position; //i know order of ops, this just is comfortable ok?
+      bool force = hit.Name=="auspicioushelper/TemplateBehaviorChain"&&hit.Bool("forceOwnPosition",false);
+      Vector2? forcepos = force? hit.Position:null;
+      var chain = new TemplateBehaviorChain.Chain(f, hit, forcepos, TemplateBehaviorChain.mainRoom);
+      var first = chain.NextEnt(); 
+      
+      if(first.Name=="auspicioushelper/TemplateDisplacer"){
+        templateFiller w = chain.NextFiller();
+        foreach(var n in first.Nodes??[]){
+          displacers.Add(new(n,new(){disp=w, Position=n},displacersUsed));
+        }
+        cbs.Add(new(f,checker,displacersUsed));
+        displacersUsed++;
+      } else {
+        onCompletion.Add(()=>{
+          if(Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
+            Level lv = scene as Level;
+            Entity e = loader(lv,lv.Session.LevelData,levelOffset,first);
+            if(e is Template te){
+              te.t = chain.NextFiller();
+              lv.Add(e);
+            }else throw new Exception($"your chained entity is not a template? how did u do this? {e}");
+          }
+        });
+        cbs.Add(new(f,checker,-1));
       }
-      if(b!=null){
-        b.Position+=minimum-Int2.One*8*padding;
-        Scene.Add(b);
-      }
+      endSingle:;
     }
-    end:
-      RemoveSelf();
+    foreach(var e in toRemove){
+      if(ExtraRemovalSteps.TryGetValue(e.GetType(),out var er))er(e);
+      if(e.SourceData?.Name is {} strname && ExtraRemovalSteps.TryGetValue(strname, out var er2))er2(e);
+      e.RemoveSelf();
+    }
+    foreach(var (l,d,didx) in displacers){
+      bool flag=false;
+      foreach(var (f,checker,cidx) in cbs) if(didx!=cidx) {
+        if(checker.collideFr(FloatRect.fromRadius(l+levelOffset,Vector2.One))){
+          f.data.ChildEntities.Add(d);
+          flag = true;
+          DebugConsole.Write("ADded thing",l,f,d);
+        }
+      }
+      if(!flag && TemplateDisplacer.ConstructAt(d,levelOffset) is {} temp) scene.Add(temp);
+    }
+    using(new Template.ChainLock()) foreach(var a in onCompletion) a();
+    UpdateHook.EnsureUpdateAny();
+  }
+  public override void Awake(Scene scene) {
+    base.Awake(scene);
+    if(!used) processScene(scene,leveloffset);
+    RemoveSelf();
   }
   public static Dictionary<object, Action<Entity>> ExtraRemovalSteps = new(){
     {typeof(FireBarrier),(Entity e)=>(e as FireBarrier).solid.RemoveSelf()},
@@ -208,27 +231,22 @@ public class ConnectedBlocks:Entity{
     {typeof(IntroCar),(Entity e)=>(e as IntroCar).wheels.RemoveSelf()},
     {"FrostHelper/CustomFireBarrier",(Entity e)=>((Entity)Util.ReflectGet(e,"solid",false))?.RemoveSelf()}
   };
-  void RemChildren(Util.OrderedSet<Entity> all, Vector2 minimum, templateFiller f, List<(TemplateDisplacer, int)> children){
+  static void RemChildren(Util.OrderedSet<Entity> all, Vector2 minimum, Vector2 leveloffset, templateFiller f, HashSet<Entity> remove){
     HashSet<Entity> donot = new();
     foreach(var e in all) if(e is Template t) foreach(Entity en in t.GetChildren<Entity>()){
       if(en!=t || t.parent!=null)donot.Add(en);
     }
     foreach(var e in all){
-      if(ExtraRemovalSteps.TryGetValue(e.GetType(),out var er))er(e);
-      if(e.SourceData?.Name is {} strname && ExtraRemovalSteps.TryGetValue(strname, out var er2))er2(e);
-      e.RemoveSelf();
+      remove.Add(e);
       if(donot.Contains(e)) continue;
-      Vector2 fpos = e.Position-minimum+padding*8*Vector2.One;
+      
       if(e is Decal d){
+        Vector2 fpos = e.Position-minimum+padding*8*Vector2.One;
         f.data.decals.Add(d.Get<DecalMarker>().withDepthAndForcepos(fpos));
       } else if(e.SourceData is EntityData dat){
-        fpos = dat.Position+leveloffset - minimum+padding*8*Vector2.One;
+        Vector2 fpos = dat.Position+leveloffset - minimum+padding*8*Vector2.One;
         f.data.ChildEntities.Add(Util.cloneWithForceposOffset(dat,fpos));
       }
-      UpdateHook.EnsureUpdateAny();
-    }
-    foreach(var (td,i) in children){
-      f.data.ChildEntities.Add(td.makeCapturing(i));
     }
   }
   public static readonly List<string> allNames = new(){
@@ -257,10 +275,6 @@ public class ConnectedBlocks:Entity{
     }
     all.Add(e);
     if(sms!=null) foreach(var sm in sms) addAllSms(sm.Entity, all);
-  }
-  public class InplaceFiller:templateFiller{
-    internal FgTiles saved = null;
-    public InplaceFiller(Int2 tlc, Int2 size):base(tlc,size){}
   }
   
   public ref struct PaddingLock:IDisposable{

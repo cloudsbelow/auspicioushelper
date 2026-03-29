@@ -140,7 +140,7 @@ anyways i want to praise it more it is wonderful
     var loader = getLoader(d.Name);
     if(loader == null) return null;
     if(etype == Types.template){
-      if(string.IsNullOrWhiteSpace(d.Attr("template")) && t.t.chain==null){
+      if(string.IsNullOrWhiteSpace(d.Attr("template")) && t.t.chain==null && d is not TemplateDisplacer.DisplacerData){
         DebugConsole.WriteFailure($"Empty template did not get culled from template room");
         goto done;
       }

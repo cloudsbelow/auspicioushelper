@@ -60,18 +60,9 @@ public class TemplateBehaviorChain:Entity{
       final = finalFiller;
       forcePos = forcepos;
     }
-    //This is so inelegent; we'll just swap the order to disambiguate which to use in this case.
     public Chain(templateFiller finalFiller, EntityData x, Vector2? forcepos, Dictionary<Vector2,EntityData> contents){
       IEnumerator e = x.Name=="auspicioushelper/TemplateBehaviorChain"?GetChainEnumerator(x.Nodes,contents):null;
       sequence = new Util.EnumeratorStack<EntityData>(e??new List<EntityData>([x]).GetEnumerator()).toList();
-      idx = 0;
-      final = finalFiller;
-      forcePos = forcepos;
-    }
-    public Chain(templateFiller finalFiller, List<EntityData> list, Template source, Vector2? forcepos = null){
-      sequence = new Util.EnumeratorStack<EntityData>(list.Map<EntityData,object>(x=>{
-        return x.Name=="auspicioushelper/TemplateBehaviorChain"?GetChainEnumerator(x.Nodes,source):x;
-      }).GetEnumerator()).toList();
       idx = 0;
       final = finalFiller;
       forcePos = forcepos;

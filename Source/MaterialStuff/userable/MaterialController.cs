@@ -127,7 +127,9 @@ internal class MaterialController:Entity{
   public class MaterialBackdrop:Backdrop{
     string identifier;
     CachedUserMaterial u;
-    bool deferred=false;
+    bool deferred=false; //automatically set
+    BlendState blend = BlendState.AlphaBlend;
+    bool dontPaste = false;
     public void Readd(){
       loadedMats[identifier]=u;
       DebugConsole.Write("Reenabling",identifier);
@@ -152,7 +154,21 @@ internal class MaterialController:Entity{
         loadedMats[identifier]=layer;
       }
       u=layer;
-      UseSpritebatch = !(deferred = u is UserLayer{DeferLayerDraw:true});
+      deferred = u is UserLayer{DeferLayerDraw:true};
+      UseSpritebatch=false;
+      blend = e.Attr("blend","") switch {
+        "Auto"=>null,
+        "AlphaBlend"=>BlendState.AlphaBlend,
+        "Addative"=>BlendState.Additive,
+        "Multiply"=>CustomBlendstates.multiply,
+        "Darken"=>CustomBlendstates.darken,
+        "Lighten"=>CustomBlendstates.lighten,
+        "Subtract"=>CustomBlendstates.subtract,
+        "Max"=>CustomBlendstates.max,
+        "Min"=>CustomBlendstates.min,
+        _=>BlendState.AlphaBlend
+      };
+      dontPaste = e.AttrBool("dontDraw",false);
     }
     public override void Update(Scene scene) {
       base.Update(scene);
@@ -175,9 +191,63 @@ internal class MaterialController:Entity{
       if(deferred){
         u.render();
         MaterialPipe.gd.SetRenderTarget(GameplayBuffers.Level);
-        BackdropCapturer.currentRenderer.StartSpritebatch(BackdropCapturer.currentBlendstate);
       }
-      Draw.SpriteBatch.Draw(u.outtex,Vector2.Zero,Color.White);
+      if(!dontPaste){
+        BackdropCapturer.currentRenderer.StartSpritebatch(blend??BackdropCapturer.currentBlendstate);
+        Draw.SpriteBatch.Draw(u.outtex,Vector2.Zero,Color.White);
+        BackdropCapturer.currentRenderer.EndSpritebatch();
+      }
+    }
+
+    static class CustomBlendstates{
+      public static readonly BlendState multiply = new BlendState {
+        ColorBlendFunction = BlendFunction.Add,
+        AlphaBlendFunction = BlendFunction.Add,
+        ColorSourceBlend = Blend.DestinationColor,
+        ColorDestinationBlend = Blend.Zero,
+        AlphaSourceBlend = Blend.One,
+        AlphaDestinationBlend = Blend.One
+      };
+      public static readonly BlendState darken = new BlendState {
+        ColorBlendFunction = BlendFunction.Add,
+        AlphaBlendFunction = BlendFunction.Add,
+        ColorSourceBlend = Blend.Zero,
+        ColorDestinationBlend = Blend.InverseSourceColor,
+        AlphaSourceBlend = Blend.One,
+        AlphaDestinationBlend = Blend.One
+      };
+      public static readonly BlendState lighten = new BlendState{
+        ColorBlendFunction = BlendFunction.Add,
+        AlphaBlendFunction = BlendFunction.Add,
+        ColorSourceBlend = Blend.One,
+        ColorDestinationBlend = Blend.InverseSourceColor,
+        AlphaSourceBlend = Blend.One,
+        AlphaDestinationBlend = Blend.One
+      };
+      public static readonly BlendState subtract = new BlendState{
+        ColorBlendFunction = BlendFunction.ReverseSubtract,
+        AlphaBlendFunction = BlendFunction.Add,
+        ColorSourceBlend = Blend.One,
+        ColorDestinationBlend = Blend.One,
+        AlphaSourceBlend = Blend.One,
+        AlphaDestinationBlend = Blend.One
+      };
+      public static readonly BlendState max = new BlendState{
+        ColorBlendFunction = BlendFunction.Max,
+        AlphaBlendFunction = BlendFunction.Max,
+        ColorSourceBlend = Blend.One,
+        ColorDestinationBlend = Blend.One,
+        AlphaSourceBlend = Blend.One,
+        AlphaDestinationBlend = Blend.One
+      };
+      public static readonly BlendState min = new BlendState{
+        ColorBlendFunction = BlendFunction.Min,
+        AlphaBlendFunction = BlendFunction.Min,
+        ColorSourceBlend = Blend.One,
+        ColorDestinationBlend = Blend.One,
+        AlphaSourceBlend = Blend.One,
+        AlphaDestinationBlend = Blend.One
+      };
     }
   }
 }
