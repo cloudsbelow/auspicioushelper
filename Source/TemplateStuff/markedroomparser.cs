@@ -41,10 +41,10 @@ internal static class MarkedRoomParser{
   public const int tilepadding = 8;
   public const int padding = 1;
   static IEnumerable<templateFiller> GetPermitted(
-    List<(QuickCollider<ConnectedBlocks>, templateFiller)> li, 
+    List<(QuickCollider<ConnectedBlocks>, templateFiller,MiptileCollider)> li, 
     FloatRect f, string str, bool d, bool s, bool t
   ){
-    foreach(var (qcl, filler) in li) foreach(var c in qcl.Test(f)){
+    foreach(var (qcl, filler, _) in li) foreach(var c in qcl.Test(f)){
       if(c.permits(str,d,s,t)){
         yield return filler;
         break;
@@ -59,7 +59,7 @@ internal static class MarkedRoomParser{
       templateFiller t = null;
       if(d.Name == "auspicioushelper/templateFiller"){
         t = new templateFiller(d, l.Position);
-        t.data.roomdat = l;
+        t.setRoomdat(l);
         fillerBounds.Add(new(t.data.roomRect,t));
         t.tiledata.setTiles(l.Solids,l.Bg);
       } else if(d.Name == "auspicioushelper/TemplateFillerSwitcher"){
@@ -93,7 +93,8 @@ internal static class MarkedRoomParser{
       if(!w) continue;
     }
 
-    List<(QuickCollider<ConnectedBlocks>,templateFiller)> cbs = new();
+    List<(QuickCollider<ConnectedBlocks>,templateFiller,MiptileCollider)> cbs = new();
+    List<(Vector2, EntityData)> displacers = new();
     while(allThings.Count>0){
       List<(IntRect,EntityData, int)> things = new();
       int idx=0;
@@ -114,7 +115,7 @@ internal static class MarkedRoomParser{
       Int2 min = things.ReduceMapI(a=>a.Item1.tlc,Int2.Min);
       Int2 max = things.ReduceMapI(a=>a.Item1.brc,Int2.Max);
       Int2 size = (max-min)/8+2*padding;
-      things.Sort((a,b)=>b.Item3-a.Item3);
+      things.Sort((a,b)=>a.Item3-b.Item3);
       VirtualMap<char> fgd = new(size.x,size.y,'0');
       VirtualMap<char> bgd = new(size.x,size.y,'0');
       QuickCollider<ConnectedBlocks> qcl = new();
@@ -141,6 +142,7 @@ internal static class MarkedRoomParser{
       f.tiledata.setTiles(fgd,true,Int2.One*padding);
       f.tiledata.setTiles(bgd,false,Int2.One*padding);
       f.tiledata.createStatically = true;
+      f.setRoomdat(l);
       EntityData hit = null;
       MiptileCollider checker = new(layer, Vector2.One*8, min, true);
       foreach(var (k,v) in room.emptyTemplates) if(checker.collideFr(FloatRect.fromRadius(k,Vector2.One))){
@@ -150,10 +152,28 @@ internal static class MarkedRoomParser{
       hit??=new EntityData(){Name=EntityParser.TemplateEmptyName,Position=min,Values=new()};
       hit = hit.cloneWithValues([new("template",name)]);
       f.data.offset = min-hit.Position;
-      cbs.Add(new(qcl,f));
+      cbs.Add(new(qcl,f,checker));
       foreach(var (r,t) in fillerBounds) if(checker.collideFr(r)){
         t.data.ChildEntities.Add(hit);
-      } // hi how are you doing
+      }
+
+      bool force = hit.Name=="auspicioushelper/TemplateBehaviorChain"&&hit.Bool("forceOwnPosition",false);
+      Vector2? forcepos = force? hit.Position:null;
+      var chain = new TemplateBehaviorChain.Chain(f, hit, forcepos, room.emptyTemplates);
+      var disp = chain.NextEnt(); 
+      if(disp.Name=="auspicioushelper/TemplateDisplacer"){
+        string name2 = name+"_disp";
+        var first = chain.NextEnt();
+        templateFiller dispFill = chain.NextFiller();//Even if chain is null, this is clamped to final
+        if(dispFill==f){
+          name2=name;
+        } else while(!templates.TryAdd(name2,dispFill)) name2+="_";
+        first??=new EntityData(){Name=EntityParser.TemplateEmptyName};
+        first = first.cloneWithValues([new("template",name2)]);
+        foreach(var n in disp.Nodes??[]){
+          displacers.Add(new(n,first.cloneWithForceposOffset(n)));
+        }
+      }
     }   // if you're reading this you're probably really happy! I am too
     List<int> into = new();
     foreach(EntityData d in filtered){
@@ -170,6 +190,16 @@ internal static class MarkedRoomParser{
       if(!flag) foreach(var (b,t) in fillerBounds) {
         if(b.CollidePointCompact(d.Position)) t.data.ChildEntities.Add(d);
       } //
+    }
+    foreach(var (n,d) in displacers){
+      bool flag=false;
+      foreach(var (_,t,checker) in cbs) if(checker.collideFr(FloatRect.fromRadius(n,Vector2.One))){
+        t.data.ChildEntities.Add(d);
+        flag = true;
+      }
+      if(!flag) foreach(var (b,t) in fillerBounds){
+        if(b.CollidePointCompact(n)) t.data.ChildEntities.Add(d);
+      }
     }
     foreach(EntityData d in l.Triggers){ 
       bool flag=false;

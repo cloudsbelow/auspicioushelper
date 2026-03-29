@@ -41,6 +41,14 @@ public class TemplateBehaviorChain:Entity{
       }
     }
   }
+  public static IEnumerator GetChainEnumerator(Vector2[] nodes, Dictionary<Vector2,EntityData> contents){
+    if(nodes!=null) foreach(var n in nodes){
+      if(contents.TryGetValue(n, out var e)){
+        if(e.Name == "auspicioushelper/TemplateBehaviorChain") yield return GetChainEnumerator(e.Nodes,contents);
+        else yield return e;
+      }
+    }
+  }
   public class Chain{
     readonly List<EntityData> sequence;
     int idx;
@@ -48,6 +56,14 @@ public class TemplateBehaviorChain:Entity{
     Vector2? forcePos = null;
     public Chain(templateFiller finalFiller, Vector2[] nodes, Template source, Vector2? forcepos = null){
       sequence = new Util.EnumeratorStack<EntityData>(GetChainEnumerator(nodes,source)).toList();
+      idx = 0;
+      final = finalFiller;
+      forcePos = forcepos;
+    }
+    //This is so inelegent; we'll just swap the order to disambiguate which to use in this case.
+    public Chain(templateFiller finalFiller, EntityData x, Vector2? forcepos, Dictionary<Vector2,EntityData> contents){
+      IEnumerator e = x.Name=="auspicioushelper/TemplateBehaviorChain"?GetChainEnumerator(x.Nodes,contents):null;
+      sequence = new Util.EnumeratorStack<EntityData>(e??new List<EntityData>([x]).GetEnumerator()).toList();
       idx = 0;
       final = finalFiller;
       forcePos = forcepos;
