@@ -75,7 +75,7 @@ public class ConnectedBlocks:Entity{
     for(int i=tlc.x; i<brc.x; i++) for(int j=tlc.y; j<brc.y; j++) m.orig_set_Item(i,j,v);
   }
   public const int padding = 1;
-  static void processScene(Scene scene, Vector2 levelOffset){
+  static void processScene(Scene scene, Int2 levelOffset){
     MaddiesIop.hooks.enable();
     List<(IntRect,ConnectedBlocks)> allThings = new();
     foreach(ConnectedBlocks c in scene.Tracker.GetEntities<ConnectedBlocks>()) if(!c.used){
@@ -87,6 +87,7 @@ public class ConnectedBlocks:Entity{
     List<(templateFiller,MiptileCollider,int)> cbs = new();
     List<Action> onCompletion = new();
     HashSet<Entity> toRemove = new();
+    int displacersUsed=1;
     while(allThings.Count>0){
       List<(IntRect,ConnectedBlocks)> things = new();
       int idx=0;
@@ -112,7 +113,6 @@ public class ConnectedBlocks:Entity{
       VirtualMap<char> bgd = new(size.x,size.y,'0');
       QuickCollider<ConnectedBlocks> qcl = new();
       var layer = MipGrid.Layer.fromAreasize(size.x,size.y);
-      int displacersUsed=1;
       foreach(var a in things){
         Int2 dloc = (a.Item1.tlc-min)/8;
         Int2 hloc = (a.Item1.brc-min)/8;
@@ -126,12 +126,13 @@ public class ConnectedBlocks:Entity{
 
       SolidTiles s=null;
       BackgroundTiles b=null;
-      templateFiller f = new(Int2.Zero+Int2.One*8*padding,max-min);
+      templateFiller f = new(min-levelOffset,max-min);
       f.setRoomdat((scene as Level).Session.LevelData);
-      f.tiledata.setTiles(fgd);
-      f.tiledata.setTiles(bgd,false);
-      if(f.tiledata.fgt!=null)using(new PaddingLock()) s=new(Vector2.Zero, fgd);
-      if(f.tiledata.bgt!=null)using(new PaddingLock()) b=new(Vector2.Zero, bgd);
+      f.tiledata.setTiles(fgd,true,Int2.One*padding);
+      f.tiledata.setTiles(bgd,false,Int2.One*padding);
+      Vector2 tileLoc = f.tiledata.tiletlc-Vector2.One*padding*8;
+      if(f.tiledata.fgt!=null)using(new PaddingLock()) s=new(tileLoc, fgd);
+      if(f.tiledata.bgt!=null)using(new PaddingLock()) b=new(tileLoc, bgd);
       f.tiledata.initStatic(s,b);
 
       Util.OrderedSet<Entity> all = new();
@@ -142,7 +143,7 @@ public class ConnectedBlocks:Entity{
         } 
       }
       if(s!=null){
-        s.Position+=min-Int2.One*8*padding;
+        s.Position=min-Int2.One*8*padding;
         foreach (StaticMover smover in scene.Tracker.GetComponents<StaticMover>()){
           if (smover.Platform == null && smover.IsRiding(s))addAllSms(smover.Entity,all);
         }
@@ -188,14 +189,15 @@ public class ConnectedBlocks:Entity{
         displacersUsed++;
       } else {
         onCompletion.Add(()=>{
-          if(Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
-            Level lv = scene as Level;
-            Entity e = loader(lv,lv.Session.LevelData,levelOffset,first);
-            if(e is Template te){
-              te.t = chain.NextFiller();
-              lv.Add(e);
-            }else throw new Exception($"your chained entity is not a template? how did u do this? {e}");
+          if(!Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
+            loader = (l,ld,o,e)=>new Template(e,o);
           }
+          Level lv = scene as Level;
+          Entity e = loader(lv,lv.Session.LevelData,levelOffset,first);
+          if(e is Template te){
+            te.t = chain.NextFiller();
+            lv.Add(e);
+          } else throw new Exception($"your chained entity is not a template? how did u do this? {e}");
         });
         cbs.Add(new(f,checker,-1));
       }
@@ -208,11 +210,10 @@ public class ConnectedBlocks:Entity{
     }
     foreach(var (l,d,didx) in displacers){
       bool flag=false;
-      foreach(var (f,checker,cidx) in cbs) if(didx!=cidx) {
-        if(checker.collideFr(FloatRect.fromRadius(l+levelOffset,Vector2.One))){
+      foreach(var (f,checker,cidx) in cbs){
+        if(didx!=cidx && checker.collideFr(FloatRect.fromRadius(l+levelOffset,Vector2.One))){
           f.data.ChildEntities.Add(d);
           flag = true;
-          DebugConsole.Write("ADded thing",l,f,d);
         }
       }
       if(!flag && TemplateDisplacer.ConstructAt(d,levelOffset) is {} temp) scene.Add(temp);
@@ -222,7 +223,7 @@ public class ConnectedBlocks:Entity{
   }
   public override void Awake(Scene scene) {
     base.Awake(scene);
-    if(!used) processScene(scene,leveloffset);
+    if(!used) processScene(scene,Int2.Round(leveloffset));
     RemoveSelf();
   }
   public static Dictionary<object, Action<Entity>> ExtraRemovalSteps = new(){
@@ -239,13 +240,10 @@ public class ConnectedBlocks:Entity{
     foreach(var e in all){
       remove.Add(e);
       if(donot.Contains(e)) continue;
-      
       if(e is Decal d){
-        Vector2 fpos = e.Position-minimum+padding*8*Vector2.One;
-        f.data.decals.Add(d.Get<DecalMarker>().withDepthAndForcepos(fpos));
+        f.data.decals.Add(d.Get<DecalMarker>().withDepthAndForcepos(d.Position));
       } else if(e.SourceData is EntityData dat){
-        Vector2 fpos = dat.Position+leveloffset - minimum+padding*8*Vector2.One;
-        f.data.ChildEntities.Add(Util.cloneWithForceposOffset(dat,fpos));
+        f.data.ChildEntities.Add(dat);
       }
     }
   }
