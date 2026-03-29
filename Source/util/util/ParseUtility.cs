@@ -88,6 +88,13 @@ public static partial class Util{
     }
     return new string(buf[..j]);
   }
+  static public EntityData cloneWithValues(this EntityData a, params (string, object)[] n){
+    EntityData e = Util.shallowCopy(a);
+    if(n.Length==0) return e;
+    e.Values = a.Values==null?new():new(a.Values);
+    foreach(var (k,v) in n) e.Values[k]=v;
+    return e;
+  }
 
   public static int bsearchLast(float[] arr, float val){
     int left = 0; 
@@ -340,8 +347,8 @@ public static partial class Util{
       return l;
     });
   }
-  public static float[] csparseflat(string str, params float[] defaults){
-    if(string.IsNullOrWhiteSpace(str)) return defaults;
+  public static float[] csparseflat(string str, params ReadOnlySpan<float> defaults){
+    if(string.IsNullOrWhiteSpace(str)) return defaults.ToArray();
     float[] res = new float[defaults.Length];
     var l = str.Split(",");
     for(int i=0; i<defaults.Length; i++){

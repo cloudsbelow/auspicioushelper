@@ -53,7 +53,7 @@ public class TemplateBehaviorChain:Entity{
       forcePos = forcepos;
     }
     public Chain(templateFiller finalFiller, List<EntityData> list, Template source, Vector2? forcepos = null){
-      sequence = new Util.EnumeratorStack<EntityData>(list.Select<EntityData,object>(x=>{
+      sequence = new Util.EnumeratorStack<EntityData>(list.Map<EntityData,object>(x=>{
         return x.Name=="auspicioushelper/TemplateBehaviorChain"?GetChainEnumerator(x.Nodes,source):x;
       }).GetEnumerator()).toList();
       idx = 0;

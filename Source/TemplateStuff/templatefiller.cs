@@ -200,11 +200,14 @@ public class templateFiller{
     }
     public void initDynamic(Level l){
       if(created) return;
-      created = true;
       if(createStatically) using(new ConnectedBlocks.PaddingLock()){
-        //initStatic(new SolidTiles)
+        int pd=MarkedRoomParser.tilepadding;
+        Vector2 tileLoc = new Vector2(tr.X-pd,tr.Y-pd)*8;
+        SolidTiles st = fgt==null?null: new(tileLoc,Util.addPadding(fgt,new(pd,pd)));
+        BackgroundTiles bt = bgt==null?null: new(tileLoc,Util.addPadding(bgt,new(pd,pd)));
+        initStatic(st,bt);
         return;
-      }
+      } else created=true;
 
       if(fgt!=null){
         SolidTiles st = l.SolidTiles;
@@ -225,6 +228,7 @@ public class templateFiller{
       created = true;
       if(fgt!=null){
         Int2 sto = Int2.Round((tiletlc-solid.Position)/8);
+        DebugConsole.Write("ssiakjhdsakjd",sto,tiletlc,solid.Position);
         if(PartialTiles.usingPartialtiles) SetMipgrid(solid, sto, new(tr.Width,tr.Height));
         Fgt = new(); 
         Fgt.Fill(solid.Tiles, solid.AnimatedTiles,sto.x,sto.y,tr.Width,tr.Height);
@@ -274,11 +278,12 @@ public class templateFiller{
       }
       bgt = keepbg? new VirtualMap<char>(bgtiles):null;
     }
-    internal void setTiles(VirtualMap<char> tiles, bool foreground = true){
+    internal void setTiles(VirtualMap<char> tiles, bool foreground = true, Int2? customOffset=null){
       char[,] fill = new char[tr.Width,tr.Height];
       bool has = false;
+      Int2 offset = customOffset??new Int2(tr.Left,tr.Top);
       for(int i=0; i<tr.Width; i++) for(int j=0; j<tr.Height; j++){
-        char c = tiles[i+tr.Left,j+tr.Top];
+        char c = tiles[i+offset.x,j+offset.y];
         fill[i,j]=c;
         has |= c!='0';
       }  

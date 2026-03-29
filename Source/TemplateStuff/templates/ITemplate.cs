@@ -120,6 +120,7 @@ public class Template:Entity, ITemplateChild{
       EmptySetup(data);
     }
   }
+  public Template(EntityData d, Vector2 o):this(d,o+d.Position,d.Int("depthoffset",0)){}
   public Template(Vector2 pos, int depthoffset=0):base(pos){
     this.Visible = false;
     Depth = 10000+depthoffset;

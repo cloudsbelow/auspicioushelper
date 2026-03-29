@@ -100,6 +100,19 @@ public static partial class Util{
     }
     return o;
   }
+  public static VirtualMap<T> addPadding<T>(VirtualMap<T> data, Int2 padding){
+    T ev = data.EmptyValue;
+    VirtualMap<T> n = new(data.Columns+2*padding.x,data.Rows+2*padding.y,ev);
+    int ss = VirtualMap<T>.SegmentSize;
+    for(int by=0; by<data.Rows; by+=ss) for(int bx=0; bx<data.Columns; bx+=ss){
+      if(!data.AnyInSegmentAtTile(bx,by)) continue;
+      for(int tx=0; tx<ss; tx++) for(int ty=0; ty<ss; ty++){
+        T nv = data[bx+tx,by+ty];
+        if(!EqualityComparer<T>.Default.Equals(ev, nv)) n[bx+tx+padding.x,by+ty+padding.y]=nv;
+      }
+    }
+    return n;
+  }
   public static T2 ReduceMap<T1,T2>(this List<T1> list, Func<T1,T2> map, Func<T2,T2,T2> reduce, T2 initial = default){
     for(int i=0; i<list.Count; i++) initial = reduce(initial,map(list[i]));
     return initial;

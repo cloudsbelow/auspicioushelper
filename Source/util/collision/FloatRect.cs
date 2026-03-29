@@ -23,7 +23,7 @@ public struct FloatRect{
       enter = MathF.Min(enter,o.enter);
       exit = MathF.Max(exit,o.exit);
     }
-    public FRCollision union(params FRCollision[] a){
+    public FRCollision union(params ReadOnlySpan<FRCollision> a){
       FRCollision f=a[0];
       for(int i=1; i<a.Length; i++){
         f.union(a[i]);
@@ -56,6 +56,10 @@ public struct FloatRect{
   }
   public FloatRect(float x,float y, float w, float h){
     this.x=x; this.y=y; this.w=w; this.h=h;
+  }
+  public FloatRect(Vector2 tlc, Vector2 size):this(tlc.X,tlc.Y,size.X,size.Y){}
+  public FloatRect(EntityData d, int expand=0):this(d.Position,Vector2.Max(new(d.Width,d.Height),Vector2.Zero)){
+    expandAll(expand);
   }
   public FloatRect(Entity e){
     x=e.Left; y=e.Top; w=e.Width; h=e.Height;
@@ -230,6 +234,12 @@ public struct FloatRect{
   }
   public void expandAll(float a){
     x-=a; y-=a; w+=a*2; h+=a*2;
+  }
+  public void expandAllH(float a){
+    x-=a; w+=a*2;
+  }
+  public void expandAllV(float a){
+    y-=a; h+=a*2;
   }
   public void expandLeft(float a){
     x-=a; w+=a;

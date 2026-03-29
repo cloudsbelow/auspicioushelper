@@ -1,8 +1,11 @@
 
 
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
+using Celeste.Mod.Registry;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -35,10 +38,21 @@ internal static class MarkedRoomParser{
   }
 
   internal static string sigstr = "zztemplates";
-  const int tilepadding = 8;
+  public const int tilepadding = 8;
+  public const int padding = 1;
+  static IEnumerable<templateFiller> GetPermitted(
+    List<(QuickCollider<ConnectedBlocks>, templateFiller)> li, 
+    FloatRect f, string str, bool d, bool s, bool t
+  ){
+    foreach(var (qcl, filler) in li) foreach(var c in qcl.Test(f)){
+      if(c.permits(str,d,s,t)){
+        yield return filler;
+        break;
+      }  
+    }
+  }
   internal static TemplateRoom parseLeveldata(LevelData l, bool simulatedRoom = false){
-    var rects = new StaticCollisiontree();
-    var handleDict = new Dictionary<int, string>();
+    List<(FloatRect,templateFiller)> fillerBounds = new();
     Dictionary<string, templateFiller> templates = new();
     var room = new TemplateRoom(l);
     foreach(EntityData d in l.Entities){
@@ -46,8 +60,7 @@ internal static class MarkedRoomParser{
       if(d.Name == "auspicioushelper/templateFiller"){
         t = new templateFiller(d, l.Position);
         t.data.roomdat = l;
-        int handle = rects.add(t.data.roomRect);
-        handleDict.TryAdd(handle, t.name);
+        fillerBounds.Add(new(t.data.roomRect,t));
         t.tiledata.setTiles(l.Solids,l.Bg);
       } else if(d.Name == "auspicioushelper/TemplateFillerSwitcher"){
         templateFiller.FillerSwitcher sw = new(d);
@@ -61,68 +74,135 @@ internal static class MarkedRoomParser{
         }
       } else templates.Add(t.name,t);
     }
+    if(fillerBounds.Count==0) return null;
+
+    List<EntityData> filtered = new(l.Entities.Count);
+    List<(IntRect,EntityData, int)> allThings=new();
     foreach(EntityData d in l.Entities){
       if(d.Name == "auspicioushelper/templateFiller" || d.Name == "auspicioushelper/TemplateFillerSwitcher") continue;
-      //DebugConsole.Write("Looking at entity "+d.Name);
-      var hits = rects.collidePointAll(d.Position);
-      bool w=false;
-      w = EntityParser.generateLoader(d, l, null, out var typ);
+      bool w=EntityParser.generateLoader(d, l, null, out var typ);
       if(typ==EntityParser.Types.template || d.Name == "auspicioushelper/TemplateBehaviorChain"){  
         if(string.IsNullOrWhiteSpace(d.Attr("template"))){
           room.addEmpty(d);
           continue;
         }
       }
-      if(!w || hits.Count==0) continue;
-      foreach(int handle in hits){
-        string tid = handleDict[handle];
-        templates.TryGetValue(tid, out var temp);
-        if(temp == null) continue;
-        temp.data.ChildEntities.Add(d);
-      }
-    }
-    foreach(EntityData d in l.Triggers){
-      var hits = rects.collidePointAll(d.Position);
-      bool w=false;
-      if(hits.Count >0) w = EntityParser.generateLoader(d, l);
+      if(d.Name.StartsWith("auspicioushelper/Connected") && ConnectedBlocks.allNames.Contains(d.Name)){
+        allThings.Add(new(new((int)d.Position.X,(int)d.Position.Y,d.Width,d.Height),d,allThings.Count));
+      } else if(w) filtered.Add(d);
       if(!w) continue;
-      foreach(int handle in hits){
-        string tid = handleDict[handle];
-        templates.TryGetValue(tid, out var temp);
-        if(temp == null) continue;
-        temp.data.ChildEntities.Add(d);
-      }
     }
-    foreach(DecalData d in l.FgDecals){
-      var hits = rects.collidePointAll(d.Position);
-      foreach(int handle in hits){
-        string tid = handleDict[handle];
-        templates.TryGetValue(tid, out var temp);
-        if(temp == null) continue;
-        temp.data.decals.Add(new DecalData(){
-          Texture = d.Texture,
-          Position = d.Position,
-          Scale = d.Scale,
-          Rotation = d.Rotation,
-          ColorHex = d.ColorHex,
-          Depth = d.Depth??-10500
+
+    List<(QuickCollider<ConnectedBlocks>,templateFiller)> cbs = new();
+    while(allThings.Count>0){
+      List<(IntRect,EntityData, int)> things = new();
+      int idx=0;
+      things.Add(allThings[^1]);
+      allThings.RemoveAt(allThings.Count-1);
+      while(idx<things.Count){
+        int nidx=things.Count;
+        allThings.RemoveAll(x=>{
+          for(int i=idx; i<nidx; i++) if(things[i].Item1.CollideIr(x.Item1)){
+            things.Add(x);
+            return true;
+          }
+          return false;
         });
+        idx=nidx;
+      } //
+
+      Int2 min = things.ReduceMapI(a=>a.Item1.tlc,Int2.Min);
+      Int2 max = things.ReduceMapI(a=>a.Item1.brc,Int2.Max);
+      Int2 size = (max-min)/8+2*padding;
+      things.Sort((a,b)=>b.Item3-a.Item3);
+      VirtualMap<char> fgd = new(size.x,size.y,'0');
+      VirtualMap<char> bgd = new(size.x,size.y,'0');
+      QuickCollider<ConnectedBlocks> qcl = new();
+      var layer = MipGrid.Layer.fromAreasize(size.x,size.y);
+      foreach(var a in things){
+        ConnectedBlocks.Category c = ConnectedBlocks.Category.fgt;
+        if(a.Item2.Name.EndsWith("Bg"))c = ConnectedBlocks.Category.bgt;
+        else if(a.Item2.Name.EndsWith("er")) c=ConnectedBlocks.Category.ent;
+        Int2 dloc = (a.Item1.tlc-min)/8;
+        Int2 hloc = (a.Item1.brc-min)/8;
+        layer.SetRect(true,dloc,hloc);
+        char tid = a.Item2.Attr("tiletype","0").FirstOrDefault();
+        switch(c){
+          case ConnectedBlocks.Category.fgt:ConnectedBlocks.FillRect(fgd, dloc+padding, hloc+padding,tid);break;
+          case ConnectedBlocks.Category.bgt:ConnectedBlocks.FillRect(bgd, dloc+padding, hloc+padding,tid);break;
+          case ConnectedBlocks.Category.ent: qcl.Add(new(a.Item2,Vector2.Zero),a.Item1); break;
+        } 
+      }
+
+      templateFiller f = new(min,max-min);
+      string name = "__auto_"+cbs.Count;
+      while(!templates.TryAdd(name,f)) name+="_";
+      f.name=name;
+      f.tiledata.setTiles(fgd,true,Int2.One*padding);
+      f.tiledata.setTiles(bgd,false,Int2.One*padding);
+      f.tiledata.createStatically = true;
+      EntityData hit = null;
+      MiptileCollider checker = new(layer, Vector2.One*8, min, true);
+      foreach(var (k,v) in room.emptyTemplates) if(checker.collideFr(FloatRect.fromRadius(k,Vector2.One))){
+        if(hit!=null)DebugConsole.MakePostcard($"Multiple empty templates cover a connected template in {l.Name}");
+        else hit = v;
+      } //
+      hit??=new EntityData(){Name=EntityParser.TemplateEmptyName,Position=min,Values=new()};
+      hit = hit.cloneWithValues([new("template",name)]);
+      f.data.offset = min-hit.Position;
+      cbs.Add(new(qcl,f));
+      foreach(var (r,t) in fillerBounds) if(checker.collideFr(r)){
+        t.data.ChildEntities.Add(hit);
+      } // hi how are you doing
+    }   // if you're reading this you're probably really happy! I am too
+    List<int> into = new();
+    foreach(EntityData d in filtered){
+      var types = EntityRegistry.GetKnownTypesFromSid(d.Name);
+      var solid = types.Any(a=>a.IsAssignableTo(typeof(Solid)));
+      bool flag=false;
+      FloatRect bounds = new(d,0);
+      if(bounds.w==0) bounds.expandAllH(1);
+      if(bounds.h==0) bounds.expandAllV(1); 
+      foreach(var t in GetPermitted(cbs,bounds,d.Name,false,solid,false)){
+        t.data.ChildEntities.Add(d);
+        flag = true;
+      } //
+      if(!flag) foreach(var (b,t) in fillerBounds) {
+        if(b.CollidePointCompact(d.Position)) t.data.ChildEntities.Add(d);
+      } //
+    }
+    foreach(EntityData d in l.Triggers){ 
+      bool flag=false;
+      foreach(var t in GetPermitted(cbs,new(d,0),d.Name,false,false,true)){
+        t.data.ChildEntities.Add(d);
+        flag = true;
+      }
+      if(!flag) foreach(var (b,t) in fillerBounds) {
+        if(b.CollidePointCompact(d.Position)) t.data.ChildEntities.Add(d);
+      } 
+    } 
+    foreach(DecalData d in l.FgDecals){
+      var nd = d.WithFallbackDepth(-10500);
+      bool flag=false;
+      var bounds = FloatRect.fromRadius(d.Position,Vector2.One);
+      foreach(var t in GetPermitted(cbs,bounds,d.Texture,true,false,false)){
+        t.data.decals.Add(nd);
+        flag = true;
+      }
+      if(!flag) foreach(var (b,t) in fillerBounds) {
+        if(b.CollidePointCompact(d.Position)) t.data.decals.Add(nd);
       }
     }
     foreach(DecalData d in l.BgDecals){
-      var hits = rects.collidePointAll(d.Position);
-      foreach(int handle in hits){
-        string tid = handleDict[handle];
-        templates.TryGetValue(tid, out var temp);
-        if(temp == null) continue;
-        temp.data.decals.Add(new DecalData(){
-          Texture = d.Texture,
-          Position = d.Position,
-          Scale = d.Scale,
-          Rotation = d.Rotation,
-          ColorHex = d.ColorHex,
-          Depth = d.Depth??9000
-        });
+      var nd = d.WithFallbackDepth(9000);
+      bool flag=false;
+      var bounds = FloatRect.fromRadius(d.Position,Vector2.One);
+      foreach(var t in GetPermitted(cbs,bounds,d.Texture,true,false,false)){
+        t.data.decals.Add(nd);
+        flag = true;
+      }
+      if(!flag) foreach(var (b,t) in fillerBounds) {
+        if(b.CollidePointCompact(d.Position)) t.data.decals.Add(nd);
       }
     }
     
@@ -190,4 +270,9 @@ internal static class MarkedRoomParser{
       filler = filler.GetInstance();
       return true;
   }
+  static DecalData WithFallbackDepth(this DecalData d,int fallbackDepth)=>new DecalData(){
+    Texture=d.Texture, Position=d.Position,
+    Scale=d.Scale, Rotation=d.Rotation, ColorHex=d.ColorHex,
+    Depth=d.Depth??fallbackDepth
+  };
 }

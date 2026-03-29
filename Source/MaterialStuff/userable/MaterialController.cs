@@ -167,7 +167,7 @@ internal class MaterialController:Entity{
     public override void Render(Scene scene) {
       if(u==null) return;
       if(Visible && !u.enabled){
-        if(scene.OnInterval(2))DebugConsole.Write($"Backdrop {u.identifier} not enabled! Enabling next frame.", MaterialPipe.renderingLevel);
+        DebugConsole.Write($"Backdrop {u.identifier} not enabled! Enabling next frame.", MaterialPipe.renderingLevel);
         if(MaterialPipe.renderingLevel == null)Update(scene);
         else MaterialPipe.addAfterAction(()=>Update(scene));
         return;
