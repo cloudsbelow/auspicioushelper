@@ -122,7 +122,7 @@ public class SplineAccessor{
       float exS = (high-low+numsegs)%numsegs;
       float midpoint = (low+exS/2)%numsegs;
       Vector2 loc = spline.getPos(midpoint, out Vector2 tang)+offset;
-      if(exS*tang.LInf()<0.5f) return midpoint;
+      if(exS*tang.LInf()<0.0001f) return midpoint;
       float step = Math.Sign(Vector2.Dot(point-loc,tang));
 
       if(step==0) return midpoint;

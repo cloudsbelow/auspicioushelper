@@ -35,6 +35,8 @@ public class OverrideVisualComponent:OnAnyRemoveComp{
     e.Add(comp);
     return comp;
   }
+  public static OverrideVisualComponent TryGet(Entity e)=>e.Get<OverrideVisualComponent>();
+  
   public OverrideVisualComponent():base(false,false){}
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public int GetOverriderIdx(IOverrideVisuals v){
@@ -106,8 +108,22 @@ public class OverrideVisualComponent:OnAnyRemoveComp{
     }
     setNvis(!nsteal);
   }
+  public void CopyOther(OverrideVisualComponent c){
+    OnRemove();
+    if(c is null) return;
+    bool hasBeenStolen = false;
+    foreach(var p in c.parents){
+      parents.Add(new(p.o,p.order,p.steal,p.use));
+      if(p.use && !hasBeenStolen) p.o.AddC(this);
+      if(p.steal) hasBeenStolen=true;
+    }
+    setNvis(!hasBeenStolen);
+  }
   public override void OnRemove() {
     foreach(var p in parents)p.o.RemoveC(this);
+    parents.Clear();
+    nvis=true;
+    overriden=false;
   }
   public bool shouldRemove=>false;
   public static void Override(Scene s){

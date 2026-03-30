@@ -176,13 +176,14 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
     toRemove.Clear();
     willdraw=nlist;
   }
+  public Color clearColor = Color.Transparent;
   public virtual void render(SpriteBatch sb, Camera c){
     if(toRemove.Count>0)FlushToremove();
     passes.setbaseparams();
     GraphicsDevice gd = MaterialPipe.gd;
     for(int i=0; i<passes.Count; i++){
       gd.SetRenderTarget(handles[i]);
-      gd.Clear(Color.Transparent);
+      gd.Clear(clearColor);
       if(i==0){
         if(!drawMaterials) continue;
         StartSb(sb,passes[i],c);

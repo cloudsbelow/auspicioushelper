@@ -242,7 +242,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     if(yes){
       Color useColor = fancyRecolor.HasContent()? customColor:
         (customColor.ToVector4()*ColorFromCrystal(color).ToVector4()).toColor();
-      SpinnerDebris.CreateBurst(Scene,numdebris,Position,parent.gatheredLiftspeed,useColor,debrisTex);
+      SpinnerDebris.CreateBurst(Scene,numdebris,Position,parent.gatheredLiftspeed,useColor,debrisTex,OverrideVisualComponent.TryGet(this));
     }
     RemoveSelf();
   }
@@ -335,12 +335,14 @@ public class SpinnerDebris:FastDebris{
     image.Color = color;
     base.Render();
   }
-  public static void CreateBurst(Scene scene, int count, Vector2 loc, Vector2 ls, Color color, MTexture debrisTex){
+  public static void CreateBurst(Scene scene, int count, Vector2 loc, Vector2 ls, Color color, MTexture debrisTex, OverrideVisualComponent c){
     for(int i=0; i<count; i++){
       bool isotropic = Calc.Random.Chance(0.4f);
       float angle = Util.randomizeAngleQuad(isotropic?Calc.Random.Range(0,MathF.PI/2):Calc.Random.Range(0,MathF.PI/6));
       Vector2 speed = Calc.AngleToVector(angle+Calc.Random.Range(-0.3f,0.3f),!isotropic?Calc.Random.Range(260,400):Calc.Random.Range(160,200));
-      scene.Add(Engine.Pooler.Create<SpinnerDebris>().Init(loc+speed.SafeNormalize(Calc.Random.Range(0,5)), color,ls+speed, debrisTex));
+      var d = Engine.Pooler.Create<SpinnerDebris>().Init(loc+speed.SafeNormalize(Calc.Random.Range(0,5)), color,ls+speed, debrisTex);
+      OverrideVisualComponent.Get(d).CopyOther(c);
+      scene.Add(d);
     }
   }
 }

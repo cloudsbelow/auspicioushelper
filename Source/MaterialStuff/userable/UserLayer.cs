@@ -106,10 +106,11 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       alwaysRender = d.AttrBool("alwaysRender"),
       drawInScene = false,
     };
-    return new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l, true){
-      noOrder = (string.IsNullOrWhiteSpace(order)||!int.TryParse(order, out int _))&&l.quadfirst,
+    var u = new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l, true){
       identifier = ident
     };
+    u.noOrder = (string.IsNullOrWhiteSpace(order)||!int.TryParse(order, out int _)) && u.layerformat.quadfirst;///todocheck
+    return u;
   }
   public IFadingLayer.FadeTypes fadeTypeIn {get;set;} = IFadingLayer.FadeTypes.Linear;
   public IFadingLayer.FadeTypes fadeTypeOut {get;set;} = IFadingLayer.FadeTypes.Linear;
@@ -175,7 +176,10 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
           }
           break;
       }
-      if(idx == 0) overrideFirstResource = texture;
+      if(idx == 0){
+        layerformat.quadfirst = true;
+        overrideFirstResource = texture;
+      }
     }
     if(backdropLayer && overrideFirstResource==null){
       overrideFirstResource = ITexture.lvWrapper;

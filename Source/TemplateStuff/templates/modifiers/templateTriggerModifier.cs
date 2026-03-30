@@ -133,7 +133,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       if(parent.OnDashCollide != null) return parent.OnDashCollide(player, direction);
       return ((ITemplateChild)parent).propagateDashhit(player, direction);
     }
-    return DashCollisionResults.NormalCollision;
+    return DashCollisionResults.NormalOverride;
   }
   ITemplateTriggerable triggerParent;
   TemplateTriggerModifier modifierParent;

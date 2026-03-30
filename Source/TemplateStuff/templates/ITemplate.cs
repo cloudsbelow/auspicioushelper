@@ -46,7 +46,7 @@ public interface ITemplateChild{
       if(parent.OnDashCollide != null) return parent.OnDashCollide(player, direction);
       return ((ITemplateChild)parent).propagateDashhit(player, direction);
     }
-    return DashCollisionResults.NormalCollision;
+    return DashCollisionResults.NormalOverride;
   }
   void AddAllChildren(List<Entity> list);
   void setOffset(Vector2 ppos){}

@@ -7,7 +7,7 @@ local entity = {}
 entity.name = aelperLib.register_template_name("auspicioushelper/TemplateDashhitModifier")
 entity.depth = -13000
 
-local rtypes = {"Normal","Bounce","Rebound","Bumper","Reflect","NormalTrigger","BounceTrigger","ReboundTrigger","BumperTrigger","ReflectTrigger","Pass","Block"}
+local rtypes = {"Normal","Bounce","Rebound","Bumper","Reflect","Ignore","NormalTrigger","BounceTrigger","ReboundTrigger","BumperTrigger","ReflectTrigger","IgnoreTrigger","Pass","Block"}
 
 entity.placements = {
   {

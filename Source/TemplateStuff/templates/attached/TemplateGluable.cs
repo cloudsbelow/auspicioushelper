@@ -73,10 +73,8 @@ public class TemplateGluable:Template, IRelocateTemplates.IDontRelocate{
     base.Awake(scene);
     if(!added){
       gluedto = FoundEntity.find(lookingFor)?.Entity;
-      DebugConsole.Write("found",gluedto);
       if(gluedto != null && gluedto.Scene!=null) make(gluedto);
     }
-    
   }
   float clampBudget(float x, float dt)=>Math.Clamp(x+usedSpd, -dt*maxspeed, dt*maxspeed)-usedSpd;
   void DealWithMovement(bool doRelpos=true){

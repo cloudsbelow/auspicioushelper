@@ -23,7 +23,7 @@ public static class Finder{
     hooks.enable();
     foreach(var sig in path.Split(',')) try{
       if(string.IsNullOrWhiteSpace(sig)) continue;
-      //DebugConsole.Write($"watching \"{sig}\"");
+      DebugConsole.Write($"watching \"{sig}\"");
       string cl = Regex.Replace(sig,@"\s+","");
       if(!flagged.TryGetValue(cl, out var li)){
         flagged.Add(cl,li = new());
@@ -34,6 +34,7 @@ public static class Finder{
       "Please remember to format your path to match: \\d+(/\\d+)*");
     }
   }
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
   static HashSet<(string,string)> waiting=new();
   public static void enqueueIdent(string path, string ident=null){
     ident??=path;
@@ -43,7 +44,10 @@ public static class Finder{
   }
   static void StartingLoad(EntityData d){
     last = null; finding = null;
-    if(flagged.TryGetValue(d.ID.ToString(), out var ident)) finding = ident;
+    if(flagged.TryGetValue(d.ID.ToString(), out var ident)){
+      //DebugConsole.Write($"Searcing for {d.ID} since there are actions on ({ident.Count})");
+      finding = ident;
+    }
   }
   static void StartingLoadTrigger(EntityData d){
     last = null; finding = null;
@@ -59,7 +63,7 @@ public static class Finder{
         DebugConsole.WriteFailure($"Failed to find the entity {d.Name} with id {d.ID} - (maybe this entity adds itself non-standardly?)");
         if(auspicioushelperModule.InFolderMod) DebugConsole.MakePostcard($"Failed to find the entity {d.Name} with id {d.ID}. This entity may not be compatible or there may be mod conflicts.");
       } else {
-        //DebugConsole.Write($"Found the entity {d.Name} with id {d.ID} - position {last.Position}");
+        DebugConsole.Write($"Found the entity {d.Name} with id {d.ID} - position {last.Position}");
         foreach(var a in finding) a(last);
       }
     } 

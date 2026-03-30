@@ -24,6 +24,11 @@ public abstract class ITexture{
         }
       }
       if(!l.enabled){
+        var nl = MaterialController.getLayer(i);
+        if(l!=nl){
+          l=nl;
+          return tex;
+        }
         DebugConsole.WriteFailure("Trying to use disabled texture as input");
         return null;
       }

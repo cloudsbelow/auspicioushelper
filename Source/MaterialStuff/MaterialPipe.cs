@@ -115,8 +115,8 @@ public static class MaterialPipe {
     );
   }
 
-  static float camAt;
-  static float NextTransitionDuration = 0.65f;
+  internal static float camAt;
+  internal static float NextTransitionDuration = 0.65f;
   [Import.SpeedrunToolIop.Static]
   static HashSet<IMaterialLayer> entering = new();
   [Import.SpeedrunToolIop.Static]

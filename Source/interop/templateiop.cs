@@ -109,7 +109,7 @@ public static class TemplateIopExp{
   public static DashCollisionResults registerDashhit(Entity target, Player p, Vector2 dir){
     if(target is Template te) return te.dashHit(p,dir);
     if(target.Get<ChildMarker>() is {} cm) return cm.parent.OnDashCollide(p,dir);
-    return DashCollisionResults.NormalCollision;
+    return DashCollisionResults.NormalOverride;
   }
   public static void registerPlatform(Entity template, Platform solid){
     registerEntity(template,solid);

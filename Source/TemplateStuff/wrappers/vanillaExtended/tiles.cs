@@ -108,30 +108,23 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
   }
   public void destroy(bool particles){
     Vector2 ls = parent.gatheredLiftspeed;
-    if(particles){
-      Rectangle bounds = (this as IBoundsHaver).GetTilebounds(Position,AnimatedTiles.GetClippedRenderTiles(32));
-      for(int i=bounds.X; i<bounds.X+bounds.Width; i++){
-        for(int j=bounds.Y; j<bounds.Height; j++){
-          char tile = tileTypes[i,j];
-          if(tile == '0' || tile == '\0') continue;
-          Vector2 offset = new Vector2(i*8+4,j*8+4);
-          Scene.Add(Engine.Pooler.Create<TileDebris>().Init(Position+offset,tile).RandFrom(ls));
-        }
-      }
-    }
+    if(particles) makeDebris();
     foreach(var m in staticMovers) m.Destroy();
     staticMovers.Clear();
     RemoveSelf();
   }
-  public void fakeDestroy(){
+  public void makeDebris(){
     Vector2 ls = parent.gatheredLiftspeed;
     Rectangle bounds = (this as IBoundsHaver).GetTilebounds(Position,AnimatedTiles.GetClippedRenderTiles(32));
+    var o = OverrideVisualComponent.TryGet(this);
     for(int i=bounds.X; i<bounds.X+bounds.Width; i++){
       for(int j=bounds.Y; j<bounds.Height; j++){
         char tile = tileTypes[i,j];
         if(tile == '0' || tile == '\0') continue;
         Vector2 offset = new Vector2(i*8+4,j*8+4);
-        Scene.Add(Engine.Pooler.Create<TileDebris>().Init(Position+offset,tile).RandFrom(ls));
+        var d = Engine.Pooler.Create<TileDebris>().Init(Position+offset,tile).RandFrom(ls);
+        Scene.Add(d);
+        OverrideVisualComponent.Get(d).CopyOther(o);
       }
     }
   }

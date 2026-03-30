@@ -135,6 +135,9 @@ internal class MaterialController:Entity{
       DebugConsole.Write("Reenabling",identifier);
     }
     static int autocountcount = 0;
+    float extraTimer=0;
+    float extraTime;
+    float alpha=1;
     public MaterialBackdrop(BinaryPacker.Element e){
       identifier=e.Attr("identifier");
       bool noIdent=false;
@@ -149,14 +152,12 @@ internal class MaterialController:Entity{
       }
       DebugConsole.Write($"Loading material backdrop from {e.Attr("passes","")} as {identifier}");
 
-      CachedUserMaterial layer = UserLayer.make(e,identifier);
-      if(!noIdent) {
-        loadedMats[identifier]=layer;
-      }
+      UserLayer layer = UserLayer.make(e,identifier);
+      if(!noIdent) loadedMats[identifier]=layer;
       u=layer;
       deferred = u is UserLayer{DeferLayerDraw:true};
       UseSpritebatch=false;
-      blend = e.Attr("blend","") switch {
+      blend = e.Attr("blendMode","") switch {
         "Auto"=>null,
         "AlphaBlend"=>BlendState.AlphaBlend,
         "Addative"=>BlendState.Additive,
@@ -168,10 +169,38 @@ internal class MaterialController:Entity{
         "Min"=>CustomBlendstates.min,
         _=>BlendState.AlphaBlend
       };
-      dontPaste = e.AttrBool("dontDraw",false);
+      dontPaste = e.Attr("blendMode","").Trim()=="Discard";
+      layer.clearColor = Util.hexToColor(e.Attr("clearColor","#0000"));
+
+      layer.fadeTypeIn = IFadingLayer.fromString(e.Attr("fadeIn","Always"));
+      layer.fadeTypeOut = IFadingLayer.fromString(e.Attr("fadeOut","Always"));
+      extraTime = e.AttrFloat("extraFadeOutTime",0);
+
+      DebugConsole.Write("Params",layer.fadeTypeIn,layer.fadeTypeOut,extraTime);
     }
     public override void Update(Scene scene) {
-      base.Update(scene);
+      Level l = scene as Level;
+      bool nextVisible = IsVisible(l);
+      if(l.Transitioning || (Visible && extraTimer>0)){
+        if(Visible || nextVisible){
+          if(u is not IFadingLayer f){}
+          else if(nextVisible){ //fade in
+            extraTimer=0;
+            if(!Visible) alpha=0;
+            alpha = Math.Max(alpha,f.getTransAlpha(false,MaterialPipe.camAt));
+          } else { //fade out
+            if(l.Transitioning) extraTimer = extraTime;
+            float time = MaterialPipe.camAt*MaterialPipe.NextTransitionDuration+(extraTime-extraTimer);
+            float denom = MaterialPipe.NextTransitionDuration+extraTime;
+            alpha = f.getTransAlpha(true,time/denom);
+            extraTimer-=Engine.DeltaTime;
+          }
+          Visible=true;
+        }
+      } else {
+        Visible = nextVisible;
+        alpha=1;
+      }
       if(u==null) return;
       if(Visible && !u.enabled){
         MaterialPipe.addLayer(u);
@@ -194,7 +223,7 @@ internal class MaterialController:Entity{
       }
       if(!dontPaste){
         BackdropCapturer.currentRenderer.StartSpritebatch(blend??BackdropCapturer.currentBlendstate);
-        Draw.SpriteBatch.Draw(u.outtex,Vector2.Zero,Color.White);
+        Draw.SpriteBatch.Draw(u.outtex,Vector2.Zero,Color.White*alpha);
         BackdropCapturer.currentRenderer.EndSpritebatch();
       }
     }

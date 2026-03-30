@@ -17,10 +17,10 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
   }
   [Flags]
   enum Result{
-    Normal=1, Bounce=2, Rebound=4, Bumper=8, Reflect=16,
-    Trigger=64, Pass = -1,Block = -2,
+    Normal=1, Bounce=2, Rebound=4, Bumper=8, Reflect=16,Ignore=32,
+    Trigger=64, Pass = -1,Block = -2, 
     NormalTrigger=Normal|Trigger, BounceTrigger=Bounce|Trigger, ReboundTrigger=Rebound|Trigger, 
-    BumperTrigger=Bumper|Trigger, ReflectTrigger=Reflect|Trigger,
+    BumperTrigger=Bumper|Trigger, ReflectTrigger=Reflect|Trigger, IgnoreTrigger=Ignore|Trigger,
     BouceTrigger=BounceTrigger //typo compat
   }
   static Dir getDir(Vector2 v){
@@ -72,8 +72,8 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
     OnDashCollide = (Player p, Vector2 dir)=>{
       Result d = res[dirToInt(getDir(dir))];
       if(!skip){
-        if(d == Result.Block) return DashCollisionResults.NormalCollision;
-        if(d == Result.Pass) return parent?.GetFromTree<TemplateDashhitModifier>(Propagation.DashHit)?.OnDashCollide(p,dir)??DashCollisionResults.NormalCollision;
+        if(d == Result.Block) return DashCollisionResults.NormalOverride;
+        if(d == Result.Pass) return parent?.GetFromTree<TemplateDashhitModifier>(Propagation.DashHit)?.OnDashCollide(p,dir)??DashCollisionResults.NormalOverride;
 
         if(!string.IsNullOrWhiteSpace(echannel) && !thing) using(Util.WithRestore(ref thing, true)){
           foreach(TemplateDashhitModifier o in Scene.Tracker.GetEntities<TemplateDashhitModifier>()){
@@ -95,6 +95,7 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
         }
         if(d.HasFlag(Result.Rebound)) return DashCollisionResults.Rebound;
         if(d.HasFlag(Result.Bounce)) return DashCollisionResults.Bounce;
+        if(d.HasFlag(Result.Ignore)) return DashCollisionResults.Ignore;
         if(d.HasFlag(Result.Reflect)){
           p.Speed-=2*dir*dir*p.Speed;
           p.DashDir-=2*dir*dir*p.DashDir;
