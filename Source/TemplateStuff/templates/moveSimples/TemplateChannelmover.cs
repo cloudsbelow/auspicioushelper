@@ -95,8 +95,8 @@ public class TemplateChannelmover:Template{
   float speedparam{
     get {
       float len = ownLiftspeed.Length();
-      //return 1/(1+MathF.Exp(-len+1));
-      return len/300;
+      //return 1/(1+MathF.Exp(-len+1)); // your function here did. uh. not work.
+      return len/200; // the "200" is the speed at which it maps 1 to the parameter; feel free to change where u think this should be. i opted for a linear mapping bc the easing takes care of any smoothing, plus the param *does* have a seek speed built in so it never has discontinuities
     }
   }
   void Audioplay(string prefix, float? par=null){
@@ -157,7 +157,7 @@ public class TemplateChannelmover:Template{
             if(!muted){
               sfx.Stop();
               Audioplay("event:/auspicioushelper/channelmover/waypoint/");
-              sfx.Play("event:/auspicioushelper/channelmover/loop/","speed",0.5f);
+              sfx.Play("event:/auspicioushelper/channelmover/loop/"+soundSuffix,"speed",0.5f);
             }
           }
           if(target<low){
