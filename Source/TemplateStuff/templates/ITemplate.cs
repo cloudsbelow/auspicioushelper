@@ -198,6 +198,7 @@ public class Template:Entity, ITemplateChild{
   }
   bool expanded = false;
   public void MarkExpanded()=>expanded=true;
+  public bool isExpanded=>expanded;
   struct RecursionMarker:IDisposable{
     [ResetEvents.NullOn(ResetEvents.RunTimes.OnReset)]
     static int count=0;
@@ -391,8 +392,9 @@ public class Template:Entity, ITemplateChild{
     expanded=false;
     destroying = false;
   }
-  public virtual void remake(Action a = null){
+  public virtual void remake(Action a = null, Func<bool> shouldAbort = null){
     UpdateHook.AddAfterUpdate(()=>{
+      if(shouldAbort is {} f && f()) return;
       makeChildren(Scene);
       AddNewEnts(GetChildren<Entity>());
       if(this is TemplateDisappearer d) UpdateHook.AddAfterUpdate(d.enforce, false,true);

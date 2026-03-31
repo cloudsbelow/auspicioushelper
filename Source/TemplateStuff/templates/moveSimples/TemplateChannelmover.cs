@@ -5,6 +5,7 @@ using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
+using System.Collections.Generic;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -21,6 +22,10 @@ public class TemplateChannelmover:Template{
   Util.Easings easing;
   EntityData dat;
   bool allowFraction = false;
+  float startupTime = 0;
+  string soundSuffix=null;
+  bool muted=>soundSuffix==null;
+  static readonly List<string> allowedSounds = new(){"stone"};
   public TemplateChannelmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateChannelmover(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
@@ -36,6 +41,10 @@ public class TemplateChannelmover:Template{
     }
     doshake = d.Bool("shake",false);
     allowFraction = d.Bool("allowFraction",false);
+    soundSuffix = d.Attr("sound","none");
+    if(!allowedSounds.Contains(soundSuffix)) soundSuffix=null;
+    if(!muted) Add(sfx = new SoundSource());
+    startupTime = d.Float("startupTime",0);
   }
   float target;
   int low;
@@ -43,11 +52,16 @@ public class TemplateChannelmover:Template{
   float cfrac=0;
   float afrac=0;
   float dir=0;
+  float pauseTimer = 0;
   public void setChVal(double val){
     if(!allowFraction){
       target = (int)Math.Floor(val);
       if(toggle || (cfrac!=0 && Math.Sign(dir)==Math.Sign(target-cur))) return;
       dir = target>cur?1:-1*asym;
+      if(!muted) sfx.Play("event:/auspicioushelper/channelmover/loop/","speed",0.5f);
+      pauseTimer = startupTime;
+      if(startupTime == 0) Audioplay("event:/auspicioushelper/channelmover/start/",0.5f);
+      else shake(startupTime);
       if(cfrac == 0){
         if(dir<0){
           low--;
@@ -78,8 +92,35 @@ public class TemplateChannelmover:Template{
     spos.set(target);
     base.addTo(scene);
   }
+  float speedparam{
+    get {
+      float len = ownLiftspeed.Length();
+      return 1/(1+MathF.Exp(-len+1));
+    }
+  }
+  void Audioplay(string prefix, float? par=null){
+    DebugConsole.Write(prefix+soundSuffix,par??speedparam);
+    Audio.Play(prefix+soundSuffix,virtLoc,"speed",par??speedparam);
+  }
+  void Arrive(){
+    if(!muted) Audioplay("event:/auspicioushelper/channelmover/impact/");
+    dir = 0;
+    if(doshake) shake(0.2f); 
+    sfx?.Stop();
+  }
+  SoundSource sfx;
   public override void Update(){
     base.Update();
+    if(pauseTimer>0){
+      ownLiftspeed=Vector2.Zero;
+      pauseTimer-=Engine.DeltaTime;
+      if(pauseTimer<=0) Audioplay("event:/auspicioushelper/channelmover/start/",0.5f);
+      else return;
+    }
+    if(sfx!=null){
+      sfx.Position=virtLoc-Position;
+      if(dir!=0) sfx.Param("speed",speedparam);
+    }
     if(allowFraction){
       if(afrac == target) ownLiftspeed = Vector2.Zero;
       else {
@@ -91,13 +132,12 @@ public class TemplateChannelmover:Template{
         childRelposSafe();
         if(flag2){
           cfrac = afrac;
-          if(doshake) shake(0.2f);
+          Arrive();
         }
       }
     } else {
-      if(cfrac == 0 && low == target){
-        ownLiftspeed = Vector2.Zero;
-      } else if(Engine.DeltaTime!=0){
+      if(cfrac == 0 && low == target) ownLiftspeed = Vector2.Zero;
+      else if(Engine.DeltaTime!=0){
         cfrac = Math.Clamp(cfrac+Engine.DeltaTime*dir*relspd,0,1);
         float x = altern && dir<0?1-cfrac:cfrac;
         float y = Util.ApplyEasing(easing, x, out var deriv);
@@ -110,9 +150,14 @@ public class TemplateChannelmover:Template{
           low++;
         }
         if(cfrac == 0){
-          if(doshake){
-            if(low == target) shake(0.2f);
-            else shake(0.1f);
+          if(low == target) Arrive();
+          else {
+            if(doshake) shake(0.1f);
+            if(!muted){
+              sfx.Stop();
+              Audioplay("event:/auspicioushelper/channelmover/waypoint/");
+              sfx.Play("event:/auspicioushelper/channelmover/loop/","speed",0.5f);
+            }
           }
           if(target<low){
             afrac = cfrac = 1;

@@ -50,7 +50,6 @@ entity.placements = {
       setChannel = "",
       skipChannel = "",
       propagateRiding = true,
-      propagateDashHit = true,
       propagateTrigger = true,
       hideTrigger = false,
       blockTrigger = false,
@@ -58,6 +57,7 @@ entity.placements = {
       holdablesTrigger = false,
       delay = -1,
       blockFilter = "",
+      neverTriggerOnAwake = false,
       log=false,
       
       _loenn_display_template = true,

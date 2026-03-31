@@ -175,8 +175,6 @@ internal class MaterialController:Entity{
       layer.fadeTypeIn = IFadingLayer.fromString(e.Attr("fadeIn","Always"));
       layer.fadeTypeOut = IFadingLayer.fromString(e.Attr("fadeOut","Always"));
       extraTime = e.AttrFloat("extraFadeOutTime",0);
-
-      DebugConsole.Write("Params",layer.fadeTypeIn,layer.fadeTypeOut,extraTime);
     }
     public override void Update(Scene scene) {
       Level l = scene as Level;

@@ -85,6 +85,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   bool throwablesTrigger = false;
   string skipCh;
   bool skip = false;
+  bool neverTriggerOnAwake = false;
   static readonly List<string> list = new(){
     "Normal","Climb","Dash","Swim","Boost","RedDash","HitSquash","Launch","Pickup","DreamDash","SummitLaunch",
     "Dummy","IntroWalk","IntroJump","IntroRespawn","IntroWakeUp","BirdDashTutorial","Frozen","ReflectionFall",
@@ -126,6 +127,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     if(!string.IsNullOrWhiteSpace(d.Attr("setChannel",""))) adv = new(d.Attr("setChannel",""));
     OnDashCollide = handleDash;
     skipCh = d.Attr("skipChannel","");
+    neverTriggerOnAwake = d.Bool("neverTriggerOnAwake",false);
   }
   DashCollisionResults handleDash(Player player, Vector2 direction){
     if((prop&Propagation.DashHit) != Propagation.None && (parent!=null)){
@@ -157,7 +159,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   }
   public override void Awake(Scene scene) {
     base.Awake(scene);
-    if(triggerCh!=null && triggerCh.value!=0){
+    if(!neverTriggerOnAwake && triggerCh!=null && triggerCh.value!=0){
       UpdateHook.AddAfterUpdate(()=>{
         if(triggerCh.value!=0) OnTrigger(new ChannelInfo(channel));
       });

@@ -12,6 +12,7 @@ entity.nodeLineRenderType = "line"
 
 local easings = {"Linear","SineIn","SineOut","SineInOut","QuadIn","QuadOut","CubeIn","CubeOut","Smoothstep","QuartIn","QuartOut","QuintIn","QuintOut"}
 local splineTypes = {"simpleLinear","compoundLinear","centripetalNormalized","centripetalDenormalized","uniformNormalized","uniformDenormalized"}
+local sounds = {"stone","none"}
 entity.placements = {
   {
     name = "main",
@@ -23,8 +24,10 @@ entity.placements = {
       asymmetry=1.0,
       easing = "Linear",
       spline = "centripetalNormalized",
+      startupTime = 0,
       lastNodeIsKnot = true,
       allowFraction = false,
+      sound = "stone",
       
       complete=false,
       alternateEasing=true,
@@ -42,7 +45,8 @@ entity.fieldInformation = function(entity)
         template = {
             options = aelperLib.get_template_options(entity)
         },
-        spline = {options = splineTypes, editable=true}
+        spline = {options = splineTypes, editable=true},
+        sound = {options = sounds, editable=false},
     }
 end
 

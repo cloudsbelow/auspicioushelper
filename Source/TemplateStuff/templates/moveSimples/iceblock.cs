@@ -19,7 +19,7 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
     base.relposTo(loc, parentLiftspeed);
   }
   float sinkTime;
-  float sinkDist;
+  Vector2 sinkDir;
   float respawnTimer=0;
   float respawnTime = 2;
   bool triggerable;
@@ -31,7 +31,12 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
   public TemplateIceblock(EntityData d, Vector2 o, int depthoffset)
   :base(d,o+d.Position,depthoffset){
     sinkTime = d.Float("sinkTime",1);
-    sinkDist = d.Float("sinkDist",12);
+    var li = Util.csparseflat(d.Attr("sinkDist","12"));
+    sinkDir = li.Length switch{
+      0=>Vector2.UnitY*12,
+      1=>Vector2.UnitY*li[0],
+      _=>new(li[0],li[1])
+    };
     respawnTime = d.Float("respawnTime",1.6f);
     triggerable = d.Bool("triggerable",true);
     ridingTriggers = d.Bool("ridingTriggers",true);
@@ -41,27 +46,29 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
   Coroutine routine;
   IEnumerator iceRoutine(){
     float time = 0;
-    shake(0.1f);
-    if((quiet%4)<2)Add(new AudioMangler(Audio.Play("event:/game/09_core/iceblock_touch", Position), 0.3f));
-    ownLiftspeed = Vector2.UnitY*sinkDist/sinkTime;
-    while(time<sinkTime-0.20){
-      time = time+Engine.DeltaTime;
-      offset = Vector2.UnitY*sinkDist*time/sinkTime;
-      childRelposSafe();
-      yield return null;
-    }
-    shake(0.20f);
-    if(quiet%2==0)Add(new AudioMangler(Audio.Play("event:/game/09_core/iceblock_touch", Position), 1f,1000));
+    if(sinkTime!=0){
+      shake(0.1f);
+      if((quiet%4)<2)Add(new AudioMangler(Audio.Play("event:/game/09_core/iceblock_touch", Position), 0.3f));
+      ownLiftspeed = sinkDir/sinkTime;
+      while(time<sinkTime-0.20){
+        time = time+Engine.DeltaTime;
+        offset = sinkDir*time/sinkTime;
+        childRelposSafe();
+        yield return null;
+      }
+      shake(0.20f);
+      if(quiet%2==0)Add(new AudioMangler(Audio.Play("event:/game/09_core/iceblock_touch", Position), 1f,1000));
 
-    while(time<sinkTime){
-      time = time+Engine.DeltaTime;
-      offset = Vector2.UnitY*sinkDist*time/sinkTime;
-      childRelposSafe();
-      yield return null;
+      while(time<sinkTime){
+        time = time+Engine.DeltaTime;
+        offset = sinkDir*time/sinkTime;
+        childRelposSafe();
+        yield return null;
+      }
     }
     destroyChildren();
-    respawnTimer = respawnTime;
     yield return null;
+    respawnTimer = respawnTime;
     offset = Vector2.Zero;
     routine = null;
   }

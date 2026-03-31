@@ -4,22 +4,24 @@ local aelperLib = require("mods").requireFromPlugin("libraries.aelper_lib")
 
 local entity = {}
 
-entity.name = aelperLib.register_template_name("auspicioushelper/TemplateIceblock")
+entity.name = aelperLib.register_template_name("auspicioushelper/TemplateResetter")
 entity.depth = -13000
+
 
 entity.placements = {
   {
-    name = "Template Iceblock",
+    name = "Template Resetter",
     data = {
       template = "",
       depthoffset=0,
-      sinkTime=1,
-      sinkDist="12",
-      respawnTime=1.6,
-      triggerable=true,
-      ridingTriggers=true,
-      disconnect=true,
-      quiet=0,
+      resetChannel="",
+      destroyChannel="",
+      particles=true,
+      --resetKeepsOld=false,
+      resetOnTrigger=false,
+      startWith=true,
+      blockedByPlayer=false,
+      
       _loenn_display_template = true,
     }
   }
@@ -28,11 +30,11 @@ entity.fieldInformation = function(entity)
     return {
         template = {
             options = aelperLib.get_template_options(entity)
-        }
+        },
     }
 end
 
 entity.selection = aelperLib.template_selection
-entity.draw = aelperLib.get_entity_draw("tcore")
+entity.texture = "loenn/auspicioushelper/template/treset"
 
 return entity
