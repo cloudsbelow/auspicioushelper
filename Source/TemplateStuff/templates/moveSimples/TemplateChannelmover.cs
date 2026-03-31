@@ -56,12 +56,13 @@ public class TemplateChannelmover:Template{
   public void setChVal(double val){
     if(!allowFraction){
       target = (int)Math.Floor(val);
-      if(toggle || (cfrac!=0 && Math.Sign(dir)==Math.Sign(target-cur))) return;
+      if((toggle && dir!=0 && pauseTimer<=0) || (cfrac!=0 && Math.Sign(dir)==Math.Sign(target-cur))) return;
+      if(target==cur){
+        dir=0;
+        return;
+      }
+      TryStart();
       dir = target>cur?1:-1*asym;
-      if(!muted) sfx.Play("event:/auspicioushelper/channelmover/loop/"+soundSuffix,"speed",0.5f);
-      pauseTimer = startupTime;
-      if(startupTime == 0) Audioplay("event:/auspicioushelper/channelmover/start/",0.5f);
-      else shake(startupTime);
       if(cfrac == 0){
         if(dir<0){
           low--;
@@ -95,8 +96,7 @@ public class TemplateChannelmover:Template{
   float speedparam{
     get {
       float len = ownLiftspeed.Length();
-      //return 1/(1+MathF.Exp(-len+1)); // your function here did. uh. not work.
-      return len/200; // the "200" is the speed at which it maps 1 to the parameter; feel free to change where u think this should be. i opted for a linear mapping bc the easing takes care of any smoothing, plus the param *does* have a seek speed built in so it never has discontinuities
+      return 1/(1+MathF.Exp(-len/150+1)); //me forgetting to divide:
     }
   }
   void Audioplay(string prefix, float? par=null){
@@ -108,6 +108,15 @@ public class TemplateChannelmover:Template{
     dir = 0;
     if(doshake) shake(0.2f); 
     sfx?.Stop();
+  }
+  void TryStart(){
+    if(pauseTimer<=0){
+      pauseTimer = startupTime;
+      if(pauseTimer<=0){
+        if(!muted) Audioplay("event:/auspicioushelper/channelmover/start/",0.5f);
+      } else shake(pauseTimer);
+      if(!muted) sfx.Play("event:/auspicioushelper/channelmover/loop/"+soundSuffix,"speed",0.5f);
+    }
   }
   SoundSource sfx;
   public override void Update(){
@@ -153,11 +162,17 @@ public class TemplateChannelmover:Template{
         if(cfrac == 0){
           if(low == target) Arrive();
           else {
-            if(doshake) shake(0.1f);
-            if(!muted){
-              sfx.Stop();
-              Audioplay("event:/auspicioushelper/channelmover/waypoint/");
-              sfx.Play("event:/auspicioushelper/channelmover/loop/"+soundSuffix,"speed",0.5f);
+            if(toggle && Math.Sign(dir)*Math.Sign(target-cur)<0){
+              Arrive();
+              TryStart();
+              dir = target>cur?1:-1*asym;
+            } else {
+              if(doshake) shake(0.1f);
+              if(!muted){
+                sfx.Stop();
+                Audioplay("event:/auspicioushelper/channelmover/waypoint/");
+                sfx.Play("event:/auspicioushelper/channelmover/loop/"+soundSuffix,"speed",0.5f);
+              }
             }
           }
           if(target<low){
