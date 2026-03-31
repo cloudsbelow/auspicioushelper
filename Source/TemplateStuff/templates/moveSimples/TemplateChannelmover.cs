@@ -58,7 +58,7 @@ public class TemplateChannelmover:Template{
       target = (int)Math.Floor(val);
       if(toggle || (cfrac!=0 && Math.Sign(dir)==Math.Sign(target-cur))) return;
       dir = target>cur?1:-1*asym;
-      if(!muted) sfx.Play("event:/auspicioushelper/channelmover/loop/","speed",0.5f);
+      if(!muted) sfx.Play("event:/auspicioushelper/channelmover/loop/"+soundSuffix,"speed",0.5f);
       pauseTimer = startupTime;
       if(startupTime == 0) Audioplay("event:/auspicioushelper/channelmover/start/",0.5f);
       else shake(startupTime);
@@ -95,7 +95,8 @@ public class TemplateChannelmover:Template{
   float speedparam{
     get {
       float len = ownLiftspeed.Length();
-      return 1/(1+MathF.Exp(-len+1));
+      //return 1/(1+MathF.Exp(-len+1));
+      return len/300;
     }
   }
   void Audioplay(string prefix, float? par=null){
