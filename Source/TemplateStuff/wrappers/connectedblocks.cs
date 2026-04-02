@@ -153,7 +153,7 @@ public class ConnectedBlocks:Entity{
           if (smover.Platform == null && smover.IsRiding(s))addAllSms(smover.Entity,all);
         }
       }
-      RemChildren(all,min,levelOffset,f,toRemove);
+      RemChildren(all,f,toRemove);
 
       EntityData hit = null;
       MiptileCollider checker = new(layer, Vector2.One*8, min, true);
@@ -238,7 +238,7 @@ public class ConnectedBlocks:Entity{
     {typeof(IntroCar),(Entity e)=>(e as IntroCar).wheels.RemoveSelf()},
     {"FrostHelper/CustomFireBarrier",(Entity e)=>((Entity)Util.ReflectGet(e,"solid",false))?.RemoveSelf()}
   };
-  static void RemChildren(Util.OrderedSet<Entity> all, Vector2 minimum, Vector2 leveloffset, templateFiller f, HashSet<Entity> remove){
+  static void RemChildren(Util.OrderedSet<Entity> all, templateFiller f, HashSet<Entity> remove){
     HashSet<Entity> donot = new();
     foreach(var e in all) if(e is Template t) foreach(Entity en in t.GetChildren<Entity>()){
       if(en!=t || t.parent!=null)donot.Add(en);

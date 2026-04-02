@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -40,10 +41,6 @@ public abstract class Spline{
     knotindices = k.ToArray();
     st = s.ToArray();
     segments = this.knotindices.Length;
-    if(nodes.Length==1){
-      using(Util.WithRestore(ref DebugConsole.alwaysWrite,true))DebugConsole.LogFullStackTrace();
-      DebugConsole.MakePostcard("Tried to make a spline with no nodes. Make sure your entity has at least one non-overlapping node. See log for more.");
-    }
   }
   public abstract Vector2 getPos(float t);
   const float finitedif=0.01f;
@@ -282,9 +279,7 @@ public class SplineEntity:Entity{
     }else if(!string.IsNullOrEmpty(dat.Attr("spline"))){
       if(Spline.splines.TryGetValue(dat.Attr("spline"), out var spline)) return spline;
     }
-    if(dat.Nodes==null || dat.Nodes.Length<1){
-      DebugConsole.MakePostcard("Trying to make a spline with no nodes! (bad)");
-      using(Util.WithRestore(ref DebugConsole.alwaysWrite,true))DebugConsole.LogFullStackTrace();
+    if(dat.Nodes==null || dat.Nodes.All(x=>x==dat.Position)){
       return new Spline.DotSpline();
     }
     switch(ctrType){
