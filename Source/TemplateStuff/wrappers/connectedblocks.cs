@@ -189,7 +189,7 @@ public class ConnectedBlocks:Entity{
       if(first.Name=="auspicioushelper/TemplateDisplacer"){
         templateFiller w = chain.NextFiller();
         foreach(var n in first.Nodes??[]){
-          displacers.Add(new(n,new(){disp=w, Position=n},displacersUsed));
+          displacers.Add(new(n,new(){disp=w, Position=n, depth=first.Int("depthoffset",0)},displacersUsed));
         }
         cbs.Add(new(f,checker,displacersUsed));
         displacersUsed++;

@@ -27,6 +27,7 @@ public static class auspicioushelperGFX {
     //-well I don't even know what this is doing <3
     v.Clear();
     v.cacheNum = auspicioushelperModule.CACHENUM;
+    v.dirty=2;
     if (graphicsDeviceService == null)  
       graphicsDeviceService = Engine.Instance.Content.ServiceProvider.GetService(typeof(IGraphicsDeviceService)) as IGraphicsDeviceService;
     ModAsset asset = Everest.Content.Get(Util.concatPaths("Effects",v.path)+".cso",true);

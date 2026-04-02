@@ -161,16 +161,18 @@ internal static class MarkedRoomParser{
       Vector2? forcepos = force? hit.Position:null;
       var chain = new TemplateBehaviorChain.Chain(f, hit, forcepos, room.emptyTemplates);
       var disp = chain.NextEnt(); 
+      disp??=new EntityData(){Name=EntityParser.TemplateEmptyName,Position=hit.Position,Values=new()}; 
       if(disp.Name=="auspicioushelper/TemplateDisplacer"){
         string name2 = name+"_disp";
         var first = chain.NextEnt();
-        first??=new EntityData(){Name=EntityParser.TemplateEmptyName,Position=hit.Position,Values=new()};
+        first??=new EntityData(){Name=EntityParser.TemplateEmptyName,Position=disp.Position,Values=new()};
         templateFiller dispFill = chain.NextFiller();//Even if chain is null, this is clamped to final
         if(dispFill==f){
           name2=name;
         } else while(!templates.TryAdd(name2,dispFill)) name2+="_";
         first??=new EntityData(){Name=EntityParser.TemplateEmptyName};
-        first = first.cloneWithValues([new("template",name2)]);
+        int depth = first.Int("depthoffset",0) + disp.Int("depthoffset",0);
+        first = first.cloneWithValues([new("template",name2),new("depthoffset",depth)]);
         foreach(var n in disp.Nodes??[]){
           displacers.Add(new(n,first.cloneWithForceposOffset(n)));
         }
