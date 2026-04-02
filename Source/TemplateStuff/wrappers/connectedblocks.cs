@@ -14,6 +14,7 @@ using Celeste.Mod.Helpers;
 using Celeste.Mod.Registry;
 using FMOD;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
@@ -113,6 +114,7 @@ public class ConnectedBlocks:Entity{
       VirtualMap<char> bgd = new(size.x,size.y,'0');
       QuickCollider<ConnectedBlocks> qcl = new();
       var layer = MipGrid.Layer.fromAreasize(size.x,size.y);
+      HashSet<char> usedChars = new();
       foreach(var a in things){
         Int2 dloc = (a.Item1.tlc-min)/8;
         Int2 hloc = (a.Item1.brc-min)/8;
@@ -120,8 +122,9 @@ public class ConnectedBlocks:Entity{
         switch(a.Item2.c){
           case Category.fgt: FillRect(fgd, dloc+padding, hloc+padding, a.Item2.tid);break;
           case Category.bgt: FillRect(bgd, dloc+padding, hloc+padding, a.Item2.tid);break;
-          case Category.ent: qcl.Add(a.Item2,a.Item1); break;
+          case Category.ent: qcl.Add(a.Item2,a.Item1); continue;
         } 
+        usedChars.Add(a.Item2.tid);
       }
 
       SolidTiles s=null;
@@ -131,8 +134,10 @@ public class ConnectedBlocks:Entity{
       f.tiledata.setTiles(fgd,true,Int2.One*padding);
       f.tiledata.setTiles(bgd,false,Int2.One*padding);
       Vector2 tileLoc = f.tiledata.tiletlc-Vector2.One*padding*8;
-      if(f.tiledata.fgt!=null)using(new PaddingLock()) s=new(tileLoc, fgd);
-      if(f.tiledata.bgt!=null)using(new PaddingLock()) b=new(tileLoc, bgd);
+      using(new PaddingLock(usedChars)){ 
+        if(f.tiledata.fgt!=null) s=new(tileLoc, fgd);
+        if(f.tiledata.bgt!=null) b=new(tileLoc, bgd);
+      }
       f.tiledata.initStatic(s,b);
 
       Util.OrderedSet<Entity> all = new();
@@ -178,7 +183,8 @@ public class ConnectedBlocks:Entity{
       bool force = hit.Name=="auspicioushelper/TemplateBehaviorChain"&&hit.Bool("forceOwnPosition",false);
       Vector2? forcepos = force? hit.Position:null;
       var chain = new TemplateBehaviorChain.Chain(f, hit, forcepos, TemplateBehaviorChain.mainRoom);
-      var first = chain.NextEnt(); 
+      var first = chain.NextEnt();
+      first??=new EntityData(){Name=EntityParser.TemplateEmptyName,Position=hit.Position,Values=new()}; 
       
       if(first.Name=="auspicioushelper/TemplateDisplacer"){
         templateFiller w = chain.NextFiller();
@@ -275,16 +281,39 @@ public class ConnectedBlocks:Entity{
     if(sms!=null) foreach(var sm in sms) addAllSms(sm.Entity, all);
   }
   
-  public ref struct PaddingLock:IDisposable{
+  public class PaddingLock:IDisposable{
     static int ctr = 0;
     public PaddingLock(){
       ctr++;
-      hooks.enable();
     }
-    void IDisposable.Dispose()=>ctr--;
+    List<(char,bool)> toRemove = null;
+    public PaddingLock(HashSet<char> used){
+      ctr++;
+      if(!used.Contains('\n')) return;
+      toRemove = new();
+      foreach(var u in used) if(u!='\n'&&u!='0'){
+        if(GFX.FGAutotiler.lookup.TryGetValue(u, out var tf) && !tf.IgnoreExceptions.Contains('\n')){
+          tf.IgnoreExceptions.Add('\n');
+          toRemove.Add(new(u,false));
+        }
+        if(GFX.BGAutotiler.lookup.TryGetValue(u, out var tb) && !tb.IgnoreExceptions.Contains('\n')){
+          tb.IgnoreExceptions.Add('\n');
+          toRemove.Add(new(u,true));
+        }
+      }
+    }
+    void IDisposable.Dispose(){
+      ctr--;
+      if(toRemove!=null) foreach(var (u,b) in toRemove){
+        if(b) GFX.BGAutotiler.lookup.GetValueOrDefault(u).IgnoreExceptions.Remove('\n');
+        else GFX.FGAutotiler.lookup.GetValueOrDefault(u).IgnoreExceptions.Remove('\n');
+      }
+    }
     static bool phDelegate(bool orig){
       return orig && ctr==0;
     }
+    [OnLoad.ILHook(typeof(SolidTiles),"")]
+    [OnLoad.ILHook(typeof(BackgroundTiles),"")]
     static void paddingHook(ILContext ctx){
       var c = new ILCursor(ctx);
       while(c.TryGotoNext(MoveType.Before,itr=>itr.MatchCallvirt<Autotiler>(nameof(Autotiler.GenerateMap)))){
@@ -292,13 +321,41 @@ public class ConnectedBlocks:Entity{
         c.Index++;
       }
     }
-    static HookManager hooks = new(()=>{
-      IL.Celeste.SolidTiles.ctor+=paddingHook;
-      IL.Celeste.BackgroundTiles.ctor+=paddingHook;
-    },()=>{
-      IL.Celeste.SolidTiles.ctor-=paddingHook;
-      IL.Celeste.BackgroundTiles.ctor-=paddingHook;
-    });
+    [OnLoad.ILHook(typeof(Autotiler),nameof(Autotiler.TileHandler))]
+    static void TileHandleHook(ILContext ctx){
+      ILCursor c = new(ctx);
+      VariableDefinition v = new(ctx.Import(typeof(bool)));
+      c.Body.Variables.Add(v);
+      if(!c.TryGotoNextBestFit(MoveType.After,
+        itr=>itr.MatchLdloc0(),
+        itr=>itr.MatchCallvirt<Autotiler>(nameof(Autotiler.IsEmpty))
+      )) goto bad;
+      c.EmitLdloc0();
+      c.EmitLdcI4('\n');
+      c.EmitCeq();
+      c.EmitLdsfld(typeof(PaddingLock).GetField(nameof(ctr),Util.GoodBindingFlags));
+      c.EmitStloc(v);
+      c.EmitLdloc(v);
+      c.EmitAnd();
+      c.EmitOr();
+      if(!c.TryGotoNextBestFit(MoveType.After,
+        itr=>itr.MatchLdloca(15),
+        itr=>itr.MatchCall<Autotiler>("TryGetTile")
+      )) goto bad;
+      ILLabel skip = c.DefineLabel();
+      c.EmitLdloc(15);
+      c.EmitLdcI4('\n');
+      c.EmitCeq();
+      c.EmitLdloc(v);
+      c.EmitAnd();
+      c.EmitBrfalse(skip);
+      c.EmitLdloc0();
+      c.EmitStloc(15);
+      c.MarkLabel(skip);
+      return;
+      bad:
+        DebugConsole.WriteFailure("Failed to add tile handling hook");
+    }
   }
 }
 

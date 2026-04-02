@@ -39,12 +39,6 @@ channelswitch.fieldOrder = {
     "player_toggle", "seeker_toggle", "throwable_toggle",
 }
 channelswitch.fieldInformation = {
-  on_value = {
-    fieldType="integer",
-  },
-  off_value = {
-    fieldType="integer",
-  },
   onSfx = {
     options={"event:/game/09_core/switch_to_cold"},
     editable=true,    

@@ -12,12 +12,12 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/ChannelHotColdWatcher")]
 public class ChannelCoreWatcher:Entity {
 
-  public int hotset;
-  public int coldset;
+  public float hotset;
+  public float coldset;
   public string channel;
   public ChannelCoreWatcher(EntityData data, Vector2 offset):base(new Vector2(0,0)){
-    hotset = data.Int("Hot_value",0);
-    coldset = data.Int("Cold_value",1);
+    hotset = data.Float("Hot_value",0);
+    coldset = data.Float("Cold_value",1);
     channel = data.Attr("channel","");
     Add(new CoreModeListener(OnChangeMode));
   }

@@ -283,6 +283,7 @@ public class templateFiller{
       Int2 offset = customOffset??new Int2(tr.Left,tr.Top);
       for(int i=0; i<tr.Width; i++) for(int j=0; j<tr.Height; j++){
         char c = tiles[i+offset.x,j+offset.y];
+        if(c=='\n') c='0';
         fill[i,j]=c;
         has |= c!='0';
       }  

@@ -164,6 +164,7 @@ internal static class MarkedRoomParser{
       if(disp.Name=="auspicioushelper/TemplateDisplacer"){
         string name2 = name+"_disp";
         var first = chain.NextEnt();
+        first??=new EntityData(){Name=EntityParser.TemplateEmptyName,Position=hit.Position,Values=new()};
         templateFiller dispFill = chain.NextFiller();//Even if chain is null, this is clamped to final
         if(dispFill==f){
           name2=name;

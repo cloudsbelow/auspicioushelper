@@ -1,3 +1,5 @@
+---@diagnostic disable:miss-symbol, miss-end, undefined-global, unknown-symbol, miss-exp, exp-in-action
+
 local drawableSprite = require("structs.drawable_sprite")
 local drawableRectangle = require("structs.drawable_rectangle")
 local entities = require("entities")
@@ -65,7 +67,7 @@ local aelperLib = {}
 
 local dark_multiplier = 0.65
 
-function delete_template(entity, oldName)
+local function delete_template(entity, oldName)
     --aelperLib.log("deleting:", entity.template_name)
     for k,v in ipairs(templates) do
         aelperLib.log(k, #v)

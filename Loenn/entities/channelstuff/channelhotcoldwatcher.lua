@@ -17,14 +17,6 @@ channelhotcoldwatcher.placements = {
     }
   }
 }
-channelhotcoldwatcher.fieldInformation = {
-  Hot_value = {
-    fieldType="integer"
-  },
-  Cold_value = {
-    fieldType="integer"
-  }
-}
 
 channelhotcoldwatcher.texture="loenn/auspicioushelper/hotcoldwatcher"
 

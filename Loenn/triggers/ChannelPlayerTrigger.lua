@@ -33,9 +33,6 @@ trigger.fieldInformation = {
   action = {
     options = actions,
     editable=false,
-  },
-  value = {
-    fieldType="integer"
   }
 }
 return trigger
