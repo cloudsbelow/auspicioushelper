@@ -25,7 +25,7 @@ public class TemplateChannelmover:Template{
   float startupTime = 0;
   string soundSuffix=null;
   bool muted=>soundSuffix==null;
-  static readonly List<string> allowedSounds = new(){"stone"};
+  static readonly List<string> allowedSounds = new(){"stone","stonescrape"};
   public TemplateChannelmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateChannelmover(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
@@ -155,9 +155,7 @@ public class TemplateChannelmover:Template{
           else {
             if(doshake) shake(0.1f);
             if(!muted){
-              sfx.Stop();
               Audioplay("event:/auspicioushelper/channelmover/waypoint/");
-              sfx.Play("event:/auspicioushelper/channelmover/loop/"+soundSuffix,"speed",0.5f);
             }
           }
           if(target<low){
