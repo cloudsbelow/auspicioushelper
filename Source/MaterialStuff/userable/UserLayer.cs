@@ -109,7 +109,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
     var u = new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l, true){
       identifier = ident
     };
-    u.noOrder = (string.IsNullOrWhiteSpace(order)||!int.TryParse(order, out int _)) && u.layerformat.quadfirst;///todocheck
+    u.noOrder = string.IsNullOrWhiteSpace(order)||!int.TryParse(order, out int _);
     return u;
   }
   public IFadingLayer.FadeTypes fadeTypeIn {get;set;} = IFadingLayer.FadeTypes.Linear;

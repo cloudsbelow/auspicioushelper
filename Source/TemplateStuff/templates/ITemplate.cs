@@ -394,7 +394,7 @@ public class Template:Entity, ITemplateChild{
   }
   public virtual void remake(Action a = null, Func<bool> shouldAbort = null){
     UpdateHook.AddAfterUpdate(()=>{
-      if(shouldAbort is {} f && f()) return;
+      if(Scene==null || (shouldAbort is {} f && f())) return;
       makeChildren(Scene);
       AddNewEnts(GetChildren<Entity>());
       if(this is TemplateDisappearer d) UpdateHook.AddAfterUpdate(d.enforce, false,true);

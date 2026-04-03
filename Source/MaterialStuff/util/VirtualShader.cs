@@ -13,12 +13,14 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 public class VirtualShader{
+  public static bool renderedDirty;
   internal Effect shader;
   public bool isnull=>shader==null;
   internal int cacheNum;
   internal string path;
   Dictionary<string,object> grrr = new();
   uint baseParamvals=0;
+  public int dirty=2;
   public VirtualShader(string path){
     cacheNum = -1;
     this.path=path;
@@ -75,21 +77,45 @@ public class VirtualShader{
       }
     }
   }
+  void Uniforms(){
+    var pa = shader.Parameters;
+    foreach(var (k,p) in grrr){
+      switch(p){
+        case bool b: pa[k]?.SetValue(b); break;
+        case float f: pa[k]?.SetValue(f); break;
+        case int i: pa[k]?.SetValue(i); break;
+        case float[] fa: pa[k]?.SetValue(fa); break;
+        case Vector4 v4: pa[k]?.SetValue(v4); break;
+        case Vector2 v2: pa[k]?.SetValue(v2); break;
+      }
+    }
+  }
+  void UniformsWrong(){
+    var pa = shader.Parameters;
+    foreach(var (k,p) in grrr){
+      switch(p){
+        case bool b: pa[k]?.SetValue(!b); break;
+        case float f: pa[k]?.SetValue(f+1); break;
+        case int i: pa[k]?.SetValue(i+1); break;
+        case float[] fa: pa[k]?.SetValue(fa.Map(x=>x+1)); break;
+        case Vector4 v4: pa[k]?.SetValue(v4+Vector4.One); break;
+        case Vector2 v2: pa[k]?.SetValue(v2+Vector2.One); break;
+      }
+    }
+  }
   public static implicit operator Effect(VirtualShader v){
     if(v==null || v.shader == null) return null;
     if(v.cacheNum != auspicioushelperModule.CACHENUM) {
       auspicioushelperGFX.Fill(v);
-      foreach(var (k,p) in v.grrr){
-        switch(p){
-          case bool b: v.setparamvalex(k,b); break;
-          case float f: v.setparamvalex(k,f); break;
-          case int i: v.setparamvalex(k,i); break;
-          case float[] fa: v.setparamvalex(k,fa); break;
-          case Vector4 v4: v.setparamvalex(k,v4); break;
-          case Vector2 v2: v.setparamvalex(k,v2); break;
-        }
-      }
       v.fixBaseparams();
+      renderedDirty = true;
+    }
+    if(v.dirty!=0){
+      if(v.dirty>1){
+        v.UniformsWrong();
+        renderedDirty = true;
+      } else v.Uniforms();
+      v.dirty--;
     }
     return v.shader;
   }
