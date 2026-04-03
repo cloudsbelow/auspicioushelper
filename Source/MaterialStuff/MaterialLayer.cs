@@ -202,6 +202,11 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
         sb.End();
       }
     }
+    if(VirtualShader.renderedDirty){
+      VirtualShader.renderedDirty = false;
+      //DebugConsole.Write("Rendered dirtily!",((UserLayer) this)?.identifier);
+      render(sb,c);
+    }
   }
 
   HashSet<OverrideVisualComponent> toRemove = new();

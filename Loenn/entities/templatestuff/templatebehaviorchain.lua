@@ -31,6 +31,15 @@ entity.fieldInformation = function(entity)
     }
 end
     
+local function initPreset(entity)
+    entity._loenn_preset_initializerType = false
+    
+    entity.nodes = {
+        {x=16,y=16},
+        {x=32,y=32},
+        {x=48,y=48},
+    }
+end
 
 function entity.selection(room, entity)
     local nodeRects = {}    
@@ -88,15 +97,5 @@ function entity.nodeSprite(room, entity, node, nodeIndex, viewport)
     }
 end
 entity.draw = aelperLib.get_entity_draw("tgroup")
-
-function initPreset(entity)
-    entity._loenn_preset_initializerType = false
-    
-    entity.nodes = {
-        {x=16,y=16},
-        {x=32,y=32},
-        {x=48,y=48},
-    }
-end
 
 return entity

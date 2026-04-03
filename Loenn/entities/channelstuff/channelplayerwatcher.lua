@@ -26,9 +26,6 @@ channelplayerwatcher.fieldInformation = {
   mode = {
     options=modes,
     editable=false,
-  },
-  valueWhenMissing = {
-    fieldType="integer"
   }
 }
 channelplayerwatcher.texture = "loenn/auspicioushelper/controllers/playerwatcher"

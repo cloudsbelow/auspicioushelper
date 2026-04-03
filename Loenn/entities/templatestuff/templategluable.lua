@@ -12,7 +12,7 @@ entity.nodeLineRenderType = "line"
 local constraintMode = {"None","OnlyX","OnlyY"}
 local splineTypes = {"simpleLinear","compoundLinear","centripetalNormalized","centripetalDenormalized","uniformNormalized","uniformDenormalized"}
 
-function concatTables(a, b)
+local function concatTables(a, b)
     local result = {}
     for _, v in ipairs(a) do table.insert(result, v) end
     for _, v in ipairs(b) do table.insert(result, v) end

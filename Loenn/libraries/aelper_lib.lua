@@ -1,3 +1,5 @@
+---@diagnostic disable:miss-symbol, miss-end, undefined-global, unknown-symbol, miss-exp, exp-in-action
+
 local drawableSprite = require("structs.drawable_sprite")
 local drawableRectangle = require("structs.drawable_rectangle")
 local entities = require("entities")
@@ -65,7 +67,7 @@ local aelperLib = {}
 
 local dark_multiplier = 0.65
 
-function delete_template(entity, oldName)
+local function delete_template(entity, oldName)
     --aelperLib.log("deleting:", entity.template_name)
     for k,v in ipairs(templates) do
         aelperLib.log(k, #v)
@@ -296,8 +298,8 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                         local quadCount = #quads
     
                         if quadCount > 0 then
-                            local randQuad = quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesFg")
-                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)), quadCount)]
+                            local randQuad = quads[math.floor(celesteRender.getRoomRandomMatrix(data[2], "tilesFg")
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * quadCount)+1]
                             local texture = celesteRender.tilesMetaFg[tile].path or " "
                             
                             table.insert(toDraw, {
@@ -335,8 +337,8 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                         local quadCount = #quads
     
                         if quadCount > 0 then
-                            local randQuad = quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesBg")
-                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)), quadCount)]
+                            local randQuad = quads[math.floor(celesteRender.getRoomRandomMatrix(data[2], "tilesBg")
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * quadCount)+1]
                             local texture = celesteRender.tilesMetaBg[bgtile].path or " "
                             
                             table.insert(toDraw, {

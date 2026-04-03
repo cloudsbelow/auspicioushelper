@@ -21,9 +21,6 @@ channelclearcontroller.placements = {
 channelclearcontroller.fieldInformation = {
   channel = {
     fieldType="string"
-  },
-  value = {
-    fieldType="integer"
   }
 }
 channelclearcontroller.texture = "loenn/auspicioushelper/controllers/clear"

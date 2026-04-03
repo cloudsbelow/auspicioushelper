@@ -107,9 +107,11 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
   int currentSegment = 0;
   private IEnumerator FancySequence(){
     float at;
+    goto first;
     waiting:
       dashed = 0;
       triggered = false;
+    first:
       yield return null;
       if(triggered) goto going;
       if(ct!=null && ct.value!=0) OnTrigger(null);
@@ -185,7 +187,6 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
   public bool triggered;
   public void OnTrigger(TriggerInfo info){
     if(!TriggerInfo.TestPass(info,this)) return;
-    //DebugConsole.Write($"{Position} triggered {upd.updatedThisFrame}");
     if(upd.updatedThisFrame) triggered = true;
     else triggerNextFrame = true;
     if(channel != null) ChannelState.SetChannel(channel,1);

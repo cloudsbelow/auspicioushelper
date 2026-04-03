@@ -55,7 +55,7 @@ public class TemplateGluable:Template, IRelocateTemplates.IDontRelocate{
     offset = constraint switch {
       Constraint.OnlyX=>new Vector2(e.X-Position.X,0),
       Constraint.OnlyY=>new Vector2(0,e.Y-Position.Y),
-      Constraint.spline=>spos.setToClosest(e.Position-Position),
+      Constraint.spline=>spos.setToClosest(e.Position-Position).Round(),
       _=>Vector2.Zero
     };
     if(constraint == Constraint.None) Position = e.Position;
@@ -85,14 +85,14 @@ public class TemplateGluable:Template, IRelocateTemplates.IDontRelocate{
       case Constraint.spline:
         Vector2 targ = gluedto.Position-Position;
         float sign = Vector2.Dot(targ-spos.pos,spos.tangent);
-        if(Math.Abs(sign)/spos.tangent.Length()<1) break;
+        if(Math.Abs(sign)/spos.tangent.Length()<0.5f) break;
         float allow = sign>0?maxspeed-usedSpd:maxspeed+usedSpd;
         float mov = spos.approach(targ, 0, spos.numsegs-1, allow*dt, out float sdist);
         usedSpd+=sdist;
         
         if(mov!=0){
           ls.AddSpeed(spos.tangent*mov/safedt);
-          offset = spos.pos;
+          offset = spos.pos.Round();
           //return;
           goto relpos;
         }
@@ -132,13 +132,14 @@ public class TemplateGluable:Template, IRelocateTemplates.IDontRelocate{
       gluedto = FoundEntity.find(lookingFor)?.Entity;
       if(gluedto != null && gluedto.Scene!=null) make(gluedto);
       return;
-    }
+    } 
     if(gluedto.Scene == null){
       gluedto = null;
       destroyChildren(true);
       added=false;
       return;
     } 
+    Depth = (int)Math.Floor(gluedto.actualDepth)-1;
     usedSpd = 0;
     ls.Update();
     DealWithMovement(true);

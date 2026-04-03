@@ -29,7 +29,7 @@ public sealed class TemplateDisplacer:TemplateInstanceable{
   }
   const string TempIdent = "auspicioushelper/hehehehe";
   public static Template ConstructAt(DisplacerData dd, Vector2 o){
-    using(new ChainLock()) return new Template(o+dd.Position){t=dd.disp};
+    using(new ChainLock()) return new Template(o+dd.Position,dd.depth){t=dd.disp};
   }
   static TemplateDisplacer()=>EntityParser.clarify(TempIdent, EntityParser.Types.template, (l,ld,o,e)=>{
     if(e is not DisplacerData cd) DebugConsole.WriteFailure("COMPAT ISSUE! CapturingData getting downcast to EntityData somewhere",true);
@@ -38,6 +38,7 @@ public sealed class TemplateDisplacer:TemplateInstanceable{
   }, true);
   public class DisplacerData:EntityData{
     public templateFiller disp;
+    public int depth;
     public DisplacerData()=>Name=TempIdent;
   }
 }
