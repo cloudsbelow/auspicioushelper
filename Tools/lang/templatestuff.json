@@ -216,7 +216,9 @@
             "shake": "Whether this will shake upon reaching a knot.",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
-            ]
+            ],
+            "startupTime": "Amount of time needed before the mover will move after the channel has changed. Equivalent to shake time of flag switch gates.",
+            "sound": ""
         }
     },
     "entities.auspicioushelper/TemplateBelt": {
@@ -362,7 +364,7 @@
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
             "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
             "sinkTime": "How long it will sink for",
-            "sinkDist": "How far it will sink during its sink time",
+            "sinkDist": "How far it will sink during its sink time. Two numbers can be given to specify a movement in the x direction.",
             "respawnTime": "How long it takes to respawn",
             "triggerable": "Whether it will start sinking when triggered by child events",
             "ridingTriggers": "Whether riding this entity triggers it",
@@ -419,7 +421,7 @@
             "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
             "drift_frequency": "How fast the template bobs up and down",
             "drift_amplitude": "How much distance the template bobs up and down",
-            "sink_amount": "How much distance the template sinks",
+            "sink_amount": "How much distance the template sinks. Two numbers can be given to specify x/y sinks for horizontal movemnent",
             "sink_speed": "How fast the template sinks when stood on or grabbed",
             "dash_influence": "How far a dash will push this block",
             "startphase": "The floating phase this template should start on, in radians",
@@ -545,7 +547,8 @@
             "log": "Log any trigger types to the debug console. Used to determine what to put in white/blacklist",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
-            ]
+            ],
+            "neverTriggerOnAwake": "If the trigger channel is set at awake, don't trigger the parent until it changes again."
         },
         "p_name": "Template Trigger Modifier"
     },
@@ -574,10 +577,28 @@
     },
     "entities.auspicioushelper/TemplateDisplacer": {
         "p_name": "Template Displacer",
-        "description": "",
+        "description": "Used to offset a template to all nodes. Placing a node over a connected entity template will add the displaced entity to that template.",
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
             "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
+    },
+    "entities.auspicioushelper/TemplateResetter": {
+        "p_name": "Template Resetter",
+        "description": "Template that can be destroyed and created at will",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "resetChannel": "When this channel is set to a nonzero value, the contained template will be recreated (destroying the old one if it exists)",
+            "destroyChannel": "When this channel is set to a nonzero value, the contained template will be destroyed.",
+            "particles": "Whether destruction of this template creates debris",
+            "--resetKeepsOld": "",
+            "resetOnTrigger": "Whether triggering this template should trigger a reset",
+            "startWith": "Whether to start with an instance created",
+            "blockedByPlayer": "Whether this should be blocked from reforming when it would overlap the player",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]

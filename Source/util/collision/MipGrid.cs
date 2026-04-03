@@ -291,6 +291,35 @@ public class MipGrid{
       return 0;
     }
     public ulong getAreaAligned(int x, int y)=>getBlock(x/blockw,y/blockh);
+    public ulong getSubarea(int x, int y){
+      if(x<=-blockw||y<=-blockh) return 0;
+      Int2 blockdim = new(blockw,blockh);
+      Int2 blockdim2 = new(blockw*blockw,blockh*blockh);
+      Int2 loc = new(x,y);
+      Int2 blk = (loc+blockdim2)/blockdim2-1;
+      Int2 p = loc-blk*blockdim2;
+      Int2 t = p/blockdim;
+      Int2 f = p-t*blockdim;
+      ulong block, mask;
+      if(p.x<=blockw*(blockw-1) && p.y<=blockh*(blockh-1)){
+        if(blk.x<0||blk.y<0) return 0;
+        block = getBlock(blk.x,blk.y);
+        mask=1ul<<(t.x+8*t.y);
+      } else {
+        block = getArea(t.x+blk.x*8,t.y+blk.y*8);
+        t = Int2.Zero;
+        mask = 1ul;
+      }
+      byte tlc=((block & mask)!=0)? (byte)0xff:(byte)0;
+      if(f.x==0 && f.y==0) return tlc!=0? FULL:0ul;
+      byte trc=((block & (mask<<1))!=0)? (byte)0xff:(byte)0;
+      byte blc=((block & (mask<<8))!=0)? (byte)0xff:(byte)0;
+      byte brc=((block & (mask<<9))!=0)? (byte)0xff:(byte)0;
+      byte tr = (byte)(((tlc>>f.x) | (trc<<(blockw-f.x)))&0xff); 
+      byte br = (byte)(((blc>>f.x) | (brc<<(blockw-f.x)))&0xff);
+      if(f.y==0) return BYTEMARKER*tr;
+      return ((BYTEMARKER*tr)>>(f.y*8)) | ((BYTEMARKER*br)<<(64-f.y*8));
+    }
     public bool collidePoint(Int2 loc){
       int bx = (loc.x+blockw)/blockw-1;
       int by = (loc.y+blockh)/blockh-1;
