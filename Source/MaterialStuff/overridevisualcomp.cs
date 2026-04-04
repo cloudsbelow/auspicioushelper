@@ -119,6 +119,25 @@ public class OverrideVisualComponent:OnAnyRemoveComp{
     }
     setNvis(!hasBeenStolen);
   }
+  public static void EnsureParity(Entity fromEnt, Entity toEnt){
+    if(TryGet(fromEnt) is not {} src){
+      if(TryGet(toEnt) is not {} r) return;
+      toEnt.Remove(r);
+      return;
+    }
+    var dst = Get(toEnt);
+    var srcp = src.parents;
+    var dstp = dst.parents;
+    if(srcp.Count!=dstp.Count) goto align;
+    for(int i=0; i<srcp.Count; i++){
+      if(srcp[i].o!=dstp[i].o){
+        goto align;
+      }
+    }
+    return;
+    align:
+      dst.CopyOther(src);
+  }
   public override void OnRemove() {
     foreach(var p in parents)p.o.RemoveC(this);
     parents.Clear();

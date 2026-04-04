@@ -70,6 +70,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     }
   }
   TemplateDisappearer te;
+  public Template Te=>te;
   Vector2 hoffset;
   public Vector2 Offset=>hoffset;
   Vector2 lpos;
@@ -163,6 +164,11 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     using(new Template.ChainLock())te = new HoldTemplate(this,Position+hoffset,d.Int("depthoffset",0));
     if(ext!=null) te.setTemplate(ext);
     te.addTo(s);
+  }
+  public Template makeCopyAt(Vector2 pos){
+    using(new Template.ChainLock()) return new HoldTemplate(this,pos+hoffset,d.Int("depthoffset",0)){
+      ownLiftspeed = te.ownLiftspeed, t=te.t
+    };
   }
   public templateFiller getTemplate=>te?.t??ext??(MarkedRoomParser.getTemplate(d.Attr("template"),null,Scene,out var f)?f:null);
   BirdTutorialGui tutorialGui=null;

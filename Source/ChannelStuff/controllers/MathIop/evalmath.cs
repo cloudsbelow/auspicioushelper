@@ -180,7 +180,7 @@ public static class Parser{
   static Regex symparseRe = new Regex(@"#(\d+)|([^#]+)",RegexOptions.Compiled);
   public static Func<double[],double> ParseToFunc(string input, out List<string> channels){
     channels = extractChannels(input, out string expr);
-    DebugConsole.Write($"parsed ({string.Join(" ",channels)})", expr);
+    //DebugConsole.Write($"parsed ({string.Join(" ",channels)})", expr);
     var inparam = Expression.Parameter(typeof(double[]));
     var symbols = channels.Map((x,i)=>(Expression)Expression.ArrayIndex(inparam,Expression.Constant(i)));
     Dictionary<string,int> syms = new();

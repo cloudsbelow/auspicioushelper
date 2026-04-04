@@ -32,7 +32,6 @@ public class FoundEntity:OnAnyRemoveComp{
     int j=0;
     for(int i=startidx; i<path.Count; i++){
       if(o == null) return 0;
-      Type type = o.GetType();
       if(path[i] == "__index__"){
         if(o is IList list) o = list[args[j]];
         else if(o is IEnumerable enumer){
@@ -46,19 +45,7 @@ public class FoundEntity:OnAnyRemoveComp{
         }
         j++;continue;
       }
-      FieldInfo field = type.GetField(path[i], BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-      if(field!=null){
-        o=field.GetValue(o); continue;
-      }
-      PropertyInfo prop = type.GetProperty(path[i], BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-      if(prop != null){
-        o = prop.GetValue(o); continue;
-      }
-      MethodInfo method = type.GetMethod(path[i], BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
-      if (method != null) {
-          return method;
-      }
-
+      o = Util.ReflectGet(o,path[i],true);
       DebugConsole.WriteFailure($"The reflection process on entity {e?.ToString()} failed at index {i} looking for {path[i]} on {o?.ToString()}");
       return 0;
     }
@@ -95,7 +82,7 @@ public class FoundEntity:OnAnyRemoveComp{
     if(Engine.Instance.scene is not Level l) return null;
     Entity e=null;
     switch(ident){
-      case "player": e = l.Tracker.GetEntity<Player>(); break;
+      case "player": case "Player": e = l.Tracker.GetEntity<Player>(); break;
       case "fg": case "solidTiles": case "foreground": case "foregroundTiles": e = l.SolidTiles; break;
       case "bg": case "background": case "backgroundTiles": e = l.BgTiles; break;
     }

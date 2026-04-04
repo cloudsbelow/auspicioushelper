@@ -19,7 +19,7 @@ public class ChannelTracker : OnAnyRemoveComp{
   ChannelTrackerList inList=null;
   public ChannelTracker(string channel, Action<double> onChannelChange, bool immediateInvoke = false):base(false, false){
     this.channel=channel;
-    this.onChannelChange=onChannelChange;
+    this.onChannelChange=onChannelChange??=static (_)=>{};
     value = ChannelState.watch(this);
     if(immediateInvoke) onChannelChange(value);
   }

@@ -244,14 +244,14 @@ public struct FloatRect{
   public void expandLeft(float a){
     x-=a; w+=a;
   }
-  public FloatRect expandLeft_(float a)=>new FloatRect(x-a,y,w+a,h);
+  public FloatRect _expandLeft(float a)=>new FloatRect(x-a,y,w+a,h);
   public void expandRight(float a)=>w+=a;
-  public FloatRect expandRight_(float a)=>new FloatRect(x,y,w+a,h);
+  public FloatRect _expandRight(float a)=>new FloatRect(x,y,w+a,h);
   public void expandH(float a){
     if(a<0) expandLeft(-a);
     else expandRight(a);
   }
-  public FloatRect expandH_(float a){
+  public FloatRect _expandH(float a){
     var f = copy();
     f.expandH(a);
     return f;
@@ -259,14 +259,14 @@ public struct FloatRect{
   public void expandUp(float a){
     y-=a; h+=a;
   }
-  public FloatRect expandUp_(float a)=>new FloatRect(x,y-a,w,h+a);
+  public FloatRect _expandUp(float a)=>new FloatRect(x,y-a,w,h+a);
   public void expandDown(float a)=>h+=a;
-  public FloatRect expandDown_(float a)=>new FloatRect(x,y,w,h+a);
+  public FloatRect _expandDown(float a)=>new FloatRect(x,y,w,h+a);
   public void expandV(float a){
     if(a<0) expandUp(-a);
     else expandDown(a);
   }
-  public FloatRect expandV_(float a){
+  public FloatRect _expandV(float a){
     var f = copy();
     f.expandV(a);
     return f;
@@ -295,6 +295,7 @@ public struct FloatRect{
     var c2 = Vector2.Max(brc,f.brc);
     return fromCorners(c1,c2);
   }
+  public FloatRect _union(Vector2 point)=>fromCorners(Vector2.Min(point,tlc),Vector2.Max(point,brc));
   public FloatRect _rot90By(int amt){
     amt=Util.SafeMod(amt,4);
     FloatRect f = amt>=2?fromCorners(-brc, -tlc):copy();

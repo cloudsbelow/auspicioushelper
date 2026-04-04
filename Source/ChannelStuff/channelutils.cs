@@ -145,7 +145,6 @@ public static class ChannelState{
       to=expr;
       string term = termReg.Match(expr).Value;
       if(term==""){
-        DebugConsole.Write("Getting parenthetical!");
         try{
           func = channelmath.Parser.ParseToFunc(expr.Substring(1,expr.Length-2),out from);
         }catch(Exception e){

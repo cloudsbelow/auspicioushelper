@@ -298,8 +298,13 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                         local quadCount = #quads
     
                         if quadCount > 0 then
+                            --cloudsbelow loenn journey. no idea wtf i am doing here but I think the issue is something is null! 
+                            --SO we just OR the two versions that worked at one point! union of coverage! right? that's how it works?
                             local randQuad = quads[math.floor(celesteRender.getRoomRandomMatrix(data[2], "tilesFg")
-                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * quadCount)+1]
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * quadCount)+1] or 
+                                quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesFg")
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)), quadCount)]
+
                             local texture = celesteRender.tilesMetaFg[tile].path or " "
                             
                             table.insert(toDraw, {
@@ -338,7 +343,10 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
     
                         if quadCount > 0 then
                             local randQuad = quads[math.floor(celesteRender.getRoomRandomMatrix(data[2], "tilesBg")
-                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * quadCount)+1]
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * quadCount)+1] or 
+                                quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesBg")
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)), quadCount)]
+
                             local texture = celesteRender.tilesMetaBg[bgtile].path or " "
                             
                             table.insert(toDraw, {
