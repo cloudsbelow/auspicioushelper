@@ -12,7 +12,7 @@ entity.nodeLineRenderType = "line"
 
 local easings = {"Linear","SineIn","SineOut","SineInOut","QuadIn","QuadOut","CubeIn","CubeOut","Smoothstep","QuartIn","QuartOut","QuintIn","QuintOut"}
 local splineTypes = {"simpleLinear","compoundLinear","centripetalNormalized","centripetalDenormalized","uniformNormalized","uniformDenormalized"}
-local sounds = {"stone","none"}
+local sounds = {"stone","stonescrape","none"}
 entity.placements = {
   {
     name = "main",
