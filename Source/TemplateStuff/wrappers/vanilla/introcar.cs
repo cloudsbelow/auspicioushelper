@@ -62,7 +62,9 @@ class CrumbleBlockW:CrumblePlatform, ISimpleEnt{
   bool ownCollidable=true;
   public Template parent {get;set;}
   public Vector2 toffset {get;set;}
-  public CrumbleBlockW(EntityData d, Vector2 o):base(d,o){}
+  public CrumbleBlockW(EntityData d, Vector2 o):base(d,o){
+    if(d.Has("texture")) OverrideTexture = d.Attr("texture");
+  }
   static IEnumerator AddDelegate(IEnumerator orig, CrumblePlatform s){
     if(s is not CrumbleBlockW c) return orig;
     else return c.NewSequence();

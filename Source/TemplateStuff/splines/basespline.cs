@@ -83,6 +83,7 @@ public abstract class Spline{
       segments=2;
     }
     public override Vector2 getPos(float loc)=>Vector2.Zero;
+    public override float getDt(float start, float dist, float step = 0.02F)=>0;
   }
 }
 

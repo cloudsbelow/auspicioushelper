@@ -12,7 +12,7 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
-public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollision,ColliderWrapper{
+public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollision,IColliderWrapper{
   public PortalFaceH f1;
   public PortalFaceH f2;
   public bool flipV;
@@ -22,11 +22,15 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
   Hitbox orig;
   //prevent wallbounces
   public const float margin = 5;
-  Collider ColliderWrapper.wrapped=>orig;
-  Collider ColliderWrapper.interceptReplace(Monocle.Collider o){
+  Collider IColliderWrapper.wrapped=>orig;
+  Collider IColliderWrapper.interceptReplace(Monocle.Collider o){
+    // return o switch {
+    //   null or PColliderH=> o,
+    //   Hitbox h=> new PColliderH(this,h),
+    // }
     if(o is PColliderH or null) return o;
     if(o is Hitbox h) return new PColliderH(this,h);
-    throw new Exception("Tried to set collider to illegal value inside portal. Ask clouds about compat");
+    return new TempNonhb(this,o);
   }
   public PColliderH(Entity wrap, PortalFaceH f1, PortalFaceH f2){
     this.f1=f1; this.f2=f2;
@@ -50,7 +54,7 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     orig.Removed();
   }
   void End(){
-    using(new ColliderWrapper.CollideDetourLock()) Entity.Collider = orig;
+    using(new IColliderWrapper.CollideDetourLock()) Entity.Collider = orig;
   }
   public Vector2 calcspeed(Vector2 speed, bool fromOtherside=false){
     Vector2 rel = speed-(fromOtherside?f2:f1).getSpeed();
@@ -73,18 +77,10 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
       player.currentLiftSpeed *= flipMult;
       player.lastLiftSpeed *= flipMult;
     } else {
-      try{
-        if(DynamicData.For(Entity).TryGet("Speed", out Vector2 val)){
-          DynamicData.For(Entity).Set("Speed",calcspeed(val));
-        } else throw new Exception("Speed not set");
-      } catch(Exception){
-        try{
-          if(DynamicData.For(Entity).TryGet("speed", out Vector2 val)){
-            DynamicData.For(Entity).Set("speed",calcspeed(val));
-          } else throw new Exception("speed not set");
-        } catch(Exception){
-          DebugConsole.Write($"Chanign speed of {Entity} failed");
-        }
+      if(DynamicData.For(Entity).TryGet("Speed", out Vector2? res) && res is {} val){
+        DynamicData.For(Entity).Set("Speed",calcspeed(val));
+      } else if(DynamicData.For(Entity).TryGet("speed", out Vector2? res2) && res2 is {} val2){
+        DynamicData.For(Entity).Set("speed",calcspeed(val2));
       }
     }
     
@@ -116,7 +112,7 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     }
 
     if(Entity is Actor a && flipV && GelperIop.SetActorGravity!=null){
-      using(new ColliderWrapper.CollideDetourLock()) Entity.Collider = orig;
+      using(new IColliderWrapper.CollideDetourLock()) Entity.Collider = orig;
       GelperIop.SetActorGravity(a,2,1);
       orig = a.Collider as Hitbox;
       if(orig == null) throw new Exception("hum");
@@ -134,7 +130,7 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     if(dontEnforce) return;
     if(p.Collider is PColliderH pch && pch.GetPrimaryRect(out var r, out bool w)){
       if(w) return;
-      using(new ColliderWrapper.CollideDetourLock()){ 
+      using(new IColliderWrapper.CollideDetourLock()){ 
         p.Collider = new Hitbox(r.w, r.h, r.x-p.Position.X, r.y-p.Position.Y);
       }
       orig(l,p);
@@ -298,4 +294,16 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     }
   }
   public override string ToString()=>"PortalCollider."+RuntimeHelpers.GetHashCode(this);
+
+  public class TempNonhb:IColliderWrapper.SimpleWrapperclass,IColliderWrapper{
+    PColliderH source;
+    Collider IColliderWrapper.interceptReplace(Collider o) {
+      return o switch {
+        Hitbox h=>new PColliderH(source,h),
+        PColliderH pch=>pch,
+        _=>new TempNonhb(source,o)
+      };
+    }
+    public TempNonhb(PColliderH source, Collider c):base(c)=>this.source=source;
+  }
 }

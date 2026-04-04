@@ -81,6 +81,11 @@ public static partial class Util{
     for(int i=0; i<data.Count; i++) res.Add(pred(data[i]));
     return res;
   } 
+  public static List<T2> Map<T1,T2>(this List<T1> data, Func<T1,int,T2> pred){
+    List<T2> res = new(data.Count);
+    for(int i=0; i<data.Count; i++) res.Add(pred(data[i],i));
+    return res;
+  } 
   public static void MapInplace<T>(this List<T> data, Func<T,T> pred){
     for(int i=0; i<data.Count; i++) data[i]=pred(data[i]);
   }

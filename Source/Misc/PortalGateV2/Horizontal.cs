@@ -313,7 +313,7 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
       e1.other = e2;
       e2.other = e1;
       l.Add([e1,e2]);
-      ResetEvents.LazyEnable(typeof(PortalFaceH),typeof(ColliderWrapper));
+      ResetEvents.LazyEnable(typeof(PortalFaceH),typeof(IColliderWrapper));
 
       if(fakeSolid?.Scene != null && fakeSolid.Scene!=l){
         fakeSolid.RemoveSelf();

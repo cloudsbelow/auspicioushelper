@@ -135,49 +135,65 @@ public static class ChannelState{
     }
     public string to;
     List<string> from = new();
-    List<double> vals = new();
+    double[] vals;
     public double outval;
-    Func<double, double, double> pred;
+    Func<double, double, double> pred = null;
+    Func<double[], double> func = null;
     double seedval;
     static Regex termReg = new Regex(@"^[^\(]*",RegexOptions.Compiled);
     public InlineCalc(string expr){
       to=expr;
       string term = termReg.Match(expr).Value;
-      if(!Enum.TryParse<Ops>(term, out var op)){
-        DebugConsole.WriteFailure($"Invalid function {op} in {expr}");
-        op = Ops.and;
-      } 
-      pred = op switch {
-        Ops.and=> static (a,b)=>(a!=0&&b!=0)?1:0, 
-        Ops.or=> static (a,b)=>(a!=0||b!=0)?1:0, 
-        Ops.sum=> static (a,b)=>a+b,
-        Ops.xor=> static (a,b)=>(int)a^(int)b, 
-        Ops.prod=> static (a,b)=>a*b, 
-        Ops.max=>Math.Max,
-        Ops.min=>Math.Min,
-        _=>(a,b)=>(a!=0&&b!=0)?1:0 //and is default
-      };
-      seedval = op switch {
-        Ops.and=>1, Ops.prod=>1, 
-        Ops.max=>float.NegativeInfinity,
-        Ops.min=>float.PositiveInfinity,
-        _=>0
-      };
-      from = Util.listparseflat(expr.Substring(term.Length),true,false);
+      if(term==""){
+        DebugConsole.Write("Getting parenthetical!");
+        try{
+          func = channelmath.Parser.ParseToFunc(expr.Substring(1,expr.Length-2),out from);
+        }catch(Exception e){
+          Logger.Error(nameof(auspicioushelper),"Making channel failed for reason "+e.Message);
+          DebugConsole.Write("Failed to parse custom channel expression",expr.Substring(1,expr.Length-2),e);
+        }
+      } else {
+        if(!Enum.TryParse<Ops>(term, out var op)){
+          DebugConsole.WriteFailure($"Invalid function {op} in {expr}");
+          op = Ops.and;
+        } 
+        pred = op switch {
+          Ops.and=> static (a,b)=>(a!=0&&b!=0)?1:0, 
+          Ops.or=> static (a,b)=>(a!=0||b!=0)?1:0, 
+          Ops.sum=> static (a,b)=>a+b,
+          Ops.xor=> static (a,b)=>(int)a^(int)b, 
+          Ops.prod=> static (a,b)=>a*b, 
+          Ops.max=>Math.Max,
+          Ops.min=>Math.Min,
+          _=>(a,b)=>(a!=0&&b!=0)?1:0 //and is default
+        };
+        seedval = op switch {
+          Ops.and=>1, Ops.prod=>1, 
+          Ops.max=>float.NegativeInfinity,
+          Ops.min=>float.PositiveInfinity,
+          _=>0
+        };
+        from = Util.listparseflat(expr.Substring(term.Length),true,false);
+      }
       int i=0;
+      vals = new double[from.Count];
       foreach(var ch in from){
         double ival = _readChannel(ch);
-        vals.Add(ival);
+        vals[i]=ival;
         if(!deps.TryGetValue(ch, out var dep)) deps.Add(ch,dep = new(ival));
         dep.calcs.Add(new(){calc=this,index=i++});
       }
-      outval = vals.Aggregate(seedval,pred);
+      calcValue();
       channelStates.Add(to,outval);
+    }
+    void calcValue(){
+      if(func==null) outval = vals.Aggregate(seedval,pred);
+      else outval = func(vals);
     }
     public void Update(int idx, double val){
       vals[idx]=val;
       double old = outval;
-      outval = vals.Aggregate(seedval,pred);
+      calcValue();
       if(old!=outval) SetChannelRaw(to,outval);
     }
     public void Remove(){

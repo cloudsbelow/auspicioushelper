@@ -150,7 +150,7 @@ public static partial class Util{
     if(ae && be) return a+b.Substring(1);
     return a+"/"+b;
   }
-  static Dictionary<char,char> escape = new Dictionary<char, char>{
+  public static Dictionary<char,char> escape = new Dictionary<char, char>{
     {'{','}'}, {'[',']'}, {'(',')'},
   };
   public static Dictionary<string,string> kvparseflat(string str, bool strip=false, bool stripout=false, bool assumeValue=false){
