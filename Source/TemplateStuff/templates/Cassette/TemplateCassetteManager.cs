@@ -19,14 +19,14 @@ public class TemplateCassetteManager:Entity{
     {"big","event:/game/general/cassette_block_switch_2"},
   };
   class timingDesc{
-    public List<Tuple<string,int>> ch = new List<Tuple<string, int>>();
+    public List<Tuple<string,double>> ch = new List<Tuple<string, double>>();
     public List<string> sound = new List<string>();
     public timingDesc fromDict(Dictionary<string,string> d){
       foreach(var pair in d){
         switch(pair.Key){
           case "channel": case "ch": case "c": case "channels":
             foreach(var chpair in Util.kvparseflat(Util.stripEnclosure(pair.Value))){
-              ch.Add(new Tuple<string, int>(chpair.Key,int.Parse(chpair.Value)));
+              ch.Add(new Tuple<string, double>(chpair.Key,double.Parse(chpair.Value)));
             } 
             break;
           case "sound": case "s":
@@ -179,7 +179,7 @@ public class TemplateCassetteManager:Entity{
     }
   }
   void runToCurrent(){
-    Dictionary<string,int> toset = new Dictionary<string, int>();
+    Dictionary<string,double> toset = new();
     foreach(string sound in ini.sound) Audio.Play(sound);
     foreach(var pair in ini.ch) toset[pair.Item1] = pair.Item2;
     lastBeatLoc = lastBeatLoc % beatsPerMeasure;

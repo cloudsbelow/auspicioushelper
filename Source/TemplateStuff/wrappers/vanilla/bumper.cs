@@ -76,7 +76,8 @@ public class PufferW:Component, ISimpleWrapper{
     Vector2 npos = ploc+toffset;
     e.returnCurve.End = e.startPosition = npos;
     Vector2 del = npos-origin;
-    if(del!=Vector2.Zero && e.state != Puffer.States.Hit && (e.anchorPosition-origin).LengthSquared()<=16){
+    DebugConsole.Write("grr",e.anchorPosition,origin);
+    if(del!=Vector2.Zero && e.state != Puffer.States.Hit && (e.anchorPosition-origin).LengthSquared()<=36){
       if(!(e.MoveH(del.X)||e.MoveV(del.Y))){
         e.anchorPosition+=del;
         e.returnCurve.Begin+=del;

@@ -144,6 +144,7 @@ public class Template:Entity, ITemplateChild{
 
 
   public void childRelposSafe(){
+    if(removed) return;
     using(new MovementLock()){
       Entity movewith = PlayerHelper.getFollowEnt();
       Vector2 mwp = movewith?.Position??Vector2.Zero;
@@ -294,7 +295,9 @@ public class Template:Entity, ITemplateChild{
     return false;
   }
   public bool PlayerIsInside() =>  UpdateHook.cachedPlayer is {} play && hasInside(play);
+  bool removed=false;
   public override void Removed(Scene scene){
+    removed=true;
     destroy(false);
     base.Removed(scene);
   }

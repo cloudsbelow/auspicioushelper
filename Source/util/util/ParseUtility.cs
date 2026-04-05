@@ -457,5 +457,6 @@ public static partial class Util{
   }
   public static string RemovePrefix(this string s, string prefix) =>
     s.StartsWith(prefix) ? s[prefix.Length..] : s;
+  public static string RemoveSuffix(this string s, string suffix) => s.EndsWith(suffix)? s.Substring(0,s.Length-suffix.Length):s;
   internal static bool HasContent(this string s)=>!string.IsNullOrWhiteSpace(s);
 }

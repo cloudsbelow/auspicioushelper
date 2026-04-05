@@ -4,7 +4,7 @@ local drawableSprite = require("structs.drawable_sprite")
 local entity = {}
 
 entity.name = "auspicioushelper/ConnectedBlocks"
-entity.depth = 0
+entity.depth = -10001
 
 function entity.placements()
     return {

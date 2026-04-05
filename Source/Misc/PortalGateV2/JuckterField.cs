@@ -266,7 +266,7 @@ public class JuckterField:Entity{
     foreach(var l in locs) Draw.Rect(new Rectangle(l.x,l.y,size.x,size.y),Color.White*0.3f);
   }
   public override void Removed(Scene scene) {
-    foreach(var (p,i) in holding) Release(p);
+    foreach(var (p,i) in holding) if(p.Entity?.Scene!=null) Release(p);
     base.Removed(scene);
   }
   [OnLoad.ILHook(typeof(Holdable),nameof(Holdable.Pickup))]

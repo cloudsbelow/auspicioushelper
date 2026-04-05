@@ -38,7 +38,8 @@ public class DecalRecolor:Entity{
     if(d.Enum<Scopes>("scope",Scopes.wholeMap)==Scopes.wholeMap)Apply(d);
   }
   static Handle Apply(string tex, string val){
-    //DebugConsole.Write($"Applying recolor {val} to {tex}");
+    tex=tex.RemoveSuffix(".png");
+    // DebugConsole.Write($"Applying recolor {val} to {tex}");
     if(!Recolors.TryGet(tex, out var st)) Recolors.Add(tex, st=new());
     return st.Push(Util.ColorRemap.Get(val));
   }
@@ -68,19 +69,19 @@ public class DecalRecolor:Entity{
     if(scope==Scopes.wholeRoom)Unapply(hs);
   }
   static void DecalCtor(Action<Decal,string,Vector2,Vector2,int> orig, Decal self, string tex, Vector2 pos, Vector2 scale, int depth){
-    if(Recolors.TryGet(tex, out var st) && st.Count>0) { 
+    if(Recolors.TryGet(tex.RemoveSuffix(".png"), out var st) && st.Count>0) { 
       Util.ColorRemap remap=st.Peek();
       using(new DecalRerouter(remap)) orig(self,tex,pos,scale,depth); 
       self.textures = self.textures.Map(remap.RemapTex);
     } else orig(self,tex,pos,scale,depth);
   }
   static void DecalAwake(On.Celeste.Decal.orig_Awake orig, Decal d, Scene s){
-    if(d.Get<DecalMarker>() is {} dm && Recolors.TryGet(dm.texstr, out var st) && st.Count>0){ 
+    if(d.Get<DecalMarker>() is {} dm && Recolors.TryGet(dm.texstr.RemoveSuffix(".png"), out var st) && st.Count>0){ 
       using(new DecalRerouter(st.Peek())) orig(d,s); 
     } else orig(d,s);
   }
   static void DecalAdded(On.Celeste.Decal.orig_Added orig, Decal d, Scene s){
-    if(d.Get<DecalMarker>() is {} dm && Recolors.TryGet(dm.texstr, out var st) && st.Count>0){ 
+    if(d.Get<DecalMarker>() is {} dm && Recolors.TryGet(dm.texstr.RemoveSuffix(".png"), out var st) && st.Count>0){ 
       using(new DecalRerouter(st.Peek())) orig(d,s); 
     } else orig(d,s);
   }

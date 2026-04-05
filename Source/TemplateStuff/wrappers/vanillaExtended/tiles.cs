@@ -104,7 +104,8 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
     return Collider.Collide(a.Collider);
   }
   public void relposTo(Vector2 loc, Vector2 liftspeed){
-    MoveTo(loc+toffset, liftspeed);
+    if(Scene==null) Position = (loc+toffset).Round();
+    else MoveTo(loc+toffset, liftspeed);
   }
   public void destroy(bool particles){
     Vector2 ls = parent.gatheredLiftspeed;
