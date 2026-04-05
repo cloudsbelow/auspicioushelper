@@ -36,13 +36,13 @@ public class ConnectedBlocks:Entity{
   bool permits(Entity e){
     if(e is ConnectedBlocks or TemplateHoldable || e is Template t && !t.hasDeclaredTemplate) return false;
     if(e is Decal d){
-      return d.Get<DecalMarker>() is DecalMarker dm && allDecals!=permittedDecals?.GetOrDefault(dm.texstr);
+      return d.Get<DecalMarker>() is DecalMarker dm && allDecals!=(permittedDecals?.GetOrDefault(dm.texstr)??false);
     } else if((excludeSolids && e is Solid) || (excludeTriggers && e is Trigger)){
       return e.SourceData?.Name is {} sn && (permittedEnts?.GetOrDefault(sn)??false);
     } else return e.SourceData?.Name is {} s && (permittedEnts?.GetOrDefault(s)??false)!=allEnts;
   }
   public bool permits(string s, bool decal, bool solid, bool trigger){
-    if(decal)return allDecals!=permittedDecals?.GetOrDefault(s);
+    if(decal)return allDecals!=(permittedDecals?.GetOrDefault(s)??false);
     if((excludeSolids && solid) || (excludeTriggers && trigger)){
       return permittedEnts?.GetOrDefault(s)??false;
     } else return (permittedEnts?.GetOrDefault(s)??false)!=allEnts;
@@ -247,7 +247,7 @@ public class ConnectedBlocks:Entity{
       remove.Add(e);
       if(donot.Contains(e)) continue;
       if(e is Decal d){
-        f.data.decals.Add(d.Get<DecalMarker>().withDepthAndForcepos(d.Position));
+        f.data.decals.Add(d.Get<DecalMarker>().withDepth());
       } else if(e.SourceData is EntityData dat){
         f.data.ChildEntities.Add(dat);
       }
@@ -373,10 +373,9 @@ class DecalMarker:Component{
   static void BgLoad(Decal d, DecalData dat){
     d.Add(new DecalMarker(dat, false));
   }
-  public DecalData withDepthAndForcepos(Vector2 forcepos){
+  public DecalData withDepth(){
     DecalData n = Util.shallowCopy(d);
     n.Depth = fg?-10500:8000;
-    n.Position = forcepos;
     return n;
   }
   [OnLoad.ILHook(typeof(Level),nameof(Level.orig_LoadLevel))]

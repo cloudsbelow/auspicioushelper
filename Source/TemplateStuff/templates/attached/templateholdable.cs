@@ -165,11 +165,12 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     if(ext!=null) te.setTemplate(ext);
     te.addTo(s);
   }
-  public Template makeCopyAt(Vector2 pos){
+  public TemplateDisappearer makeCopyAt(Vector2 pos){
     using(new Template.ChainLock()) return new HoldTemplate(this,pos+hoffset,d.Int("depthoffset",0)){
-      ownLiftspeed = te.ownLiftspeed, t=te.t
+      t=te.t, toffset = hoffset
     };
   }
+  public List<TemplateDisappearer> juckterChildren;
   public templateFiller getTemplate=>te?.t??ext??(MarkedRoomParser.getTemplate(d.Attr("template"),null,Scene,out var f)?f:null);
   BirdTutorialGui tutorialGui=null;
   IEnumerator tutorialRoutine(){

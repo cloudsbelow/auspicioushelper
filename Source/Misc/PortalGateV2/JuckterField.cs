@@ -57,6 +57,8 @@ public class JuckterField:Entity{
         return -1;
       }
     }
+    public Vector2 GetCenter(int idx)=>wrapped.Center+wrapped.Entity.Position-f.locs[index]+f.locs[idx];
+    public Vector2 GetPos(int idx)=>wrapped.Entity.Position-f.locs[index]+f.locs[idx];
   }
   public class JuckterColliderHb:JuckterBase{
     Hitbox orig;
@@ -161,30 +163,73 @@ public class JuckterField:Entity{
     var e = h.Entity;
     holding.Add((h,i));
     AddEnt(e,i);
-    if(e is TemplateHoldable t) foreach(var x in t.Te.GetChildren<Entity>()){
-      if(x.Collider!=null) AddEnt(x,i);
+    if(e is TemplateHoldable t) using(new Template.ChainLock()){
+      t.juckterChildren = new();
+      foreach(var x in t.Te.GetChildren<Entity>()) if(x.Collider!=null) AddEnt(x,i);
+      for(int j=0; j<locs.Length-1; j++){
+        TemplateDisappearer d = t.makeCopyAt(e.Position-10000*Vector2.UnitY);
+        d.addTo(Scene);
+        d.setVisColAct(false,false,false);
+        t.juckterChildren.Add(d);
+      }
     }
   }
+  static ParticleType pDisappear = new(){
+    Source = GFX.Game["particles/zappysmoke"],
+    Color = Calc.HexToColor("aa55cc"),
+    FadeMode = ParticleType.FadeModes.Late,
+    RotationMode = ParticleType.RotationModes.Random,
+    LifeMin = 0.5f,
+    LifeMax = 0.8f,
+    Size = 0.7f,
+    SizeRange = 0.25f,
+    ScaleOut = true,
+    Direction = 0,
+    DirectionRange = MathF.PI*2,
+    SpeedMin = 40f,
+    SpeedMax = 80f,
+    Acceleration = new Vector2(0f, 90f)
+  };
   void Release(Holdable h){
     var e = h.Entity;
     if(e.Collider is not JuckterBase b) throw new Exception("idk");
+    for(int i=0; i<b.f.locs.Length; i++) if(i!=b.index){
+      var c = b.GetCenter(i);
+      float aoff = Calc.Random.Range(0,MathF.PI*2/6);
+      for(int aidx = 0; aidx<6; aidx++){
+        float angle = aoff+aidx*MathF.PI*2/6;
+        (base.Scene as Level).ParticlesBG.Emit(pDisappear, 2, c, new Vector2(3f, 3f), angle);
+      }
+      if(e is TemplateHoldable th && th.juckterChildren?.Count>0){
+        var last = th.juckterChildren[^1];
+        th.juckterChildren.RemoveAt(th.juckterChildren.Count-1);
+        last.relposTo(b.GetPos(i),Vector2.Zero);
+        last.ownLiftspeed = th.Te.ownLiftspeed;
+        last.setVisCol(true,true);
+        last.destroy(true);
+        DebugConsole.Write("Moved child to", last.Position);
+      }
+    }
+    if(e is TemplateHoldable the) the.juckterChildren=null;
     using(new IColliderWrapper.CollideDetourLock()){
-      e.Collider=b.wrapped;
+      e.Collider = b.wrapped;
       if(e is TemplateHoldable t) foreach(var x in t.Te.GetChildren<Entity>()){
         if(x.Collider is JuckterBase be) x.Collider=be.wrapped;
       }
     }
   }
   static void Pickup(Holdable h){
-    var og = h.Entity.Collider;
-    if(h.PickupCollider != null) h.Entity.Collider=h.PickupCollider;
-    if(h.Entity.Collider is JuckterBase b) {
+    if(h.Entity.Collider is JuckterBase og) {
+      if(h.PickupCollider != null) h.Entity.Collider=h.PickupCollider;
+      JuckterBase b = h.Entity.Collider as JuckterBase;
       int idx = b.CollideWhich(h.Holder.Collider);
       if(idx==-1) throw new Exception("idk");
       h.Entity.Position += b.f.locs[idx]-b.f.locs[b.index];
-      b.index = idx;
+      og.index = b.index = idx;
+      h.Entity.Collider = og;
+      b.f.Release(h);
+      b.f.holding.RemoveAll(x=>x.Item1==h);
     }
-    h.Entity.Collider = og;
   }
   bool inArea(Entity e, int i){
     if(!Collidable) return false;
@@ -195,18 +240,21 @@ public class JuckterField:Entity{
   public override void Update() {
     base.Update();
     holding.RemoveAll((pair)=>{
-      if(!inArea(pair.Item1.Entity, pair.Item2) || pair.Item1.Holder!=null){
+      if(pair.Item1.Entity is not {} e || e.Scene==null){
+        if(pair.Item1.Entity is TemplateHoldable te) foreach(var v in te.juckterChildren) v.destroy(true);
+        return true;
+      }
+      if(!inArea(e, pair.Item2) || pair.Item1.Holder!=null){
         Release(pair.Item1);
         return true;
       }
-      else if(pair.Item1.Entity.Collider is not JuckterBase){
-        throw new Exception("Collider escaped without permission on "+pair.Item1.Entity.ToString());
-      }
+      else if(e.Collider is not JuckterBase) throw new Exception("Collider escaped on "+e.ToString());
       return false;
     });
     if(!Collidable) return;
     foreach(Holdable h in Scene.Tracker.GetComponents<Holdable>()) if(h.Holder == null && h.Entity.Collider is not JuckterBase){
       var col = h.Entity.Collider;
+      if(h.Entity?.Scene==null || !h.Entity.Collidable) continue;
       for(int i=0; i<locs.Length; i++) if(col.Collide(new Rectangle(locs[i].x,locs[i].y,size.x,size.y))){
         Enter(h,i);
         break;
@@ -216,6 +264,10 @@ public class JuckterField:Entity{
   public override void Render(){
     base.Render();
     foreach(var l in locs) Draw.Rect(new Rectangle(l.x,l.y,size.x,size.y),Color.White*0.3f);
+  }
+  public override void Removed(Scene scene) {
+    foreach(var (p,i) in holding) Release(p);
+    base.Removed(scene);
   }
   [OnLoad.ILHook(typeof(Holdable),nameof(Holdable.Pickup))]
   static void PickupHook(ILContext ctx){
