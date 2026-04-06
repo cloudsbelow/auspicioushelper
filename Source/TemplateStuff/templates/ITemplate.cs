@@ -215,10 +215,10 @@ public class Template:Entity, ITemplateChild{
     Util.MultiDisposable dispose = new();
     if(RecursionMarker.isRoot) TemplateTemplate.correctChain(dispose,this);
     using(dispose.Add(new RecursionMarker())){
-      t.AddTilesTo(this, scene);
+      string fp = fullpath;
+      t.AddTilesTo(this, scene, fp);
       Level l = scene as Level;
       Vector2 simoffset = lastRoundloc-t.data.origin;
-      string fp = fullpath;
       foreach(EntityData w in t.data.ChildEntities){
         Entity e = EntityParser.create(w,l,t.data.roomdat,simoffset,this,fp);
         if(e is ITemplateChild c){
@@ -404,9 +404,11 @@ public class Template:Entity, ITemplateChild{
       if(a!=null) a();
     }, true, false);
   }
-  public string fullpath=>parent==null?ownidpath.ToString():parent.fullpath+$"/{ownidpath}";
-  public static string getOwnID(EntityData e){
-    return e.ID.ToString();
+  public string fullpath=>parent==null?ownidpath.ToString():parent.fullpath+$"{ownidpath}";
+  public virtual string getOwnID(EntityData e){
+    if(e.Has("prefixid")) return e.Attr("prefixid")+"/"+e.ID.ToString()+"/";
+    if(!string.IsNullOrWhiteSpace(templateStr)) return e.ID.ToString()+"/";
+    return "";
   }
   
   public Vector2 ownShakeVec;
@@ -462,9 +464,13 @@ public class Template:Entity, ITemplateChild{
   });
 
   public T GetFromTree<T>(){
-    if(this is T a) return a;
-    if(parent != null) return parent.GetFromTree<T>();
-    return default(T);
+    Template cur = this;
+    while(cur!=null){
+      if(cur is T a){
+        return a;
+      } else cur = cur.parent;
+    }
+    return default;
   }
   public T GetFromTree<T>(Propagation p){
     if(this is T a) return a;

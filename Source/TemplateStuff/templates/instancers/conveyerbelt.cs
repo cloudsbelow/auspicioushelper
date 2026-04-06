@@ -109,7 +109,12 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
     } 
   }
   public void RemoveChild(ITemplateChild c){
-    foreach(var desc in belt) if(desc.te == c.parent && desc.te.children.Count==1){
+    ITemplateChild f=c;
+    while(f.parent!=this){
+      if(f.parent==null || f.parent.children.Count>1) return;
+      f=f.parent;
+    }
+    foreach(var desc in belt) if(desc.te == f){
       desc.active=false;
       desc.removedChild = c;
       return;

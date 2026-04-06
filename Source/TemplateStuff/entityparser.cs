@@ -151,6 +151,7 @@ anyways i want to praise it more it is wonderful
     using (new Template.ChainLock()) e = loader(l,ld,simoffset,TemplateTemplate.withReplace(d));
     if(e==null) goto done;
     ChildMarker.Get(e,t);
+    DebugConsole.Write("path",d.Name,path,d.ID);
     if(path!=null && Finder.flagged.TryGetValue(path+$"/{d.ID}",out var ident)){
       foreach(var a in ident) a(e);
     }
@@ -287,7 +288,11 @@ anyways i want to praise it more it is wonderful
       currentParent.addEnt(new HookVanilla.AnchorLocMod(ent,fields));
       return null;
     });
-    clarify(TemplateEmptyName,Types.template,(l,ld,o,e)=>new Template(e,o),true);
+    clarify(TemplateEmptyName,Types.template,static (l,ld,o,e)=>new Template(e,o),true);
+    clarify("auspicioushelper/EntityMarkingFlag", Types.unwrapped, static (l,ld,o,e)=>{
+      DebugConsole.Write($"Entity marking flag with ID {e.ID} created inside template with path {currentParent.fullpath}");
+      return null;
+    },true);
   }
   public const string TemplateEmptyName = "auspicioushelper/templateEmpty";
   public static Level.EntityLoader getLoader(string name){

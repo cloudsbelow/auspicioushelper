@@ -16,7 +16,7 @@
     },
     "entities.auspicioushelper/EntityMarkingFlag": {
         "name": "Entity Marker",
-        "description": "Finds an entity by ID and assigns it a string id. Add to a zztemplates room.",
+        "description": "Finds an entity by ID and assigns it a string id. If put in a template, logs parent template's full path.",
         "placements": {
             "path": "The entity ID",
             "identifier": "The unique identifier to give the entity, when found"

@@ -3,12 +3,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using Celeste.Editor;
 using Celeste.Mod.auspicioushelper;
 using Celeste.Mod.auspicioushelper.Import;
 using Celeste.Mod.auspicioushelper.iop;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
 using MonoMod.ModInterop;
@@ -126,7 +128,7 @@ public class auspicioushelperModule : EverestModule {
         OnReloadMap.run();
         MapenterEv.Run(l.Level.Session.MapData);
         MarkedRoomParser.parseMapdata(l.Level.Session.MapData);
-      }
+      } 
     } catch (Exception ex){
       if(ex is DebugConsole.PassingException p) throw p;
       else DebugConsole.Write($"reloading error: {ex}");
@@ -142,21 +144,31 @@ public class auspicioushelperModule : EverestModule {
   
   [OnLoad.EverestEvent(typeof(Everest.Events.Level),nameof(Everest.Events.Level.OnEnter))]
   static void OnEnterEvent(Session session, bool fromsave){
-    DebugConsole.Write("fromsave",fromsave);
     OnEnter(session);
     if(fromsave) Session?.load(session);
   }
   
   [OnLoad.ILHook(typeof(Commands),"LoadIdLevel")]
+  [OnLoad.ILHook(typeof(MapEditor),nameof(MapEditor.LoadLevel))]
+  [OnLoad.ILHook(typeof(MapEditor),"orig_LoadLevel")]
+  [OnLoad.ILHook(typeof(MapEditor),"MakeMapEditorBetter")]
   static void OtherOnenter(ILContext ctx){
     ILCursor c = new(ctx);
-    if(c.TryGotoNextBestFit(MoveType.Before,
+    VariableDefinition v = new(ctx.Import(typeof(Vector2?)));
+    c.Body.Variables.Add(v);
+    bool flag = true;
+    while(c.TryGotoNextBestFit(MoveType.Before,
       itr=>itr.MatchNewobj<LevelLoader>(),
       itr=>itr.MatchCall<Engine>("set_Scene")
     )){
-      c.EmitLdloc1();
+      c.EmitStloc(v);
+      c.EmitDup();
       c.EmitDelegate(OnEnter);
-    } else DebugConsole.WriteFailure("Could not add command onenter hook",false);
+      c.EmitLdloc(v);
+      c.Index+=2;
+      flag=false;
+    } 
+    if(flag) DebugConsole.WriteFailure("Could not add command onenter hook",false);
   }
   public override void Load() {
     DebugConsole.Write("Loading");

@@ -296,7 +296,7 @@ public class templateFiller{
       } else bgt = has?new VirtualMap<char>(fill):null;
     }
   }
-  public void AddTilesTo(Template tem, Scene s){
+  public void AddTilesTo(Template tem, Scene s, string path){
     if(tiledata == null) return;
     if(!tiledata.created){
       tiledata.initDynamic(s as Level);  
@@ -304,10 +304,13 @@ public class templateFiller{
     if(tiledata.Fgt != null){
       tiledata.Fgt.InterceptNext();
       tem.addEnt(tem.fgt = new FgTiles(this, tem.roundLoc, tem.depthoffset));
+      if(Finder.flagged.TryGetValue(path+$"fg",out var fns)) foreach(var f in fns) f(tem.fgt);
     }
     if(tiledata.Bgt != null){
       tiledata.Bgt.InterceptNext();
-      tem.addEnt(new BgTiles(this, tem.roundLoc, tem.depthoffset));
+      BgTiles bg = new BgTiles(this, tem.roundLoc, tem.depthoffset);
+      tem.addEnt(bg);
+      if(Finder.flagged.TryGetValue(path+$"fg",out var fns)) foreach(var f in fns) f(bg);
     }
   }
   public virtual bool Use(Template user)=>true;

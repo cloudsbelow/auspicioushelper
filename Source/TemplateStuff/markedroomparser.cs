@@ -149,7 +149,11 @@ internal static class MarkedRoomParser{
         if(hit!=null)DebugConsole.MakePostcard($"Multiple empty templates cover a connected template in {l.Name}");
         else hit = v;
       } //
-      hit??=new EntityData(){Name=EntityParser.TemplateEmptyName,Position=min,Values=new()};
+      hit??=new EntityData(){
+        Name=EntityParser.TemplateEmptyName,
+        Position=min, Values=new(),
+        ID = things[0].Item2.ID
+      };
       hit = hit.cloneWithValues([new("template",name)]);
       f.data.offset = min-hit.Position;
       cbs.Add(new(qcl,f,checker));
@@ -165,16 +169,21 @@ internal static class MarkedRoomParser{
       if(disp.Name=="auspicioushelper/TemplateDisplacer"){
         string name2 = name+"_disp";
         var first = chain.NextEnt();
-        first??=new EntityData(){Name=EntityParser.TemplateEmptyName,Position=disp.Position,Values=new()};
+        first??=new EntityData(){
+          Name=EntityParser.TemplateEmptyName,
+          Position=disp.Position, Values=new()
+        };
         templateFiller dispFill = chain.NextFiller();//Even if chain is null, this is clamped to final
         if(dispFill==f){
           name2=name;
         } else while(!templates.TryAdd(name2,dispFill)) name2+="_";
-        first??=new EntityData(){Name=EntityParser.TemplateEmptyName};
         int depth = first.Int("depthoffset",0) + disp.Int("depthoffset",0);
-        first = first.cloneWithValues([new("template",name2),new("depthoffset",depth)]);
+        first = first.cloneWithValues([new("template",name2),new("depthoffset",depth),new("prefixid",hit.ID)]);
+        int i=0;
         foreach(var n in disp.Nodes??[]){
-          displacers.Add(new(n,first.cloneWithForceposOffset(n)));
+          var dn = first.cloneWithForceposOffset(n);
+          dn.ID = i++; 
+          displacers.Add(new(n,dn));
         }
       }
     }   // if you're reading this you're probably really happy! I am too

@@ -54,7 +54,7 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
     }
     origpos = Position;
     prop &= ~Propagation.Riding;
-    Depth = d.Int("decal_depth",-10001)+depthoffset;
+    Depth = d.Int("decal_depth",-10001);
     if(decalOffset.Count>0) {
       arrows = GFX.Game.GetAtlasSubtextures("objects/auspicioushelper/templates/movearrows/"+d.Attr("arrow_texture","small"));
       Visible = true;
@@ -67,6 +67,7 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
     base.Awake(scene);
     Add(movesfx = new SoundSource());
     Add(new Coroutine(Sequence()));
+    Depth+=depthoffset;
   }
 
   SoundSource movesfx;

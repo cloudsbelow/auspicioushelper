@@ -86,7 +86,7 @@ public class TemplateBehaviorChain:Entity{
   public TemplateBehaviorChain(EntityData d, Vector2 o):base(d.Position+o){
     dat=d;
     templateStr = d.Attr("template","");
-    if(string.IsNullOrWhiteSpace(templateStr)){
+    if(!Template.ChainLock.locked && string.IsNullOrWhiteSpace(templateStr)){
       AddEmptyTemplate(d);
     }
   }
@@ -100,9 +100,10 @@ public class TemplateBehaviorChain:Entity{
       if(!Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
         DebugConsole.WriteFailure("Unknown template type");
         return null;
-      } else {
+      } else using (new Template.ChainLock()){
         Entity e = loader(l,l.Session.LevelData,pos-first.Position,first);
         if(e is Template te){
+          te.ownidpath = dat.ID.ToString()+"/";
           te.t = chain.NextFiller();
           return te;
         }

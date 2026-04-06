@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Celeste.Mod.Entities;
+using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -94,10 +95,14 @@ public class FoundEntity:OnAnyRemoveComp{
 
   [CustomEntity("auspicioushelper/EntityMarkingFlag")]
   [MapenterEv(nameof(Search))]
-  [CustomloadEntity]
+  //[CustomloadEntity]
   public class MarkingFlag:Entity{
     static void Search(EntityData d){
+      if(string.IsNullOrWhiteSpace(d.Attr("path"))) return;
       Finder.enqueueIdent(d.Attr("path"),d.Attr("identifier"));
+    }
+    public MarkingFlag(EntityData d, Vector2 o):base(d.Position+o){
+      Visible = Active = false;
     }
   }
 }

@@ -178,32 +178,45 @@ public class ConnectedBlocks:Entity{
           goto endSingle;
         }
       }
-      hit??=new EntityData(){Name=EntityParser.TemplateEmptyName,Position=min-levelOffset,Values=new()};
+      hit??=new EntityData(){
+        Name=EntityParser.TemplateEmptyName,
+        Position=min-levelOffset, Values=new(),
+        ID=things[0].Item2.SourceData.ID
+      };
       f.data.offset = (min-levelOffset)-hit.Position; //i know order of ops, this just is comfortable ok?
       bool force = hit.Name=="auspicioushelper/TemplateBehaviorChain"&&hit.Bool("forceOwnPosition",false);
       Vector2? forcepos = force? hit.Position:null;
       var chain = new TemplateBehaviorChain.Chain(f, hit, forcepos, TemplateBehaviorChain.mainRoom);
       var first = chain.NextEnt();
-      first??=new EntityData(){Name=EntityParser.TemplateEmptyName,Position=hit.Position,Values=new()}; 
+      first??=new EntityData(){
+        Name=EntityParser.TemplateEmptyName,
+        Position=hit.Position,Values=new(),
+      }; 
       
       if(first.Name=="auspicioushelper/TemplateDisplacer"){
         templateFiller w = chain.NextFiller();
+        int i=0;
         foreach(var n in first.Nodes??[]){
-          displacers.Add(new(n,new(){disp=w, Position=n, depth=first.Int("depthoffset",0)},displacersUsed));
+          string idpath = hit.ID.ToString()+"/"+i.ToString()+"/";
+          int deptho = first.Int("depthoffset",0);
+          displacers.Add(new(n, new(){disp=w, idpath=idpath, Position=n, depth=deptho}, displacersUsed));
         }
         cbs.Add(new(f,checker,displacersUsed));
         displacersUsed++;
       } else {
         onCompletion.Add(()=>{
-          if(!Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
-            loader = (l,ld,o,e)=>new Template(e,o);
+          using(new Template.ChainLock()){
+            if(!Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
+              loader = (l,ld,o,e)=>new Template(e,o);
+            }
+            Level lv = scene as Level;
+            Entity e = loader(lv,lv.Session.LevelData,levelOffset,first);
+            if(e is Template te){
+              te.ownidpath = hit.ID.ToString()+"/";
+              te.t = chain.NextFiller();
+              lv.Add(e);
+            } else throw new Exception($"your chained entity is not a template? how did u do this? {e}");
           }
-          Level lv = scene as Level;
-          Entity e = loader(lv,lv.Session.LevelData,levelOffset,first);
-          if(e is Template te){
-            te.t = chain.NextFiller();
-            lv.Add(e);
-          } else throw new Exception($"your chained entity is not a template? how did u do this? {e}");
         });
         cbs.Add(new(f,checker,-1));
       }

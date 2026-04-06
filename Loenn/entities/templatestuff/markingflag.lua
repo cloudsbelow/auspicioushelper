@@ -10,7 +10,7 @@ entity.placements = {
   {
     name = "main",
     data = {
-      path = "0",
+      path = "",
       identifier = ""
     }
   }

@@ -29,7 +29,7 @@ interface IMipCollider{
       return new(level-1,x*8+index%8, y*8+index/8);
     }
   }
-  public static bool Collide(params IMipCollider[] list){
+  public static bool Collide(params ReadOnlySpan<IMipCollider> list){
     IntRect bounds = list[0].getBounds();
     Int2[] offsets = new Int2[list.Length];
     offsets[0] = bounds.tlc;
