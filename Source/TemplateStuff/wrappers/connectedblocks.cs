@@ -214,6 +214,7 @@ public class ConnectedBlocks:Entity{
             if(e is Template te){
               te.ownidpath = hit.ID.ToString()+"/";
               te.t = chain.NextFiller();
+              if(Finder.flagged.TryGetValue($"{first.ID}",out var ident)) foreach(var a in ident) a(te);
               lv.Add(e);
             } else throw new Exception($"your chained entity is not a template? how did u do this? {e}");
           }

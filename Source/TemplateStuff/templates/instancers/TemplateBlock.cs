@@ -65,8 +65,7 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
       info.Pass(this);
       return;
     }
-    if(!info.TestPass(this)) return;
-    breakBlock();
+    if(TriggerInfo.TestPass(info,this)) breakBlock();
   }
   public override void addTo(Scene scene){
     if(persistent && auspicioushelperModule.Session.brokenTempaltes.Contains(fullpath)){

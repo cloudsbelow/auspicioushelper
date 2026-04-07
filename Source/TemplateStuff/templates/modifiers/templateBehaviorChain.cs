@@ -118,7 +118,10 @@ public class TemplateBehaviorChain:Entity{
     }
     if(!MarkedRoomParser.getTemplate(templateStr, null, scene, out var t)){
       DebugConsole.Write($"No template found with identifier \"{templateStr}\" in {this} at {Position}");
-    } else startChain(t, dat, Position, scene as Level, null)?.addTo(scene);
+    } else if(startChain(t, dat, Position, scene as Level, null) is {} te){
+      if(Finder.flagged.TryGetValue($"{dat.ID}",out var ident)) foreach(var a in ident) a(te);
+      te.addTo(scene);
+    }
     RemoveSelf();
   }
 }

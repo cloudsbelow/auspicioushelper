@@ -198,11 +198,11 @@ public struct FloatRect{
   }
   public bool CollideCollider(Collider c){
     if(c is Hitbox h){
-      h.Collide(munane());
+      return h.Collide(munane());
     } else if(c is Circle cir){
       return CollideCircle(cir.AbsolutePosition,cir.Radius);
     } else if(c is Grid r){
-      r.Collide(munane());
+      return r.Collide(munane());
     } else if(c is ColliderList l){
       foreach(Collider i in l.colliders){
         if(CollideCollider(i)) return true;
@@ -212,16 +212,6 @@ public struct FloatRect{
       DebugConsole.Write("Forgor to implement floatrect colliding for "+c.ToString());
       throw new NotImplementedException();
     }
-    return false;
-  }
-  public Entity CollideFirst(List<Entity> li){
-    foreach(Entity e in li){
-      if(e.Collidable && CollideCollider(e.Collider)) return e;
-    }
-    return null;
-  }
-  public bool CollideEntitylist(List<Entity> e){
-    return CollideFirst(e)!=null;
   }
   public Rectangle munane(){
     return new Rectangle((int) Math.Round(x), (int) Math.Round(y), (int) w, (int) h);

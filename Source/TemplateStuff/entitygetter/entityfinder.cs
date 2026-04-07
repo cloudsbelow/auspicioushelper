@@ -38,6 +38,7 @@ public static class Finder{
   static HashSet<(string,string)> waiting=new();
   public static void enqueueIdent(string path, string ident=null){
     ident??=path;
+    if(string.IsNullOrWhiteSpace(ident)) return;
     if(waiting.Contains((path,ident))) return;
     waiting.Add((path,ident));
     watch(path,e=>FoundEntity.addIdent(e,path));

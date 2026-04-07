@@ -151,7 +151,6 @@ anyways i want to praise it more it is wonderful
     using (new Template.ChainLock()) e = loader(l,ld,simoffset,TemplateTemplate.withReplace(d));
     if(e==null) goto done;
     ChildMarker.Get(e,t);
-    DebugConsole.Write("path",d.Name,path,d.ID);
     if(path!=null && Finder.flagged.TryGetValue(path+$"/{d.ID}",out var ident)){
       foreach(var a in ident) a(e);
     }

@@ -71,7 +71,11 @@ public abstract class TriggerInfo{
 
 
 [CustomEntity("auspicioushelper/TemplateTriggerModifier")]
+[MapenterEv(nameof(Search))]
 public class TemplateTriggerModifier:Template, ITemplateTriggerable{
+  static void Search(EntityData d){
+    foreach(var id in Util.listparseflat(d.Attr("collideWith","")))Finder.enqueueIdent(id);
+  }
   bool triggerOnTouch;
   Util.Trie<bool> advtouch = new(true);
   bool passTrigger;
@@ -82,8 +86,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   bool log;
   Util.Trie blockManager;
   ChannelState.AdvancedSetter adv = null;
-  bool seekersTrigger = false;
-  bool throwablesTrigger = false;
   string skipCh;
   bool skip = false;
   bool neverTriggerOnAwake = false;
@@ -235,6 +237,8 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       }
       endCC:;
     }
+
+    
     if(delay<0) return;
     activeTime+=Engine.DeltaTime;
     while(delayed.Count>0 && activeTime>delayed.Peek().Item1){
