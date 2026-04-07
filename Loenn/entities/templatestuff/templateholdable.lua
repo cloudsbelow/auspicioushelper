@@ -49,6 +49,9 @@ entity.placements = {
     }
   }
 }
+entity.fieldOrder = {
+  "x","y", "template","depthoffset","gravity","terminal_velocity","Holdable_collider_expand","friction","cannot_hold_timer","minHoldTimer","customThrowspeeds","customRecoil","player_momentum_weight","holdable_momentum_weight","respawnDelay","voidDieOffset"
+}
 entity.fieldInformation = function(entity)
     return {
         template = {

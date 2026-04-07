@@ -23,6 +23,9 @@ entity.placements = {
     }
   }
 }
+entity.fieldOrder = {
+  "x","y", "template","depthoffset","drift_frequency","drift_amplitude","startphase","dash_influence","sink_amount","sink_speed"
+}
 entity.fieldInformation = function(entity)
     return {
         template = {

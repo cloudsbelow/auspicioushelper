@@ -24,6 +24,9 @@ entity.placements = {
     }
   }
 }
+entity.fieldOrder = {
+  "x","y", "template","depthoffset"
+}
 entity.fieldInformation = function(entity)
     return {
         template = {

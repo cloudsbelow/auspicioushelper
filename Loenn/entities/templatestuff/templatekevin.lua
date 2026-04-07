@@ -31,6 +31,9 @@ entity.placements = {
     }
   }
 }
+entity.fieldOrder = {
+  "x","y", "template","depthoffset","maxspeed","acceleration","ImpactSfx","StartSfx"
+}
 entity.fieldInformation = function(entity)
     return {
         template = {

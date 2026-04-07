@@ -33,6 +33,9 @@ entity.placements = {
     }
   }
 }
+entity.fieldOrder = {
+  "x","y", "template","depthoffset","terminalVelocity","gravity","horizontalDrag","speedFromDash","NoPhysicsTime","movementLeniency","BounceStrengthFromWall","ownSpringRecoil","ImpactSfx"
+}
 entity.fieldInformation = function(entity)
     return {
         template = {

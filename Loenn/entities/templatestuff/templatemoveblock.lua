@@ -39,6 +39,9 @@ entity.placements = {
     }
   }
 }
+entity.fieldOrder = {
+  "x","y", "template","depthoffset","speed","acceleration","direction","arrow_texture","decal_depth","decal_colors","max_leniency","Max_stuck"
+}
 entity.fieldInformation = function(entity)
     return {
         direction = {

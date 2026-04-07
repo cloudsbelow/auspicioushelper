@@ -31,6 +31,9 @@ entity.placements = {
     }
   }
 }
+entity.fieldOrder = {
+  "x","y", "template","depthoffset"
+}
 entity.selection = aelperLib.template_selection
 entity.draw = aelperLib.get_entity_draw("tsub")
 

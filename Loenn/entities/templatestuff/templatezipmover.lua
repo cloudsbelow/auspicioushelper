@@ -37,6 +37,9 @@ entity.placements = {
     }
   }
 }
+entity.fieldOrder = {
+  "x","y", "template","depthoffset","return_type","activation_type","returnEasing","easing","returnSpeed","speed","returningSound","outgoingSound","channel","spline"
+}
 entity.fieldInformation = function(entity)
     return {
         template = {

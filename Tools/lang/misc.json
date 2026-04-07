@@ -4,7 +4,7 @@
         "description": "Prevents certain zero-frameable inputs from happening while inside this entity",
         "placements": {
             "holdables": "Pick up holdables on the first possible pixel",
-            "player_colliders": "Hit player colliders on the first possible pixel (if speed or number of dashes changes, will stop your movement)",
+            "player_colliders": "Hit player colliders on the first possible pixel (if speed or number of dashes changes, will end the frame's movement)",
             "always_walljumpcheck": [
                 "Check Unsolid Walljumps",
                 "Check for walljumps off of non-solids each pixel (needed if using sideways jumpthrus) (slow; only use in the area directly around the jumpthru)"
@@ -19,11 +19,11 @@
         "placements": {
             "image": "Image to use as visuals and collider shape. Rooted in Graphics/Atlases/Gameplay/ (i.e. if using decal texture, decals/ must be added in front of the texture path used in the decal)",
             "CustomColliderPath": "Override the above image for only the collider",
-            "scaleX": "",
-            "scaleY": "",
+            "scaleX": "Horizontal stretch factor",
+            "scaleY": "Vertical stretch factor",
             "color": "Multiplicative tint color",
-            "rotation": "",
-            "depth": "",
+            "rotation": "Rotation in degrees",
+            "depth": "Depth (negative is more in front; player is 0, fgtiles are -10000)",
             "alphaCutoff": "Pixels whose alpha is higher than this value will be collidable"
         },
         "p_name": "Arbitrary shape kill area"
@@ -32,14 +32,14 @@
         "description": "Solid with the exact shape of a specified image. Suggested to use with pixel leniency trigger. ",
         "placements": {
             "safe": "If berries can be collected while standing here",
-            "soundIndex": "",
+            "soundIndex": "Check wiki for a list of indices",
             "image": "Image to use as visuals and collider shape. Rooted in Graphics/Atlases/Gameplay/ (i.e. if using decal texture, decals/ must be added in front of the texture path used in the decal)",
             "CustomColliderPath": "Override the above image for only the collider",
-            "scaleX": "",
-            "scaleY": "",
+            "scaleX": "Horizontal stretch factor",
+            "scaleY": "Vertical stretch factor",
             "color": "Multiplicative tint color",
-            "rotation": "",
-            "depth": "",
+            "rotation": "Rotation in degrees",
+            "depth": "Depth (negative is more in front; player is 0, fgtiles are -10000)",
             "alphaCutoff": "Pixels whose alpha is higher than this value will be collidable",
             "occludeLight": "Whether this entitiy casts shadows (only the solid pixels). Relatively optimized; no need to worry about lag if there are not hundreds of these entities"
         },
@@ -69,8 +69,8 @@
         "name": "Relative Spikes",
         "description": "Spikes with recoloring options and options to fix common speed issues with spikes. With all options enabled, the spikes will kill you only if your velocity 'relative' to them is not moving away",
         "placements": {
-            "type": "",
-            "direction": "",
+            "type": "Texture to use. Rooted in Atlases/Gameplay/danger/spikes/ ",
+            "direction": ["DO NOT TOUCH", "the rotation value. Do not change this directly, use the R key on the selection. Changing in this box will break the entity."],
             "fancy": "Fancy recoloring option. See wiki for details. For example (000,fff)->(fff,000)",
             "tint": "Multiplicative tint color",
             "dreamThru": "Lets you move through these spikes in a dream state (dreamblocks will go through these)",
@@ -85,7 +85,7 @@
     "entities.auspicioushelper/DecalRecolor": {
         "description": "Controller to recolor decals non-multiplicatively",
         "placements": {
-            "scope": "",
+            "scope": "Where to apply the recolor",
             "texture": "Textures to recolor. Can use fancy matching with *",
             "recolor": "Fancy recoloring option. See wiki for details. For example (000,fff)->(fff,000)"
         },
@@ -145,7 +145,7 @@
                 "Portal 2 Facing Right",
                 "If the second portal should face right"
             ],
-            "flipGravity": "",
+            "flipGravity": "Gravityhelper must be enabled",
             "color_hex": "The portal color",
             "attached": "If the portals are attached to solids",
             "giveRCB": [
@@ -153,7 +153,7 @@
                 "Whether the portal should give reverse corner boost on exiting portal"
             ],
             "instant_camera": "Switch the camera when moving through the portals to keep the player at the same screen position",
-            "depth": ""
+            "depth": "Render depth of portal lights"
         }
     },
     "entities.auspicioushelper/SpiralBossBeam": {
@@ -162,7 +162,7 @@
         "placements": {
             "start_angle": "The starting angle in radians",
             "speed": "The rotation speed in radians/sec",
-            "depth": ""
+            "depth": "Render dept"
         }
     },
     "entities.auspicioushelper/TrackedCassette": {

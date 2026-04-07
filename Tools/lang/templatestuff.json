@@ -92,7 +92,7 @@
         "description": "Place this entity so that it's covering your desired group of objects, and then it can be used as a template (make sure the room name starts with \"zztemplates-\")",
         "placements": {
             "template_name": "The name of this template. When using this template, specify it like <roomname>/<templatename>, assuming this template is placed in a room named \"zztemplates-<roomname>\"",
-            "oldTemplateName": ""
+            "oldTemplateName": ["ignore this","for kyfex's fancy thing"]
         }
     },
     "entities.auspicioushelper/templateholdable": {
@@ -218,7 +218,7 @@
                 "[LÖNN] Display Template"
             ],
             "startupTime": "Amount of time needed before the mover will move after the channel has changed. Equivalent to shake time of flag switch gates.",
-            "sound": ""
+            "sound": "Take a sound from vert's sound bucket"
         }
     },
     "entities.auspicioushelper/TemplateBelt": {
@@ -351,7 +351,7 @@
             "glue_to_identifier": "The entity ID path to glue to. The number found after the ID: in loenn. Can also specify 'player' to glue to player.",
             "maxSpeed": "The maximum speed this template can approach its target position with",
             "constraint": "Constrain the entity's movement. For spline options, you must add nodes. Will get as close as possible to the entity without violating its constraint (i.e. changing X in an onlyY constraint or leaving the spline in a spline constraint)",
-            "setProgressChannel": "Currently unimplemented TODO",
+            "setProgressChannel": "Set channel to current progress. Varies by constraint mode.",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]
@@ -389,9 +389,9 @@
             "right": "Whether you can hit the right side",
             "top": "Whether you can hit the top side",
             "bottom": "Whether you can hit the bottom side",
-            "returning": "",
-            "ImpactSfx": "",
-            "StartSfx": "",
+            "returning": "Whether the template should return to its starting position",
+            "ImpactSfx": "Standard event path",
+            "StartSfx": "Standard event path",
             "hitJumpthrus": "Whether jumpthrus should block this entity's movement. Works for sideways and upsidedown jumpthrus (and regular).",
             "throughDashblocks": "Whether to move through breakable blocks like dashblocks or breakable template blocks",
             "_loenn_display_template": [
@@ -530,25 +530,20 @@
         "placements": {
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
             "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
-            "advancedTouchOptions": "Touch events in this list will have the opposite behavior to triggerOnTouch. Works as either blacklist or whitelist.",
-            "triggerOnTouch": "Trigger when player touches, jumps off of, etc",
+            "advancedTouchOptions": "Match all touches with *. Specific player states needed can be specified with more slashes - use log for more information about paths. If a single '*' is present, remaining items will work as a blacklist.",
             "channel": "When this channel is set to a nonzero value, trigger the template",
             "setChannel": "Set this channel when this template is triggered. Can be given advanced input; a:3,b:@c[*2] sets channel a to 3 and channel b to twice the value of channel c. ",
             "skipChannel": "When this channel is set, triggering events will pass over this template without being modified",
             "propagateRiding": "Child zipmovers/falling blocks will trigger from this being stood on",
-            "propagateDashHit": "Whether dashhits go through this template",
-            "propagateTrigger": "Whether to pass trigger events to parents",
             "hideTrigger": "Whether to hide trigger events (preventing parents from triggering.) Events are unhidden at next trigger modifier",
-            "blockTrigger": "Block all triggers",
-            "seekersTrigger": "",
-            "holdablesTrigger": "",
-            "delay": "Delay all trigger events by this amount.",
-            "blockFilter": "Works as a comma seperated white/blacklist. Trigger categories on this list have opposite behavior to the blockTrigger box. Can end strings with * for fuzzy matching",
+            "delay": "Delay all trigger events by this amount. (seconds)",
+            "blockFilter": "Block trigger events with a certain path, preventing them from reaching parent triggerables. Use log to learn trigger paths. Comma seperated with wildcard * matching. Include a single * as an item to turn additional items into a blacklist insteada of a whitelist",
             "log": "Log any trigger types to the debug console. Used to determine what to put in white/blacklist",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ],
-            "neverTriggerOnAwake": "If the trigger channel is set at awake, don't trigger the parent until it changes again."
+            "neverTriggerOnAwake": "If the trigger channel is set at awake, don't trigger the parent until it changes again.",
+            "collideWith": "Trigger parent templates when the entity or template with the given ID intersects with this template's child solids"
         },
         "p_name": "Template Trigger Modifier"
     },
@@ -568,8 +563,8 @@
             "returnSpeed": "How fast to return. The return will take 1/returnSpeed seconds.",
             "easing": "Easing function to use when outgoing",
             "returnEasing": "Easing to use when returning",
-            "outgoingSound": "",
-            "returningSound": "",
+            "outgoingSound": "Ask vert about these. the event needs to be special idk not sound",
+            "returningSound": "Ask vert about these. the event needs to be special idk not sound",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ]

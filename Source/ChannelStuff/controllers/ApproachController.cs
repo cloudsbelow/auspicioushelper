@@ -30,12 +30,11 @@ public class ChannelApproachController:Entity{
   }
   public override void Added(Scene scene) {
     base.Added(scene);
-    Add(to = new(toCh,instant? (double nv)=>{
+    Add(to = new(toCh.RemovePrefix("@"),instant? (double nv)=>{
       if(!instant) return;
-      DebugConsole.Write("instant set", nv);
       using(Util.WithRestore(ref instant,false)) ChannelState.SetChannel(outChannel,nv);
     }:null,instant));
-    if(!instant) Add(amount = new(amountCh));
+    if(!instant) Add(amount = new(amountCh.RemovePrefix("@")));
     if(!string.IsNullOrWhiteSpace(outChannel))Add(ownval = new(outChannel));
   }
   public override void Update() {

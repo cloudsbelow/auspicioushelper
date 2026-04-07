@@ -34,6 +34,9 @@ entity.placements = {
     }
   }
 }
+entity.fieldOrder = {
+  "x","y", "template","depthoffset","gravity","max_speed","customFallTiming","maxWaitTiming","impact_sfx","shake_sfx","reverseChannel","triggerChannel"
+}
 entity.fieldInformation = function(entity)
     return {
   direction = {

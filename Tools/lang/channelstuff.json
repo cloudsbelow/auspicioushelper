@@ -27,7 +27,7 @@
             "value": "Set the channel to this value",
             "clear_all": "Completely reset all channel values to 0",
             "clear_prefix": "Set all channel values with this prefix to 0",
-            "advanced": ""
+            "advanced": "Specify a list of channels and new values. Example abc:1, xyz:@pqr[+2]"
         },
         "p_name": "Channel Clear Controller"
     },
@@ -92,7 +92,7 @@
             "activation_cond": "When to try to start scripts",
             "debug": "Whether to print debug information to the current debugging view",
             "notifying_override": "List of channels that override the usual watched channels as a starting condition",
-            "run_when_awake": "",
+            "run_when_awake": "Start this program on room load",
             "only_run_for_nonzero": "Won't run when notifying channels change to set to zero"
         },
         "p_name": "Channel Math Controller"
@@ -102,7 +102,7 @@
         "placements": {
             "channel": "Channel to set",
             "valueWhenMissing": "Value to set when player is dead",
-            "mode": "",
+            "mode": "Set the channel when ___",
             "custom": "Perform reflection, getting all fields in this list successively and trying to cast to double. Kinda cursed"
         },
         "p_name": "Channel Player Watcher"
@@ -127,7 +127,7 @@
             "xml_spritename": "name of the XML sprite",
             "cases": "number of cases defined in XML",
             "depth": "it's what you would expect from this field",
-            "materialIdentifiers": ""
+            "materialIdentifiers": "Currently unimplemented. Just use a applier smh"
         },
         "p_name": "auspicioushelper_example1"
     },
@@ -143,9 +143,9 @@
             "on_value": "Value to set when on",
             "off_value": "Value to set when off",
             "cooldown": "Cooldown for hitting this particular switch (the channel itself is not constrained)",
-            "onSfx": "",
-            "offSfx": "",
-            "dieSfx": "",
+            "onSfx": "Given in normal event form",
+            "offSfx": "Given in normal event form",
+            "dieSfx": "Given in normal event form",
             "switchsprite": "Define the sprite so that it matches vanilla format."
         },
         "p_name": "Channel Switch"
@@ -223,5 +223,15 @@
             "flag": "the flag to set"
         },
         "p_name": "Channel Flag Setter"
+    },
+    "entities.auspicioushelper/ChannelApproacher": {
+        "p_name": "channel approach controller",
+        "description": "Controller used to make the value of one channel approach the value of another at a certain rate.",
+        "placements": {
+            "towardsChannel": "The value to approach",
+            "amount": "Channel representing the amount to change by per unit time (either per frame or second depending on whether useDT is selected). Can be a constant number.",
+            "outChannel": "Channel to change",
+            "useDt": "Multiply the amount by delta time when approaching. Should be used if amount should specify change per second"
+        }
     }
 }

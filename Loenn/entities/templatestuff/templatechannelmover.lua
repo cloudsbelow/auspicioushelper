@@ -37,6 +37,9 @@ entity.placements = {
     }
   }
 }
+entity.fieldOrder = {
+  "x","y", "template","depthoffset","move_time","asymmetry","easing","startupTime"
+}
 entity.fieldInformation = function(entity)
     return {
         move_time = {minimumValue=0},
