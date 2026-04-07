@@ -28,7 +28,9 @@ entity.fieldInformation = function(entity)
                 "dashV",
                 "FishExplosion",
                 "SeekerExplosion",
-                "bumper"
+                "bumper",
+                "SeekerSlam",
+                "HoldableHit",
             }
         }
     },
@@ -45,20 +47,17 @@ entity.placements = {
       template = "",
       depthoffset=0,
       advancedTouchOptions = "",
-      triggerOnTouch = false,
       channel = "",
       setChannel = "",
       skipChannel = "",
       propagateRiding = true,
       propagateTrigger = true,
       hideTrigger = false,
-      blockTrigger = false,
-      seekersTrigger = false,
-      holdablesTrigger = false,
       delay = -1,
       blockFilter = "",
       neverTriggerOnAwake = false,
       log=false,
+      collideWith="",
       
       _loenn_display_template = true,
     }
@@ -66,5 +65,9 @@ entity.placements = {
 }
 entity.selection = aelperLib.template_selection
 entity.draw = aelperLib.get_entity_draw("ttrig")
+entity.fieldOrder = {
+    "x", "y", "template", "depthoffset", "channel", "setChannel",
+    "advancedTouchOptions", "blockFilter", "delay", "skipChannel"
 
+}
 return entity

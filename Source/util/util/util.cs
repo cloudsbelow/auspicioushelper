@@ -474,4 +474,21 @@ public static partial class Util{
   //     deferredRemove.Clear();
   //   }
   // }
+  public ref struct LazyList<T>{
+    public List<T> l = null;
+    public LazyList(){}
+    public void Add(T item)=>(l??=new()).Add(item);
+    public int Count=>l==null?0:l.Count;
+    public Enumerator GetEnumerator() => new Enumerator(l);
+    public ref struct Enumerator{
+      List<T>.Enumerator li;
+      bool nonempty;
+      public Enumerator(List<T> list){
+        nonempty = list != null;
+        li = nonempty ? list!.GetEnumerator() : default;
+      }
+      public T Current => li.Current;
+      public bool MoveNext() => nonempty && li.MoveNext();
+    }
+  }
 }

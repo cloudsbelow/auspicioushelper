@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using AsmResolver.Collections;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
@@ -86,6 +87,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   string skipCh;
   bool skip = false;
   bool neverTriggerOnAwake = false;
+  List<string> onCollidePaths = null;
   static readonly List<string> list = new(){
     "Normal","Climb","Dash","Swim","Boost","RedDash","HitSquash","Launch","Pickup","DreamDash","SummitLaunch",
     "Dummy","IntroWalk","IntroJump","IntroRespawn","IntroWakeUp","BirdDashTutorial","Frozen","ReflectionFall",
@@ -94,7 +96,12 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   public TemplateTriggerModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateTriggerModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
+    triggerOnTouch = d.Bool("triggerOnTouch",false);
     foreach(string s in Util.listparseflat(d.Attr("advancedTouchOptions",""),true)){
+      if(Util.removeWhitespace(s)=="*"){
+        triggerOnTouch = true;
+        continue;
+      }
       if(s.StartsWith('/')){
         advtouch.Add(s.Substring(1)+"*",true);
         continue;
@@ -105,10 +112,9 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
         for(int i=1; i<strs.Length; i++) if(int.TryParse(strs[i], out int st))advtouch.Add("touch/"+strs[0]+"/"+list[st],true);
       }
     }
-    triggerOnTouch = d.Bool("triggerOnTouch",false);
-    seekersTrigger = d.Bool("seekersTrigger",false);
-    throwablesTrigger = d.Bool("holdablesTrigger",false);
-    if(triggerOnTouch || advtouch.hasStuff || seekersTrigger || throwablesTrigger || log) hooks.enable();
+    if(d.Bool("seekersTrigger",false) && !triggerOnTouch) advtouch.Add("touch/SeekerSlam*",true);
+    if(d.Bool("holdablesTrigger",false) && !triggerOnTouch) advtouch.Add("touch/HoldableHit*",true);
+    if(triggerOnTouch || advtouch.hasStuff || log) hooks.enable();
     channel = d.Attr("channel",null);
     if(!d.Bool("propagateRiding",true)) prop &= ~Propagation.Riding;
     if(!d.Bool("propagateInside",true)) prop &= ~Propagation.Inside;
@@ -120,6 +126,9 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     delay = d.Float("delay",-1);
     if(delay>=0) delayed = new();
     foreach(string s in Util.listparseflat(d.Attr("blockFilter"),true,true)){
+      if(Util.removeWhitespace(s)=="*"){
+        blockTrigger = true; continue;
+      }
       if(blockManager == null) blockManager = new();
       blockManager.Add(s);
     }
@@ -128,6 +137,8 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     OnDashCollide = handleDash;
     skipCh = d.Attr("skipChannel","");
     neverTriggerOnAwake = d.Bool("neverTriggerOnAwake",false);
+    string paths = d.String("collideWith",null);
+    if(paths!=null) onCollidePaths = Util.listparseflat(paths);
   }
   DashCollisionResults handleDash(Player player, Vector2 direction){
     if((prop&Propagation.DashHit) != Propagation.None && (parent!=null)){
@@ -172,13 +183,8 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     if(sm is IUsable tinfo){
       bool has = advtouch.GetOrDefault(sm.category);
       if(has!=triggerOnTouch && (!triggerOnTouch || sm is TouchInfo)) tinfo.asUsable();
-    } 
-    if(sm is HitInfo hinfo){
-      if(seekersTrigger && hinfo.entity is Seeker seeker && Math.Abs(seeker.Speed.X)>100) {
-        if(seeker.State.State==Seeker.StAttack||seeker.State.State==Seeker.StSkidding)hinfo.asUsable();
-      }
-      if(throwablesTrigger && hinfo.entity.Get<Holdable>()!=null) hinfo.asUsable();
     }
+    if(blockTrigger!=(blockManager?.Test(sm?.category)??false)) goto end;
     if(triggerParent == null) goto end;
     if(hideTrigger){
       modifierParent?.OnTrigger(sm);
@@ -196,7 +202,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       return;
     }
     if(log) DebugConsole.Write($"From trigger modifier: ",sm?.category);
-    if(blockTrigger!=(blockManager?.Test(sm?.category)??false)) return;
     if(delay<0) HandleTrigger(sm);
     else{
       if(upd.updatedThisFrame) delayed.Enqueue(new(activeTime+delay,sm));
@@ -205,6 +210,31 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   }
   public override void Update() {
     base.Update();
+    if(onCollidePaths != null){
+      FloatRect bounds = FloatRect.empty;
+      List<Collider> co = new();
+      foreach(var v in GetChildren<Solid>(Propagation.Shake)) if(v.Collidable){
+        bounds=bounds._union(new FloatRect(v));
+        co.Add(v.Collider);
+      }
+      if(co.Count==0) goto endCC;
+      Util.LazyList<Collider> cs = new();
+      foreach(string s in onCollidePaths) if(FoundEntity.find(s) is {} comp){
+        var e = comp.Entity;
+        if(e is Template to) foreach(var en in to.GetChildren<Entity>()){
+          var col = en.Collider;
+          if(en.Collidable && bounds.CollideCollider(col) && col!=null) cs.Add(col);
+        } else if(e.Collidable && bounds.CollideCollider(e.Collider)){
+          if(e.Collider!=null)cs.Add(e.Collider);
+        }
+      }
+      if(cs.Count==0) goto endCC;
+      foreach(var o in co) foreach(var s in cs) if(o.Collide(s)){
+        OnTrigger(null);
+        goto endCC;
+      }
+      endCC:;
+    }
     if(delay<0) return;
     activeTime+=Engine.DeltaTime;
     while(delayed.Count>0 && activeTime>delayed.Peek().Item1){
@@ -217,7 +247,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   public class TouchInfo:TriggerInfo, IUsable{
     public enum Type {
       collideV, collideH, jump, climbjump, walljump, wallbounce, super, grounded, climbing , dashH, dashV,
-      invalid, FishExplosion, SeekerExplosion, bumper,
+      invalid, FishExplosion, SeekerExplosion, bumper, SeekerSlam,HoldableHit
     }
     public Type ty;
     public bool use = false;
@@ -231,19 +261,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       return this;
     }
     public override string category => "touch/"+ty.ToString()+(entity is Player p?$"/{p.StateMachine.GetCurrentStateName()}":"");
-  }
-  class HitInfo:TriggerInfo, IUsable{
-    public bool use = false;
-    public override bool shouldTrigger => use;
-    bool horizontal;
-    public HitInfo(Template parent, Actor a, bool horizontal):base(){
-      entity=a;this.parent=parent;this.horizontal=horizontal;
-    }
-    public TriggerInfo asUsable(){
-      use=true;
-      return this;
-    }
-    public override string category=>"hit/"+(horizontal?"h/":"v/")+entity;
   }
   class ChannelInfo:TriggerInfo{
     public string channel;
@@ -323,26 +340,38 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     } else DebugConsole.WriteFailure("Failed to apply explosion hooks",true);
   }
 
-  static void MoveHDelegate(Platform h, Actor a){
-    if(h.Get<ChildMarker>() is ChildMarker c) c.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new HitInfo(c.parent,a,true));
+  static void HitDelegate(Platform h, Actor a, bool vertical){
+    List<TouchInfo> ts=new();
+    if(a is Seeker seeker){
+      bool attack = seeker.State.State==Seeker.StAttack||seeker.State.State==Seeker.StSkidding;
+      if(Math.Abs(seeker.Speed.X)>100 && attack) {
+        ts.Add(new TouchInfo(seeker,TouchInfo.Type.SeekerSlam));
+      }
+    }
+    if(a.Get<Holdable>() is {} hold){
+      ts.Add(new TouchInfo(a,TouchInfo.Type.HoldableHit));
+    }
+
+    if(ts.Count>0 && h.Get<ChildMarker>() is ChildMarker c) foreach(var t in ts){
+      c.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(t);
+    } 
   }
   static void HookMoveH(ILContext ctx){
     ILCursor c = new(ctx);
     if(c.TryGotoNextBestFit(MoveType.After, i=>i.MatchLdloc3(), i=>i.MatchStfld<CollisionData>("Hit"))){
       c.EmitLdloc3();
       c.EmitLdarg0();
-      c.EmitDelegate(MoveHDelegate);
+      c.EmitLdcI4(0);
+      c.EmitDelegate(HitDelegate);
     } else DebugConsole.WriteFailure("Failed to make actor moveH IL hook for triggerModifier",true);
-  }
-  static void MoveVDelegate(Platform h, Actor a){
-    if(h.Get<ChildMarker>() is ChildMarker c) c.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new HitInfo(c.parent,a,false));
   }
   static void HookMoveV(ILContext ctx){
     ILCursor c = new(ctx);
     while(c.TryGotoNextBestFit(MoveType.After, i=>i.MatchLdloc3(), i=>i.MatchStfld<CollisionData>("Hit"))){
       c.EmitLdloc3();
       c.EmitLdarg0();
-      c.EmitDelegate(MoveVDelegate);
+      c.EmitLdcI4(1);
+      c.EmitDelegate(HitDelegate);
     }
   }
   public class CoyotePlatformMarker:Component{
