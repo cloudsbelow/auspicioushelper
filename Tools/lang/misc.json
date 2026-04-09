@@ -70,7 +70,10 @@
         "description": "Spikes with recoloring options and options to fix common speed issues with spikes. With all options enabled, the spikes will kill you only if your velocity 'relative' to them is not moving away",
         "placements": {
             "type": "Texture to use. Rooted in Atlases/Gameplay/danger/spikes/ ",
-            "direction": ["DO NOT TOUCH", "the rotation value. Do not change this directly, use the R key on the selection. Changing in this box will break the entity."],
+            "direction": [
+                "DO NOT TOUCH",
+                "the rotation value. Do not change this directly, use the R key on the selection. Changing in this box will break the entity."
+            ],
             "fancy": "Fancy recoloring option. See wiki for details. For example (000,fff)->(fff,000)",
             "tint": "Multiplicative tint color",
             "dreamThru": "Lets you move through these spikes in a dream state (dreamblocks will go through these)",

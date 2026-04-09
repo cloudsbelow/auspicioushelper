@@ -44,6 +44,7 @@ entities.auspicioushelper/ChannelClearController.attributes.description.channel=
 entities.auspicioushelper/ChannelClearController.attributes.description.value=Set the channel to this value
 entities.auspicioushelper/ChannelClearController.attributes.description.clear_all=Completely reset all channel values to 0
 entities.auspicioushelper/ChannelClearController.attributes.description.clear_prefix=Set all channel values with this prefix to 0
+entities.auspicioushelper/ChannelClearController.attributes.description.advanced=Specify a list of channels and new values. Example abc:1, xyz:@pqr[+2]
 
 # auspicioushelper/CollisionCounter
 entities.auspicioushelper/CollisionCounter.placements.description.channel collision counter=Count the number of collisions between entities in two groups
@@ -90,12 +91,14 @@ entities.auspicioushelper/ChannelMathController.attributes.description.multi_typ
 entities.auspicioushelper/ChannelMathController.attributes.description.activation_cond=When to try to start scripts
 entities.auspicioushelper/ChannelMathController.attributes.description.debug=Whether to print debug information to the current debugging view
 entities.auspicioushelper/ChannelMathController.attributes.description.notifying_override=List of channels that override the usual watched channels as a starting condition
+entities.auspicioushelper/ChannelMathController.attributes.description.run_when_awake=Start this program on room load
 entities.auspicioushelper/ChannelMathController.attributes.description.only_run_for_nonzero=Won't run when notifying channels change to set to zero
 
 # auspicioushelper/ChannelPlayerWatcher
 entities.auspicioushelper/ChannelPlayerWatcher.placements.description.Channel Player Watcher=Watch the player and set a channel when various conditions are met
 entities.auspicioushelper/ChannelPlayerWatcher.attributes.description.channel=Channel to set
 entities.auspicioushelper/ChannelPlayerWatcher.attributes.description.valueWhenMissing=Value to set when player is dead
+entities.auspicioushelper/ChannelPlayerWatcher.attributes.description.mode=Set the channel when ___
 entities.auspicioushelper/ChannelPlayerWatcher.attributes.description.custom=Perform reflection, getting all fields in this list successively and trying to cast to double. Kinda cursed
 
 # auspicioushelper/ChannelReflector
@@ -114,6 +117,7 @@ entities.auspicioushelper/ChannelSprite.attributes.description.edge_type=How to 
 entities.auspicioushelper/ChannelSprite.attributes.description.xml_spritename=name of the XML sprite
 entities.auspicioushelper/ChannelSprite.attributes.description.cases=number of cases defined in XML
 entities.auspicioushelper/ChannelSprite.attributes.description.depth=it's what you would expect from this field
+entities.auspicioushelper/ChannelSprite.attributes.description.materialIdentifiers=Currently unimplemented. Just use a applier smh
 
 # auspicioushelper/ChannelSwitch
 entities.auspicioushelper/ChannelSwitch.placements.description.Channel Switch=Core switch that actually toggles channels
@@ -126,6 +130,9 @@ entities.auspicioushelper/ChannelSwitch.attributes.description.seeker_toggle=Whe
 entities.auspicioushelper/ChannelSwitch.attributes.description.on_value=Value to set when on
 entities.auspicioushelper/ChannelSwitch.attributes.description.off_value=Value to set when off
 entities.auspicioushelper/ChannelSwitch.attributes.description.cooldown=Cooldown for hitting this particular switch (the channel itself is not constrained)
+entities.auspicioushelper/ChannelSwitch.attributes.description.onSfx=Given in normal event form
+entities.auspicioushelper/ChannelSwitch.attributes.description.offSfx=Given in normal event form
+entities.auspicioushelper/ChannelSwitch.attributes.description.dieSfx=Given in normal event form
 entities.auspicioushelper/ChannelSwitch.attributes.description.switchsprite=Define the sprite so that it matches vanilla format.
 
 # auspicioushelper/ChannelTheo
@@ -176,6 +183,13 @@ entities.auspicioushelper/ChannelToFlag.placements.description.Channel Flag Sett
 entities.auspicioushelper/ChannelToFlag.attributes.description.channel=the channel to read
 entities.auspicioushelper/ChannelToFlag.attributes.description.flag=the flag to set
 
+# auspicioushelper/ChannelApproacher
+entities.auspicioushelper/ChannelApproacher.placements.description.channel approach controller=Controller used to make the value of one channel approach the value of another at a certain rate.
+entities.auspicioushelper/ChannelApproacher.attributes.description.towardsChannel=The value to approach
+entities.auspicioushelper/ChannelApproacher.attributes.description.amount=Channel representing the amount to change by per unit time (either per frame or second depending on whether useDT is selected). Can be a constant number.
+entities.auspicioushelper/ChannelApproacher.attributes.description.outChannel=Channel to change
+entities.auspicioushelper/ChannelApproacher.attributes.description.useDt=Multiply the amount by delta time when approaching. Should be used if amount should specify change per second
+
 
 ##############
 ###  junk  ###
@@ -219,6 +233,9 @@ entities.auspicioushelper/spinner.attributes.description.color=Base color to use
 entities.auspicioushelper/spinner.attributes.description.fancy=Fancy recoloring option. See wiki for details. For example (000,fff)->(fff,000)
 entities.auspicioushelper/spinner.attributes.description.border=Border color. Can be transparent for borderless spinners.
 
+# auspicioushelper/JuckterField
+entities.auspicioushelper/JuckterField.placements.description.Juckter Field=Throw a holdable into it! pretty self explanatory. Works with template holdables.
+
 
 ##############
 ###  misc  ###
@@ -228,7 +245,7 @@ entities.auspicioushelper/spinner.attributes.description.border=Border color. Ca
 entities.auspicioushelper/Anti0fZone.placements.name.main=Anti 0f Zone
 entities.auspicioushelper/Anti0fZone.placements.description.main=Prevents certain zero-frameable inputs from happening while inside this entity
 entities.auspicioushelper/Anti0fZone.attributes.description.holdables=Pick up holdables on the first possible pixel
-entities.auspicioushelper/Anti0fZone.attributes.description.player_colliders=Hit player colliders on the first possible pixel (if speed or number of dashes changes, will stop your movement)
+entities.auspicioushelper/Anti0fZone.attributes.description.player_colliders=Hit player colliders on the first possible pixel (if speed or number of dashes changes, will end the frame's movement)
 entities.auspicioushelper/Anti0fZone.attributes.name.always_walljumpcheck=Check Unsolid Walljumps
 entities.auspicioushelper/Anti0fZone.attributes.description.always_walljumpcheck=Check for walljumps off of non-solids each pixel (needed if using sideways jumpthrus) (slow; only use in the area directly around the jumpthru)
 entities.auspicioushelper/Anti0fZone.attributes.description.triggers=Hit triggers on the first possible pixel
@@ -239,15 +256,24 @@ entities.auspicioushelper/Anti0fZone.attributes.description.cover_whole_room=Mak
 entities.auspicioushelper/ArbitraryDie.placements.description.Arbitrary shape kill area=Kill area with the shape of a specified image
 entities.auspicioushelper/ArbitraryDie.attributes.description.image=Image to use as visuals and collider shape. Rooted in Graphics/Atlases/Gameplay/ (i.e. if using decal texture, decals/ must be added in front of the texture path used in the decal)
 entities.auspicioushelper/ArbitraryDie.attributes.description.CustomColliderPath=Override the above image for only the collider
+entities.auspicioushelper/ArbitraryDie.attributes.description.scaleX=Horizontal stretch factor
+entities.auspicioushelper/ArbitraryDie.attributes.description.scaleY=Vertical stretch factor
 entities.auspicioushelper/ArbitraryDie.attributes.description.color=Multiplicative tint color
+entities.auspicioushelper/ArbitraryDie.attributes.description.rotation=Rotation in degrees
+entities.auspicioushelper/ArbitraryDie.attributes.description.depth=Depth (negative is more in front; player is 0, fgtiles are -10000)
 entities.auspicioushelper/ArbitraryDie.attributes.description.alphaCutoff=Pixels whose alpha is higher than this value will be collidable
 
 # auspicioushelper/ArbitrarySolid
 entities.auspicioushelper/ArbitrarySolid.placements.description.Arbitrary shape solid=Solid with the exact shape of a specified image. Suggested to use with pixel leniency trigger. 
 entities.auspicioushelper/ArbitrarySolid.attributes.description.safe=If berries can be collected while standing here
+entities.auspicioushelper/ArbitrarySolid.attributes.description.soundIndex=Check wiki for a list of indices
 entities.auspicioushelper/ArbitrarySolid.attributes.description.image=Image to use as visuals and collider shape. Rooted in Graphics/Atlases/Gameplay/ (i.e. if using decal texture, decals/ must be added in front of the texture path used in the decal)
 entities.auspicioushelper/ArbitrarySolid.attributes.description.CustomColliderPath=Override the above image for only the collider
+entities.auspicioushelper/ArbitrarySolid.attributes.description.scaleX=Horizontal stretch factor
+entities.auspicioushelper/ArbitrarySolid.attributes.description.scaleY=Vertical stretch factor
 entities.auspicioushelper/ArbitrarySolid.attributes.description.color=Multiplicative tint color
+entities.auspicioushelper/ArbitrarySolid.attributes.description.rotation=Rotation in degrees
+entities.auspicioushelper/ArbitrarySolid.attributes.description.depth=Depth (negative is more in front; player is 0, fgtiles are -10000)
 entities.auspicioushelper/ArbitrarySolid.attributes.description.alphaCutoff=Pixels whose alpha is higher than this value will be collidable
 entities.auspicioushelper/ArbitrarySolid.attributes.description.occludeLight=Whether this entitiy casts shadows (only the solid pixels). Relatively optimized; no need to worry about lag if there are not hundreds of these entities
 
@@ -268,6 +294,9 @@ entities.auspicioushelper/CassetteFixerThing.placements.description.Cassette blo
 # auspicioushelper/SillySpikes
 entities.auspicioushelper/SillySpikes.placements.name.main=Relative Spikes
 entities.auspicioushelper/SillySpikes.placements.description.main=Spikes with recoloring options and options to fix common speed issues with spikes. With all options enabled, the spikes will kill you only if your velocity 'relative' to them is not moving away
+entities.auspicioushelper/SillySpikes.attributes.description.type=Texture to use. Rooted in Atlases/Gameplay/danger/spikes/ 
+entities.auspicioushelper/SillySpikes.attributes.name.direction=DO NOT TOUCH
+entities.auspicioushelper/SillySpikes.attributes.description.direction=the rotation value. Do not change this directly, use the R key on the selection. Changing in this box will break the entity.
 entities.auspicioushelper/SillySpikes.attributes.description.fancy=Fancy recoloring option. See wiki for details. For example (000,fff)->(fff,000)
 entities.auspicioushelper/SillySpikes.attributes.description.tint=Multiplicative tint color
 entities.auspicioushelper/SillySpikes.attributes.description.dreamThru=Lets you move through these spikes in a dream state (dreamblocks will go through these)
@@ -280,6 +309,7 @@ entities.auspicioushelper/SillySpikes.attributes.description.canAttach=Whether t
 
 # auspicioushelper/DecalRecolor
 entities.auspicioushelper/DecalRecolor.placements.description.Decal recolor controller=Controller to recolor decals non-multiplicatively
+entities.auspicioushelper/DecalRecolor.attributes.description.scope=Where to apply the recolor
 entities.auspicioushelper/DecalRecolor.attributes.description.texture=Textures to recolor. Can use fancy matching with *
 entities.auspicioushelper/DecalRecolor.attributes.description.recolor=Fancy recoloring option. See wiki for details. For example (000,fff)->(fff,000)
 
@@ -323,17 +353,20 @@ entities.auspicioushelper/PortalGateH.attributes.name.right_facing_f0=Portal 1 F
 entities.auspicioushelper/PortalGateH.attributes.description.right_facing_f0=If the first portal should face right
 entities.auspicioushelper/PortalGateH.attributes.name.right_facing_f1=Portal 2 Facing Right
 entities.auspicioushelper/PortalGateH.attributes.description.right_facing_f1=If the second portal should face right
+entities.auspicioushelper/PortalGateH.attributes.description.flipGravity=Gravityhelper must be enabled
 entities.auspicioushelper/PortalGateH.attributes.description.color_hex=The portal color
 entities.auspicioushelper/PortalGateH.attributes.description.attached=If the portals are attached to solids
 entities.auspicioushelper/PortalGateH.attributes.name.giveRCB=Gives Reverse Corner Boost
 entities.auspicioushelper/PortalGateH.attributes.description.giveRCB=Whether the portal should give reverse corner boost on exiting portal
 entities.auspicioushelper/PortalGateH.attributes.description.instant_camera=Switch the camera when moving through the portals to keep the player at the same screen position
+entities.auspicioushelper/PortalGateH.attributes.description.depth=Render depth of portal lights
 
 # auspicioushelper/SpiralBossBeam
 entities.auspicioushelper/SpiralBossBeam.placements.name.main=Spiral Boss Beam
 entities.auspicioushelper/SpiralBossBeam.placements.description.main=A Boss Beam that rotates
 entities.auspicioushelper/SpiralBossBeam.attributes.description.start_angle=The starting angle in radians
 entities.auspicioushelper/SpiralBossBeam.attributes.description.speed=The rotation speed in radians/sec
+entities.auspicioushelper/SpiralBossBeam.attributes.description.depth=Render dept
 
 # auspicioushelper/TrackedCassette
 entities.auspicioushelper/TrackedCassette.placements.name.main=Tracked Cassette
@@ -362,7 +395,7 @@ entities.auspicioushelper/FinderDepth.attributes.description.depth=The new depth
 
 # auspicioushelper/EntityMarkingFlag
 entities.auspicioushelper/EntityMarkingFlag.placements.name.main=Entity Marker
-entities.auspicioushelper/EntityMarkingFlag.placements.description.main=Finds an entity by ID and assigns it a string id. Add to a zztemplates room.
+entities.auspicioushelper/EntityMarkingFlag.placements.description.main=Finds an entity by ID and assigns it a string id. If put in a template, logs parent template's full path.
 entities.auspicioushelper/EntityMarkingFlag.attributes.description.path=The entity ID
 entities.auspicioushelper/EntityMarkingFlag.attributes.description.identifier=The unique identifier to give the entity, when found
 
@@ -423,6 +456,8 @@ entities.auspicioushelper/CustomDreamlayer.attributes.description.insideColor=Th
 entities.auspicioushelper/templateFiller.placements.name.main=Template Filler
 entities.auspicioushelper/templateFiller.placements.description.main=Place this entity so that it's covering your desired group of objects, and then it can be used as a template (make sure the room name starts with "zztemplates-")
 entities.auspicioushelper/templateFiller.attributes.description.template_name=The name of this template. When using this template, specify it like <roomname>/<templatename>, assuming this template is placed in a room named "zztemplates-<roomname>"
+entities.auspicioushelper/templateFiller.attributes.name.oldTemplateName=ignore this
+entities.auspicioushelper/templateFiller.attributes.description.oldTemplateName=for kyfex's fancy thing
 
 # auspicioushelper/templateholdable
 entities.auspicioushelper/templateholdable.placements.name.main=Template Holdable
@@ -518,6 +553,8 @@ entities.auspicioushelper/TemplateChannelmover.attributes.description.complete=W
 entities.auspicioushelper/TemplateChannelmover.attributes.description.alternateEasing=Whether easing should apply symmetrically
 entities.auspicioushelper/TemplateChannelmover.attributes.description.shake=Whether this will shake upon reaching a knot.
 entities.auspicioushelper/TemplateChannelmover.attributes.name._loenn_display_template=[LÖNN] Display Template
+entities.auspicioushelper/TemplateChannelmover.attributes.description.startupTime=Amount of time needed before the mover will move after the channel has changed. Equivalent to shake time of flag switch gates.
+entities.auspicioushelper/TemplateChannelmover.attributes.description.sound=Take a sound from vert's sound bucket
 
 # auspicioushelper/TemplateBelt
 entities.auspicioushelper/TemplateBelt.placements.description.Template Belt=Make a conveyer belt of entities
@@ -618,7 +655,7 @@ entities.auspicioushelper/TemplateGluable.attributes.description.depthoffset=How
 entities.auspicioushelper/TemplateGluable.attributes.description.glue_to_identifier=The entity ID path to glue to. The number found after the ID: in loenn. Can also specify 'player' to glue to player.
 entities.auspicioushelper/TemplateGluable.attributes.description.maxSpeed=The maximum speed this template can approach its target position with
 entities.auspicioushelper/TemplateGluable.attributes.description.constraint=Constrain the entity's movement. For spline options, you must add nodes. Will get as close as possible to the entity without violating its constraint (i.e. changing X in an onlyY constraint or leaving the spline in a spline constraint)
-entities.auspicioushelper/TemplateGluable.attributes.description.setProgressChannel=Currently unimplemented TODO
+entities.auspicioushelper/TemplateGluable.attributes.description.setProgressChannel=Set channel to current progress. Varies by constraint mode.
 entities.auspicioushelper/TemplateGluable.attributes.name._loenn_display_template=[LÖNN] Display Template
 
 # auspicioushelper/TemplateIceblock
@@ -626,7 +663,7 @@ entities.auspicioushelper/TemplateIceblock.placements.description.Template Icebl
 entities.auspicioushelper/TemplateIceblock.attributes.description.template=The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.
 entities.auspicioushelper/TemplateIceblock.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
 entities.auspicioushelper/TemplateIceblock.attributes.description.sinkTime=How long it will sink for
-entities.auspicioushelper/TemplateIceblock.attributes.description.sinkDist=How far it will sink during its sink time
+entities.auspicioushelper/TemplateIceblock.attributes.description.sinkDist=How far it will sink during its sink time. Two numbers can be given to specify a movement in the x direction.
 entities.auspicioushelper/TemplateIceblock.attributes.description.respawnTime=How long it takes to respawn
 entities.auspicioushelper/TemplateIceblock.attributes.description.triggerable=Whether it will start sinking when triggered by child events
 entities.auspicioushelper/TemplateIceblock.attributes.description.ridingTriggers=Whether riding this entity triggers it
@@ -646,6 +683,9 @@ entities.auspicioushelper/TemplateKevin.attributes.description.left=Whether you 
 entities.auspicioushelper/TemplateKevin.attributes.description.right=Whether you can hit the right side
 entities.auspicioushelper/TemplateKevin.attributes.description.top=Whether you can hit the top side
 entities.auspicioushelper/TemplateKevin.attributes.description.bottom=Whether you can hit the bottom side
+entities.auspicioushelper/TemplateKevin.attributes.description.returning=Whether the template should return to its starting position
+entities.auspicioushelper/TemplateKevin.attributes.description.ImpactSfx=Standard event path
+entities.auspicioushelper/TemplateKevin.attributes.description.StartSfx=Standard event path
 entities.auspicioushelper/TemplateKevin.attributes.description.hitJumpthrus=Whether jumpthrus should block this entity's movement. Works for sideways and upsidedown jumpthrus (and regular).
 entities.auspicioushelper/TemplateKevin.attributes.description.throughDashblocks=Whether to move through breakable blocks like dashblocks or breakable template blocks
 entities.auspicioushelper/TemplateKevin.attributes.name._loenn_display_template=[LÖNN] Display Template
@@ -667,7 +707,7 @@ entities.auspicioushelper/TemplateMoonblock.attributes.description.template=The 
 entities.auspicioushelper/TemplateMoonblock.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
 entities.auspicioushelper/TemplateMoonblock.attributes.description.drift_frequency=How fast the template bobs up and down
 entities.auspicioushelper/TemplateMoonblock.attributes.description.drift_amplitude=How much distance the template bobs up and down
-entities.auspicioushelper/TemplateMoonblock.attributes.description.sink_amount=How much distance the template sinks
+entities.auspicioushelper/TemplateMoonblock.attributes.description.sink_amount=How much distance the template sinks. Two numbers can be given to specify x/y sinks for horizontal movemnent
 entities.auspicioushelper/TemplateMoonblock.attributes.description.sink_speed=How fast the template sinks when stood on or grabbed
 entities.auspicioushelper/TemplateMoonblock.attributes.description.dash_influence=How far a dash will push this block
 entities.auspicioushelper/TemplateMoonblock.attributes.description.startphase=The floating phase this template should start on, in radians
@@ -753,20 +793,19 @@ entities.auspicioushelper/TemplateTemplate.attributes.name._loenn_display_templa
 entities.auspicioushelper/TemplateTriggerModifier.placements.description.Template Trigger Modifier=A template wrapper that changes the way parent templates recieve trigger events from children
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.template=The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.advancedTouchOptions=Touch events in this list will have the opposite behavior to triggerOnTouch. Works as either blacklist or whitelist.
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.triggerOnTouch=Trigger when player touches, jumps off of, etc
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.advancedTouchOptions=Match all touches with *. Specific player states needed can be specified with more slashes - use log for more information about paths. If a single '*' is present, remaining items will work as a blacklist.
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.channel=When this channel is set to a nonzero value, trigger the template
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.setChannel=Set this channel when this template is triggered. Can be given advanced input; a:3,b:@c[*2] sets channel a to 3 and channel b to twice the value of channel c. 
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.skipChannel=When this channel is set, triggering events will pass over this template without being modified
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateRiding=Child zipmovers/falling blocks will trigger from this being stood on
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateDashHit=Whether dashhits go through this template
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateTrigger=Whether to pass trigger events to parents
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.hideTrigger=Whether to hide trigger events (preventing parents from triggering.) Events are unhidden at next trigger modifier
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.blockTrigger=Block all triggers
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.delay=Delay all trigger events by this amount.
-entities.auspicioushelper/TemplateTriggerModifier.attributes.description.blockFilter=Works as a comma seperated white/blacklist. Trigger categories on this list have opposite behavior to the blockTrigger box. Can end strings with * for fuzzy matching
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.delay=Delay all trigger events by this amount. (seconds)
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.blockFilter=Block trigger events with a certain path, preventing them from reaching parent triggerables. Use log to learn trigger paths. Comma seperated with wildcard * matching. Include a single * as an item to turn additional items into a blacklist insteada of a whitelist
 entities.auspicioushelper/TemplateTriggerModifier.attributes.description.log=Log any trigger types to the debug console. Used to determine what to put in white/blacklist
 entities.auspicioushelper/TemplateTriggerModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.neverTriggerOnAwake=If the trigger channel is set at awake, don't trigger the parent until it changes again.
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.collideWith=Trigger parent templates when the entity or template with the given ID intersects with this template's child solids
+entities.auspicioushelper/TemplateTriggerModifier.attributes.description.propagateTrigger=Whether to pass trigger events to parents
 
 # auspicioushelper/TemplateZipmover
 entities.auspicioushelper/TemplateZipmover.placements.name.main=Template Zipmover
@@ -783,12 +822,27 @@ entities.auspicioushelper/TemplateZipmover.attributes.description.speed=How fast
 entities.auspicioushelper/TemplateZipmover.attributes.description.returnSpeed=How fast to return. The return will take 1/returnSpeed seconds.
 entities.auspicioushelper/TemplateZipmover.attributes.description.easing=Easing function to use when outgoing
 entities.auspicioushelper/TemplateZipmover.attributes.description.returnEasing=Easing to use when returning
+entities.auspicioushelper/TemplateZipmover.attributes.description.outgoingSound=Ask vert about these. the event needs to be special idk not sound
+entities.auspicioushelper/TemplateZipmover.attributes.description.returningSound=Ask vert about these. the event needs to be special idk not sound
 entities.auspicioushelper/TemplateZipmover.attributes.name._loenn_display_template=[LÖNN] Display Template
 
 # auspicioushelper/TemplateDisplacer
+entities.auspicioushelper/TemplateDisplacer.placements.description.Template Displacer=Used to offset a template to all nodes. Placing a node over a connected entity template will add the displaced entity to that template.
 entities.auspicioushelper/TemplateDisplacer.attributes.description.template=The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.
 entities.auspicioushelper/TemplateDisplacer.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
 entities.auspicioushelper/TemplateDisplacer.attributes.name._loenn_display_template=[LÖNN] Display Template
+
+# auspicioushelper/TemplateResetter
+entities.auspicioushelper/TemplateResetter.placements.description.Template Resetter=Template that can be destroyed and created at will
+entities.auspicioushelper/TemplateResetter.attributes.description.template=The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.
+entities.auspicioushelper/TemplateResetter.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
+entities.auspicioushelper/TemplateResetter.attributes.description.resetChannel=When this channel is set to a nonzero value, the contained template will be recreated (destroying the old one if it exists)
+entities.auspicioushelper/TemplateResetter.attributes.description.destroyChannel=When this channel is set to a nonzero value, the contained template will be destroyed.
+entities.auspicioushelper/TemplateResetter.attributes.description.particles=Whether destruction of this template creates debris
+entities.auspicioushelper/TemplateResetter.attributes.description.resetOnTrigger=Whether triggering this template should trigger a reset
+entities.auspicioushelper/TemplateResetter.attributes.description.startWith=Whether to start with an instance created
+entities.auspicioushelper/TemplateResetter.attributes.description.blockedByPlayer=Whether this should be blocked from reforming when it would overlap the player
+entities.auspicioushelper/TemplateResetter.attributes.name._loenn_display_template=[LÖNN] Display Template
 
 
 ##################
@@ -799,6 +853,7 @@ entities.auspicioushelper/TemplateDisplacer.attributes.name._loenn_display_templ
 triggers.auspicioushelper/FadeChannelTrigger.placements.description.channel fade=Fade between two channel values depending on player position in the trigger
 triggers.auspicioushelper/FadeChannelTrigger.attributes.description.from=From value to fade from
 triggers.auspicioushelper/FadeChannelTrigger.attributes.description.to=To value to fade from
+triggers.auspicioushelper/FadeChannelTrigger.attributes.description.positionMode=hi! dm cloudsbelow the code tl8q_ and they will accept a (reasonable) feature request. Limit first person.
 triggers.auspicioushelper/FadeChannelTrigger.attributes.description.onlyOnce=Remove this trigger after it is exited for the first time
 triggers.auspicioushelper/FadeChannelTrigger.attributes.description.channel=The channel to change
 triggers.auspicioushelper/FadeChannelTrigger.attributes.description.activeChannel=If specified, the trigger will do nothing if this channel is zero

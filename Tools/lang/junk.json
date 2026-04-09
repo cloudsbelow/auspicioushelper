@@ -53,5 +53,10 @@
             "fancy": "Fancy recoloring option. See wiki for details. For example (000,fff)->(fff,000)",
             "border": "Border color. Can be transparent for borderless spinners."
         }
+    },
+    "entities.auspicioushelper/JuckterField": {
+        "p_name": "Juckter Field",
+        "description": "Throw a holdable into it! pretty self explanatory. Works with template holdables.",
+        "placements": {}
     }
 }

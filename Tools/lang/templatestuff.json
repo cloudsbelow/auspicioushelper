@@ -92,7 +92,10 @@
         "description": "Place this entity so that it's covering your desired group of objects, and then it can be used as a template (make sure the room name starts with \"zztemplates-\")",
         "placements": {
             "template_name": "The name of this template. When using this template, specify it like <roomname>/<templatename>, assuming this template is placed in a room named \"zztemplates-<roomname>\"",
-            "oldTemplateName": ["ignore this","for kyfex's fancy thing"]
+            "oldTemplateName": [
+                "ignore this",
+                "for kyfex's fancy thing"
+            ]
         }
     },
     "entities.auspicioushelper/templateholdable": {
@@ -543,7 +546,8 @@
                 "[LÖNN] Display Template"
             ],
             "neverTriggerOnAwake": "If the trigger channel is set at awake, don't trigger the parent until it changes again.",
-            "collideWith": "Trigger parent templates when the entity or template with the given ID intersects with this template's child solids"
+            "collideWith": "Trigger parent templates when the entity or template with the given ID intersects with this template's child solids",
+            "propagateTrigger": "Whether to pass trigger events to parents"
         },
         "p_name": "Template Trigger Modifier"
     },

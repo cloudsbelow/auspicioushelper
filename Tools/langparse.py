@@ -62,7 +62,8 @@ def parse_lua_file(path):
         # --- detect start of data block ---
         if "data = {" in stripped:
             in_data = True
-            brace_depth = 1
+            stripped = stripped.split("data =",1)[1]
+            brace_depth = stripped.count("{")-stripped.count("}")
             continue
 
         if in_data:
