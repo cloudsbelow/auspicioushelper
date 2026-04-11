@@ -68,3 +68,44 @@ public class TemplateTriggerModifier:Template{
 public class TemplateResetter:Template{
   public override string BaseTemplateSprite => "treset";
 }
+
+[CustomEntity("auspicioushelper/MaterialTemplate", ["auspicioushelper"])]
+public class MaterialTemplate:Template{
+  public override string BaseTemplateSprite => "tmat";
+}
+
+[CustomEntity("auspicioushelper/TemplateMoveblock", ["auspicioushelper"])]
+public class TemplateArrowblock:Template{
+  public override string BaseTemplateSprite => "tmat";
+}
+
+[CustomEntity("auspicioushelper/TemplateStaticmover", ["auspicioushelper"])]
+public class TemplateStaticmover:Template{
+  public override string BaseTemplateSprite => "tmat";
+}
+
+
+[CustomEntity("auspicioushelper/TemplateChannelmover",["auspicioushelper"])]
+public class TemplateChannelmover:NodedTemplate{
+  public override string BaseTemplateSprite => "tchan";
+}
+
+[CustomEntity("auspicioushelper/TemplateBelt",["auspicioushelper"])]
+public class TemplateBelt:NodedTemplate{
+  public override string BaseTemplateSprite => "tconv";
+}
+
+[CustomEntity("auspicioushelper/TemplateGluable",["auspicioushelper"])]
+public class TemplateGluable:NodedTemplate{
+  public override string BaseTemplateSprite => "tglue";
+}
+
+[CustomEntity("auspicioushelper/TemplateSwapblock",["auspicioushelper"])]
+public class TemplateSwapblock:NodedTemplate{
+  public override string BaseTemplateSprite => "tswap";
+}
+
+[CustomEntity("auspicioushelper/TemplateZipmover",["auspicioushelper"])]
+public class TemplateZipmover:NodedTemplate{
+  public override string BaseTemplateSprite => "tzip";
+}

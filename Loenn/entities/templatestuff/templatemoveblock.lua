@@ -80,4 +80,17 @@ function entity.nodeTexture(room, entity)
 end
 entity.nodeDepth = -100000
 
+function entity.rotate(room, entity, direction)
+  entity.direction = ({
+    ["left"]="top",
+    ["top"]="right",
+    ["right"]="bottom",
+    ["bottom"]="left",
+  })[entity.direction] or "right"
+  if direction ~= 0 then
+      entity.rotation = ((entity.rotation or 0) + direction * 90) % 360
+  end
+  return direction ~= 0
+end
+
 return entity

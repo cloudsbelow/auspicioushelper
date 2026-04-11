@@ -39,5 +39,6 @@ end
 
 entity.selection = aelperLib.template_selection
 entity.draw = aelperLib.get_entity_draw("tstat")
+entity.nodeTexture = "objects/auspicioushelper/templates/tstat"
 
 return entity

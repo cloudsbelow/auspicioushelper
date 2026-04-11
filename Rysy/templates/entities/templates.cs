@@ -28,3 +28,6 @@ public class Template:LonnEntity {
     return st.Create(Pos);
   }
 }
+public class NodedTemplate:Template{
+  
+}
