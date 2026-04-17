@@ -83,6 +83,10 @@ public class TemplateArrowblock:Template{
 public class TemplateStaticmover:Template{
   public override string BaseTemplateSprite => "tmat";
 }
+[CustomEntity("auspicioushelper/TemplateDreamblockModifier", ["auspicioushelper"])]
+public class TemplateDreamblock:Template{
+  public override string BaseTemplateSprite => "tmat";
+}
 
 
 [CustomEntity("auspicioushelper/TemplateChannelmover",["auspicioushelper"])]

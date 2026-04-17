@@ -111,8 +111,14 @@
         "description": "For adding entities to shader layers",
         "placements": {
             "can_be_ID_path": "Keep this checked always.",
-            "identifier": "The entity ID path of the entity you want to include (found after ID: at the top of the loenn entity menu). Use 'player' for the player, 'fg' for foreground tiles and 'bg' for background tiles.",
-            "materialLayer": "Identifier of the layer to add the entity to",
+            "identifier": [
+                "path",
+                "The entity ID path of the entity you want to include (found after ID: at the top of the loenn entity menu). Use 'player' for the player, 'fg' for foreground tiles and 'bg' for background tiles."
+            ],
+            "materialLayer": [
+                "Material Identifier",
+                "Identifier of the material layer to add the entity to"
+            ],
             "dontNormalRender": "Turn off normal rendering for this entity while in operation",
             "toggleChannel": "Channel to toggle between modified/original rendering",
             "priority": "The priority of this layer. Used when putting this entity in multiple layers simultaneously to decide which it appears in. (don't normal render will stop this item from rendering in lower priority layers as well as in normal usage)"

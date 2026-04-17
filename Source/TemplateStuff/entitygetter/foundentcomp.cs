@@ -47,8 +47,7 @@ public class FoundEntity:OnAnyRemoveComp{
         j++;continue;
       }
       o = Util.ReflectGet(o,path[i],true);
-      DebugConsole.WriteFailure($"The reflection process on entity {e?.ToString()} failed at index {i} looking for {path[i]} on {o?.ToString()}");
-      return 0;
+      if(o==null) return 0;
     }
     return o;
   }

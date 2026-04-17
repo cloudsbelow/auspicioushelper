@@ -12,7 +12,8 @@ entity.placements = {
     data = {
       path = "0",
       channel = "",
-      collider = "rect:[-8,-8,16,16]"
+      collider = "rect:[-8,-8,16,16]",
+      boundsColors = ""
     }
   }
 }

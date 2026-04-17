@@ -7,10 +7,10 @@
 
 using System;
 using System.Collections.Generic;
+using auspicioushelper.Rysy;
 using Microsoft.Xna.Framework;
-using Monocle;
 
-namespace Celeste.Mod.auspicioushelper;
+namespace auspicioushelper.Rysy;
 
 
 public struct IntRect{
@@ -36,9 +36,8 @@ public struct IntRect{
   public IntRect(int x,int y, int w, int h){
     this.x=x; this.y=y; this.w=w; this.h=h;
   }
-  public IntRect(Entity e){
-    x=(int)Math.Round(e.Left); y=(int)Math.Round(e.Top); 
-    w=(int)Math.Round(e.Width); h=(int)Math.Round(e.Height);
+  public IntRect(Int2 loc, int w, int h){
+    this.x=loc.x; this.y=loc.y; this.w=w; this.h=h;
   }
   public IntRect(Rectangle r){
     x=r.X; y=r.Y; w=r.Width; h=r.Height;
@@ -63,9 +62,6 @@ public struct IntRect{
   }
   public bool CollideExRect(int ox, int oy, int ow, int oh){
     return x+w>ox && y+h>oy && x<ox+ow && y<oy+oh;
-  }
-  public bool CollideFr(FloatRect other){
-    return CollideExRect(other.x,other.y,other.w,other.h);
   }
   public bool CollideIr(IntRect other){
     return CollideExRect(other.x,other.y,other.w,other.h);
@@ -136,7 +132,5 @@ public struct IntRect{
   }
   public IntRect union_(Int2 point)=>fromCorners(Int2.Min(point,tlc),Int2.Max(point,brc));
   public IntRect union_(IntRect o)=>fromCorners(Int2.Min(o.tlc,tlc),Int2.Max(o.brc,brc));
-  
-  public static implicit operator FloatRect(IntRect o)=>new FloatRect(o.x,o.y,o.w,o.h); 
   public static implicit operator Rectangle(IntRect o)=>new(o.x,o.y,o.w,o.h);
 }

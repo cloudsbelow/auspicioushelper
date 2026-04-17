@@ -99,6 +99,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   public TemplateTriggerModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
     triggerOnTouch = d.Bool("triggerOnTouch",false);
+    log = d.Bool("log",false);
     foreach(string s in Util.listparseflat(d.Attr("advancedTouchOptions",""),true)){
       if(Util.removeWhitespace(s)=="*"){
         triggerOnTouch = true;
@@ -134,7 +135,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       if(blockManager == null) blockManager = new();
       blockManager.Add(s);
     }
-    log = d.Bool("log",false);
     if(!string.IsNullOrWhiteSpace(d.Attr("setChannel",""))) adv = new(d.Attr("setChannel",""));
     OnDashCollide = handleDash;
     skipCh = d.Attr("skipChannel","");

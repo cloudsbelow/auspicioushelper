@@ -42,7 +42,7 @@ public class auspicioushelperModule : EverestModule {
   [OnLoad.EverestEvent(typeof(Everest.Events.Level), nameof(Everest.Events.Level.OnTransitionTo))]
   void OnTransition(Level level, LevelData next, Vector2 direction){
     Session.save();
-    ChannelState.unwatchTemporary();
+    ChannelState.unwatchTemporary(true);
     MarkedRoomParser.clearDynamicRooms();
     if(Session is {} s)s.transitions++;
 
@@ -67,7 +67,7 @@ public class auspicioushelperModule : EverestModule {
     TemplateBehaviorChain.mainRoom.Clear();
     if(playerIntro == Player.IntroTypes.Respawn){
       Session.load(null);
-      ChannelState.unwatchAll();
+      ChannelState.unwatchTemporary(false);
       UpdateHook.TimeSinceTransMs = 1000000;
 
       OnReset.run();
@@ -120,7 +120,7 @@ public class auspicioushelperModule : EverestModule {
     CACHENUM++;
     MapHider.handleReload(); 
     try {
-      ChannelState.unwatchAll();
+      ChannelState.ClearAll();
       if(Engine.Instance.scene is LevelLoader l){
         SetFoldermod(l.Level.Session);
         DebugConsole.Write("\n\nReloading Map! In foldermod: ",InFolderMod);

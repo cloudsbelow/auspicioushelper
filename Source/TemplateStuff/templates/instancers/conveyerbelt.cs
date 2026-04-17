@@ -48,17 +48,17 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
     if(!string.IsNullOrWhiteSpace(channel)) return;
     List<BeltItem> l= new();
     float max = spline.segments-(loop?0:1);
-    float i = initialOffset*speed;
+    float ioff = initialOffset*speed;
     float step = speed*maxtimer;
-    i += step*MathF.Floor((max-i)/step);
+    float numinst = loop? Math.Max(1, MathF.Round((max-ioff)/step)): MathF.Ceiling((max-ioff)/step);
     
-    for(; i>=0; i-=speed*maxtimer){
+    for(int j=(int)numinst-1; j>=0; j--){
       SplineAccessor spos = new(spline, Vector2.Zero, true, loop);
-      spos.set(Util.ApplyEasingFrac(easing,i,out var _));
+      spos.set(Util.ApplyEasingFrac(easing,j*step+ioff,out var _));
       Template nte = addInstance(spos.pos);
-      belt.Enqueue(new(){te=nte, extent = i, sp=spos});
+      belt.Enqueue(new(){te=nte, extent = j*step+ioff, sp=spos});
     }
-    timer = -i/speed;
+    timer = (step-ioff)/speed;
   }
   public override void addTo(Scene scene) {
     spline = SplineEntity.GetSpline(dat,SplineEntity.Types.centripetalNormalized);

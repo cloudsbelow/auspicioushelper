@@ -20,7 +20,6 @@ public static class Finder{
   [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
   public static Dictionary<string, List<Action<Entity>>> flagged = new();
   public static void watch(string path, Action<Entity> thing){
-    hooks.enable();
     foreach(var sig in path.Split(',')) try{
       if(string.IsNullOrWhiteSpace(sig)) continue;
       DebugConsole.Write($"watching \"{sig}\"");
@@ -58,19 +57,23 @@ public static class Finder{
       flagged.TryGetValue(matchstr="trigger"+d.ID.ToString(), out ident)
     )finding = ident;
   }
-  public static void EndingLoad(EntityData d){
+  public static Level addingLevel;
+  public static void EndingLoad(EntityData d, Level l){
     if(finding!=null){
       if(last==null){
         DebugConsole.WriteFailure($"Failed to find the entity {d.Name} with id {d.ID} - (maybe this entity adds itself non-standardly?)");
         if(auspicioushelperModule.InFolderMod) DebugConsole.MakePostcard($"Failed to find the entity {d.Name} with id {d.ID}. This entity may not be compatible or there may be mod conflicts.");
       } else {
         DebugConsole.Write($"Found the entity {d.Name} with id {d.ID} - position {last.Position}");
+        addingLevel = l;
         foreach(var a in finding) a(last);
+        addingLevel = null;
       }
     } 
     finding = null;
     last = null;
   }
+  [OnLoad.ILHook(typeof(Level),nameof(Level.orig_LoadLevel))]
   public static void LLILHook(ILContext ctx){
     var c = new ILCursor(ctx);
     Type et = typeof(List<EntityData>.Enumerator);
@@ -81,6 +84,7 @@ public static class Finder{
     if(!c.TryGotoNext(MoveType.Before, instr=>instr.MatchLdloca(16),instr=>instr.MatchCall(et,"MoveNext"))) goto bad;
     c.Index++;
     c.EmitLdloc(17);
+    c.EmitLdarg0();
     c.EmitDelegate(EndingLoad);
 
     //triggers
@@ -90,12 +94,13 @@ public static class Finder{
     if(!c.TryGotoNext(MoveType.Before, instr=>instr.MatchLdloca(16),instr=>instr.MatchCall(et,"MoveNext"))) goto bad;
     c.Index++;
     c.EmitLdloc(46);
+    c.EmitLdarg0();
     c.EmitDelegate(EndingLoad);
     return;
     bad:
       DebugConsole.WriteFailure("Failed to add hook to entity finder",true);
   }
-  static ILHook llhook;
+  [OnLoad.OnHook(typeof(EntityList),nameof(EntityList.Add),Util.HookTarget.Normal,[typeof(Entity)])]
   public static void AddHook(On.Monocle.EntityList.orig_Add_Entity orig, EntityList self, Entity e){
     if(self.Scene is Level l){
       //if(e!=null)DebugConsole.Write("Add "+ e?.ToString());
@@ -107,14 +112,6 @@ public static class Finder{
     }
     orig(self, e);
   } 
-  [OnLoad]
-  public static HookManager hooks = new HookManager(()=>{
-    llhook = new ILHook(typeof(Level).GetMethod("orig_LoadLevel",Util.GoodBindingFlags), LLILHook);
-    On.Monocle.EntityList.Add_Entity+=AddHook;
-  },void ()=>{
-    llhook?.Dispose();
-    On.Monocle.EntityList.Add_Entity-=AddHook;
-  });
 
 
 
@@ -132,9 +129,38 @@ public static class Finder{
   [MapenterEv(nameof(Search))]
   [CustomloadEntity]
   public class ColliderModifier:Entity{
+    class WrapperImg(Entity on, CMod from, Color[] colors):Entity(on.Position){
+      public override void Update() {
+        base.Update();
+        if(on.Scene == null) RemoveSelf();
+        Depth = Math.Max(on.Depth+1,2);
+      }
+      public override void Render() {
+        if(from != null && !on.Collider.Equals(from.replace)) return;
+        IntRect r = new FloatRect(on).munane();
+        if(!on.Collidable){
+          if(colors.Length<3 || !MaterialPipe.clipBounds.CollideIr(r)) return;
+          Color c = colors[2];
+          for(int i=0; i<r.w-1; i+=2){
+            Draw.Rect(new IntRect(r.x+i,r.y,1,1),c);
+            Draw.Rect(new IntRect(r.x+i+1,r.y+r.h-1,1,1),c);
+          }
+          for(int i=0; i<r.h-1; i+=2){
+            Draw.Rect(new IntRect(r.x,r.y+i+1,1,1),c);
+            Draw.Rect(new IntRect(r.x+r.w-1,r.y+i,1,1),c);
+          }
+          return;
+        }
+        base.Render();
+        if(colors.Length==1 || colors[1].A==255) Draw.Rect(r,colors[0]);
+        else Draw.HollowRect(r,colors[0]);
+        if(colors.Length==1) return;
+        Draw.Rect(r.expandAll_(-1),colors[1]);
+      }
+    }
     class CMod:ChannelTracker{
       Collider orig;
-      Collider replace;
+      public Collider replace;
       bool restorable;
       Entity e;
       public CMod(EntityData d, Entity e, string c):base(c){
@@ -151,9 +177,13 @@ public static class Finder{
     }
     static void Search(EntityData d){
       Finder.watch(d.Attr("path"),(e)=>{
+        CMod c=null;
         if(d.tryGetStr("channel", out var str)){
-          e.Add(new CMod(d,e,str));
+          e.Add(c=new CMod(d,e,str));
         } else e.Collider = buildCollider(d);
+        if(Util.listparseflat(d.Attr("boundsColors","")).Map(Util.hexToColor) is {Count: >0} a){
+          addingLevel.Add(new WrapperImg(e,c,a.ToArray()));
+        }
       });
     }
 

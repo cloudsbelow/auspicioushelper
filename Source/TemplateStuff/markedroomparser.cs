@@ -280,31 +280,21 @@ internal static class MarkedRoomParser{
       if(i!=templatestr.Length) templatestr = templatestr.Substring(i);
     }
     string[] ts = templatestr.Split('/');
-    for(int idx = ts.Length-1; idx>=0; idx--){
-      string b = "";
-      for(int i=0; i<idx; i++)b+=ts[i];
-      string e = "";
-      for(int i=idx; i<ts.Length; i++)e+=ts[i];
-      TemplateRoom dr=null;
-      if(idx==0){
-        if(parentRoom!=null){
-          if(parentRoom.templates.TryGetValue(e, out filler)) goto success;
-        } else {
-          string ldn = (scene as Level)?.Session.LevelData.Name??"NULL";
-          if(dynamicRooms.TryGetValue(ldn, out dr)){
-            if(dr.templates.TryGetValue(e, out filler)) goto success;
-          }
-          if(staticRooms.TryGetValue(ldn,out dr)){
-            if(dr.templates.TryGetValue(e, out filler)) goto success;
-          }
-        }
+    string e = ts[^1];
+    string b = ts[0];
+    if(ts.Length==1){
+      if(parentRoom!=null){
+        if(parentRoom.templates.TryGetValue(e, out filler)) goto success;
+      } else {
+        string ldn = (scene as Level)?.Session.LevelData.Name??"NULL";
+        if(dynamicRooms.TryGetValue(ldn, out var dr) && dr.templates.TryGetValue(e, out filler)) goto success;
+        if(staticRooms.TryGetValue(ldn,out var sr) && sr.templates.TryGetValue(e, out filler)) goto success;
       }
-      if(dynamicRooms.TryGetValue(b, out dr)){
-        if(dr.templates.TryGetValue(e, out filler)) goto success;
-      }
-      if(staticRooms.TryGetValue(b,out dr)){
-        if(dr.templates.TryGetValue(e, out filler)) goto success;
-      }
+      b="";
+    }
+    {
+      if(dynamicRooms.TryGetValue(b, out var dr) && dr.templates.TryGetValue(e, out filler)) goto success;
+      if(staticRooms.TryGetValue(b,out var sr) && sr.templates.TryGetValue(e, out filler)) goto success;
     }
     filler = null;
     return false;
