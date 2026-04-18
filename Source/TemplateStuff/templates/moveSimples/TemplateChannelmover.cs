@@ -114,7 +114,7 @@ public class TemplateChannelmover:Template{
       pauseTimer = startupTime;
       if(pauseTimer<=0){
         if(!muted) Audioplay("event:/auspicioushelper/channelmover/start/",0.5f);
-      } else shake(pauseTimer);
+      } else if(doshake) shake(pauseTimer);
       if(!muted) sfx.Play("event:/auspicioushelper/channelmover/loop/"+soundSuffix,"speed",0.5f);
     }
   }

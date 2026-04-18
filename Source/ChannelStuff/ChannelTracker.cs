@@ -41,6 +41,7 @@ public class ChannelTracker : OnAnyRemoveComp{
   }
   public class ChannelTrackerList{
     List<ChannelTracker> list = new();
+    internal IReadOnlyList<ChannelTracker> getList()=>list;
     HashSet<ChannelTracker> toRemove = new();
     List<ChannelTracker> deferredAdd = new();
     List<ChannelTracker> deferredRemove = new();
@@ -56,20 +57,18 @@ public class ChannelTracker : OnAnyRemoveComp{
       lval = n;
       if(toRemove.Count==0) foreach(var ct in list)ct.setChVal(n);
       else {
-        List<ChannelTracker> nlist = new();
-        foreach(var ct in list){
-          if(toRemove.Contains(ct)) continue;
+        list.RemoveAll(ct=>{
+          if(toRemove.Contains(ct)) return true;
           ct.setChVal(n);
-          nlist.Add(ct);
-        }
+          return false;
+        });
         toRemove.Clear();
-        list = nlist;
       }
       locked = false;
       Catchup();
     }
     void Catchup(){
-      if(deferredAdd.Count==0 && deferredRemove.Count==0) return;
+      if(deferredAdd.Count==0 && deferredRemove.Count==0 && ToApply.Count==0) return;
       foreach(var v in deferredAdd) Add(v);
       deferredAdd.Clear();
       foreach(var v in deferredRemove) Remove(v);
@@ -97,16 +96,13 @@ public class ChannelTracker : OnAnyRemoveComp{
       }
     }
     public bool RemoveTemp(){
-      List<ChannelTracker> nlist = new();
-      foreach(var ct in list){
-        if(ct.Entity is {} en && (en.TagCheck(Tags.Persistent) || en.TagCheck(Tags.Global))){
-          if(!toRemove.Contains(ct))nlist.Add(ct);
-        }
-        toRemove.Add(ct);//This also removes inexplicable duplicates
-      }
+      list.RemoveAll(ct=>{
+        if(ct.Entity is not {} en || !(en.TagCheck(Tags.Persistent) || en.TagCheck(Tags.Global)) || toRemove.Contains(ct)) return true;
+        toRemove.Add(ct); //deal with duplicates
+        return false;
+      });
       toRemove.Clear();
-      list = nlist;
-      return nlist.Count>0;
+      return list.Count>0;
     }
     public void Add(ChannelTracker ct){
       if(locked){
