@@ -99,7 +99,7 @@ public class TemplatePushblock:TemplateMoveCollidable{
         QueryIn qe = getQself();
         HashSet<Spring> exclude = new(GetChildren<Spring>());
         foreach(SpringTracker s in Scene.Tracker.GetComponents<SpringTracker>()){
-          if(!exclude.Contains(s.Spring) && qe.Collide(new FloatRect(s.Entity))){
+          if(!exclude.Contains(s.Spring) && qe.Collide(s.Entity)){
             s.Spring.BounceAnimate();
             Vector2 m = SpringTracker.Multiplier(s.Spring);
             speed = SpringTracker.GetDir(s.Spring) switch {

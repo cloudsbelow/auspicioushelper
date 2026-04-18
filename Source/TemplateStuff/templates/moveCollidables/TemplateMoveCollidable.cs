@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Microsoft.Xna.Framework;
@@ -56,119 +57,80 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     setCollidability(old);
   }
   public class QueryBounds {
-    public struct DRect{
-      public FloatRect f;
-      public CollisionDirection d;
-      public DRect(FloatRect f, CollisionDirection d=CollisionDirection.solid){
-        this.f=f; this.d=d;
+    public struct ColItem{
+      public Collider c;
+      public CollisionDirection dir;
+      public ColItem(Collider c, CollisionDirection d=CollisionDirection.solid){
+        this.c=c; this.dir=d;
       }
     }
-    public List<DRect> rects=new();
-    public List<MiptileCollider> grids=new();
+    public List<ColItem> colliders=new();
     public HashSet<BreakableRect> breakable=null;
-    public bool Collide(FloatRect o, Vector2 offset, CollisionDirection movedir=CollisionDirection.yes){
-      float nx = MathF.Round(o.x)+offset.X;
-      float ny = MathF.Round(o.y)+offset.Y;
-      foreach(var rect in rects){
-        if((movedir&rect.d)!=0 && rect.f.CollideExRect(nx,ny,o.w,o.h)) return true;
-      }
-      FloatRect n = new FloatRect(nx,ny,o.w,o.h);
-      foreach(var grid in grids){
-        if(grid.collideFr(n)) return true;
-      }
+    public bool Collide(FloatRect r, Vector2 offset, CollisionDirection movedir=CollisionDirection.yes){
+      foreach(var a in colliders) if((movedir&a.dir)!=0 && a.c.Collide(r.munane())) return true;
       return false;
     }
-    public bool Collide(MiptileCollider g, Vector2 offset, CollisionDirection movedir=CollisionDirection.yes){
-      foreach(var grid in grids){
-        if(grid.CollideMipTileOffset(g,offset)) return true;
+    public bool Collide(Collider c, Vector2 offset, CollisionDirection movedir=CollisionDirection.yes){ 
+      var ent = c.Entity;
+      Vector2 oldpos = ent.Position;
+      ent.Position = ent.Position+offset;
+      foreach(var a in colliders) if((movedir&a.dir)!=0 && a.c.Collide(c)){
+        ent.Position = oldpos;
+        return true;
       }
-      foreach(var rect in rects){
-        if((movedir&rect.d)!=0 && g.collideFrOffset(rect.f, -offset)) return true;
-      }
+      ent.Position = oldpos;
       return false;
     }
     public bool Collide(QueryIn q, Vector2 offset, CollisionDirection movedir){
       movedir = movedir|CollisionDirection.yes;
-      foreach(var g in q.grids) if(Collide(g,offset,movedir)) return true;
-      //again we only need to shift the floatrects
-      foreach(var r in q.rects) if(Collide(r,offset+q.shift,movedir)) return true;
+      foreach(var a in q.colliders) if(Collide(a,offset,movedir)) return true;
       return false;
     }
     public bool Collide(QueryIn q, Vector2 offset)=>Collide(q,offset,Util.getCollisionDir(offset));
   }
   public class QueryIn{
-    public List<FloatRect> rects=new();
-    public List<MiptileCollider> grids=new();
+    public List<Collider> colliders = new();
     public FloatRect bounds = FloatRect.empty;
-    public HashSet<Solid> gotten;
-    //MipGrids move with their underlying grids. However FloatRects do not.
-    //We need to apply a shift with FloatRects after the entity has actually moved.
-    public Vector2 shift = Vector2.Zero;
-    public bool Collide(FloatRect f){
-      if(!bounds.CollideFr(f)) return false;
-      foreach(var g in grids) if(g.collideFr(f)) return true;
-      f.shift(-shift);
-      foreach(var r in rects) if(r.CollideFr(f)) return true;
+    public HashSet<Platform> gotten;
+    public bool Collide(Collider c){
+      if(c is Grid g) c=MiptileCollider.fromGrid(g);
+      foreach(var a in colliders) if(a.Collide(c)) return true;
       return false;
     }
-    public bool Collide(MiptileCollider g){
-      if(!g.collideFrOffset(bounds,shift)) return false;
-      foreach(var r in rects) if(g.collideFrOffset(r,shift)) return true;
-      foreach(var o in grids) if(g.CollideMipTileOffset(o,Vector2.Zero)) return true;
-      return false;
-    }
-    public bool Collide(Entity e){
-      if(e.Collider is Grid g) return Collide(MiptileCollider.fromGrid(g));
-      else return Collide(new FloatRect(e));
-    }
-    public void ApplyShift(Vector2 v){
-      shift+=v;
-    }
+    public bool Collide(Entity e)=>Collide(e.Collider);
     public void BreakStuff(HashSet<BreakableRect> stuff, CollisionDirection dir){
       foreach(var desc in stuff){
         if(desc.toBreak.Collidable && (desc.dir&dir)!=0) if(Collide(desc.toBreak))desc.Break();
       }
     }
   }
+  static Collider asMgUtil(Collider c)=>c is Grid g? MiptileCollider.fromGrid(g):c;
   public static QueryBounds getQinfo(FloatRect f, HashSet<Entity> exclude, Scene Scene){
     QueryBounds res  =new();
     foreach(Solid s in Scene.Tracker.GetEntities<Solid>()){
-      if(!s.Collidable || exclude.Contains(s)) continue;
-      FloatRect coarseBounds = new FloatRect(s);
-      if(s.Collider is Hitbox h && f.CollideFr(coarseBounds)) res.rects.Add(new QueryBounds.DRect(coarseBounds,CollisionDirection.solid));
-      if(s.Collider is Grid g && f.CollideFr(coarseBounds)) res.grids.Add(MiptileCollider.fromGrid(g));
+      if(!s.Collidable || exclude.Contains(s) || s.Collider is not {} c || !f.CollideFr(new FloatRect(s))) continue;
+      res.colliders.Add(new(asMgUtil(c), CollisionDirection.solid));
     }
     return res;
   }
-  public static void AddJumpthrus(FloatRect f, QueryBounds q, QueryIn s, HashSet<Entity> exclude, Scene Scene){
-    foreach(JumpThru j in Scene.Tracker.GetEntities<JumpThru>()){
-      if(!j.Collidable || exclude.Contains(j)) continue;
-      FloatRect coarseBounds = new FloatRect(j);
-      if(j.Collider is Hitbox h && f.CollideFr(coarseBounds) && !s.Collide(coarseBounds)){
-        q.rects.Add(new QueryBounds.DRect(coarseBounds,CollisionDirection.up));
-      }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static void AddWithDir(List<Entity> from, FloatRect coarse, QueryBounds q, QueryIn s, HashSet<Entity> exclude, CollisionDirection d){
+    foreach(var j in from){
+      if(!j.Collidable || !coarse.CollideFr(new(j)) || exclude.Contains(j) || j.Collider is not {} c || s.Collide(c)) continue;
+      q.colliders.Add(new(asMgUtil(c),d));
     }
-    if(MaddiesIop.jt!=null && Scene.Tracker.Entities.TryGetValue(MaddiesIop.jt, out var li)) foreach(Entity j in li){
-      if(!j.Collidable || exclude.Contains(j)) continue;
-      FloatRect coarseBounds = new FloatRect(j);
-      if(j.Collider is Hitbox h && f.CollideFr(coarseBounds) && !s.Collide(coarseBounds)){
-        var dir = MaddiesIop.side.get(j)?CollisionDirection.right:CollisionDirection.left;
-        q.rects.Add(new (coarseBounds, dir));
-      }
+  }
+  public static void AddJumpthrus(FloatRect coarse, QueryBounds q, QueryIn s, HashSet<Entity> exclude, Scene Scene){
+    AddWithDir(Scene.Tracker.GetEntities<JumpThru>(), coarse, q, s, exclude, CollisionDirection.up);
+    if(MaddiesIop.dt!=null && Scene.Tracker.Entities.TryGetValue(MaddiesIop.dt,out var li)){
+      AddWithDir(li, coarse, q, s, exclude, CollisionDirection.down);
+    } 
+    if(MaddiesIop.samah!=null && Scene.Tracker.Entities.TryGetValue(MaddiesIop.samah,out li)){
+      AddWithDir(li, coarse, q, s, exclude, CollisionDirection.down);
     }
-    if(MaddiesIop.dt!=null && Scene.Tracker.Entities.TryGetValue(MaddiesIop.dt,out li)) foreach(Entity j in li){
-      if(!j.Collidable || exclude.Contains(j)) continue;
-      FloatRect coarseBounds = new FloatRect(j);
-      if(j.Collider is Hitbox h && f.CollideFr(coarseBounds) && !s.Collide(coarseBounds)){
-        q.rects.Add(new (coarseBounds, CollisionDirection.down));
-      }
-    }
-    if(MaddiesIop.samah!=null && Scene.Tracker.Entities.TryGetValue(MaddiesIop.samah,out li)) foreach(Entity j in li){
-      if(!j.Collidable || exclude.Contains(j)) continue;
-      FloatRect coarseBounds = new FloatRect(j);
-      if(j.Collider is Hitbox h && f.CollideFr(coarseBounds) && !s.Collide(coarseBounds)){
-        q.rects.Add(new (coarseBounds, CollisionDirection.down));
-      }
+    if(MaddiesIop.jt!=null && Scene.Tracker.Entities.TryGetValue(MaddiesIop.jt, out li)) foreach(Entity j in li){
+      if(!j.Collidable || !coarse.CollideFr(new(j)) || exclude.Contains(j) || j.Collider is not {} c || s.Collide(c)) continue;
+      q.colliders.Add(new(asMgUtil(c),MaddiesIop.side.get(j)?CollisionDirection.right:CollisionDirection.left));
     }
   }
   public QueryBounds getQinfo(FloatRect f, HashSet<Entity> exclude)=>getQinfo(f,exclude,Scene);
@@ -179,11 +141,8 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     res.gotten = new(all);
     foreach(Solid s in all){
       if(useOwnUncollidable || s.Collidable){
-        FloatRect coarseBounds = new FloatRect(s);
-        if(s.Collider is Grid g) res.grids.Add(MiptileCollider.fromGrid(g));
-        else if(s.Collider is Hitbox f) res.rects.Add(coarseBounds);
-        else continue; 
-        bounds = bounds._union(coarseBounds);
+        res.colliders.Add(asMgUtil(s.Collider));
+        bounds = bounds._union(new FloatRect(s));
       }
     }
     res.bounds = bounds;
@@ -234,7 +193,6 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     if(v!=Vector2.Zero){
       Position+=v;
       childRelposSafe();
-      s.ApplyShift(v);
       if(q.breakable!=null) s.BreakStuff(q.breakable,Util.getCollisionDir(v));
       return false;
     }
@@ -246,7 +204,6 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     if(v!=Vector2.Zero){
       Position+=v;
       childRelposSafe();
-      s.ApplyShift(v);
       if(q.breakable!=null) s.BreakStuff(q.breakable,Util.getCollisionDir(v));
       return false;
     }
@@ -283,7 +240,6 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
   }
   public struct BreakableRect{
     public Entity toBreak;
-    public FloatRect box;
     public CollisionDirection dir;
     public BreakableRect(Entity toBreak){
       this.toBreak=toBreak;
@@ -295,7 +251,6 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       else if(MaddiesIop.jt!=null && MaddiesIop.jt.IsInstanceOfType(toBreak)){
         dir = MaddiesIop.side.get(toBreak)?CollisionDirection.right:CollisionDirection.left;
       }
-      this.box = new FloatRect(toBreak);
     }
     public void Break(){
       if(toBreak is DashBlock db) db.Break(Vector2.Zero,Vector2.Zero,true,true);

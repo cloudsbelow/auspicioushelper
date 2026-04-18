@@ -46,13 +46,7 @@ public sealed class MiptileCollider:Grid{
   public override bool Collide(Circle circle){
     return mg.CollideCircle((circle.AbsolutePosition-tlc)/cellsize,circle.Radius/cellsize.X);
   }
-  public override bool Collide(Grid grid) {
-    if(grid is MiptileCollider o){
-      return CollideMipTileOffset(o,Vector2.Zero);
-    } else {
-      throw new NotImplementedException();
-    }
-  }
+  public override bool Collide(Grid grid)=>CollideMipTileOffset(fromGrid(grid), Vector2.Zero);
   public bool CollideMipTileOffset(MiptileCollider o, Vector2 offset){
     if(o.cellsize!=cellsize){
       if(o.cellsize.X>cellsize.X) return o.CollideMipTileOffset(this, -offset);
@@ -124,7 +118,7 @@ class DumbGridWrapper:Grid{
   }
   public override void Added(Entity entity) {
     base.Added(entity);
-    mtc.lastentity = entity;
+    mtc.Added(entity);
   }
   public override bool Collide(Vector2 point){
     Vector2 vector = point - base.AbsolutePosition;
@@ -134,6 +128,7 @@ class DumbGridWrapper:Grid{
   public override bool Collide(Circle c){
     return mg.CollideCircle((c.AbsolutePosition-tlc)/cellsize,c.Radius/cellsize.X);
   }
+  public override bool Collide(Grid grid)=>mtc.Collide(grid);
 }
 
 public class DelegatingPointcollider:ColliderList{

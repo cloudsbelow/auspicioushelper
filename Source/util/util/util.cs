@@ -324,6 +324,10 @@ public static partial class Util{
     }
     public IEnumerator<T> GetEnumerator()=>usingSet?set.GetEnumerator():list.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    public IReadOnlyList<T> GetList(){
+      if(usingSet) return list;
+      return set.ToArray();
+    }
   }
   public class OrderedSet<T>:IEnumerable<T>{
     HashSet<T> set = new();

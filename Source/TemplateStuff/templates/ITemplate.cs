@@ -116,6 +116,7 @@ public class Template:Entity, ITemplateChild{
     Depth = 10000+depthoffset;
     this.ownidpath=getOwnID(data);
     MovementLock.skiphooks.enable();
+    SourceData = data;
     if(string.IsNullOrEmpty(templateStr) && !ChainLock.locked){
       EmptySetup(data);
     }
@@ -492,6 +493,8 @@ public class Template:Entity, ITemplateChild{
     }
   }
   public override string ToString()=>base.ToString()+GetHashCode();
+  public virtual string declaredTypename=>null;
+  public string GetTypename()=>declaredTypename??SourceData?.Name.RemovePrefix("auspicioushelper/")??"NULL";
 }
 
 

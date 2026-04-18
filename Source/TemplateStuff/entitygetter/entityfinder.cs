@@ -22,7 +22,7 @@ public static class Finder{
   public static void watch(string path, Action<Entity> thing){
     foreach(var sig in path.Split(',')) try{
       if(string.IsNullOrWhiteSpace(sig)) continue;
-      DebugConsole.Write($"watching \"{sig}\"");
+      //DebugConsole.Write($"watching \"{sig}\"");
       string cl = Regex.Replace(sig,@"\s+","");
       if(!flagged.TryGetValue(cl, out var li)){
         flagged.Add(cl,li = new());

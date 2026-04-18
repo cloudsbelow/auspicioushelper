@@ -187,7 +187,7 @@ public class ConnectedBlocks:Entity{
       bool force = hit.Name=="auspicioushelper/TemplateBehaviorChain"&&hit.Bool("forceOwnPosition",false);
       Vector2? forcepos = force? hit.Position:null;
       var chain = new TemplateBehaviorChain.Chain(f, hit, forcepos, TemplateBehaviorChain.mainRoom);
-      var first = chain.NextEnt();
+      var first = chain.NextEntBackupFp(hit.Position); 
       first??=new EntityData(){
         Name=EntityParser.TemplateEmptyName,
         Position=hit.Position,Values=new(),

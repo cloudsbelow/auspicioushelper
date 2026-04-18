@@ -80,6 +80,12 @@ public class TemplateBehaviorChain:Entity{
         return Util.cloneWithForcepos(sequence[idx++],forcePos);
       } else return null;
     }
+    public EntityData NextEntBackupFp(Vector2 backupPos){
+      if(idx<sequence.Count){
+        if(forcePos!=null) return Util.cloneWithForcepos(sequence[idx++],forcePos);
+        else return Util.cloneWithForceposOffset(sequence[idx++],backupPos);
+      } else return null;
+    }
   }
   string templateStr;
   EntityData dat;

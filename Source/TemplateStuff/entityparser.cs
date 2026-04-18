@@ -147,9 +147,11 @@ anyways i want to praise it more it is wonderful
     }
     
     currentParent = t;
+    EntityData data = TemplateTemplate.withReplace(d);
     Entity e = null; 
-    using (new Template.ChainLock()) e = loader(l,ld,simoffset,TemplateTemplate.withReplace(d));
+    using (new Template.ChainLock()) e = loader(l,ld,simoffset,data);
     if(e==null) goto done;
+    e.SourceData = data;
     ChildMarker.Get(e,t);
     if(path!=null && Finder.flagged.TryGetValue(path+$"/{d.ID}",out var ident)){
       foreach(var a in ident) a(e);

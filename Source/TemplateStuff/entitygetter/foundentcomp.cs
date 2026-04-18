@@ -25,8 +25,12 @@ public class FoundEntity:OnAnyRemoveComp{
     found[ident]=f;
     return f;
   }
+  public static IReadOnlyList<string> foundIdents(Entity e){
+    if(e.Get<FoundEntity>() is not {} f) return Array.Empty<string>();
+    return f.idents.GetList();
+  }
   public override void OnRemove() {
-    foreach(var i in idents) if(found.GetValueOrDefault(i)==this)found.Remove(i);
+    foreach(var i in idents) if(found.GetValueOrDefault(i)==this) found.Remove(i);
   }
   public static object reflectGet(Entity e, List<string> path, List<int> args, int startidx = 2){
     object o = e;
