@@ -7,7 +7,11 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateCollisionModifier")]
+[MapenterEv(nameof(Search))]
 public class TemplateCollisionModifier:Template, Template.IRegisterEnts{
+  public static void Search(EntityData d){
+    foreach(var p in Util.listparseflat(d.Attr("paths",""))) if(!p.Contains('*')) Finder.enqueueIdent(p);
+  }
   class EKey():OnAnyRemoveComp(false,false){
     Util.HybridSet<HittableComp> inside = new();
     public static EKey Get(Entity e){
@@ -65,10 +69,11 @@ public class TemplateCollisionModifier:Template, Template.IRegisterEnts{
     if(e.Get<ChildMarker>() is {} m){
       Template c = m.parent;
       do {
+        if((pathv || paths==null) && typev) break;
         typename = c.GetTypename();
         if(log) DebugConsole.Write("testing", typename);
         typev |= typename!=null && types.GetOrDefault(typename??"NULL");
-        if(paths!=null && !string.IsNullOrEmpty(c.ownidpath)) pathv |= paths.GetOrDefault(c.fullpath);
+        if(paths!=null && !string.IsNullOrEmpty(c.ownidpath)) pathv |= paths.GetOrDefault(c.fullpath.RemoveSuffix("/"));
       }while((c=c.parent)!=null);
     }
     typev = typev!=invTypes;
@@ -94,7 +99,7 @@ public class TemplateCollisionModifier:Template, Template.IRegisterEnts{
   :base(d,offset+d.Position,depthoffset){
     foreach(var path in Util.listparseflat(d.Attr("paths",""))){
       if(path=="*") invPaths=true;
-      else paths.Add(path,true);
+      else paths.Add(path.RemoveSuffix("/"),true);
     }
     if(!paths.hasStuff) paths=null;
     foreach(var type in Util.listparseflat(d.Attr("types",""))){

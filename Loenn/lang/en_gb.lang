@@ -59,6 +59,7 @@ entities.auspicioushelper/FinderCollider.placements.description.channel collider
 entities.auspicioushelper/FinderCollider.attributes.description.path=Entity ID path to target
 entities.auspicioushelper/FinderCollider.attributes.description.channel=Channel to listen to. If left blank, will change the channel on spawn only.
 entities.auspicioushelper/FinderCollider.attributes.description.collider=New collider to set. Format is collidertype:[parameters] such as rect:[-8,-8,16,16] for a 16-wide centered rectangle
+entities.auspicioushelper/FinderCollider.attributes.description.boundsColors=Color a rectangular box around the new outline. Takes 3 colors (border, fill, outline)
 
 # auspicioushelper/channelTemplateMover
 entities.auspicioushelper/channelTemplateMover.placements.description.channel template gate mover=Move the nearest unrooted template. An unrooted template either has no parent or is disconnected from its parent's movement.
@@ -325,8 +326,10 @@ entities.auspicioushelper/enclorse.attributes.description.resettable=Whether to 
 # auspicioushelper/MaterialApplier
 entities.auspicioushelper/MaterialApplier.placements.description.Material Applier=For adding entities to shader layers
 entities.auspicioushelper/MaterialApplier.attributes.description.can_be_ID_path=Keep this checked always.
+entities.auspicioushelper/MaterialApplier.attributes.name.identifier=path
 entities.auspicioushelper/MaterialApplier.attributes.description.identifier=The entity ID path of the entity you want to include (found after ID: at the top of the loenn entity menu). Use 'player' for the player, 'fg' for foreground tiles and 'bg' for background tiles.
-entities.auspicioushelper/MaterialApplier.attributes.description.materialLayer=Identifier of the layer to add the entity to
+entities.auspicioushelper/MaterialApplier.attributes.name.materialLayer=Material Identifier
+entities.auspicioushelper/MaterialApplier.attributes.description.materialLayer=Identifier of the material layer to add the entity to
 entities.auspicioushelper/MaterialApplier.attributes.description.dontNormalRender=Turn off normal rendering for this entity while in operation
 entities.auspicioushelper/MaterialApplier.attributes.description.toggleChannel=Channel to toggle between modified/original rendering
 entities.auspicioushelper/MaterialApplier.attributes.description.priority=The priority of this layer. Used when putting this entity in multiple layers simultaneously to decide which it appears in. (don't normal render will stop this item from rendering in lower priority layers as well as in normal usage)
@@ -843,6 +846,16 @@ entities.auspicioushelper/TemplateResetter.attributes.description.resetOnTrigger
 entities.auspicioushelper/TemplateResetter.attributes.description.startWith=Whether to start with an instance created
 entities.auspicioushelper/TemplateResetter.attributes.description.blockedByPlayer=Whether this should be blocked from reforming when it would overlap the player
 entities.auspicioushelper/TemplateResetter.attributes.name._loenn_display_template=[LÖNN] Display Template
+
+# auspicioushelper/TemplateCollisionModifier
+entities.auspicioushelper/TemplateCollisionModifier.placements.description.Template Collision Modifier=Modify what the template can collide with
+entities.auspicioushelper/TemplateCollisionModifier.attributes.description.template=The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.
+entities.auspicioushelper/TemplateCollisionModifier.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
+entities.auspicioushelper/TemplateCollisionModifier.attributes.description.paths=paths of specific items to collide with. Using a template will collide with all children of that template. Can use fuzzy matching * only for templates.
+entities.auspicioushelper/TemplateCollisionModifier.attributes.description.types=All the types this should collide with. Including a template's type includes all children of those templates. Add a * to turn this into a blacklist. Can use fuzzy matching such as dreamb* to match dreamblocks. Use log to determine typename. 'actor' will also match all actors.
+entities.auspicioushelper/TemplateCollisionModifier.attributes.description.combinationMode=How to combine path and type results. OR means that either a matching type or path will collide. TypeMinusPath will collide matching types if they dont match the path. etc.
+entities.auspicioushelper/TemplateCollisionModifier.attributes.description.log=Print intersecting types to the current auspicious debug log
+entities.auspicioushelper/TemplateCollisionModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
 
 
 ##################

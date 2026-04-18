@@ -34,6 +34,14 @@ entity.fieldInformation = function(entity)
         combinationMode = {
           options = combinationModes,
           editable = false
+        },
+        types = {
+          fieldType="list",
+          elementDefault = ""
+        },
+        paths = {
+          fieldType="list",
+          elementDefault = ""
         }
     }
 end

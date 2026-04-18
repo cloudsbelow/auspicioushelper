@@ -100,7 +100,6 @@ public class TemplateChannelmover:Template{
     }
   }
   void Audioplay(string prefix, float? par=null){
-    DebugConsole.Write(prefix+soundSuffix,par??speedparam);
     Audio.Play(prefix+soundSuffix,virtLoc,"speed",par??speedparam);
   }
   void Arrive(){

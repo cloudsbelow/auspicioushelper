@@ -14,7 +14,7 @@ namespace Celeste.Mod.auspicioushelper.channelmath;
 public static class Parser{
   static Expression asInt(Expression e)=>Expression.Convert(e,typeof(int));
   static Expression asDouble(Expression e)=>Expression.Convert(e,typeof(double));
-  static Expression asBool(Expression e)=>Expression.Convert(e,typeof(bool));
+  static Expression asBool(Expression e)=>Expression.NotEqual(e,Expression.Constant((double)0,typeof(double)));
   class Descr{
     public Regex reg;
     public string mid;
@@ -68,8 +68,8 @@ public static class Parser{
       throw new Exception($"Could not find method {name} that accepts {num} arguments.");
     }),
     new Descr($"[\\!\\~]{TOK}",(s,l)=>l[0].Item1 switch {
-      "!"=>Expression.Not(asBool(s[l[1].Item2])),
-      "~"=>Expression.Not(asInt(s[l[1].Item2])),
+      "!"=>asDouble(Expression.Not(asBool(s[l[1].Item2]))),
+      "~"=>asDouble(Expression.Not(asInt(s[l[1].Item2]))),
       _=> throw new Exception("bye")
     },"\\!","\\~"),
     new Descr($"({TOK}(?:\\*|\\/|\\/\\/|\\%|\\%\\%))+{TOK}",(s,l)=>{

@@ -602,5 +602,20 @@
                 "[LÖNN] Display Template"
             ]
         }
+    },
+    "entities.auspicioushelper/TemplateCollisionModifier": {
+        "p_name": "Template Collision Modifier",
+        "description": "Modify what the template can collide with",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "paths": "paths of specific items to collide with. Using a template will collide with all children of that template. Can use fuzzy matching * only for templates.",
+            "types": "All the types this should collide with. Including a template's type includes all children of those templates. Add a * to turn this into a blacklist. Can use fuzzy matching such as dreamb* to match dreamblocks. Use log to determine typename. 'actor' will also match all actors.",
+            "combinationMode": "How to combine path and type results. OR means that either a matching type or path will collide. TypeMinusPath will collide matching types if they dont match the path. etc.",
+            "log": "Print intersecting types to the current auspicious debug log",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
+        }
     }
 }

@@ -47,7 +47,8 @@
         "placements": {
             "path": "Entity ID path to target",
             "channel": "Channel to listen to. If left blank, will change the channel on spawn only.",
-            "collider": "New collider to set. Format is collidertype:[parameters] such as rect:[-8,-8,16,16] for a 16-wide centered rectangle"
+            "collider": "New collider to set. Format is collidertype:[parameters] such as rect:[-8,-8,16,16] for a 16-wide centered rectangle",
+            "boundsColors": "Color a rectangular box around the new outline. Takes 3 colors (border, fill, outline)"
         },
         "p_name": "channel collider swapper"
     },

@@ -349,7 +349,7 @@ public static class ChannelState{
   public class AdvancedSetter{
     Dictionary<string, Tuple<string, double>> toDo = new();
     public AdvancedSetter(string str){
-      foreach(var v in Util.kvparseflat(str)){
+      foreach(var v in Util.kvparseflat(str,assumeValue:true)){
         Tuple<string,double> n=null;
         if(string.IsNullOrWhiteSpace(v.Value)) n = new(null,1);
         else if(v.Value[0]=='@') n = new(v.Value.Substring(1),0);
