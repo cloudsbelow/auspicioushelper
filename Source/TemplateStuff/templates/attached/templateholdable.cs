@@ -40,12 +40,19 @@ public interface ICustomHoldableRelease{
       c.EmitLdarg0();
     } else DebugConsole.WriteFailure("Could not add recoil hook", true);
   }
+  bool TryPickup(Player p)=>true;
+  static bool TryPickup(On.Celeste.Holdable.orig_Pickup orig, Holdable h, Player p){
+    if(h.Entity is ICustomHoldableRelease c && !c.TryPickup(p)) return false;
+    return orig(h,p);
+  }
   public static HookManager hooks = new(()=>{
     On.Celeste.Holdable.Release+=ReleaseHook;
     IL.Celeste.Player.Throw += ThrowHook;
+    On.Celeste.Holdable.Pickup += TryPickup;
   },()=>{
     On.Celeste.Holdable.Release-=ReleaseHook;
     IL.Celeste.Player.Throw -= ThrowHook;
+    On.Celeste.Holdable.Pickup -= TryPickup;
   },auspicioushelperModule.OnEnterMap);
 }
 
@@ -81,27 +88,20 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   float noGravityTimer=0;
   bool keepCollidableAlways = false;
   float playerfrac; float theofrac;
-  string wallhitsound;
+  string[] wallhitsound;
   float[] wallhitKeepspeed;
-  float gravity;
-  float friction;
-  float terminalvel;
-  bool dietobarrier;
+  float gravity, friction, terminalvel;
   bool respawning;
   float respawndelay;
   public EntityData d;
-  bool dontFlingOff=false;
-  bool hasBeenTouched = false;
-  bool showTutorial = false;
-  bool startFloating = false;
-  bool dangerous = false;
+  bool dontFlingOff=false, moveImmediately=false, dangerous=false, dietobarrier;
+  bool hasBeenTouched = false, showTutorial = false, startFloating=false, hasReflection=false;
   float voidDieOffset = 100;
   float minHoldTimer = 0.35f;
   float[] customThrowspeeds;
   Vector2 customRecoil;
-  bool moveImmediately = true;
-  bool hasReflection;
   float? neutralHolddelay = null;
+  ChannelState.ChannelReaderBool dontPickup = null;
   public TemplateHoldable(EntityData d, Vector2 offset):base(d.Position+offset){
     Position+=new Vector2(d.Width/2, d.Height);
     hoffset = d.Nodes.Length>0?(d.Nodes[0]-new Vector2(d.Width/2, d.Height)):new Vector2(0,-d.Height/2);
@@ -135,7 +135,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
 
     playerfrac = d.Float("player_momentum_weight",1);
     theofrac = d.Float("holdable_momentum_weight",0);
-    wallhitsound = d.Attr("wallhitsound","event:/game/05_mirror_temple/crystaltheo_hit_side");
+    wallhitsound = Util.listparseflat(d.Attr("wallhitsound","event:/game/05_mirror_temple/crystaltheo_hit_side")).ToArray();
     wallhitKeepspeed = Util.csparseflat(d.Attr("wallhit_speedretain",""),0.4f,0.6f);
     gravity = d.Float("gravity",800f);
     terminalvel = d.Float("terminal_velocity",200f);
@@ -154,8 +154,10 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     customThrowspeeds = Util.csparseflat(d.Attr("customThrowspeeds"));
     customRecoil = Util.toVec2(Util.csparseflat(d.Attr("customRecoil",""),80,0));
     Depth = -1;
+    dontPickup = new(d.String("cantPickupChannel","false"));
     Add(Mysolids = new());
   }
+  bool ICustomHoldableRelease.TryPickup(Player p)=>!dontPickup;
   GroupTracker.TrackedGroupComp Mysolids;
   templateFiller ext = null;
   void make(Scene s, templateFiller use = null){
@@ -277,7 +279,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       );
       bounds.expandLeft(force.X<0?num:1);
       bounds.expandRight(force.X>0?num:1);
-      var q = TemplateMoveCollidable.getQinfo(bounds, new(te.GetChildren<Solid>()), Scene);
+      var q = TemplateMoveCollidable.getQinfo(bounds, new(Mysolids), Scene);
       FloatRect f = new FloatRect(this);
       if(!q.Collide(f,Vector2.Zero)) goto done;
       if(Width>p.Width) f = new(p.Left,p.Top,p.Width,1);
@@ -361,14 +363,14 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     if (data.Hit is DashSwitch){
       (data.Hit as DashSwitch).OnDashCollide(null, Vector2.UnitX * MathF.Sign(Speed.X));
     }
-    Audio.Play(wallhitsound, Position);
+    if(wallhitsound.Length>0)Audio.Play(wallhitsound[0], Position);
     Speed.X *= -wallhitKeepspeed[0];
   }
   void OnCollideV(CollisionData data){
     if (data.Hit is DashSwitch){
       (data.Hit as DashSwitch).OnDashCollide(null, Vector2.UnitY * Math.Sign(Speed.Y));
     }
-    Audio.Play(wallhitsound, Position);
+    if(wallhitsound.Length>0)Audio.Play(wallhitsound[^1], Position);
     if (Speed.Y > 140f && !(data.Hit is DashSwitch) && !dontFlingOff) Speed.Y*= -wallhitKeepspeed[1];
     else Speed.Y=0;
   }
@@ -410,7 +412,8 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     te.ownLiftspeed = Hold.IsHeld? Hold.Holder.Speed:Speed;
     if (Hold.IsHeld){
       prevLiftspeed = Vector2.Zero;
-      if(actualDepth>=Hold.Holder.actualDepth)Depth = Hold.Holder.Depth-1;
+      if(dontPickup) Hold.Holder.Throw();
+      else if(actualDepth>=Hold.Holder.actualDepth)Depth = Hold.Holder.Depth-1;
     } else {
       //Position not being a whole number causes very annoying errors elsewhere
       Position = Position.Round();

@@ -21,6 +21,9 @@ entity.placements = {
       returning = false,
       spline = "simpleLinear",
       lastNodeIsKnot = true,
+      triggerable = false,
+      onDash = true,
+      earlyGracetime = 0.2,
       
       _loenn_display_template = true,
     }

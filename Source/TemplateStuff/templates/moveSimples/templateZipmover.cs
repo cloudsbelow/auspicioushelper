@@ -19,17 +19,11 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
   EntityData dat;
   public string channel {get;set;} = null;
   public enum ReturnType{
-    loop,
-    none,
-    normal,
+    loop, none, normal, onChannelReset
   }
   ReturnType rtype;
   public enum ActivationType{
-    ride,
-    dash,
-    rideAutomatic,
-    dashAutomatic,
-    manual
+    ride, dash, rideAutomatic, dashAutomatic, manual
   }
   ActivationType atype;
   Util.Easings outEasing = Util.Easings.SineIn;
@@ -45,19 +39,8 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
     Add(upd = new UpdateHook());
     Add(sfx);
     dat=d;
-    rtype = d.Attr("return_type","normal") switch {
-      "loop"=>ReturnType.loop,
-      "none"=>ReturnType.none,
-      _=>ReturnType.normal
-    };
-    atype = d.Attr("activation_type","ride") switch {
-      "ride"=>ActivationType.ride,
-      "dash"=>ActivationType.dash,
-      "rideAutomatic"=>ActivationType.rideAutomatic,
-      "dashAutomatic"=>ActivationType.dashAutomatic,
-      "manual"=>ActivationType.manual,
-      _=>ActivationType.ride,
-    };
+    rtype = d.Enum("return_type",ReturnType.normal);
+    atype = d.Enum("activation_type",ActivationType.ride);
     if(!d.Bool("propegateRiding"))prop &= ~Propagation.Riding;
     if(!string.IsNullOrWhiteSpace(d.Attr("channel","")))channel = d.Attr("channel");
     outSpeed = d.Float("speed",2);
@@ -141,7 +124,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
       Input.Rumble(RumbleStrength.Strong, RumbleLength.Medium);
       SceneAs<Level>().Shake();
       shake(0.1f);
-      if(channel!=null)ChannelState.SetChannel(channel,0);
+      if(rtype != ReturnType.onChannelReset && channel!=null)ChannelState.SetChannel(channel,0);
       sfx.instance?.setParameterValue("start_end",1);
       yield return 0.25f;
 
@@ -151,12 +134,14 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
       } else{
         if(currentSegment==spos.numsegs-1 && rtype == ReturnType.normal)goto returning;
         if(currentSegment<spos.numsegs-1 || rtype == ReturnType.loop)goto waiting;
+        if(rtype==ReturnType.onChannelReset) goto returning;
         else yield break;
       }
 
     returning:
       triggered=false;
       yield return 0.25f;
+      while(rtype == ReturnType.onChannelReset && (ct?.value??0)!=0) yield return null;
       sfx.Stop();
       if(returningSound.HasContent())sfx.Play(returningSound);
       at=0;
@@ -175,7 +160,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
 
       ownLiftspeed = Vector2.Zero;
       if(currentSegment>0) goto returning;
-      if(channel!=null)ChannelState.SetChannel(channel,0);
+      if(rtype != ReturnType.onChannelReset && channel!=null)ChannelState.SetChannel(channel,0);
       yield return 0.5f;
       sfx.Stop();
       goto waiting;

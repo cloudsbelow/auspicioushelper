@@ -9,7 +9,7 @@ entity.depth = -13000
 entity.nodeLimits = {1,-1}
 entity.nodeLineRenderType = "line"
 
-local rtypes = {"loop","none", "normal"}
+local rtypes = {"loop","none", "normal", "onChannelReset"}
 local atypes = {"ride","rideAutomatic","dash","dashAutomatic","manual"}
 local splineTypes = {"simpleLinear","compoundLinear","centripetalNormalized","centripetalDenormalized","uniformNormalized","uniformDenormalized"}
 local easings = {"Linear","SineIn","SineOut","SineInOut","QuadIn","QuadOut","CubeIn","CubeOut","Smoothstep","QuartIn","QuartOut","QuintIn","QuintOut"}

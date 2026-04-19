@@ -367,9 +367,9 @@ public static class ChannelState{
 
   internal class ChannelReader{
     public string ch;
-    public ChannelVal cache = null;
+    protected ChannelVal cache = null;
     public ChannelReader(string channel){
-      ch=channel.RemovePrefix("@");
+      ch=channel?.RemovePrefix("@");
       if(ch!=null) cache=new(double.NaN);
     }
   }
@@ -380,8 +380,7 @@ public static class ChannelState{
     )=>val = float.TryParse(parse, out var p)?p:default;
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator float(ChannelReaderFloat o){
-      if(o.ch==null) return o.val;
-      var c = o.cache;
+      if(o.cache is not {} c) return o.val;
       if(double.IsNaN(c.val)) c = o.cache = _getVal(o.ch);
       return (float) c.val;
     }
@@ -393,8 +392,7 @@ public static class ChannelState{
     )=>val = int.TryParse(parse, out var p)?p:default;
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator int(ChannelReaderInt o){
-      if(o.ch==null) return o.val;
-      var c = o.cache;
+      if(o.cache is not {} c) return o.val;
       if(double.IsNaN(c.val)) c = o.cache = _getVal(o.ch);
       return (int) Math.Floor(c.val);
     }
@@ -402,14 +400,13 @@ public static class ChannelState{
   internal class ChannelReaderBool:ChannelReader{
     bool val;
     public ChannelReaderBool(string parse):base(
-      (parse.Length==0 || int.TryParse(parse, out var _))?null:parse
+      (parse.Length==0 || bool.TryParse(parse, out var _))?null:parse
     )=>val = bool.TryParse(parse, out var p)?p:default;
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator bool(ChannelReaderBool o){
-      if(o.ch==null) return o.val;
-      var c = o.cache;
+      if(o.cache is not {} c) return o.val;
       if(double.IsNaN(c.val)) c = o.cache = _getVal(o.ch);
-      return c.val==0;
+      return c.val!=0;
     }
   }
 

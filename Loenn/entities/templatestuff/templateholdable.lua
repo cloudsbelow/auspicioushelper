@@ -44,6 +44,7 @@ entity.placements = {
       customThrowspeeds = "",
       mirrorReflection = true,
       customRecoil = "",
+      cantPickupChannel = "",
       
       _loenn_display_template = true,
     }

@@ -216,6 +216,9 @@ public struct FloatRect{
   public Rectangle munane(){
     return new Rectangle((int) Math.Round(x), (int) Math.Round(y), (int) w, (int) h);
   }
+  public Rectangle munane(Int2 offset){
+    return new Rectangle((int) Math.Round(x)+offset.x, (int) Math.Round(y)+offset.y, (int) w, (int) h);
+  }
   public override string ToString(){
       return "FloatRect:{"+string.Format("x:{0}, y:{1}, w:{2}, h:{3}",x,y,w,h)+"} ";
   }

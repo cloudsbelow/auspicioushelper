@@ -16,12 +16,9 @@ public class TemplateChannelmover:Template{
   public string channel {get;set;}
   SplineAccessor spos;
   protected override Vector2 virtLoc => Position+spos.pos;
-  bool toggle = false;
-  bool altern = false;
-  bool doshake = false;
+  bool toggle, altern, doshake, allowFraction, bonk, bonkedLastFrame;
   Util.Easings easing;
   EntityData dat;
-  bool allowFraction = false;
   float startupTime = 0;
   string soundSuffix=null;
   bool muted=>soundSuffix==null;
@@ -45,6 +42,7 @@ public class TemplateChannelmover:Template{
     if(!allowedSounds.Contains(soundSuffix)) soundSuffix=null;
     if(!muted) Add(sfx = new SoundSource());
     startupTime = d.Float("startupTime",0);
+    bonk = d.Bool("bonkMode",false);
   }
   float target;
   int low;
@@ -118,6 +116,21 @@ public class TemplateChannelmover:Template{
     }
   }
   SoundSource sfx;
+  public void tryMoveTo(float loc, float validLsMult){
+    if(!bonk){
+      spos.setSidedFromDir(Util.SafeMod(loc, spos.numsegs), Math.Sign(dir));
+      ownLiftspeed = validLsMult*spos.tangent;
+    } else {
+      float delta = Util.SafeMod(dir>0? loc-spos.t:spos.t-loc, spos.numsegs);
+      Vector2 likelyMove = (delta*spos.tangent).Abs()+Vector2.One*8;
+      var q = TemplateMoveCollidable.getq(this, likelyMove, true, true, false);
+      float orig = spos.t;
+      float ds = Math.Sign(dir);
+      float limit = spos.t+delta*ds;
+      //spos.moveDist()
+    }
+    childRelposSafe();
+  }
   public override void Update(){
     base.Update();
     if(pauseTimer>0){
@@ -136,9 +149,7 @@ public class TemplateChannelmover:Template{
         bool flag1 = afrac==cfrac;
         afrac = Util.EaseOutApproach(easing, afrac, target, Math.Abs(dir*Engine.DeltaTime), out float deriv);
         bool flag2 = afrac==target;
-        spos.setSidedFromDir(Util.SafeMod(afrac,spos.numsegs), Math.Sign(dir));
-        ownLiftspeed = spos.tangent*(flag1&&flag2? (afrac-cfrac)/MathF.Max(Engine.DeltaTime,0.001f) : relspd*dir*deriv); 
-        childRelposSafe();
+        tryMoveTo(afrac, flag1&&flag2? (afrac-cfrac)/MathF.Max(Engine.DeltaTime,0.001f) : relspd*dir*deriv);
         if(flag2){
           cfrac = afrac;
           Arrive();
@@ -151,9 +162,7 @@ public class TemplateChannelmover:Template{
         float x = altern && dir<0?1-cfrac:cfrac;
         float y = Util.ApplyEasing(easing, x, out var deriv);
         afrac = altern && dir<0?1-y:y;
-        spos.setSidedFromDir(low%spos.numsegs+afrac, Math.Sign(dir));
-        ownLiftspeed = spos.tangent*relspd*dir*deriv;
-        childRelposSafe();
+        tryMoveTo(low%spos.numsegs+afrac, relspd*dir*deriv);
         if(cfrac == 1){
           afrac = cfrac = 0;
           low++;

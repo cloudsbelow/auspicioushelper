@@ -67,7 +67,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     public List<ColItem> colliders=new();
     public HashSet<BreakableRect> breakable=null;
     public bool Collide(FloatRect r, Vector2 offset, CollisionDirection movedir=CollisionDirection.yes){
-      foreach(var a in colliders) if((movedir&a.dir)!=0 && a.c.Collide(r.munane())) return true;
+      foreach(var a in colliders) if((movedir&a.dir)!=0 && a.c.Collide(r.munane(Int2.Round(offset)))) return true;
       return false;
     }
     public bool Collide(Collider c, Vector2 offset, CollisionDirection movedir=CollisionDirection.yes){ 
@@ -133,14 +133,13 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       q.colliders.Add(new(asMgUtil(c),MaddiesIop.side.get(j)?CollisionDirection.right:CollisionDirection.left));
     }
   }
-  public QueryBounds getQinfo(FloatRect f, HashSet<Entity> exclude)=>getQinfo(f,exclude,Scene);
-  public QueryIn getQself(){
+  public static QueryIn getQself(Template self, bool useUncol){
     QueryIn res = new();
     FloatRect bounds = FloatRect.empty;
-    var all = GetChildren<Solid>(Propagation.Shake);
+    var all = self.GetChildren<Solid>(Propagation.Shake);
     res.gotten = new(all);
     foreach(Solid s in all){
-      if(useOwnUncollidable || s.Collidable){
+      if(useUncol || s.Collidable){
         res.colliders.Add(asMgUtil(s.Collider));
         bounds = bounds._union(new FloatRect(s));
       }
@@ -148,7 +147,8 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     res.bounds = bounds;
     return res;
   }
-  public Vector2 TestMove(QueryBounds q, QueryIn s, int amount, Vector2 dirvec){
+  public QueryIn getQself()=>getQself(this,useOwnUncollidable);
+  public static Vector2 TestMove(QueryBounds q, QueryIn s, int amount, Vector2 dirvec){
     int dir = Math.Sign(amount);
     int i = 0;
     while(i!=amount){
@@ -157,8 +157,8 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     }
     return dirvec*amount;
   }
-  public bool TestMove(Query qs, int amount, Vector2 dirvec)=>amount==0||TestMove(qs.q,qs.s,amount,dirvec)!=Vector2.Zero;
-  public Vector2 TestLeniency(QueryBounds q, QueryIn s, Vector2 ioffset, int maxLeniency, Vector2 leniencyVec){
+  public static bool TestMove(Query qs, int amount, Vector2 dirvec)=>amount==0||TestMove(qs.q,qs.s,amount,dirvec)!=Vector2.Zero;
+  public static Vector2 TestLeniency(QueryBounds q, QueryIn s, Vector2 ioffset, int maxLeniency, Vector2 leniencyVec){
     for(int i=1; i<=maxLeniency; i++){
       for(int j=-1; j<=1; j+=2){
         if(!q.Collide(s,i*j*leniencyVec+ioffset)) return i*j*leniencyVec+ioffset;
@@ -166,7 +166,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     }
     return Vector2.Zero;
   }
-  public bool TestMoveLeniency(QueryBounds q, QueryIn s, int amount, Vector2 dirvec, int maxLeniency, Vector2 leniencyVec, out Vector2 loc){
+  public static bool TestMoveLeniency(QueryBounds q, QueryIn s, int amount, Vector2 dirvec, int maxLeniency, Vector2 leniencyVec, out Vector2 loc){
     if(amount == 0){
       if(q.Collide(s,Vector2.Zero)){
         loc = TestLeniency(q,s,Vector2.Zero,maxLeniency,leniencyVec);
@@ -184,7 +184,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       return loc==Vector2.Zero;
     }
   }
-  public Vector2 TestMoveLeniency(QueryBounds q, QueryIn s, int amount, Vector2 dirvec, int maxLeniency, Vector2 leniencyVec){
+  public static Vector2 TestMoveLeniency(QueryBounds q, QueryIn s, int amount, Vector2 dirvec, int maxLeniency, Vector2 leniencyVec){
     bool res = TestMoveLeniency(q,s,amount,dirvec,maxLeniency,leniencyVec, out var v);
     return v;
   }
@@ -262,13 +262,13 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       }
     }
   }
-  public Query getq(Vector2 maxpotentialmovemagn){
-    QueryIn s = getQself();
+  public static Query getq(Template self, Vector2 maxpotentialmovemagn, bool getBreakables, bool useJts, bool useUncollidable){
+    QueryIn s = getQself(self, useUncollidable);
     Vector2 v = maxpotentialmovemagn.Abs().Ceiling();
     //HashSet<Entity> toExclude = new(s.gotten);
     List<Entity> l = new();
     var qbounds = s.bounds._expand(v.X,v.Y);
-    AddAllChildrenProp(l,Propagation.Shake);
+    self.AddAllChildrenProp(l,Propagation.Shake);
     foreach(Solid p in s.gotten){
       foreach(StaticMover sm in p.staticMovers){
         if(sm.Entity is TemplateStaticmover smt){
@@ -279,29 +279,30 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     }
     HashSet<Entity> toExclude = new(l);
     HashSet<BreakableRect> fbs = null;
-    if(moveThroughDashblocks){
+    if(getBreakables){
       fbs = new();
-      foreach(DashBlock f in Scene.Tracker.GetEntities<DashBlock>()){
-        if(f.Get<ChildMarker>()?.propagatesTo(this)??false) continue;
+      foreach(DashBlock f in self.Scene.Tracker.GetEntities<DashBlock>()){
+        if(f.Get<ChildMarker>()?.propagatesTo(self)??false) continue;
         fbs.Add(new(f));
       }
-      foreach(TemplateBlock b in Scene.Tracker.GetEntities<TemplateBlock>()){
-        if(!b.breakableByBlocks || PropagateEither(b,Propagation.Shake)) continue;
+      foreach(TemplateBlock b in self.Scene.Tracker.GetEntities<TemplateBlock>()){
+        if(!b.breakableByBlocks || self.PropagateEither(b,Propagation.Shake)) continue;
         foreach(Platform p in b.GetChildren<Platform>()){
           if(p is Solid && qbounds.CollideFr(new(p))) fbs.Add(new(p));
-          else if(hitJumpthrus && p is JumpThru jt && qbounds.CollideFr(new(jt))) fbs.Add(new(jt));
+          else if(useJts && p is JumpThru jt && qbounds.CollideFr(new(jt))) fbs.Add(new(jt));
         }
-        if(hitJumpthrus&&MaddiesIop.jt!=null) foreach(var jt in b.GetChildren(MaddiesIop.jt, Propagation.Shake)){
+        if(useJts&&MaddiesIop.jt!=null) foreach(var jt in b.GetChildren(MaddiesIop.jt, Propagation.Shake)){
           if(qbounds.CollideFr(new(jt)))fbs.Add(new(jt));
         }
       }
       foreach(var d in fbs) toExclude.Add(d.toBreak);
     }
-    QueryBounds q = getQinfo(qbounds,toExclude);
+    QueryBounds q = getQinfo(qbounds,toExclude,self.Scene);
     q.breakable = fbs;
-    if(hitJumpthrus) AddJumpthrus(qbounds,q,s,toExclude,Scene);
+    if(useJts) AddJumpthrus(qbounds,q,s,toExclude,self.Scene);
     return new(q,s);
   }
+  public Query getq(Vector2 maxpotentialmovemagn)=>getq(this, maxpotentialmovemagn,moveThroughDashblocks,hitJumpthrus,useOwnUncollidable);
 
   public virtual void OnTrigger(TriggerInfo info){
     if(TriggerInfo.TestPass(info,this)) triggered = true;

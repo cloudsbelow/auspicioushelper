@@ -243,7 +243,13 @@ public class SplineAccessor{
   }
   public Vector2 moveDist(float dist, float step=0.02f){
     t+=spline.getDt(t,dist,step);
-    set(t);
+    setSidedFromDir(t,Math.Sign(dist));
+    return pos;
+  }
+  public Vector2 moveDist(float dist, float limit, float step=0.02f){
+    t+=spline.getDt(t,dist,step);
+    if(dist<0? t<limit : t>limit) t=limit;
+    setSidedFromDir(t,Math.Sign(dist));
     return pos;
   }
   public int numsegs=>spline.segments;
