@@ -24,10 +24,11 @@ entity.placements = {
       asymmetry=1.0,
       easing = "Linear",
       spline = "centripetalNormalized",
-      startupTime = 0,
+      startupTime = "0",
       lastNodeIsKnot = true,
       allowFraction = false,
       sound = "stone",
+      bonkMode = false,
       
       complete=false,
       alternateEasing=true,

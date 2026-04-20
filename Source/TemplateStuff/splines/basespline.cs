@@ -246,9 +246,11 @@ public class SplineAccessor{
     setSidedFromDir(t,Math.Sign(dist));
     return pos;
   }
-  public Vector2 moveDist(float dist, float limit, float step=0.02f){
+  public Vector2 moveDistLimit(float dist, float limit, float step=0.02f){
+    float distTo = Util.SafeMod((limit-t)*Math.Sign(dist),numsegs);
     t+=spline.getDt(t,dist,step);
-    if(dist<0? t<limit : t>limit) t=limit;
+    float ndist = Util.SafeMod((limit-t)*Math.Sign(dist), numsegs);
+    if(ndist>distTo) t=limit;
     setSidedFromDir(t,Math.Sign(dist));
     return pos;
   }

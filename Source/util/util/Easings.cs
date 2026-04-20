@@ -185,7 +185,6 @@ public static partial class Util{
     if(val>1) return ApplyEasing(easing,1,out derivative);
     return ApplyEasing(easing,val,out derivative);
   }
-  const int MAXITER = 16;
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float getEasingPreimage(Easings easing, float target, float tolerence = 0.0001f){
     if(target >= 1) return 1;
@@ -194,7 +193,8 @@ public static partial class Util{
     float high = 1;
     float x=target;
     //wow bounded monotonic function optimization! i love love love love  
-    for(int i=0; i<MAXITER; i++){
+    //Each iter reduces the size by at least half so 23 max's float precision
+    for(int i=0; i<23; i++){
       float y = ApplyEasing(easing, x, out var dx);
       float delta = y-target;
       if(Math.Abs(delta)<tolerence) return x;

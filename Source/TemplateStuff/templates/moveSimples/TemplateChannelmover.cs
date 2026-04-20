@@ -15,8 +15,8 @@ public class TemplateChannelmover:Template{
   float asym;
   public string channel {get;set;}
   SplineAccessor spos;
-  protected override Vector2 virtLoc => Position+spos.pos;
-  bool toggle, altern, doshake, allowFraction, bonk, bonkedLastFrame;
+  protected override Vector2 virtLoc => bonk? (Position+spos.pos).Round():(Position+spos.pos);
+  bool toggle, altern, doshake, allowFraction, bonk, bonkedLastFrame=false;
   Util.Easings easing;
   EntityData dat;
   float startupTime = 0;
@@ -116,20 +116,45 @@ public class TemplateChannelmover:Template{
     }
   }
   SoundSource sfx;
-  public void tryMoveTo(float loc, float validLsMult){
+  public bool tryMoveTo(float loc, float validLsMult){
     if(!bonk){
       spos.setSidedFromDir(Util.SafeMod(loc, spos.numsegs), Math.Sign(dir));
-      ownLiftspeed = validLsMult*spos.tangent;
     } else {
       float delta = Util.SafeMod(dir>0? loc-spos.t:spos.t-loc, spos.numsegs);
       Vector2 likelyMove = (delta*spos.tangent).Abs()+Vector2.One*8;
       var q = TemplateMoveCollidable.getq(this, likelyMove, true, true, false);
-      float orig = spos.t;
-      float ds = Math.Sign(dir);
+      float last = spos.t;
+      float orig = last;
+      int ds = Math.Sign(dir);
       float limit = spos.t+delta*ds;
-      //spos.moveDist()
+      Vector2 oloc = virtLoc;
+      HashSet<Vector2> cleared = new();
+      for(int i=0; i<10&&Util.SafeMod(last-limit,spos.numsegs)!=0; i++){
+        Vector2 cloc = virtLoc;
+        while(Util.SafeMod(last-limit,spos.numsegs)!=0){
+          spos.moveDistLimit(ds,limit);
+          cloc = virtLoc;
+          if(!cleared.Contains(cloc)) break;
+        }
+        if(q.q.Collide(q.s,cloc-oloc)){
+          spos.setSidedFromDir(last, ds);
+          if(bonkedLastFrame) validLsMult = (last-orig)/MathF.Max(Engine.DeltaTime,0.001f);
+          else {
+            if(doshake) shake(0.1f);
+            if(!muted) Audioplay("event:/auspicioushelper/channelmover/impact/",speedparam);
+          }
+          bonkedLastFrame = true;
+          cleared.Add(cloc);
+          goto end;
+        }
+        last = spos.t;
+      }
+      bonkedLastFrame = false;
     }
-    childRelposSafe();
+    end:
+      ownLiftspeed = validLsMult*spos.tangent;
+      childRelposSafe();
+      return bonkedLastFrame;
   }
   public override void Update(){
     base.Update();
@@ -143,13 +168,25 @@ public class TemplateChannelmover:Template{
       sfx.Position=virtLoc-Position;
       if(dir!=0) sfx.Param("speed",speedparam);
     }
+    /**
+      It shold be noticed that afrac/cfrac have different relationships in these two cases.
+      
+      Under allowfraction, cfrac serves as a store of the last frame position if the target
+      was reached (in order to calc liftspeed). Has no meaning if the target wasn't. 
+      Also isn't frac.
+
+      In the other case, cfrac is the uneased distance and afrac the eased one. A
+      ctually frac here.
+    */
     if(allowFraction){
       if(afrac == target) ownLiftspeed = Vector2.Zero;
       else {
         bool flag1 = afrac==cfrac;
         afrac = Util.EaseOutApproach(easing, afrac, target, Math.Abs(dir*Engine.DeltaTime), out float deriv);
         bool flag2 = afrac==target;
-        tryMoveTo(afrac, flag1&&flag2? (afrac-cfrac)/MathF.Max(Engine.DeltaTime,0.001f) : relspd*dir*deriv);
+        if(tryMoveTo(afrac, flag1&&flag2? (afrac-cfrac)/MathF.Max(Engine.DeltaTime,0.001f) : relspd*dir*deriv)){
+          afrac = cfrac = spos.t;
+        }
         if(flag2){
           cfrac = afrac;
           Arrive();
@@ -159,10 +196,15 @@ public class TemplateChannelmover:Template{
       if(cfrac == 0 && low == target) ownLiftspeed = Vector2.Zero;
       else if(Engine.DeltaTime!=0){
         cfrac = Math.Clamp(cfrac+Engine.DeltaTime*dir*relspd,0,1);
-        float x = altern && dir<0?1-cfrac:cfrac;
+        bool flip = altern && dir<0;
+        float x = flip?1-cfrac:cfrac;
         float y = Util.ApplyEasing(easing, x, out var deriv);
-        afrac = altern && dir<0?1-y:y;
-        tryMoveTo(low%spos.numsegs+afrac, relspd*dir*deriv);
+        afrac = flip?1-y:y;
+        if(tryMoveTo(low%spos.numsegs+afrac, relspd*dir*deriv)){
+          afrac = spos.t - MathF.Floor(spos.t);
+          cfrac = Util.getEasingPreimage(easing, flip?1-afrac:afrac);
+          if(flip) cfrac = 1-cfrac;
+        }
         if(cfrac == 1){
           afrac = cfrac = 0;
           low++;
