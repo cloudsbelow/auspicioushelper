@@ -62,6 +62,7 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
   string echannel;
   ChannelTracker etracker;
   static bool thing=false;
+  string sfx;
   bool checkEntanglement(TemplateDashhitModifier other){
     if(string.IsNullOrWhiteSpace(echannel) || other.skip) return false;
     return etracker!=null? etracker.value==other.etracker?.value : echannel==other.echannel;
@@ -88,9 +89,9 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
           p.Collider=old;
           if(alwaysLetThrough) (this as ITemplateChild).propagateDashhit(p,dir);
         }
+        Audio.Play(sfx, p.Position);
         if(d.HasFlag(Result.Bumper)) {
           p.ExplodeLaunch(p.Center+dir*6,false,false);
-          Audio.Play("event:/game/09_core/pinballbumper_hit", p.Position);
           return DashCollisionResults.Ignore;
         }
         if(d.HasFlag(Result.Rebound)) return DashCollisionResults.Rebound;
@@ -118,6 +119,7 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
     alwaysLetThrough = d.Bool("alwaysPropegate",false);
     echannel = d.Attr("entanglementId","");
     if(echannel.StartsWith('@')) Add(etracker = new(echannel.Substring(1)));
+    sfx = d.Attr("sfx","event:/game/06_reflection/crushblock_activate");
   }
   public override void addTo(Scene scene) {
     base.addTo(scene);

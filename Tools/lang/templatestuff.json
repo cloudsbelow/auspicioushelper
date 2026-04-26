@@ -91,7 +91,7 @@
         "name": "Template Filler",
         "description": "Place this entity so that it's covering your desired group of objects, and then it can be used as a template (make sure the room name starts with \"zztemplates-\")",
         "placements": {
-            "template_name": "The name of this template. When using this template, specify it like <roomname>/<templatename>, assuming this template is placed in a room named \"zztemplates-<roomname>\"",
+            "template_name": "The name of this template. When using this template, specify it like <roomname>/<templatename>, assuming this template is placed in a room named \"zztemplates-<roomname>\".",
             "oldTemplateName": [
                 "ignore this",
                 "for kyfex's fancy thing"
@@ -130,7 +130,8 @@
             "customRecoil": "The recoil throwing this template causes. Can pass an X and Y value.",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
-            ]
+            ],
+            "cantPickupChannel": "When this channel is set to a nonzero value, the holdable cannot be picked up. If holding at the moment it is set, it will force a throw"
         }
     },
     "entities.auspicioushelper/MaterialTemplate": {
@@ -182,7 +183,8 @@
             "active": "Whether the template will update or not",
             "propagateRiding": "Whether to pass player riders to parent template in compound templates",
             "propagateShaking": "Whether shake this block when the parent shakes when in compound template",
-            "exitBlockBehavior": "Behave like an exit block"
+            "exitBlockBehavior": "Behave like an exit block",
+            "triggerTouching": "When this block breaks, trigger touching templates"
         },
         "p_name": "Template Block (Triggerable)"
     },
@@ -221,7 +223,8 @@
                 "[LÖNN] Display Template"
             ],
             "startupTime": "Amount of time needed before the mover will move after the channel has changed. Equivalent to shake time of flag switch gates.",
-            "sound": "Take a sound from vert's sound bucket"
+            "sound": "Take a sound from vert's sound bucket",
+            "bonkMode": "Don't move through solids"
         }
     },
     "entities.auspicioushelper/TemplateBelt": {
@@ -258,7 +261,8 @@
             "entanglementId": "Dashhit entanglement. It's scary.",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
-            ]
+            ],
+            "sfx": "The sound to play on non-normal dash collisions."
         },
         "p_name": "Template Dashhit Modifier"
     },
@@ -513,7 +517,10 @@
             "lastNodeIsKnot": "Make the last node a knot even if it is not stacked. Can be disabled to allow for crooked paths on the last segment of a looping path. Having it on results in more intuitive behavior for new users.",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
-            ]
+            ],
+            "triggerable": "Whether to swap on trigger",
+            "onDash": "Whether to swap on dash",
+            "earlyGracetime": "Allow the target to be moved to the next node before reaching the current target if it is reached within this amount of time."
         }
     },
     "entities.auspicioushelper/TemplateTemplate": {

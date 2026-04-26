@@ -27,6 +27,7 @@ entity.placements = {
       triggerable = false,
       triggerOnBreak = true,
       breakableByBlocks = true,
+      triggerTouching = false,
       
       _loenn_display_template = true,
     }
@@ -48,6 +49,7 @@ entity.placements = {
       triggerable = true,
       triggerOnBreak = false,
       breakableByBlocks = true,
+      triggerTouching = false,
       
       _loenn_display_template = true,
     }

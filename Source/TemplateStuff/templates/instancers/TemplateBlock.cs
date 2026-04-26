@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -16,15 +17,10 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/TemplateBlock")]
 class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
   public TemplateBlock(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
-  bool uvis;
-  bool ucol;
-  bool uact;
-  bool candash;
-  bool persistent;
+  bool uvis, ucol, uact;
+  bool candash, persistent, isExitBlock;
   string breaksfx;
-  bool isExitBlock;
-  bool triggerable;
-  bool triggerOnBreak;
+  bool triggerable, triggerOnBreak, triggerTouching;
   public bool breakableByBlocks = false;
   public TemplateBlock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
@@ -50,11 +46,23 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
     triggerOnBreak=d.Bool("triggerOnBreak",false);
     isExitBlock = d.Bool("exitBlockBehavior",false);
     breakableByBlocks = d.Bool("breakableByBlocks",false);
+    triggerTouching = d.Bool("triggerTouching",false);
   }
   bool broken=false;
+  class CrumbleHit(Template t):TriggerInfo{
+    public override string category => "crumbleHit/"+t.fullpath;
+  }
   public void breakBlock(){
     if(broken) return;
     broken=true;
+    if(triggerTouching){
+      var q = TemplateMoveCollidable.getq(this, Vector2.Zero, false, false, false);
+      foreach(var c in q.q.colliders) if(q.s.Collide(c.c)){
+        if(c.c.Entity?.Get<ChildMarker>() is not {} cm) continue;
+        if(cm.propagatesTo(this)) continue;
+        cm.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new CrumbleHit(this));
+      }
+    }
     if(triggerOnBreak) new TriggerInfo.EntInfo("TemplateBlock",this).Pass(this); 
     Audio.Play(breaksfx,Position);
     destroy(true);
