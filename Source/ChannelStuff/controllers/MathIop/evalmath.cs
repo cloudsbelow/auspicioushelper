@@ -19,11 +19,16 @@ public static class Parser{
     public Regex reg;
     public string mid;
     public string[] ndelims; 
+    public bool before;
     public Func<List<Expression>,List<(string,int)>,Expression> parse;
     public Descr(string mid, Func<List<Expression>,List<(string,int)>,Expression> fn, params string[] newDelim){
       this.mid=mid;
       parse = fn;
       this.ndelims = newDelim;
+    }
+    public Descr(string mid, bool addBefore, Func<List<Expression>,List<(string,int)>,Expression> fn, params string[] newDelim):
+      this(mid,fn,newDelim){
+      before = addBefore;
     }
   }
   const string TOK = @"#\d+";
@@ -58,7 +63,6 @@ public static class Parser{
     new Descr($"(?:[a-zA-Z_][\\w]*)?\\(({TOK}(?:,{TOK})*)?\\)",(s,l)=>{
       int num = l.Count/2;
       string name = l[0].Item1.Substring(0,l[0].Item1.Length-1).ToLower();
-      DebugConsole.Write("Looking for func",name,num);
       if(num==1 && name=="") return s[l[1].Item2];
       if(parenOps.TryGetValue(new(num,name),out var method)){
         var par = new Expression[num];
@@ -115,18 +119,19 @@ public static class Parser{
       "!="=>asDouble(Expression.NotEqual(s[l[0].Item2],s[l[2].Item2])),
       _=>throw new Exception("bye")
     },"\\=\\=","\\!\\="),
-    new Descr($"{TOK}\\&{TOK}",(s,l)=>asDouble(Expression.And(asInt(s[l[0].Item2]),asInt(s[l[2].Item2]))),"\\&"),
-    new Descr($"{TOK}\\^{TOK}",(s,l)=>asDouble(Expression.ExclusiveOr(asInt(s[l[0].Item2]),asInt(s[l[2].Item2]))),"\\^"),
-    new Descr($"{TOK}\\|{TOK}",(s,l)=>asDouble(Expression.Or(asInt(s[l[0].Item2]),asInt(s[l[2].Item2]))),"\\|"),
-    new Descr($"{TOK}\\&\\&{TOK}",(s,l)=>asDouble(Expression.AndAlso(asBool(s[l[0].Item2]),asBool(s[l[2].Item2]))),"\\&\\&"),
-    new Descr($"{TOK}\\|\\|{TOK}",(s,l)=>asDouble(Expression.OrElse(asBool(s[l[0].Item2]),asBool(s[l[2].Item2]))),"\\|\\|"),
+    new Descr($"{TOK}\\&{TOK}",true,(s,l)=>asDouble(Expression.And(asInt(s[l[0].Item2]),asInt(s[l[2].Item2]))),"\\&"),
+    new Descr($"{TOK}\\^{TOK}",true,(s,l)=>asDouble(Expression.ExclusiveOr(asInt(s[l[0].Item2]),asInt(s[l[2].Item2]))),"\\^"),
+    new Descr($"{TOK}\\|{TOK}",true,(s,l)=>asDouble(Expression.Or(asInt(s[l[0].Item2]),asInt(s[l[2].Item2]))),"\\|"),
+    new Descr($"{TOK}\\&\\&{TOK}",true,(s,l)=>asDouble(Expression.AndAlso(asBool(s[l[0].Item2]),asBool(s[l[2].Item2]))),"\\&\\&"),
+    new Descr($"{TOK}\\|\\|{TOK}",true,(s,l)=>asDouble(Expression.OrElse(asBool(s[l[0].Item2]),asBool(s[l[2].Item2]))),"\\|\\|"),
   };
   static Parser(){
     string delims = "|,";
     for(int i=ops.Count-1; i>=0; i--){
+      if(ops[i].before) foreach(var d in ops[i].ndelims) delims+="|"+d;
       ops[i].reg = new Regex($"(^|(?<=\\({delims}))({ops[i].mid})($|(?=\\){delims}))",RegexOptions.Compiled);
       //DebugConsole.Write("",i,$"(^|(?<=\\({delims}))({ops[i].mid})($|(?=\\){delims}))");
-      foreach(var d in ops[i].ndelims) delims+="|"+d;
+      if(!ops[i].before) foreach(var d in ops[i].ndelims) delims+="|"+d;
     }
   }
   static Regex beginStringCh = new(@"^(?:[$#?]?"+

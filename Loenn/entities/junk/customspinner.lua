@@ -5,7 +5,7 @@ local drawableSprite = require("structs.drawable_sprite")
 local utils = require("utils")
 
 local entity = {}
-local colors = {"Blue", "Red", "Purple", "Rainbow"}
+local colors = {"danger/crystal>_blue", "danger/crystal>_red", "danger/crystal>_purple", "danger/crystal>_rainbow"}
 entity.name = "auspicioushelper/spinner"
 entity.depth = 2000
 
@@ -19,7 +19,7 @@ entity.placements = {
       numDebris = 4,
       dreamThru = false,
       neverClip = false,
-      color = "Rainbow",
+      color = "danger/crystal>_rainbow",
       fancy = "",
       border = "000",
     }
@@ -28,7 +28,7 @@ entity.placements = {
 entity.fieldInformation = {
   color ={
     options = colors,
-    editable=false
+    editable=true
   },
 }
 

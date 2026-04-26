@@ -55,6 +55,7 @@ public class TemplateCloud:TemplateDisappearer, ITemplateTriggerable{
         GetFromTree<ITemplateTriggerable>()?.OnTrigger(new TriggerInfo.EntInfo("tcloud/end",this,true));
         if(UpdateHook.cachedPlayer is Player p && hasPlayerRider() && p.Speed.Y>=0){
           if(disableCbb) p.Add(new CloudboostBlocker(-200*cloudDir.X));
+          DebugConsole.Write("blocker",p.Get<CloudboostBlocker>());
           p.Speed=-200*cloudDir;
         }
         if(!fragile) goto returning;

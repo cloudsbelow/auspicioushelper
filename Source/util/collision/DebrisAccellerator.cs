@@ -54,6 +54,7 @@ public class FastDebris:Actor{
       fastMoveV(speed.Y*Engine.DeltaTime);
       onGround=SolidMiptree.Test(Int2.Round(Position+Vector2.UnitY),radius,CollisionDirection.ground)!=null;
     }
+    //Visible = MaterialPipe.clipBounds.CollidePointCompact(Int2.Round(Position));
   }
   public void fastMoveH(float moveH){
     movementCounter.X += moveH;

@@ -104,6 +104,7 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       if(res){
         ownLiftspeed = Vector2.Zero;
         Audio.Play(ImpactSfx,Position);
+        DebugConsole.Write("HJere");
         if(triggerOnImpact)parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new TriggerInfo.EntInfo("fallingBlock",this,true));
         if(delays[2]>=0){
           shake(delays[2]);

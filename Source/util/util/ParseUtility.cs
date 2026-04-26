@@ -153,6 +153,16 @@ public static partial class Util{
   public static Dictionary<char,char> escape = new Dictionary<char, char>{
     {'{','}'}, {'[',']'}, {'(',')'},
   };
+  static bool TryEmitParseErr(ref string culprit, Stack<char> unescaped, bool inString){
+    DebugConsole.WriteFailure("PARSE ERROR - unbalanced brackets/parenthesis: "+culprit, false);
+    if(!false){
+      string nc = culprit;
+      if(inString) nc+="\"";
+      foreach(var c in unescaped) nc+=c;
+      culprit = nc;
+    }
+    return false;
+  }
   public static Dictionary<string,string> kvparseflat(string str, bool strip=false, bool stripout=false, bool assumeValue=false){
     if(strip) str=stripEnclosure(str);
     Stack<char> unescaped = new Stack<char>();
@@ -170,8 +180,8 @@ public static partial class Util{
         idx++; goto parsevalue;
       }
       if(idx >= str.Length){
-        DebugConsole.WriteFailure("PARSE ERROR: "+str);
-        return o;
+        if(TryEmitParseErr(ref str,unescaped,false)) return null;
+        goto parsekey;
       }
       if(escape.TryGetValue(str[idx], out var esc)){
         unescaped.Push(esc);
@@ -189,7 +199,8 @@ public static partial class Util{
 
     parsestringkey:
       if(idx == str.Length){
-        DebugConsole.WriteFailure("PARSE ERROR: "+str);
+        if(TryEmitParseErr(ref str,unescaped,true)) return null;
+        goto parsestringkey;
       }
       if(escapeNext){
         escapeNext = false; 
@@ -205,8 +216,8 @@ public static partial class Util{
         idx++; goto fent;
       }
       if(idx >= str.Length){
-        DebugConsole.WriteFailure("PARSE ERROR: "+str);
-        return null;
+        if(TryEmitParseErr(ref str,unescaped,false)) return null;
+        goto parsevalue;
       }
       if(escape.TryGetValue(str[idx], out var esc)){
         unescaped.Push(esc);
@@ -224,7 +235,8 @@ public static partial class Util{
 
     parsestring:
       if(idx == str.Length){
-        DebugConsole.WriteFailure("PARSE ERROR: "+str);
+        if(TryEmitParseErr(ref str,unescaped,true)) return null;
+        goto parsestring;
       }
       if(escapeNext){
         escapeNext = false; 
@@ -256,8 +268,10 @@ public static partial class Util{
         idx++; goto fent;
       }
       if(idx >= str.Length){
-        DebugConsole.WriteFailure("PARSE ERROR: "+str);
-        return null;
+        DebugConsole.Write("Before",str);
+        if(TryEmitParseErr(ref str,unescaped,false)) return null;
+        DebugConsole.Write("After",str);
+        //goto parsevalue;
       }
       if(escape.TryGetValue(str[idx], out var esc)){
         unescaped.Push(esc);
@@ -274,7 +288,8 @@ public static partial class Util{
 
     parsestring:
       if(idx == str.Length){
-        DebugConsole.WriteFailure("PARSE ERROR: "+str);
+        if(TryEmitParseErr(ref str,unescaped,true)) return null;
+        goto parsestring;
       }
       if(escapeNext){
         escapeNext = false; 

@@ -171,7 +171,7 @@ public static class ChannelState{
           Ops.min=>float.PositiveInfinity,
           _=>0
         };
-        from = Util.listparseflat(expr.Substring(term.Length),true,false);
+        from = Util.listparseflat(expr.Substring(term.Length+1).RemoveSuffix(")"),false,false);
       }
       int i=0;
       vals = new double[from.Count];
@@ -219,8 +219,8 @@ public static class ChannelState{
       mods=null;
       calcs=null;
       if(silent) return;
-      foreach(var li in l1) li.Remove();
-      foreach(var li in l2) li.calc.Remove();
+      if(l1 != null) foreach(var li in l1) li.Remove();
+      if(l2 != null) foreach(var li in l2) li.calc.Remove();
     }
     public ChannelVal(double value)=>this.val = value;
   }

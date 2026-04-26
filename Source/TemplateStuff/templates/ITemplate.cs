@@ -163,6 +163,7 @@ public class Template:Entity, ITemplateChild{
     lastRoundloc=orig;
   }
   public bool PropagateEither(Template other,Propagation req){
+    DebugConsole.Write("lalaa",this,other,this.parent,other.parent, this.prop, other.prop);
     Template c=other;
     while(c!=null){
       if(c==this) return true;
@@ -172,7 +173,7 @@ public class Template:Entity, ITemplateChild{
     c=this;
     while(c!=null){
       if(c==other) return true;
-      if((c.prop & req)!= req) break;
+      if((c.prop & req)!= req) {DebugConsole.Write("breaking", c.prop); break;};
       c=c.parent;
     }
     return false;

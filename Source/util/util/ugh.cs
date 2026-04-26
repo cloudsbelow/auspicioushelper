@@ -15,9 +15,25 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 public static partial class Util{
+  public class TexDataContext{
+    public static TexDataContext currentCache=null; 
+    Dictionary<MTexture, Color[]> ctx = new();
+    public void Clear()=>ctx.Clear();
+    public Ctx GetCtx(){
+      var c = new Ctx(currentCache);
+      currentCache = this;
+      return c;
+    }
+    public ref struct Ctx(TexDataContext last):IDisposable{
+      void IDisposable.Dispose()=>currentCache=last;
+    }
+    public static Color[] GetOrDefault(MTexture find)=>currentCache?.ctx.GetValueOrDefault(find);
+    public static void Cache(MTexture find, Color[] b)=>currentCache?.ctx[find]=b;
+  }
   public static Color[] TexData(MTexture tex, out int w, out int h){
     w = tex.ClipRect.Width;
     h = tex.ClipRect.Height;
+    if(TexDataContext.GetOrDefault(tex) is {} cached) return cached.Map(x=>x);
     Color[] data = new Color[w*h];
     if(tex.Texture.Texture.Format != Microsoft.Xna.Framework.Graphics.SurfaceFormat.Color){
       throw new System.Exception("Texture does not have the right format (color)."+
@@ -25,7 +41,33 @@ public static partial class Util{
         "it's not hard. they don't feel like coding it today and also doubt that it can happen.");
     }
     tex.Texture.Texture.GetData(0,tex.ClipRect,data,0,data.Length);
-    return data;
+    TexDataContext.Cache(tex,data);
+    return data.Map(x=>x);
+  }
+  public class SamplableHist<T>{
+    public List<T> items = new();
+    float[] counts;
+    float totalCount=0;
+    public SamplableHist(Dictionary<T,float> make){
+      List<float> counts = new();
+      foreach(var (k,v) in make){
+        items.Add(k);
+        counts.Add(totalCount);
+        totalCount+=v;
+      }
+      this.counts = counts.ToArray();
+    }
+    public T Sample(float f) => items[bsearchLast(counts,(f%1)*totalCount)];
+  }
+  static public SamplableHist<Color> makeHist(IEnumerable<MTexture> texs, Func<Color, bool> include = null){
+    include??=x=>x.A>=32;
+    Dictionary<Color, float> counts = new();
+    foreach(var m in texs) foreach(var c in TexData(m, out var w, out var h)){
+      if(include==null || !include(c)) continue;
+      float val = counts.TryGetValue(c, out float f)?f:0;
+      counts[c]=val+1;
+    }
+    return new(counts);
   }
   static T[] Rotate90<T>(this T[] data, int w){
     T[] res = new T[data.Length];

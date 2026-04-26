@@ -15,6 +15,7 @@ entity.fieldInformation = function(entity)
         elementOptions = {
             fieldType = "string",
             options={
+                "*",
                 "collideV", 
                 "collideH", 
                 "jump", 

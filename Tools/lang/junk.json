@@ -43,13 +43,19 @@
         "name": "Recolorable Spinner",
         "description": "Lots of recoloring options",
         "placements": {
-            "customColor": "Multiplicative color tint",
+            "customColor": [
+                "tint",
+                "Multiplicative color tint"
+            ],
             "depth": "",
             "makeFiller": "Whether to make connections to other spinners",
             "numDebris": "Number of shards to create when in a template that gets destroyed",
             "dreamThru": "Whether to kill the player if the player is in a dream state (allows dreamblocks to go through this spinner)",
             "neverClip": "Render as one image. Will get rid of gaps around solids.",
-            "color": "Base color to use",
+            "color": [
+                "texture",
+                "Base texture to use. Can be a (non animated) custom spinner. Check the frost wiki for formatting details."
+            ],
             "fancy": "Fancy recoloring option. See wiki for details. For example (000,fff)->(fff,000)",
             "border": "Border color. Can be transparent for borderless spinners."
         }
