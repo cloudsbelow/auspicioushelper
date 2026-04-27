@@ -87,10 +87,10 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   Vector2 origpos;
   float noGravityTimer=0;
   bool keepCollidableAlways = false;
-  float playerfrac; float theofrac;
+  ChannelState.FloatCh playerfrac, theofrac;
   string[] wallhitsound;
   float[] wallhitKeepspeed;
-  float gravity, friction, terminalvel;
+  ChannelState.FloatCh gravity, friction, terminalvel;
   bool respawning;
   float respawndelay;
   public EntityData d;
@@ -98,10 +98,10 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   bool hasBeenTouched = false, showTutorial = false, startFloating=false, hasReflection=false;
   float voidDieOffset = 100;
   float minHoldTimer = 0.35f;
-  float[] customThrowspeeds;
-  Vector2 customRecoil;
+  ChannelState.FloatCh[] customThrowspeeds;
+  ChannelState.Vec2Ch customRecoil;
   float? neutralHolddelay = null;
-  ChannelState.ChannelReaderBool dontPickup = null;
+  ChannelState.BoolCh dontPickup;
   public TemplateHoldable(EntityData d, Vector2 offset):base(d.Position+offset){
     Position+=new Vector2(d.Width/2, d.Height);
     hoffset = d.Nodes.Length>0?(d.Nodes[0]-new Vector2(d.Width/2, d.Height)):new Vector2(0,-d.Height/2);
@@ -133,13 +133,13 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     hooks.enable();
     this.d=d;
 
-    playerfrac = d.Float("player_momentum_weight",1);
-    theofrac = d.Float("holdable_momentum_weight",0);
+    playerfrac = d.ChannelFloat("player_momentum_weight",1);
+    theofrac = d.ChannelFloat("holdable_momentum_weight",0);
     wallhitsound = Util.listparseflat(d.Attr("wallhitsound","event:/game/05_mirror_temple/crystaltheo_hit_side")).ToArray();
     wallhitKeepspeed = Util.csparseflat(d.Attr("wallhit_speedretain",""),0.4f,0.6f);
-    gravity = d.Float("gravity",800f);
-    terminalvel = d.Float("terminal_velocity",200f);
-    friction = d.Float("friction",350);
+    gravity = d.ChannelFloat("gravity",800f);
+    terminalvel = d.ChannelFloat("terminal_velocity",200f);
+    friction = d.ChannelFloat("friction",350);
     dietobarrier = d.Bool("die_to_barrier",false);
     respawning = d.Bool("respawning",false);
     respawndelay = d.Float("respawnDelay",2f);
@@ -151,10 +151,10 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     minHoldTimer = d.Float("minHoldTimer",0.35f);
     hasReflection = d.Bool("mirrorReflection",false);
     SquishCallback = OnSquish2;
-    customThrowspeeds = Util.csparseflat(d.Attr("customThrowspeeds"));
-    customRecoil = Util.toVec2(Util.csparseflat(d.Attr("customRecoil",""),80,0));
+    customThrowspeeds = Util.listparseflat(d.Attr("customThrowspeeds")).Map(x=>new ChannelState.FloatCh(x)).ToArray();
+    customRecoil = d.ChannelVec2("customRecoil",80,0);
     Depth = -1;
-    dontPickup = new(d.String("cantPickupChannel","false"));
+    dontPickup = d.ChannelBool("cantPickupChannel",false);
     Add(Mysolids = new());
   }
   bool ICustomHoldableRelease.TryPickup(Player p)=>!dontPickup;

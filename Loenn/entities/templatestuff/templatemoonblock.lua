@@ -14,10 +14,10 @@ entity.placements = {
       template = "",
       depthoffset=0,
       drift_frequency=1,
-      drift_amplitude=4,
+      drift_amplitude="4",
       sink_amount="12",
-      sink_speed=1,
-      dash_influence=8,
+      sink_speed="1",
+      dash_influence="8",
       startphase=0,
       useCustomStartphase=false,
     }

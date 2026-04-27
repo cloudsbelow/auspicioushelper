@@ -15,18 +15,16 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/TemplatePushBlock")]
 public class TemplatePushblock:TemplateMoveCollidable{
   Vector2 speed;
-  float terminalVelocity = 130f;
-  float gravity = 500;
+  ChannelState.FloatCh terminalVelocity, gravity, drag, floordragraw;
+  float floordrag=>floordragraw==null? drag*2:floordragraw;
   int leniency = 4;
   float reflectX = 0.5f;
-  float drag = 300;
-  float floordrag = 600;
   float nophysicstime = 0;
   float giveNoPhysicsDash = 0.3f;
   float giveNoPhysicsStill = 0.2f;
   float giveNoPhysicsSpring = 0.25f;
   float giveNoPhysicsOwnSpring = 0.3f;
-  float dashSpeed = 100;
+  ChannelState.FloatCh dashSpeed;
   float ownSpringRecoil = 60;
   string ImpactSfx = "event:/game/general/fallblock_impact";
   bool hitSprings = true;
@@ -52,19 +50,15 @@ public class TemplatePushblock:TemplateMoveCollidable{
     if(npt.Length>1) giveNoPhysicsStill = npt[1];
     if(npt.Length>2) giveNoPhysicsSpring = npt[2];
     if(npt.Length>3) giveNoPhysicsOwnSpring = npt[3];
-    dashSpeed = d.Float("speedFromDash",100);
-    var drags = Util.csparseflat(d.Attr("horizontalDrag","300"));
-    if(drags.Length>0){
-      drag = drags[0];
-      floordrag = drags[0]*2;
-    } 
-    if(drags.Length>1) floordrag = drags[1];
-    leniency = d.Int("movementLeniency",4);
+    dashSpeed = d.ChannelFloat("speedFromDash",100);
+    var drags = Util.listparseflat(d.Attr("horizontalDrag")).Map(x=>new ChannelState.FloatCh(x)).ToArray();
+    drag = drags.Length==0? new("300"):drags[0];
+    floordragraw = drags.Length>1? drags[1]:null;
     ImpactSfx = d.Attr("ImpactSfx","event:/game/general/fallblock_impact");
     startDisconnected = d.Bool("startDisconnected",true);
     hitSprings = d.Bool("hitSprings", true);
-    terminalVelocity = d.Float("terminalVelocity", 130f);
-    gravity = d.Float("gravity", 500f);
+    terminalVelocity = d.ChannelFloat("terminalVelocity", 130f);
+    gravity = d.ChannelFloat("gravity", 500f);
     reflectX = d.Float("BounceStrengthFromWall",0.4f);
     ownSpringRecoil = d.Float("ownSpringRecoil", 60);
     alwaysDrag = d.Bool("alwaysDrag",false);

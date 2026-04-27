@@ -18,8 +18,8 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
     if(disconnected) return;
     base.relposTo(loc, parentLiftspeed);
   }
-  float sinkTime;
-  Vector2 sinkDir;
+  float nextSinktime;
+  ChannelState.Vec2Ch nextSinkdir;
   float respawnTimer=0;
   float respawnTime = 2;
   bool triggerable;
@@ -30,13 +30,8 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
   public TemplateIceblock(EntityData d, Vector2 o):this(d,o,d.Int("depthoffset",0)){}
   public TemplateIceblock(EntityData d, Vector2 o, int depthoffset)
   :base(d,o+d.Position,depthoffset){
-    sinkTime = d.Float("sinkTime",1);
-    var li = Util.csparseflat(d.Attr("sinkDist","12"));
-    sinkDir = li.Length switch{
-      0=>Vector2.UnitY*12,
-      1=>Vector2.UnitY*li[0],
-      _=>new(li[0],li[1])
-    };
+    nextSinktime = d.ChannelFloat("sinkTime",1);
+    nextSinkdir = d.ChannelVec2("sinkDist",0,12,true);
     respawnTime = d.Float("respawnTime",1.6f);
     triggerable = d.Bool("triggerable",true);
     ridingTriggers = d.Bool("ridingTriggers",true);
@@ -46,6 +41,8 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
   Coroutine routine;
   IEnumerator iceRoutine(){
     float time = 0;
+    float sinkTime = nextSinktime;
+    Vector2 sinkDir = nextSinkdir;
     if(sinkTime!=0){
       shake(0.1f);
       if((quiet%4)<2)Add(new AudioMangler(Audio.Play("event:/game/09_core/iceblock_touch", Position), 0.3f));

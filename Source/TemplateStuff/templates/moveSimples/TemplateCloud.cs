@@ -17,7 +17,8 @@ public class TemplateCloud:TemplateDisappearer, ITemplateTriggerable{
   bool fromRiding;
   float respawnTime = 1;
   float pos = 0;
-  Vector2 cloudDir = new(0,1);
+  ChannelState.Vec2Ch nextClouddir;
+  Vector2 cloudDir;
   protected override Vector2 virtLoc=>Position+pos*cloudDir;
   float speed;
   bool disableCbb;
@@ -27,8 +28,7 @@ public class TemplateCloud:TemplateDisappearer, ITemplateTriggerable{
     fragile = d.Bool("fragile");
     respawnTime = d.Float("respawnTime",2.5f);
     fromRiding = d.Bool("fromRiding",true);
-    var l = Util.csparseflat(d.String("cloudDir","1"));
-    cloudDir = l.Length switch {1=>new Vector2(0,l[0]), >=2=>new Vector2(l[0],l[1]), _=>new Vector2(0,12)};
+    nextClouddir = d.ChannelVec2("cloudDir",0,1,true);
     if(disableCbb = d.Bool("noDoubleBoost",true)) ResetEvents.LazyEnable(typeof(CloudboostBlocker));
   }
   void Move(){
@@ -44,6 +44,7 @@ public class TemplateCloud:TemplateDisappearer, ITemplateTriggerable{
           GetFromTree<ITemplateTriggerable>()?.OnTrigger(new TriggerInfo.EntInfo("tcloud/begin",this,false));
           speed = 180;
           Audio.Play(fragile?"event:/game/04_cliffside/cloud_pink_boost":"event:/game/04_cliffside/cloud_blue_boost", Position);
+          cloudDir = nextClouddir;
           goto going;
         }
         yield return null;
@@ -55,7 +56,6 @@ public class TemplateCloud:TemplateDisappearer, ITemplateTriggerable{
         GetFromTree<ITemplateTriggerable>()?.OnTrigger(new TriggerInfo.EntInfo("tcloud/end",this,true));
         if(UpdateHook.cachedPlayer is Player p && hasPlayerRider() && p.Speed.Y>=0){
           if(disableCbb) p.Add(new CloudboostBlocker(-200*cloudDir.X));
-          DebugConsole.Write("blocker",p.Get<CloudboostBlocker>());
           p.Speed=-200*cloudDir;
         }
         if(!fragile) goto returning;

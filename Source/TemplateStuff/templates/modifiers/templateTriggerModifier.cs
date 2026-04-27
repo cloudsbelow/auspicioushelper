@@ -86,8 +86,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   bool log;
   Util.Trie blockManager;
   ChannelState.AdvancedSetter adv = null;
-  string skipCh;
-  bool skip = false;
+  ChannelState.BoolCh skip;
   bool neverTriggerOnAwake = false;
   List<string> onCollidePaths = null;
   static readonly List<string> list = new(){
@@ -137,7 +136,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     }
     if(!string.IsNullOrWhiteSpace(d.Attr("setChannel",""))) adv = new(d.Attr("setChannel",""));
     OnDashCollide = handleDash;
-    skipCh = d.Attr("skipChannel","");
+    skip = d.ChannelBool("skipChannel",false);
     neverTriggerOnAwake = d.Bool("neverTriggerOnAwake",false);
     string paths = d.String("collideWith",null);
     if(paths!=null) onCollidePaths = Util.listparseflat(paths);
@@ -162,11 +161,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       Add(triggerCh = new ChannelTracker(channel, (double val)=>{
         if(val!=0) OnTrigger(new ChannelInfo(channel));
       }));
-    }
-    if(!string.IsNullOrWhiteSpace(skipCh)){
-      Add(new ChannelTracker(skipCh, (double val)=>{
-        skip = val!=0;
-      }, true));
     }
     base.addTo(scene);
   }
@@ -200,7 +194,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   }
   public void OnTrigger(TriggerInfo sm){
     if(skip){
-      triggerParent.OnTrigger(sm);
+      triggerParent?.OnTrigger(sm);
       return;
     }
     if(log) DebugConsole.Write($"From trigger modifier: ",sm?.category);

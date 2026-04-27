@@ -25,9 +25,11 @@ public class ChannelPlayerTrigger:Trigger{
   bool restore=false;
   bool onlyOnce; 
   ChannelState.AdvancedSetter adv=null;
+  ChannelState.BoolCh onlywhen;
 
   public ChannelPlayerTrigger(EntityData data, Vector2 offset):base(data, offset){
     onlyOnce = data.Bool("only_once",false);
+    onlywhen = data.ChannelBool("OnlyWhenChannel",true);
     channel = data.Attr("channel","");
     value = data.Float("value",1);
     if(!string.IsNullOrWhiteSpace(data.Attr("advanced"))){
@@ -72,6 +74,7 @@ public class ChannelPlayerTrigger:Trigger{
   }
   double? restoreTo = null;
   public void activate(){
+    if(!onlywhen) return;
     double oldval = ChannelState.readChannel(channel);
     if(restoreTo == null) restoreTo = oldval;
     //DebugConsole.Write(op.ToString());

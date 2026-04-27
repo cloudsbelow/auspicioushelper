@@ -23,7 +23,11 @@ trigger.placements = {
       only_once = false,
       advanced = "",
       everywhere = false,
+      OnlyWhenChannel = ""
     }
+}
+trigger.fieldOrder = {
+  "x", "y", "width", "height", "channel", "advanced", "value", "op", "action", "OnlyWhenChannel"
 }
 trigger.fieldInformation = {
   op = {

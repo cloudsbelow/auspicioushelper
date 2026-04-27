@@ -24,7 +24,7 @@ public class TemplateFakewall:TemplateDisappearer, Template.IRegisterEnts{
   bool freeze;
   bool dontOnTransitionInto;
   int ddepth;
-  float fadespeed;
+  ChannelState.FloatCh fadespeed;
   bool persistent = true;
   bool caveMode;
   public TemplateFakewall(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
@@ -35,7 +35,7 @@ public class TemplateFakewall:TemplateDisappearer, Template.IRegisterEnts{
     ddepth = d.Int("disappear_depth",-13000);
     persistent = d.Bool("persistent",true);
     caveMode = d.Bool("caveMode",false);
-    fadespeed = d.Float("fade_speed",1);
+    fadespeed = d.ChannelFloat("fade_speed",1);
   }
   public override void addTo(Scene scene){
     if(auspicioushelperModule.Session.brokenTempaltes.Contains(fullpath) && persistent){

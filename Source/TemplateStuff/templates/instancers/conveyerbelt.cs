@@ -25,19 +25,18 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
   bool loop;
   Spline spline;
   EntityData dat;
-  float speed;
+  ChannelState.FloatCh speed, numPerSegment;
   float initialOffset;
   float timer;
-  float maxtimer;
   string channel;
   Util.Easings easing;
   public ConveyerTemplate(EntityData d, Vector2 o):this(d,o,d.Int("depthoffset",0)){}
   public ConveyerTemplate(EntityData d, Vector2 o, int depthoffset)
   :base(d,o+d.Position,depthoffset){
     dat=d;
-    speed = d.Float("speed",0.3f);
-    maxtimer = 1/d.Float("numPerSegment",3)/speed;
-    initialOffset = (maxtimer*d.Float("initialOffset",0))%maxtimer;
+    speed = d.ChannelFloat("speed",0.3f);
+    numPerSegment = d.ChannelFloat("numPerSegment",3);
+    initialOffset = Util.SafeMod(d.Float("initialOffset",0),1);
     loop = d.Bool("loop",false);
     channel = d.Attr("channel","");
     easing = d.Enum("easing",Util.Easings.Linear);
@@ -47,9 +46,10 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
     base.makeInitialInstances();
     if(!string.IsNullOrWhiteSpace(channel)) return;
     List<BeltItem> l= new();
+    if(numPerSegment==0) return;
     float max = spline.segments-(loop?0:1);
-    float ioff = initialOffset*speed;
-    float step = speed*maxtimer;
+    float step = 1/numPerSegment;
+    float ioff = initialOffset*step;
     float numinst = loop? Math.Max(1, MathF.Round((max-ioff)/step)): MathF.Ceiling((max-ioff)/step);
     
     for(int j=(int)numinst-1; j>=0; j--){
@@ -58,7 +58,7 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
       Template nte = addInstance(spos.pos);
       belt.Enqueue(new(){te=nte, extent = j*step+ioff, sp=spos});
     }
-    timer = (step-ioff)/speed;
+    timer = 1-ioff;
   }
   public override void addTo(Scene scene) {
     spline = SplineEntity.GetSpline(dat,SplineEntity.Types.centripetalNormalized);
@@ -98,14 +98,18 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
       desc.te.toffset = desc.sp.pos;
     }
     childRelposSafe();
-    timer-=Engine.DeltaTime;
+    timer-=Engine.DeltaTime*speed*numPerSegment;
     if(!loop && timer<=0){
-      SplineAccessor spos = new(spline, Vector2.Zero, true, loop);
-      float extent = -timer*speed;
-      spos.setPos(Util.ApplyEasingFrac(easing,extent, out var _));
-      timer+=maxtimer;
-      Template nte = addInstance(spos.pos);
-      belt.Enqueue(new(){te=nte,sp=spos,extent = extent});
+      if(numPerSegment==0){
+        timer=0;
+      } else {
+        SplineAccessor spos = new(spline, Vector2.Zero, true, loop);
+        float extent = -timer/numPerSegment;
+        spos.setPos(Util.ApplyEasingFrac(easing,extent, out var _));
+        timer+=1;
+        Template nte = addInstance(spos.pos);
+        belt.Enqueue(new(){te=nte,sp=spos,extent = extent});
+      }
     } 
   }
   public void RemoveChild(ITemplateChild c){

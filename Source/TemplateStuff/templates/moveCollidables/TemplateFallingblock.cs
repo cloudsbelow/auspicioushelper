@@ -14,13 +14,12 @@ public class TemplateFallingblock:TemplateMoveCollidable{
   public TemplateFallingblock(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
 
   Vector2 falldir = Vector2.UnitY;
-  float basemaxspeed;
+  ChannelState.FloatCh basemaxspeed, gravity;
+  float maxspeed=>rch? -basemaxspeed:basemaxspeed;
   string tch;
-  string rch;
+  ChannelState.BoolCh rch;
   string ImpactSfx = "event:/game/general/fallblock_impact";
   string ShakeSfx = "event:/game/general/fallblock_shake";
-  float maxspeed;
-  float gravity;
   bool setTch=false;
   bool triggeredByRiding = true;
   UpdateHook upd;
@@ -37,12 +36,12 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       "right"=>Vector2.UnitX,
       _=>Vector2.UnitX
     };
-    rch = d.Attr("reverseChannel");
+    rch = d.ChannelBool("reverseChannel",false);
     tch = d.Attr("triggerChannel");
     ImpactSfx = d.Attr("impact_sfx","event:/game/general/fallblock_impact");
     ShakeSfx = d.Attr("shake_sfx","event:/game/general/fallblock_shake");
-    basemaxspeed = maxspeed = d.Float("max_speed",130f);
-    gravity = d.Float("gravity", 500);
+    basemaxspeed = d.ChannelFloat("max_speed",130f);
+    gravity = d.ChannelFloat("gravity", 500);
     setTch = d.Bool("set_trigger_channel",false) && !string.IsNullOrWhiteSpace(tch);
     triggeredByRiding = d.Bool("triggeredByRiding",true);
     delays = Util.csparseflat(d.Attr("customFallTiming",""),0.25f,0.1f,-1);
@@ -132,11 +131,6 @@ public class TemplateFallingblock:TemplateMoveCollidable{
       else Add(new ChannelTracker(tch,(double val)=>{
         if(val!=0) OnTrigger(null);
       }));
-    }
-    if(!string.IsNullOrWhiteSpace(rch)){
-      Add(new ChannelTracker(rch, (double val)=>{
-        maxspeed = val==0?basemaxspeed:-basemaxspeed;
-      },true));
     }
   }
   bool triggerNextFrame;

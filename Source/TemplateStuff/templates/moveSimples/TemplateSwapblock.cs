@@ -21,15 +21,16 @@ public class TemplateSwapblock:Template, ITemplateTriggerable{
   protected override Vector2 virtLoc=>Position+spos.pos;
   SplineAccessor spos;
   EntityData dat;
-  float speed=0, maxspeed = 360, maxreturnspeed=120;
+  float speed=0;
+  ChannelState.FloatCh maxspeed, maxreturnspeed;
   float returnTimer = 0.8f, earlyGracetime, graceNext=0;
   bool triggerable = false, onDash = true, returnable = false;
   public TemplateSwapblock(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateSwapblock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
     dat=d;
-    maxspeed = d.Float("max_speed",360);
-    maxreturnspeed = d.Float("max_return_speed",120);
+    maxspeed = d.ChannelFloat("max_speed",360);
+    maxreturnspeed = d.ChannelFloat("max_return_speed",120);
     returnable = d.Bool("returning",false);
     triggerable = d.Bool("triggerable");
     onDash = d.Bool("onDash",true);

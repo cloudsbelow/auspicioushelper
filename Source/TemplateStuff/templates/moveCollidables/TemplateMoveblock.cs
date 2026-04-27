@@ -14,11 +14,9 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/TemplateMoveblock")]
 public class TemplateMoveBlock:TemplateMoveCollidable{
   public Vector2 movedir;
-  public float maxspeed;
-  public float acceleration;
+  ChannelState.FloatCh maxspeed, acceleration, maxStuckTime;
   bool respawning;
   float maxrespawntimer;
-  float maxStuckTime;
   bool cansteer;
   int maxleniency;
   Vector2 origpos;
@@ -40,11 +38,11 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
     };
     lastmovevec = movedir;
     useOwnUncollidable = d.Bool("uncollidable_blocks",false);
-    maxspeed = d.Float("speed",75);
-    acceleration = d.Float("acceleration", 300);
+    maxspeed = d.ChannelFloat("speed",75);
+    acceleration = d.ChannelFloat("acceleration", 300);
     respawning = d.Bool("respawning",true);
     maxrespawntimer = d.Float("respawn_timer",2f);
-    maxStuckTime = d.Float("Max_stuck",0.15f);
+    maxStuckTime = d.ChannelFloat("Max_stuck",0.15f);
     cansteer = d.Bool("cansteer", false);
     maxleniency = d.Int("max_leniency",4);
     moveevent = d.Attr("movesfx","event:/game/04_cliffside/arrowblock_move");

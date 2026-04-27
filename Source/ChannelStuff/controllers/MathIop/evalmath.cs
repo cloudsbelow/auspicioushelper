@@ -31,12 +31,18 @@ public static class Parser{
       before = addBefore;
     }
   }
-  const string TOK = @"#\d+";
+  const string TOK = @"(?:#\d+)";
   static Type[] withNum(int num)=>(new bool[num]).Map(x=>typeof(double)).ToArray();
   const BindingFlags bf = BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic;
   static double Pi()=>Math.PI;
   static double Saturate(double d)=>Math.Clamp(d,0,1);
   static double Mix(double fac, double a, double b)=>fac*a+(1-fac)*b;
+  static double When(double fac, double a, double b)=>fac!=0?a:b;
+  static double Take2(double fac, double a, double b)=>fac switch{<1=>a, _=>b};
+  static double Take3(double fac, double a, double b, double c)=>fac switch{<1=>a, <2=>b, _=>c};
+  static double Take4(double fac, double a, double b, double c, double d)=>fac switch{<1=>a, <2=>b, <3=>c, _=>d};
+  static double Take5(double fac, double a, double b, double c, double d, double e)=>fac switch{<1=>a, <2=>b, <3=>c, <4=>d, _=>e};
+  static double Take6(double fac, double a, double b, double c, double d, double e, double f)=>fac switch{<1=>a, <2=>b, <3=>c, <4=>d, <5=>e, _=>f};
   static Dictionary<(int,string),MethodInfo> parenOps = new(){
     {new(0,"pi"), typeof(Parser).GetMethod(nameof(Pi),bf)},
     {new(1,"floor"), typeof(Math).GetMethod(nameof(Math.Floor),withNum(1))},
@@ -52,6 +58,12 @@ public static class Parser{
     {new(2,"pow"), typeof(Math).GetMethod(nameof(Math.Pow),withNum(2))},
     {new(3,"clamp"), typeof(Math).GetMethod(nameof(Math.Clamp),withNum(3))},
     {new(3,"mix"), typeof(Parser).GetMethod(nameof(Mix),bf)},
+    {new(3,"when"), typeof(Parser).GetMethod(nameof(When),bf)},
+    {new(3,"take"), typeof(Parser).GetMethod(nameof(Take2),bf)},
+    {new(4,"take"), typeof(Parser).GetMethod(nameof(Take3),bf)},
+    {new(5,"take"), typeof(Parser).GetMethod(nameof(Take4),bf)},
+    {new(6,"take"), typeof(Parser).GetMethod(nameof(Take5),bf)},
+    {new(7,"take"), typeof(Parser).GetMethod(nameof(Take6),bf)}
   };
   static readonly List<Descr> ops = new(){
     new Descr("(?:\\d+\\.\\d*)|(?:(0x|0b)?\\d+)|(?:\\.\\d*)",(s,l)=>{
@@ -69,7 +81,7 @@ public static class Parser{
         for(int i=0; i<num; i++) par[i]=s[l[i*2+1].Item2];
         return Expression.Call(method,par);
       }
-      throw new Exception($"Could not find method {name} that accepts {num} arguments.");
+      throw new Exception($"Could not find method \"{name}\" that accepts {num} arguments.");
     }),
     new Descr($"[\\!\\~]{TOK}",(s,l)=>l[0].Item1 switch {
       "!"=>asDouble(Expression.Not(asBool(s[l[1].Item2]))),
@@ -92,7 +104,7 @@ public static class Parser{
     },"\\*","\\/","\\%","\\/\\/"),
     new Descr($"{TOK}?([\\+\\-]{TOK})+",(s,l)=>{
       bool hs = l[0].Item1!=null;
-      Expression cur = hs?Expression.Constant(0):s[l[0].Item2];
+      Expression cur = hs?Expression.Constant(0.0d):s[l[0].Item2];
       for(int i=hs?0:1; i<l.Count; i+=2){
         cur = l[i].Item1 switch {
           "+"=>Expression.Add(cur,s[l[i+1].Item2]),

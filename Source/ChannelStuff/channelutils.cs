@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Celeste.Mod.auspicioushelper;
 using Celeste.Mod.auspicioushelper.Import;
+using Microsoft.Xna.Framework;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -148,7 +149,7 @@ public static class ChannelState{
           func = channelmath.Parser.ParseToFunc(expr.Substring(1,expr.Length-2),out from);
         }catch(Exception e){
           Logger.Error(nameof(auspicioushelper),"Making channel failed for reason "+e.Message);
-          DebugConsole.Write("Failed to parse custom channel expression",expr.Substring(1,expr.Length-2),e);
+          DebugConsole.WriteFailure($"Failed to parse custom channel expression \"{expr.Substring(1,expr.Length-2)}\": \n {e}", true);
         }
       } else {
         if(!Enum.TryParse<Ops>(term, out var op)){
@@ -373,42 +374,59 @@ public static class ChannelState{
       if(ch!=null) cache=new(double.NaN);
     }
   }
-  internal class ChannelReaderFloat:ChannelReader{
+  internal class FloatCh:ChannelReader{
     float val;
-    public ChannelReaderFloat(string parse):base(
+    public FloatCh(string parse):base(
       (parse.Length==0 || float.TryParse(parse, out var _))?null:parse
     )=>val = float.TryParse(parse, out var p)?p:default;
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator float(ChannelReaderFloat o){
+    public static implicit operator float(FloatCh o){
       if(o.cache is not {} c) return o.val;
       if(double.IsNaN(c.val)) c = o.cache = _getVal(o.ch);
       return (float) c.val;
     }
   }
-  internal class ChannelReaderInt:ChannelReader{
+  internal static FloatCh ChannelFloat(this EntityData d, string attr, float def=default)=>new(d.String(attr,def.ToString()));
+  internal class Vec2Ch{
+    public FloatCh X {get; private set;}
+    public FloatCh Y {get; private set;}
+    public Vec2Ch(FloatCh x, FloatCh y){
+      this.X=x; this.Y = y;
+    }
+    public static implicit operator Vector2(Vec2Ch o)=>new(o.X,o.Y);
+  }
+  internal static Vec2Ch ChannelVec2(this EntityData d, string attr, float xDefault, float yDefault, bool yfirst=false){
+    var th = Util.listparseflat(d.Attr(attr));
+    FloatCh x = th.Count>(yfirst?1:0)? new(th[0]) : new(xDefault.ToString());
+    FloatCh y = th.Count>(yfirst?0:1)? new(th[th.Count>1? 1:0]) : new(yDefault.ToString());
+    return new(x,y);
+  }
+  internal class IntCh:ChannelReader{
     int val;
-    public ChannelReaderInt(string parse):base(
+    public IntCh(string parse):base(
       (parse.Length==0 || int.TryParse(parse, out var _))?null:parse
     )=>val = int.TryParse(parse, out var p)?p:default;
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator int(ChannelReaderInt o){
+    public static implicit operator int(IntCh o){
       if(o.cache is not {} c) return o.val;
       if(double.IsNaN(c.val)) c = o.cache = _getVal(o.ch);
       return (int) Math.Floor(c.val);
     }
   }
-  internal class ChannelReaderBool:ChannelReader{
+  internal static IntCh ChannelInt(this EntityData d, string attr, int def=default)=>new(d.String(attr,def.ToString()));
+  internal class BoolCh:ChannelReader{
     bool val;
-    public ChannelReaderBool(string parse):base(
+    public BoolCh(string parse):base(
       (parse.Length==0 || bool.TryParse(parse, out var _))?null:parse
     )=>val = bool.TryParse(parse, out var p)?p:default;
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator bool(ChannelReaderBool o){
+    public static implicit operator bool(BoolCh o){
       if(o.cache is not {} c) return o.val;
       if(double.IsNaN(c.val)) c = o.cache = _getVal(o.ch);
       return c.val!=0;
     }
   }
+  internal static BoolCh ChannelBool(this EntityData d, string attr, bool def=default)=>new(d.String(attr,def.ToString()));
 
 
 

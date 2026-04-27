@@ -16,7 +16,7 @@ entity.placements = {
       freeze = false,
       dontOnTransitionInto = false,
       disappear_depth = -13000,
-      fade_speed = 1,
+      fade_speed = "1",
       persistent = true,
       caveMode = false,
       

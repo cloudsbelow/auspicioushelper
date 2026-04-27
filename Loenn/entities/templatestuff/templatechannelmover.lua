@@ -20,8 +20,8 @@ entity.placements = {
       template = "",
       depthoffset=0,
       channel = "",
-      move_time=1.8,
-      asymmetry=1.0,
+      move_time="1.8",
+      asymmetry="1.0",
       easing = "Linear",
       spline = "centripetalNormalized",
       startupTime = "0",
@@ -43,8 +43,6 @@ entity.fieldOrder = {
 }
 entity.fieldInformation = function(entity)
     return {
-        move_time = {minimumValue=0},
-        asymmetry = {minimumValue=0},
         easing = {options=easings, editable=false},
         template = {
             options = aelperLib.get_template_options(entity)

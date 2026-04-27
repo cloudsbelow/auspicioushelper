@@ -16,7 +16,7 @@ public class TemplateGluable:Template, IRelocateTemplates.IDontRelocate{
     None, OnlyX, OnlyY, spline
   }
   Constraint constraint;
-  float maxspeed;
+  ChannelState.FloatCh maxspeed;
   public override Vector2 gatheredLiftspeed => constraint==Constraint.None?ownLiftspeed:base.gatheredLiftspeed;
   LiftspeedSm.LiftspeedHelper ls = new();
   Vector2 offset = Vector2.Zero;
@@ -43,7 +43,7 @@ public class TemplateGluable:Template, IRelocateTemplates.IDontRelocate{
     if(d.Bool("onlyX",false)) constraint = Constraint.OnlyX;
     if(d.Bool("onlyY",false)) constraint = Constraint.OnlyY;
     setProgressChannel = d.String("setProgressChannel");
-    maxspeed = d.Float("maxSpeed",float.PositiveInfinity);
+    maxspeed = d.ChannelFloat("maxSpeed",float.PositiveInfinity);
     this.d=d;
   }
   static Regex matchReg = new(@"^\s*\d+\s*(?:[\/,]\s*\d+\s*)*$",RegexOptions.Compiled);

@@ -28,8 +28,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
   ActivationType atype;
   Util.Easings outEasing = Util.Easings.SineIn;
   Util.Easings inEasing = Util.Easings.SineIn;
-  float outSpeed = 2;
-  float inSpeed = 0.5f;
+  ChannelState.FloatCh nextInSpeed, nextOutSpeed;
   string outgoingSound;
   string returningSound;
   public TemplateZipmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
@@ -43,8 +42,8 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
     atype = d.Enum("activation_type",ActivationType.ride);
     if(!d.Bool("propegateRiding"))prop &= ~Propagation.Riding;
     if(!string.IsNullOrWhiteSpace(d.Attr("channel","")))channel = d.Attr("channel");
-    outSpeed = d.Float("speed",2);
-    inSpeed = d.Float("returnSpeed",0.5f);
+    nextOutSpeed = d.ChannelFloat("speed",2);
+    nextInSpeed = d.ChannelFloat("returnSpeed",0.5f);
     outEasing = d.Enum<Util.Easings>("easing",Util.Easings.SineIn);
     inEasing = d.Enum<Util.Easings>("returnEasing",Util.Easings.SineIn);
     outgoingSound = d.Attr("outgoingSound","event:/auspicioushelper/zip/ah_zip_start");
@@ -108,6 +107,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
       triggered = true;
       if(outgoingSound.HasContent())sfx.Play(outgoingSound);
       yield return 0.1f;
+      float outSpeed = nextOutSpeed;
       at=0;
       while(at<1){
         at+=Engine.DeltaTime*outSpeed;
@@ -142,6 +142,7 @@ public class TemplateZipmover:Template, ITemplateTriggerable{
       triggered=false;
       yield return 0.25f;
       while(rtype == ReturnType.onChannelReset && (ct?.value??0)!=0) yield return null;
+      float inSpeed = nextInSpeed;
       sfx.Stop();
       if(returningSound.HasContent())sfx.Play(returningSound);
       at=0;

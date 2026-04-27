@@ -14,9 +14,7 @@ public class TemplateKevin:TemplateMoveCollidable{
   enum Axis{vertical, horizontal}
   Stack<Tuple<Axis, float>> moves = new(); 
   Vector2 godir;
-  float maxspeed;
-  float acceleration;
-  float returnSpeed;
+  ChannelState.FloatCh maxspeed, acceleration, returnSpeed;
   float locktime=0.25f;
   int leniency;
   bool locked;
@@ -42,9 +40,9 @@ public class TemplateKevin:TemplateMoveCollidable{
       d.Bool("top",false),d.Bool("right",false),d.Bool("bottom",false),d.Bool("left",false)
     ];
     leniency = d.Int("leniency",4);
-    maxspeed = d.Float("maxspeed",240);
-    acceleration = d.Float("acceleration",500);
-    returnSpeed = d.Float("returnSpeed",60);
+    maxspeed = d.ChannelFloat("maxspeed",240);
+    acceleration = d.ChannelFloat("acceleration",500);
+    returnSpeed = d.ChannelFloat("returnSpeed",60);
     returning = d.Bool("returning",true);
     ImpactSfx = d.Attr("ImpactSfx","event:/game/general/fallblock_impact");
     StartSfx = d.Attr("StartSfx","event:/new_content/game/10_farewell/fusebox_hit_1");

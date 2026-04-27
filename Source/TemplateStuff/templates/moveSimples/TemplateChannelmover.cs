@@ -11,15 +11,15 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateChannelmover")]
 public class TemplateChannelmover:Template{
-  float relspd;
-  float asym;
+  ChannelState.FloatCh movetime;
+  ChannelState.FloatCh asym;
   public string channel {get;set;}
   SplineAccessor spos;
   protected override Vector2 virtLoc => bonk? (Position+spos.pos).Round():(Position+spos.pos);
   bool toggle, altern, doshake, allowFraction, bonk, bonkedLastFrame=false;
   Util.Easings easing;
   EntityData dat;
-  float startupTime = 0;
+  ChannelState.FloatCh startupTime;
   string soundSuffix=null;
   bool muted=>soundSuffix==null;
   static readonly List<string> allowedSounds = new(){"stone","stonescrape"};
@@ -28,8 +28,8 @@ public class TemplateChannelmover:Template{
   :base(d,d.Position+offset,depthoffset){
     dat = d;
     channel = d.Attr("channel","");
-    relspd = 1/d.Float("move_time",1);
-    asym = d.Float("asymmetry",1f);
+    movetime = d.ChannelFloat("move_time",1);
+    asym = d.ChannelFloat("asymmetry",1f);
     easing = d.Enum<Util.Easings>("easing",Util.Easings.Linear);
     toggle = d.Bool("complete",false);
     altern = d.Bool("alternateEasing",true);
@@ -41,7 +41,7 @@ public class TemplateChannelmover:Template{
     soundSuffix = d.Attr("sound","none");
     if(!allowedSounds.Contains(soundSuffix)) soundSuffix=null;
     if(!muted) Add(sfx = new SoundSource());
-    startupTime = d.Float("startupTime",0);
+    startupTime = d.ChannelFloat("startupTime",0);
     bonk = d.Bool("bonkMode",false);
   }
   float target;
@@ -182,25 +182,24 @@ public class TemplateChannelmover:Template{
       if(afrac == target) ownLiftspeed = Vector2.Zero;
       else {
         bool flag1 = afrac==cfrac;
+        cfrac = afrac;
         afrac = Util.EaseOutApproach(easing, afrac, target, Math.Abs(dir*Engine.DeltaTime), out float deriv);
         bool flag2 = afrac==target;
-        if(tryMoveTo(afrac, flag1&&flag2? (afrac-cfrac)/MathF.Max(Engine.DeltaTime,0.001f) : relspd*dir*deriv)){
+        bool useFd = (flag1 && flag2) || movetime==0;
+        if(tryMoveTo(afrac, useFd? (afrac-cfrac)/MathF.Max(Engine.DeltaTime,0.001f) : dir*deriv/movetime)){
           afrac = cfrac = spos.t;
         }
-        if(flag2){
-          cfrac = afrac;
-          Arrive();
-        }
+        if(flag2) Arrive();
       }
     } else {
       if(cfrac == 0 && low == target) ownLiftspeed = Vector2.Zero;
       else if(Engine.DeltaTime!=0){
-        cfrac = Math.Clamp(cfrac+Engine.DeltaTime*dir*relspd,0,1);
+        cfrac = movetime==0? target:Math.Clamp(cfrac+Engine.DeltaTime*dir/movetime,0,1);
         bool flip = altern && dir<0;
         float x = flip?1-cfrac:cfrac;
         float y = Util.ApplyEasing(easing, x, out var deriv);
         afrac = flip?1-y:y;
-        if(tryMoveTo(low%spos.numsegs+afrac, relspd*dir*deriv)){
+        if(tryMoveTo(low%spos.numsegs+afrac, movetime==0?0:dir*deriv/movetime)){
           afrac = spos.t - MathF.Floor(spos.t);
           cfrac = Util.getEasingPreimage(easing, flip?1-afrac:afrac);
           if(flip) cfrac = 1-cfrac;

@@ -56,8 +56,7 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
     }
     public override string category=>"dashHit/"+dir.ToString();
   }
-  string skipCh;
-  bool skip=false;
+  ChannelState.BoolCh skip;
   bool alwaysLetThrough=true;
   string echannel;
   ChannelTracker etracker;
@@ -106,7 +105,7 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
       }
       return (this as ITemplateChild).propagateDashhit(p,dir);
     };
-    skipCh = d.Attr("skipChannel");
+    skip = d.ChannelBool("skipChannel",false);
     res[dirToInt(Dir.Left)] = d.Enum("Left",Result.Normal);
     res[dirToInt(Dir.Right)] = d.Enum("Right",Result.Normal);
     res[dirToInt(Dir.Up)] = d.Enum("Up",Result.Normal);
@@ -120,9 +119,5 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
     echannel = d.Attr("entanglementId","");
     if(echannel.StartsWith('@')) Add(etracker = new(echannel.Substring(1)));
     sfx = d.Attr("sfx","event:/game/06_reflection/crushblock_activate");
-  }
-  public override void addTo(Scene scene) {
-    base.addTo(scene);
-    if(!string.IsNullOrWhiteSpace(skipCh)) Add(new ChannelTracker(skipCh,(double val)=>skip=val!=0,true));
   }
 }
