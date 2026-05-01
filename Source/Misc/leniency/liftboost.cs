@@ -37,6 +37,7 @@ public class LiftspeedThing:Trigger{
 
   LinkedListNode<Settings> ownNode;
   Settings rules;
+  bool everywhere;
   public LiftspeedThing(EntityData d, Vector2 o):base(d,o){
     hooks.enable();
     rules = new(){
@@ -45,7 +46,11 @@ public class LiftspeedThing:Trigger{
       speedMultiplier = d.Float("speedMultiplier",1),
       disableMulti = d.Bool("disableMultiboost",false)
     };
-    if(d.Bool("coverRoom"))Collider = new Hitbox(2000000000,2000000000,-1000000000,-1000000000);
+    everywhere = d.Bool("coverRoom");
+  }
+  public override void Added(Scene scene) {
+    base.Added(scene);
+    if(everywhere) Collider = new Hitbox(200_000_000,200_000_000,-100_000_000,-100_000_000);
   }
   public static void FixRules(){
     appliedRules = overRules.Count>0?overRules.First.Value:defaultRules;

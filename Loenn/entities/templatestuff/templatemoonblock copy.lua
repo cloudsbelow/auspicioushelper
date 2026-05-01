@@ -14,10 +14,11 @@ entity.placements = {
       template = "",
       depthoffset=0,
       fragile = true,
-      respawnTime = 2.5,
+      respawnTime = "2.5",
       cloudDir = "0,1",
       fromRiding = true,
       noDoubleBoost = true,
+      followGravity=true,
     }
   }
 }

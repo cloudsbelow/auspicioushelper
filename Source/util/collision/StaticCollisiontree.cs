@@ -20,10 +20,11 @@ public struct ACol<T>{
   }
 }
 public abstract class LinearRaster<T>{
-  public LinkedList<ACol<T>> active = new();
+  public List<ACol<T>> active = new();
   public List<ACol<T>> mayHit = new();
   public int addIdx = 0;
-  public void Fill(IEnumerable<ACol<T>> l, float maxt){
+  bool noProg = false;
+  public void Fill(IEnumerable<ACol<T>> l, float maxt, bool noprog = false){
     var idx = 0;
     var enu = l.GetEnumerator();
     while(enu.MoveNext()){
@@ -33,7 +34,8 @@ public abstract class LinearRaster<T>{
         mayHit.Add(col);
       }
     }
-    mayHit.Sort((a,b)=>{
+    if(this.noProg = noprog) active=mayHit;
+    else mayHit.Sort((a,b)=>{
       var c1 = MathF.Max(a.f.enter,0)- MathF.Max(b.f.enter,0);
       if(c1 != 0) return MathF.Sign(c1);
       return a.order-b.order;
@@ -45,17 +47,18 @@ public abstract class LinearRaster<T>{
     addIdx=0;
   }
   public bool prog(float step){
-    var cn = active.First;
-    if((cn==null) && (addIdx>=mayHit.Count || mayHit[addIdx].f.enter>step)) return false;
-    while(cn!=null){
-      if(cn.Value.f.exit<step) active.Remove(cn);
-      cn=cn.Next;
-    }
+    if(noProg) return false;
+    bool changeFlag = false;
+    active.RemoveAll(x=>{
+      bool f = x.f.exit<step;
+      changeFlag |= f;
+      return f;
+    });
+    if(addIdx>=mayHit.Count || mayHit[addIdx].f.enter>step) return changeFlag;
     while(addIdx<mayHit.Count && mayHit[addIdx].f.enter<=step){
-      if(mayHit[addIdx].f.exit>=step) active.AddLast(mayHit[addIdx]);
+      if(mayHit[addIdx].f.exit>=step) active.Add(mayHit[addIdx]);
       addIdx++;
     }
-    //DebugConsole.Write($"{this.GetType().ToString()} {active.Count} {step}");
     return true;
   }
 }

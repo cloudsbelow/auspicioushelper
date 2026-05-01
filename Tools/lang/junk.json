@@ -28,7 +28,7 @@
     "entities.auspicioushelper/CustomRefill": {
         "description": "Fancy refill with some extra options",
         "placements": {
-            "respawnTimer": "in seconds",
+            "respawnTimer": "CHANNELABLE. in seconds",
             "oneUse": "",
             "twoDash": "",
             "triggering": "Whether collecting this refill should trigger templates it is a part of",

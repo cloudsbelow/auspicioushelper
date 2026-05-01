@@ -146,7 +146,7 @@ public class Template:Entity, ITemplateChild{
 
   public void childRelposSafe(){
     if(removed) return;
-    using(new MovementLock()){
+    using(new MovementLock()) using(new GelperIop.MoveOverride()){
       Entity movewith = PlayerHelper.getFollowEnt();
       Vector2 mwp = movewith?.Position??Vector2.Zero;
       childRelposTo(virtLoc,gatheredLiftspeed);

@@ -15,17 +15,14 @@ namespace Celeste.Mod.auspicioushelper;
 public class TemplateMoveBlock:TemplateMoveCollidable{
   public Vector2 movedir;
   ChannelState.FloatCh maxspeed, acceleration, maxStuckTime;
-  bool respawning;
-  float maxrespawntimer;
-  bool cansteer;
+  RespawnCountdown respawn;
+  bool cansteer, triggerFromRiding = true, respawning;
   int maxleniency;
   Vector2 origpos;
   string moveevent = "event:/game/04_cliffside/arrowblock_move";
   List<Vector2> decalOffset = new();
   List<MTexture> arrows;
-  Color c1 = Util.hexToColor("#50cf50ff");
-  Color c2 = Util.hexToColor("#ffff");
-  bool triggerFromRiding = true;
+  Color c1 = Util.hexToColor("#50cf50ff"), c2 = Util.hexToColor("#ffff");
   public TemplateMoveBlock(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateMoveBlock(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
@@ -40,8 +37,8 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
     useOwnUncollidable = d.Bool("uncollidable_blocks",false);
     maxspeed = d.ChannelFloat("speed",75);
     acceleration = d.ChannelFloat("acceleration", 300);
+    respawn = new(d.ChannelFloat("respawn_timer",2f));
     respawning = d.Bool("respawning",true);
-    maxrespawntimer = d.Float("respawn_timer",2f);
     maxStuckTime = d.ChannelFloat("Max_stuck",0.15f);
     cansteer = d.Bool("cansteer", false);
     maxleniency = d.Int("max_leniency",4);
@@ -152,7 +149,8 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
       destroyChildren();
       triggered=false;
       fgt = null;
-      yield return maxrespawntimer;
+      respawn.Begin();
+      while(!respawn.Prog(Engine.DeltaTime)) yield return null;
       reconnect(origpos);
       if(parent?.GetFromTree<IRemovableContainer>() is {} cont){
         if(!cont.RestoreChild(this)){

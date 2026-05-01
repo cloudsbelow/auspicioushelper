@@ -3,8 +3,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using IL.Monocle;
 using Microsoft.Xna.Framework.Graphics;
+using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -55,7 +55,7 @@ public abstract class ITexture{
     }
   }
   public class ImageWrapper:ITexture{
-    static Dictionary<ModAsset, Texture2D> cached = new();
+    static Dictionary<string, Texture2D> cached = new();
     static ImageWrapper(){
       auspicioushelperModule.OnEnterMap.enroll(new ScheduledAction(()=>{
         foreach(var c in cached) c.Value.Dispose();
@@ -64,17 +64,36 @@ public abstract class ITexture{
       },"clear cached images"));
     }
     public override Texture2D tex {get;}
-    public ImageWrapper(ModAsset asset){
-      if(asset==null) return;
-      if(!cached.TryGetValue(asset,out var texture)){
-        using (Stream stream = asset.Stream) {
-          cached.Add(asset, tex = Texture2D.FromStream(auspicioushelperGFX.gd, stream));
+    public ImageWrapper(string gfxPath){
+      if(!cached.TryGetValue(gfxPath,out var texture)){
+        if(Everest.Content.Get(Util.concatPaths("Graphics",gfxPath)) is { } a){
+          using(Stream stream = a.Stream){
+            cached.Add(gfxPath, tex = Texture2D.FromStream(auspicioushelperGFX.gd, stream));
+          }
+        } else {
+          string path = Util.removeWhitespace(gfxPath).RemovePrefix("/").RemovePrefix("Atlases/").RemoveSuffix(".png");
+          string first = path.Split("/")[0];
+          Atlas from = first switch {
+            "ColorGrading"=>GFX.ColorGrades,
+            "Gameplay"=>GFX.Game,
+            "Gui"=>GFX.Gui,
+            // ""=>GFX.Opening,
+            // ""=>GFX.Misc,
+            "Portraits"=>GFX.Portraits,
+            _=>null
+          };
+          path=path.RemovePrefix(first+"/");
+          if(from?[path] is {} mtex){
+            var dat = Util.TexData(mtex, out var w, out var h);
+            tex = new Texture2D(auspicioushelperGFX.gd, w,h);
+            tex.SetData(dat);
+            cached.Add(gfxPath, tex);
+          }
         }
+        if(tex!=null) DebugConsole.Write("Texture loaded:", gfxPath, tex?.Width, tex?.Height);
+        else DebugConsole.WriteFailure($"Texture failed to load: {gfxPath}",true);
       } else tex=texture;
-      DebugConsole.Write("Texture:", asset?.PathVirtual, tex?.Width, tex?.Height);
     }
-    public ImageWrapper(string pathToAsset)
-      :this(GetAsset(pathToAsset)){}
     static ModAsset GetAsset(string asset){
       if(Everest.Content.Get(Util.concatPaths("Graphics",asset)) is { } a) return a;
       DebugConsole.WriteFailure($"Could not find image at {asset}",true);

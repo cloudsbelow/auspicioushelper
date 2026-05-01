@@ -11,7 +11,8 @@
             ],
             "triggers": "Hit triggers on the first possible pixel",
             "solids": "Perform walljumps/cornerjumps on first possible pixel (prevents missing cornerboost speed when buffering)",
-            "cover_whole_room": "Makes this entity cover the whole room"
+            "cover_whole_room": "Makes this entity cover the whole room",
+            "ForceGroundCollide": "Do ground collisions before touching ground (immediately gain ultra speed)"
         }
     },
     "entities.auspicioushelper/ArbitraryDie": {
@@ -41,7 +42,8 @@
             "rotation": "Rotation in degrees",
             "depth": "Depth (negative is more in front; player is 0, fgtiles are -10000)",
             "alphaCutoff": "Pixels whose alpha is higher than this value will be collidable",
-            "occludeLight": "Whether this entitiy casts shadows (only the solid pixels). Relatively optimized; no need to worry about lag if there are not hundreds of these entities"
+            "occludeLight": "Whether this entitiy casts shadows (only the solid pixels). Relatively optimized; no need to worry about lag if there are not hundreds of these entities",
+            "enableSlopes": "Enable pixel leniency with the reccomended settings for good slopes. Use pixel leniency trigger for more customizability."
         },
         "p_name": "Arbitrary shape solid"
     },

@@ -32,7 +32,8 @@
             "action": "What player action will trigger this",
             "only_once": "If this should only trigger once",
             "advanced": "Set channels in a more advanced way. Given a list of channels to set/expression for value pairs such as  'a:3,b:@c[*2]' which sets channel a to 3 and channel b to twice the value of channel c. If using a channel in an expression, it must be prepended with @. If using a number, no prefix is needed.",
-            "everywhere": "Make the trigger cover the whole room"
+            "everywhere": "Make the trigger cover the whole room",
+            "OnlyWhenChannel": "Make the trigger only work when this channel is nonzero"
         }
     },
     "triggers.auspicioushelper/ConditionalStrawbCollectTrigger": {

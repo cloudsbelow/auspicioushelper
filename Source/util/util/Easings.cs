@@ -111,6 +111,10 @@ public static partial class Util{
     derivative = MathF.PI*MathF.Sin(MathF.PI*val)/2;
     return SineInOut(val);
   }
+  public static float SineInOutSign(float val, out float derivative){
+    derivative = MathF.PI*MathF.Sin(MathF.PI*val)/2;
+    return SineInOut(val)*Math.Sign(val);
+  }
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static float Smoothstep(float val){
     val = Math.Clamp(val,0,1);

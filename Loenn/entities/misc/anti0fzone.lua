@@ -5,6 +5,7 @@ local entity = {}
 
 entity.name = "auspicioushelper/Anti0fZone"
 entity.depth = -11000
+local groundModes = {"None", "OnJump", "Always" }
 
 entity.placements = {
   {
@@ -17,7 +18,8 @@ entity.placements = {
       always_walljumpcheck = false,
       triggers = false,
       solids = false,
-      cover_whole_room=false
+      cover_whole_room=false,
+      ForceGroundCollide = "None",
     }
   }
 }
@@ -34,6 +36,9 @@ entity.fieldOrder = {
     "solids",
     "always_walljumpcheck",
     "cover_whole_room"
+}
+entity.fieldInformation = {
+  ForceGroundCollide = {options=groundModes, editable=false}
 }
 
 return entity

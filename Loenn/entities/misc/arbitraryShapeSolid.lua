@@ -24,6 +24,7 @@ entity.placements = {
       depth=-100,
       alphaCutoff=0.5,
       occludeLight=true,
+      enableSlopes = true,
     }
   }
 }

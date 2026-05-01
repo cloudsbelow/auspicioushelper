@@ -23,7 +23,7 @@ public class ChannelPlayerTrigger:Trigger{
   bool activateOnleave=false;
   bool activateOnStay=false;
   bool restore=false;
-  bool onlyOnce; 
+  bool onlyOnce, everywhere; 
   ChannelState.AdvancedSetter adv=null;
   ChannelState.BoolCh onlywhen;
 
@@ -35,9 +35,7 @@ public class ChannelPlayerTrigger:Trigger{
     if(!string.IsNullOrWhiteSpace(data.Attr("advanced"))){
       adv = new(data.Attr("advanced"));
     }
-    if(data.Bool("everywhere",false)){
-      Collider = new Hitbox(int.MaxValue,int.MaxValue,-int.MaxValue/2,-int.MaxValue/2);
-    }
+    everywhere = data.Bool("everywhere",false);
     switch(data.Attr("action")){
       case "dash":
         Add(new DashListener((Vector2 d)=>{
@@ -71,6 +69,10 @@ public class ChannelPlayerTrigger:Trigger{
       "add"=>Op.add,
       _=>Op.set
     };
+  }
+  public override void Awake(Scene scene) {
+    base.Awake(scene);
+    if(everywhere) Collider = new Hitbox(200_000_000,200_000_000,-100_000_000,-100_000_000);
   }
   double? restoreTo = null;
   public void activate(){

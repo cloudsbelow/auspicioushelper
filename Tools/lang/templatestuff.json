@@ -119,7 +119,7 @@
             "die_to_barrier": "Die to seeker barriers",
             "respawning": "Whether this respawns.",
             "dontFlingOff": "When liftspeed stops or becomes pointed downwards, whether this holdable should be flung",
-            "respawnDelay": "Time it takes to respawn",
+            "respawnDelay": "CHANNELABLE. Time it takes to respawn",
             "start_floating": "Yea like if it starts floating",
             "dangerous": "Whether to crush things like hearts",
             "voidDieOffset": "How far below the screen the bottom of the collider must be for this to die",
@@ -372,14 +372,15 @@
             "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
             "sinkTime": "CHANNELABLE. How long it will sink for",
             "sinkDist": "CHANNELABLE. How far it will sink during its sink time. Two numbers can be given for x/y.",
-            "respawnTime": "How long it takes to respawn",
+            "respawnTime": "CHANNELABLE. How long it takes to respawn",
             "triggerable": "Whether it will start sinking when triggered by child events",
             "ridingTriggers": "Whether riding this entity triggers it",
             "disconnect": "Whether to disconnect this template's movement from its parent when it starts sinking",
             "quiet": "Various options to mute certain sounds. Can have value from 0-7 with each number muting a different variety of sounds. 7 mutes all.",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
-            ]
+            ],
+            "followGravity": "Sink the other way when gravity helper has flipped the player"
         },
         "p_name": "Template Iceblock"
     },
@@ -413,10 +414,11 @@
             "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
             "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
             "fragile": "Whether to shatter at the end of the cloud boost thing",
-            "respawnTime": "The time it takes for the cloud to respawn",
+            "respawnTime": "CHANNELABLE. The time it takes for the cloud to respawn",
             "cloudDir": "CHANNELABLE. Cloud movement factor. A second number can be given to specify x/y",
             "fromRiding": "Whether riding this cloud triggers it",
-            "noDoubleBoost": "Disables double cloudboosts (jumping in coyote after the cloud has shattered) only important for clouds with horizontal direction."
+            "noDoubleBoost": "Disables double cloudboosts (jumping in coyote after the cloud has shattered) only important for clouds with horizontal direction.",
+            "followGravity": "Sink the other way when gravity helper has flipped the player"
         },
         "p_name": "Template Cloud"
     },
@@ -432,7 +434,8 @@
             "sink_speed": "CHANNELABLE. How fast the template sinks when stood on or grabbed",
             "dash_influence": "CHANNELABLE. How far a dash will push this block",
             "startphase": "The floating phase this template should start on, in radians",
-            "useCustomStartphase": "If this template should start its floating on some certain phase. Check this if \"Start Phase\" is specified"
+            "useCustomStartphase": "If this template should start its floating on some certain phase. Check this if \"Start Phase\" is specified",
+            "followGravity": "Sink the other way when gravity helper has flipped the player"
         }
     },
     "entities.auspicioushelper/TemplateMoveblock": {
@@ -446,7 +449,7 @@
             "speed": "CHANNELABLE. The top speed of this template",
             "acceleration": "CHANNELABLE. How fast this template will accelerate to its top speed",
             "respawning": "Whether or not this template will respawn",
-            "respawn_timer": "How long it takes this template to respawn",
+            "respawn_timer": "CHANNELABLE. How long it takes this template to respawn",
             "Max_stuck": "CHANNELABLE. How long this template can be stuck before it breaks",
             "cansteer": "If the player can steer this template",
             "movesfx": "The sound to play while this template is moving",
@@ -474,7 +477,10 @@
             "movementLeniency": "Will corner correct movement by up to this amount",
             "startDisconnected": "Will immedately fall and not move with attached parent template",
             "hitSprings": "Whether to be sprung by springs",
-            "alwaysDrag": ["physics always","Don't have no physics times"],
+            "alwaysDrag": [
+                "physics always",
+                "Don't have no physics times"
+            ],
             "terminalVelocity": "CHANNELABLE. Fastest downward speed",
             "gravity": "CHANNELABLE. How quickly to approach terminal velocity. Can be thought of as vertical drag biased around a nonzero value.",
             "BounceStrengthFromWall": "When hitting a wall, how much speed to recoil back with",

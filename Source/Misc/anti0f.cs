@@ -20,12 +20,11 @@ namespace Celeste.Mod.auspicioushelper;
 [Tracked]
 public class Anti0fZone:Entity{
   public FloatRect bounds;
-  bool ctriggers = true;
-  bool cplayercolliders = true;
-  bool cthrowables = false;
-  bool csolids = false;
-  bool alwayswjc = false;
-  bool wholeroom = false;
+  bool ctriggers, cplayercolliders, cthrowables, csolids, alwayswjc, wholeroom;
+  enum HitGroundMode{
+    None, OnJump, Always 
+  }
+  HitGroundMode groundMode;
   public Anti0fZone(EntityData d, Vector2 offset):base(d.Position+offset){
     bool ci = d.Bool("completely_inside",false);
     bounds = new FloatRect(Position.X,Position.Y,d.Width,d.Height);
@@ -38,6 +37,7 @@ public class Anti0fZone:Entity{
     csolids |= alwayswjc;
     wholeroom = d.Bool("cover_whole_room",false);
     Collider = ci?new Hitbox(d.Width-12,d.Height-12,6,6):new Hitbox(d.Width,d.Height);
+    groundMode = d.Enum("ForceGroundCollide",HitGroundMode.None);
   }
 
   public static Anti0fZone getHit(Player p){
@@ -98,19 +98,12 @@ public class Anti0fZone:Entity{
       prog(step);
       Collider old = p.Collider;
       p.Collider = p.hurtbox;
-      var cn = active.First;
-      while(cn!=null){
-        if(cn.Value.o.Check(p)){
-          active.Remove(cn);
-          if(p.Dead){
-            p.Collider = old;
-            return true;
-          }
-        }
-        cn=cn.Next;
-      }
+      active.RemoveAll(cn=>{
+        if(p.Dead || cn.o.Check(p)) return true;
+        return false;
+      });
       p.Collider = old;
-      return false;
+      return p.Dead;
     }
   }
   class TriggerRaster:LinearRaster<Trigger>{
@@ -123,9 +116,8 @@ public class Anti0fZone:Entity{
     public bool prog(Player p, float step){
       if (p.StateMachine.State == 18) return false;
       prog(step);
-      var cn = active.First;
-      while(cn != null){
-        var t = cn.Value.o;
+      active.RemoveAll(cn=>{
+        var t = cn.o;
         if (p.CollideCheck(t)){
           if (!t.Triggered){
             t.Triggered = true;
@@ -133,10 +125,10 @@ public class Anti0fZone:Entity{
             t.OnEnter(p);
           }
           t.OnStay(p);
-          active.Remove(cn);
+          return true;
         } 
-        cn = cn.Next;
-      }
+        return false;
+      });
       return false;
     }
   }
@@ -149,19 +141,56 @@ public class Anti0fZone:Entity{
     }
     public bool prog(Player p, float step, bool doPlayerstuff=true, bool alwayswjc = false){
       
-      if(prog(step)) p.Scene.Tracker.Entities[typeof(Solid)] = active.Select(s=>s.o).ToList<Entity>();
+      if(prog(step)) p.Scene.Tracker.Entities[typeof(Solid)] = active.Map(x=>(Entity)x.o);
       //DebugConsole.Write($"solid reinterpolation {p.StateMachine.state}");
       bool wjcp,wjcn;
+      bool grounded = false;
       if(!doPlayerstuff) return false;
+      int st = p.StateMachine.State;
+      if((st==Player.StNormal || st==Player.StDash || st==Player.StRedDash) && p.Speed.Y>=0){
+        bool og = p.onGround;
+        Vector2 gp = p.Position+Vector2.UnitY;
+        Platform plat = (Platform)p.CollideFirst<Solid>(gp)?? p.CollideFirstOutside<JumpThru>(gp);
+        if(plat!=null && !og){
+          p.onGround = true;
+          grounded = true;
+          if(st==Player.StNormal){
+            if(p.Holding == null){
+              if((float)Input.MoveY == 1f) p.Ducking = true;
+            } else {
+              if(!p.Ducking && (float)Input.MoveY == 1f && !p.holdCannotDuck){
+                p.Drop();
+                p.Ducking = true;
+              }
+            }
+          }
+          p.StartJumpGraceTime();
+          if(p.dashRefillCooldownTimer<=0){
+            bool f1 = SaveData.Instance.Assists.DashMode == Assists.DashModes.Infinite && !p.level.InCutscene;
+            if(f1 || (!p.Inventory.NoRefills && p.onGround && 
+              (p.CollideCheck<Solid, NegaBlock>(gp) || p.CollideCheckOutside<JumpThru>(gp)) &&
+              (!p.CollideCheck<Spikes>(p.Position) || SaveData.Instance.Assists.Invincible)
+            )){
+              p.RefillDash();
+            }
+          }
+          bool noNj = !Input.Jump.Pressed || (TalkComponent.PlayerOver != null && Input.Talk.Pressed) || Input.Jump.bufferCounter==0;
+          if(rast.active.Any(x=>x.o.groundMode==HitGroundMode.Always || (!noNj && x.o.groundMode==HitGroundMode.OnJump))){
+            var oldspeed=p.Speed;
+            p.OnCollideV(new(){Direction=Vector2.UnitY, Moved=Vector2.Zero, Hit=plat, Pusher=null, TargetPosition=gp});
+            DebugConsole.Write("Forced ground collision", oldspeed, p.Speed);
+          } 
+        }
+      }
       switch(p.StateMachine.state){
         case Player.StNormal:
           
           if (!Input.Jump.Pressed || (TalkComponent.PlayerOver != null && Input.Talk.Pressed) || Input.Jump.bufferCounter==0) return false;
-          // if((p.jumpGraceTimer>0f || p.onGround) && p.Speed.Y>=0){
-          //   p.Jump(); //always happens before we reach here
-          //   return true;
-          // }
-          //DebugConsole.Write($"normal reinterpolation {p.Position} {Input.Jump.Pressed } {p.CanUnDuck}");
+          if((p.jumpGraceTimer>0f || p.onGround) && p.Speed.Y>=0){
+            p.Jump(); //always happens before we reach here
+            DebugConsole.Write("Normal jump in anti0f");
+            return true;
+          }
           if(p.CanUnDuck){
             wjcp = (alwayswjc||p.CollideCheck<Solid>(p.Position+Vector2.UnitX*5)) && p.WallJumpCheck(1);
             wjcn = (alwayswjc||p.CollideCheck<Solid>(p.Position-Vector2.UnitX*5)) && p.WallJumpCheck(-1);
@@ -194,10 +223,12 @@ public class Anti0fZone:Entity{
         case Player.StDash: case Player.StRedDash:
           //DebugConsole.Write($"dash reinterpolation {p.Speed}");
           if(!Input.Jump.Pressed || !p.CanUnDuck || Input.Jump.bufferCounter==0) return false;
-          // if((p.jumpGraceTimer>0f || p.onGround) && p.Speed.Y>=0){
-          //   p.Jump(); //always happens before we reach here
-          //   return true;
-          // }
+          if(p.CanUnDuck && p.jumpGraceTimer>0f && p.Speed.Y>=0 && Math.Abs(p.DashDir.Y) < 0.1f){
+            p.SuperJump(); 
+            DebugConsole.Write("Super jump in anti0f");
+            p.StateMachine.State  =0;
+            return true;
+          }
           wjcp = (alwayswjc||p.CollideCheck<Solid>(p.Position+Vector2.UnitX*5)) && p.WallJumpCheck(1);
           wjcn = (alwayswjc||p.CollideCheck<Solid>(p.Position-Vector2.UnitX*5)) && p.WallJumpCheck(-1);
           if(!(wjcp || wjcn)) return false;
@@ -218,7 +249,15 @@ public class Anti0fZone:Entity{
           p.StateMachine.State = 0;
           return true;
       }
-      return false;
+      return grounded;
+    }
+  }
+  class JtRaster:LinearRaster<JumpThru>{
+    public void Fill(Player p, Vector2 step, float maxt){
+      FloatRect f = new FloatRect(p)._expand(1,4);
+      Fill(p.Scene.Tracker.GetEntities<JumpThru>().Select(
+        h=>new ACol<JumpThru>(f.ISweep(h.Collider,-step),(JumpThru)h)
+      ),maxt, true);
     }
   }
   class ZoneRaster:LinearRaster<Anti0fZone>{
@@ -267,29 +306,30 @@ public class Anti0fZone:Entity{
       if(hh) hrast.Fill(p,step,maxt);
       if(hs){
         srast.Fill(p,step,maxt);
+        jtrast.Fill(p,step,maxt);
         p.Scene.Tracker.Entities[typeof(Solid)] = srast.active.Select(s=>s.o).ToList<Entity>();
+        p.Scene.Tracker.Entities[typeof(JumpThru)] = jtrast.active.Select(s=>s.o).ToList<Entity>();
       }
       return true;
     }
     public bool prog(Player p, float step){
-      var cn = active.First;
-      while(cn!=null){
-        if(cn.Value.f.exit<step){
-          inire(cn.Value.o,-1);
-          active.Remove(cn);
+      active.RemoveAll(x=>{
+        if(x.f.exit<step){
+          inire(x.o,-1);
+          return false;
         }
-        cn=cn.Next;
-      }
+        return false;
+      });
       while(addIdx<mayHit.Count && mayHit[addIdx].f.enter<=step){
         if(mayHit[addIdx].f.exit>=step){
           inire(mayHit[addIdx].o,1);
-          active.AddLast(mayHit[addIdx]);
+          active.Add(mayHit[addIdx]);
         }
         addIdx++;
       }
 
       bool flag = false;
-      if(hs) flag |= srast.prog(p,step,dosolids,dowalljumps);
+      if(hs)flag |= srast.prog(p,step,dosolids,dowalljumps);
       if(flag || exitNormal.OrShortcircuit(p)) return true;
       if(doholdables) flag |= hrast.prog(p,step);
       if(doplayercolliders) flag |= crast.prog(p,step);
@@ -323,10 +363,12 @@ public class Anti0fZone:Entity{
   static ColliderRaster crast = new();
   static TriggerRaster trast = new();
   static SolidRaster srast = new();
+  static JtRaster jtrast = new();
   static ZoneRaster rast = new();
   static List<Entity> oldSolids;
+  static List<Entity> oldJts;
   static void ClearRasters(){
-    hrast.Clear(); crast.Clear(); trast.Clear(); srast.Clear(); rast.Clear();
+    hrast.Clear(); crast.Clear(); trast.Clear(); srast.Clear(); jtrast.Clear(); rast.Clear();
   }
   static bool PlayerUpdateDetour3(Player p){
     bool first = true;
@@ -343,6 +385,7 @@ public class Anti0fZone:Entity{
     float frac;
 
     oldSolids = p.Scene.Tracker.Entities[typeof(Solid)];
+    oldJts = p.Scene.Tracker.Entities[typeof(JumpThru)];
     float totalfrac = 0;
     start:
       ClearRasters();
@@ -383,6 +426,7 @@ public class Anti0fZone:Entity{
     exit:
       ClearRasters();
       p.Scene.Tracker.Entities[typeof(Solid)] = oldSolids;
+      p.Scene.Tracker.Entities[typeof(JumpThru)] = oldJts;
       return true;
     reconsile:
       totalfrac += frac;
@@ -391,6 +435,7 @@ public class Anti0fZone:Entity{
       dist = _ispeed*Engine.DeltaTime*(1-totalfrac);
       if(dist == Vector2.Zero) goto exit;
       p.Scene.Tracker.Entities[typeof(Solid)] = oldSolids;
+      p.Scene.Tracker.Entities[typeof(JumpThru)] = oldJts;
       goto start;
   }
   static void NaiveMoveHook(On.Celeste.Actor.orig_NaiveMove orig, Actor a, Vector2 dist){
@@ -414,6 +459,7 @@ public class Anti0fZone:Entity{
     Vector2 step = dist/length;
     ClearRasters();
     oldSolids = p.Scene.Tracker.Entities[typeof(Solid)];
+    oldJts = p.Scene.Tracker.Entities[typeof(JumpThru)];
     if(!rast.Fill(p,step,length,true)){
       orig(a,dist);
       return;
@@ -431,6 +477,7 @@ public class Anti0fZone:Entity{
     }
     exit:
       p.Scene.Tracker.Entities[typeof(Solid)] = oldSolids;
+      p.Scene.Tracker.Entities[typeof(JumpThru)] = oldJts;
       ClearRasters();
   }
 

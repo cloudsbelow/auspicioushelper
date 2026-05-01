@@ -20,6 +20,7 @@ entity.placements = {
       dash_influence="8",
       startphase=0,
       useCustomStartphase=false,
+      followGravity=true,
     }
   }
 }

@@ -215,7 +215,7 @@ entities.auspicioushelper/ConnectedBlocks.placements.description.main=Foreground
 
 # auspicioushelper/CustomRefill
 entities.auspicioushelper/CustomRefill.placements.description.(Another) custom refill=Fancy refill with some extra options
-entities.auspicioushelper/CustomRefill.attributes.description.respawnTimer=in seconds
+entities.auspicioushelper/CustomRefill.attributes.description.respawnTimer=CHANNELABLE. in seconds
 entities.auspicioushelper/CustomRefill.attributes.description.triggering=Whether collecting this refill should trigger templates it is a part of
 entities.auspicioushelper/CustomRefill.attributes.description.useOnPickup=Whether to always use this refill if it is in a template that gets picked up
 entities.auspicioushelper/CustomRefill.attributes.description.useOnRelease=Whether to always use this refill when in a template that is thrown
@@ -253,6 +253,7 @@ entities.auspicioushelper/Anti0fZone.attributes.description.always_walljumpcheck
 entities.auspicioushelper/Anti0fZone.attributes.description.triggers=Hit triggers on the first possible pixel
 entities.auspicioushelper/Anti0fZone.attributes.description.solids=Perform walljumps/cornerjumps on first possible pixel (prevents missing cornerboost speed when buffering)
 entities.auspicioushelper/Anti0fZone.attributes.description.cover_whole_room=Makes this entity cover the whole room
+entities.auspicioushelper/Anti0fZone.attributes.description.ForceGroundCollide=Do ground collisions before touching ground (immediately gain ultra speed)
 
 # auspicioushelper/ArbitraryDie
 entities.auspicioushelper/ArbitraryDie.placements.description.Arbitrary shape kill area=Kill area with the shape of a specified image
@@ -483,7 +484,7 @@ entities.auspicioushelper/templateholdable.attributes.description.friction=CHANN
 entities.auspicioushelper/templateholdable.attributes.description.die_to_barrier=Die to seeker barriers
 entities.auspicioushelper/templateholdable.attributes.description.respawning=Whether this respawns.
 entities.auspicioushelper/templateholdable.attributes.description.dontFlingOff=When liftspeed stops or becomes pointed downwards, whether this holdable should be flung
-entities.auspicioushelper/templateholdable.attributes.description.respawnDelay=Time it takes to respawn
+entities.auspicioushelper/templateholdable.attributes.description.respawnDelay=CHANNELABLE. Time it takes to respawn
 entities.auspicioushelper/templateholdable.attributes.description.start_floating=Yea like if it starts floating
 entities.auspicioushelper/templateholdable.attributes.description.dangerous=Whether to crush things like hearts
 entities.auspicioushelper/templateholdable.attributes.description.voidDieOffset=How far below the screen the bottom of the collider must be for this to die
@@ -672,7 +673,7 @@ entities.auspicioushelper/TemplateIceblock.attributes.description.template=The n
 entities.auspicioushelper/TemplateIceblock.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
 entities.auspicioushelper/TemplateIceblock.attributes.description.sinkTime=CHANNELABLE. How long it will sink for
 entities.auspicioushelper/TemplateIceblock.attributes.description.sinkDist=CHANNELABLE. How far it will sink during its sink time. Two numbers can be given for x/y.
-entities.auspicioushelper/TemplateIceblock.attributes.description.respawnTime=How long it takes to respawn
+entities.auspicioushelper/TemplateIceblock.attributes.description.respawnTime=CHANNELABLE. How long it takes to respawn
 entities.auspicioushelper/TemplateIceblock.attributes.description.triggerable=Whether it will start sinking when triggered by child events
 entities.auspicioushelper/TemplateIceblock.attributes.description.ridingTriggers=Whether riding this entity triggers it
 entities.auspicioushelper/TemplateIceblock.attributes.description.disconnect=Whether to disconnect this template's movement from its parent when it starts sinking
@@ -703,7 +704,7 @@ entities.auspicioushelper/TemplateCloud.placements.description.Template Cloud=Ma
 entities.auspicioushelper/TemplateCloud.attributes.description.template=The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.
 entities.auspicioushelper/TemplateCloud.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
 entities.auspicioushelper/TemplateCloud.attributes.description.fragile=Whether to shatter at the end of the cloud boost thing
-entities.auspicioushelper/TemplateCloud.attributes.description.respawnTime=The time it takes for the cloud to respawn
+entities.auspicioushelper/TemplateCloud.attributes.description.respawnTime=CHANNELABLE. The time it takes for the cloud to respawn
 entities.auspicioushelper/TemplateCloud.attributes.description.cloudDir=CHANNELABLE. Cloud movement factor. A second number can be given to specify x/y
 entities.auspicioushelper/TemplateCloud.attributes.description.fromRiding=Whether riding this cloud triggers it
 entities.auspicioushelper/TemplateCloud.attributes.description.noDoubleBoost=Disables double cloudboosts (jumping in coyote after the cloud has shattered) only important for clouds with horizontal direction.
@@ -731,7 +732,7 @@ entities.auspicioushelper/TemplateMoveblock.attributes.description.uncollidable_
 entities.auspicioushelper/TemplateMoveblock.attributes.description.speed=CHANNELABLE. The top speed of this template
 entities.auspicioushelper/TemplateMoveblock.attributes.description.acceleration=CHANNELABLE. How fast this template will accelerate to its top speed
 entities.auspicioushelper/TemplateMoveblock.attributes.description.respawning=Whether or not this template will respawn
-entities.auspicioushelper/TemplateMoveblock.attributes.description.respawn_timer=How long it takes this template to respawn
+entities.auspicioushelper/TemplateMoveblock.attributes.description.respawn_timer=CHANNELABLE. How long it takes this template to respawn
 entities.auspicioushelper/TemplateMoveblock.attributes.description.Max_stuck=CHANNELABLE. How long this template can be stuck before it breaks
 entities.auspicioushelper/TemplateMoveblock.attributes.description.cansteer=If the player can steer this template
 entities.auspicioushelper/TemplateMoveblock.attributes.description.movesfx=The sound to play while this template is moving
@@ -898,6 +899,7 @@ triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.action=Wha
 triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.only_once=If this should only trigger once
 triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.advanced=Set channels in a more advanced way. Given a list of channels to set/expression for value pairs such as  'a:3,b:@c[*2]' which sets channel a to 3 and channel b to twice the value of channel c. If using a channel in an expression, it must be prepended with @. If using a number, no prefix is needed.
 triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.everywhere=Make the trigger cover the whole room
+triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.OnlyWhenChannel=Make the trigger only work when this channel is nonzero
 
 # auspicioushelper/ConditionalStrawbCollectTrigger
 triggers.auspicioushelper/ConditionalStrawbCollectTrigger.placements.name.main=Conditional Strawberry Collection Trigger

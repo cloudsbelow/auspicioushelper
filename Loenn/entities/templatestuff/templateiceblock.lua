@@ -15,11 +15,12 @@ entity.placements = {
       depthoffset=0,
       sinkTime="1",
       sinkDist="12",
-      respawnTime=1.6,
+      respawnTime="1.6",
       triggerable=true,
       ridingTriggers=true,
       disconnect=true,
       quiet=0,
+      followGravity=true,
       _loenn_display_template = true,
     }
   }

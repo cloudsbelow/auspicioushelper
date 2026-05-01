@@ -13,7 +13,7 @@ entity.placements = {
   {
     name = "(Another) custom refill",
     data = {
-      respawnTimer = 2.5,
+      respawnTimer = "2.5",
       oneUse = false,
       twoDash = false,
       triggering=false,

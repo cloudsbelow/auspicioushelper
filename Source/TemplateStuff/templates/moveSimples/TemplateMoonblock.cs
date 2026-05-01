@@ -21,6 +21,7 @@ public class TemplateMoonblock:Template{
   float sinephase =0;
   float dashease =0;
   Vector2 dashdir;
+  bool followGravity;
   public TemplateMoonblock(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateMoonblock(EntityData d, Vector2 offset, int depthoffset):base(d,d.Position+offset,depthoffset){
     floatfreq = d.Float("drift_frequency",1f);
@@ -31,6 +32,7 @@ public class TemplateMoonblock:Template{
     sinephase = d.Bool("useCustomStartphase",false)?d.Float("startphase",0): Calc.Random.NextFloat(MathF.PI*2);
     OnDashCollide = OnDash;
     this.offset = (Vector2)floatDir*MathF.Sin(sinephase*floatfreq);
+    followGravity = d.Bool("followGravity");
   }
   DashCollisionResults OnDash(Player p, Vector2 ddir){
     if(dashease<0.2f){
@@ -48,7 +50,8 @@ public class TemplateMoonblock:Template{
     } else {
       if(sinkTimer>0)sinkTimer -= Engine.DeltaTime;
     }
-    ylerp = Util.Approach(ylerp,sinkTimer>0?1:0,Engine.DeltaTime*sinkSpeed, out var sign);
+    int target = (followGravity && GelperIop.PlayerFlipped)? -1:1;
+    ylerp = Util.Approach(ylerp,sinkTimer>0?target:0,Engine.DeltaTime*sinkSpeed, out var sign);
     sinephase += Engine.DeltaTime;
     dashease = Calc.Approach(dashease, 0f, Engine.DeltaTime * dashReturn);
 
@@ -56,7 +59,7 @@ public class TemplateMoonblock:Template{
     offset = Vector2.Zero;
     offset += (Vector2)floatDir*MathF.Sin(sinephase*floatfreq);
     ownLiftspeed += (Vector2)floatDir*floatfreq*MathF.Cos(sinephase*floatfreq);
-    offset += Util.SineInOut(ylerp, out var dyl)*(Vector2) sinkDir;
+    offset += Util.SineInOutSign(ylerp, out var dyl)*(Vector2) sinkDir;
     ownLiftspeed += sinkSpeed*sign*dyl*(Vector2) sinkDir;
     offset += dashdir*dashmagn*Util.Spike(Util.QuadIn(dashease,out var d2), out var d1);
     ownLiftspeed += -dashdir*dashmagn*d1*d2*dashReturn;

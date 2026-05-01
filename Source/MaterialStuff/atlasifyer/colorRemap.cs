@@ -186,8 +186,7 @@ public static partial class Util{
             });
           } else if(dict.TryFloat(["falloff","f"],out var falloff)){
             weightMap.Add((d)=>d/falloff);
-          }
-          weightMap.Add(fn);
+          } else weightMap.Add(fn);
         }
       }
     }

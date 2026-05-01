@@ -19,6 +19,7 @@ public class ArbitraryShapeSolid:Solid{
   float rot;
   Vector2 scale;
   Color col;
+  bool enableLeniency;
   static Vector2 getScale(EntityData d){
     return new(
       d.Float("scaleX",d.Bool("flipH",false)?-1:1), 
@@ -36,6 +37,13 @@ public class ArbitraryShapeSolid:Solid{
     } else Visible =false;
     col = Util.hexToColor(d.Attr("color","fff"));
     SurfaceSoundIndex = d.Int("soundIndex",8);
+    enableLeniency = d.Bool("enableSlopes",false);
+  }
+  public override void Added(Scene scene) {
+    base.Added(scene);
+    if(enableLeniency)PixelLeniencyTrigger.SetCurrent(
+      new(){staticSlip=1, fallDepth=2, fallingSlip=1, forceSlip=false, maxGroundedStep=2, maxStepSlope=1, snapDown=2}, true
+    );
   }
   static MTexture GetTextureAtPath(string path){
     if(GFX.Game.textures.ContainsKey(path)) return GFX.Game[path];

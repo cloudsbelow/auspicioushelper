@@ -20,29 +20,27 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
   }
   float nextSinktime;
   ChannelState.Vec2Ch nextSinkdir;
-  float respawnTimer=0;
-  float respawnTime = 2;
-  bool triggerable;
-  bool ridingTriggers;
-  bool disconnect=false;
-  bool disconnected=false;
+  RespawnCountdown respawn;
+  bool triggerable, ridingTriggers, disconnect, followGravity, disconnected=false;
   int quiet=0;
   public TemplateIceblock(EntityData d, Vector2 o):this(d,o,d.Int("depthoffset",0)){}
   public TemplateIceblock(EntityData d, Vector2 o, int depthoffset)
   :base(d,o+d.Position,depthoffset){
     nextSinktime = d.ChannelFloat("sinkTime",1);
     nextSinkdir = d.ChannelVec2("sinkDist",0,12,true);
-    respawnTime = d.Float("respawnTime",1.6f);
+    respawn = new(d.ChannelFloat("respawnTime",1.6f));
     triggerable = d.Bool("triggerable",true);
     ridingTriggers = d.Bool("ridingTriggers",true);
     disconnect = d.Bool("disconnect", false);
     quiet = d.Int("quiet",0);
+    followGravity = d.Bool("followGravity", false);
   }
   Coroutine routine;
   IEnumerator iceRoutine(){
     float time = 0;
     float sinkTime = nextSinktime;
     Vector2 sinkDir = nextSinkdir;
+    if(followGravity && GelperIop.PlayerFlipped) sinkDir*=-1;
     if(sinkTime!=0){
       shake(0.1f);
       if((quiet%4)<2)Add(new AudioMangler(Audio.Play("event:/game/09_core/iceblock_touch", Position), 0.3f));
@@ -65,7 +63,7 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
     }
     destroyChildren();
     yield return null;
-    respawnTimer = respawnTime;
+    respawn.Begin();
     offset = Vector2.Zero;
     routine = null;
   }
@@ -92,9 +90,8 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
       setVisCol(true,true);
       if(quiet<4)Audio.Play("event:/game/09_core/iceblock_reappear",Position);
     }
-    if(respawnTimer>0){
-      respawnTimer-=Engine.DeltaTime;
-      if(respawnTimer<=0){
+    if(respawn.Active){
+      if(respawn.Prog(Engine.DeltaTime)){
         if(disconnected){
           disconnected = false;
           if(parent?.GetFromTree<IRemovableContainer>() is {} cont){

@@ -12,23 +12,21 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateCloud")]
 public class TemplateCloud:TemplateDisappearer, ITemplateTriggerable{
-  bool fragile;
-  bool triggered;
-  bool fromRiding;
-  float respawnTime = 1;
+  bool fragile, triggered, fromRiding, disableCbb, followGravity;
+  RespawnCountdown respawn;
   float pos = 0;
   ChannelState.Vec2Ch nextClouddir;
   Vector2 cloudDir;
   protected override Vector2 virtLoc=>Position+pos*cloudDir;
   float speed;
-  bool disableCbb;
   public TemplateCloud(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateCloud(EntityData d, Vector2 offset, int depthoffset):base(d,d.Position+offset,depthoffset){
     Add(new Coroutine(cloudRoutine()));
     fragile = d.Bool("fragile");
-    respawnTime = d.Float("respawnTime",2.5f);
+    respawn = new(d.ChannelFloat("respawnTime",2.5f));
     fromRiding = d.Bool("fromRiding",true);
     nextClouddir = d.ChannelVec2("cloudDir",0,1,true);
+    followGravity = d.Bool("followGravity", false);
     if(disableCbb = d.Bool("noDoubleBoost",true)) ResetEvents.LazyEnable(typeof(CloudboostBlocker));
   }
   void Move(){
@@ -45,6 +43,7 @@ public class TemplateCloud:TemplateDisappearer, ITemplateTriggerable{
           speed = 180;
           Audio.Play(fragile?"event:/game/04_cliffside/cloud_pink_boost":"event:/game/04_cliffside/cloud_blue_boost", Position);
           cloudDir = nextClouddir;
+          if(followGravity && GelperIop.PlayerFlipped) cloudDir*=-1;
           goto going;
         }
         yield return null;
@@ -73,12 +72,13 @@ public class TemplateCloud:TemplateDisappearer, ITemplateTriggerable{
       yield return null;
       goto returning;
     respawning:
-      if(respawnTime<0){
+      if(respawn.isNeg()){
         RemoveSelf();
         yield break;
       }
       setVisCol(false,false);
-      yield return respawnTime;
+      respawn.Begin();
+      while(!respawn.Prog(Engine.DeltaTime)) yield return null;
       pos = 0;
       remake();
       UpdateHook.AddAfterUpdate(enforce, false, true);

@@ -50,18 +50,18 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
       }
     }
     public static SpinnerSource Get(EntityData d){
-      string type = d.Attr("color");
+      string type = d.String("color", d.Name=="spinner"?"Blue":"Rainbow");
       string prefix = "danger/crystal";
       string suffix = "";
       switch(type){
         case "Purple": case "purple": suffix = "_purple"; break;
         case "Blue": case "blue": suffix = "_blue"; break;
         case "Red": case "red": suffix = "_red"; break;
-        case "Rainbow": case "rainbow": suffix = "_rainbow"; break;
+        case "Rainbow": case "rainbow": suffix = "_white"; break;
         default:
           var arr = type.Split(">");
           prefix = arr[0];
-          if(arr.Length>0) suffix = arr[1];
+          if(arr.Length>1) suffix = arr[1];
         break;
       }
       string fancy = d.Attr("fancy","");

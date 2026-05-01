@@ -91,10 +91,9 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   string[] wallhitsound;
   float[] wallhitKeepspeed;
   ChannelState.FloatCh gravity, friction, terminalvel;
-  bool respawning;
-  float respawndelay;
+  RespawnCountdown respawn;
   public EntityData d;
-  bool dontFlingOff=false, moveImmediately=false, dangerous=false, dietobarrier;
+  bool dontFlingOff=false, moveImmediately=false, dangerous=false, dietobarrier, respawning;
   bool hasBeenTouched = false, showTutorial = false, startFloating=false, hasReflection=false;
   float voidDieOffset = 100;
   float minHoldTimer = 0.35f;
@@ -102,6 +101,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   ChannelState.Vec2Ch customRecoil;
   float? neutralHolddelay = null;
   ChannelState.BoolCh dontPickup;
+  int down = 1;
   public TemplateHoldable(EntityData d, Vector2 offset):base(d.Position+offset){
     Position+=new Vector2(d.Width/2, d.Height);
     hoffset = d.Nodes.Length>0?(d.Nodes[0]-new Vector2(d.Width/2, d.Height)):new Vector2(0,-d.Height/2);
@@ -141,8 +141,8 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     terminalvel = d.ChannelFloat("terminal_velocity",200f);
     friction = d.ChannelFloat("friction",350);
     dietobarrier = d.Bool("die_to_barrier",false);
+    respawn = new(d.ChannelFloat("respawnDelay",2f));
     respawning = d.Bool("respawning",false);
-    respawndelay = d.Float("respawnDelay",2f);
     dontFlingOff = d.Bool("dontFlingOff",false);
     showTutorial = d.Bool("tutorial",false);
     startFloating = d.Bool("start_floating",false);
@@ -197,6 +197,16 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       scene.Add(tutorialGui);
       Add(new Coroutine(tutorialRoutine()));
     }
+    foreach(var c in Components) if(c.GetType() == GelperIop.gravityComponentType){
+      GelperIop.OnChangeVisuals.SetValue(c,GelperIop.wrapFunc((changed, cur)=>{
+        down = cur!=0? -1:1;
+        if(changed){
+          hoffset.Y*=-1;
+          fixPosition();
+        }
+      }));
+    }
+  
   }
   void touched(){
     hasBeenTouched=true;
@@ -371,7 +381,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       (data.Hit as DashSwitch).OnDashCollide(null, Vector2.UnitY * Math.Sign(Speed.Y));
     }
     if(wallhitsound.Length>0)Audio.Play(wallhitsound[^1], Position);
-    if (Speed.Y > 140f && !(data.Hit is DashSwitch) && !dontFlingOff) Speed.Y*= -wallhitKeepspeed[1];
+    if (Speed.Y*down > 140f && !(data.Hit is DashSwitch) && !dontFlingOff) Speed.Y*= -wallhitKeepspeed[1];
     else Speed.Y=0;
   }
   bool resetting;
@@ -391,7 +401,8 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     else Add(new Coroutine(respawnRoutine()));
   }
   IEnumerator respawnRoutine(){
-    yield return respawndelay;
+    respawn.Begin();
+    while(!respawn.Prog(Engine.DeltaTime)) yield return null;
     hasBeenTouched=false;
     if(Scene!=null)make(Scene);
     Collidable = true;
@@ -419,10 +430,10 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       Position = Position.Round();
       te.setCollidability(false);
       //DebugConsole.Write($"out update: {Position}");
-      if(this.OnGroundCached(ref colCenter)){
+      if(this.OnGroundCached(ref colCenter, down)){
         hasBeenTouched=true;
-        float target = (!this.OnGroundCached(ref colRight, Position + Vector2.UnitX * 3f))? 20f: 
-                       (!this.OnGroundCached(ref colLeft, Position - Vector2.UnitX * 3f) ? -20f:0);
+        float target = (!this.OnGroundCached(ref colRight, Position + Vector2.UnitX * 3f, down))? 20f: 
+                       (!this.OnGroundCached(ref colLeft, Position - Vector2.UnitX * 3f, down) ? -20f:0);
         Speed.X = Calc.Approach(Speed.X, target, 800f * Engine.DeltaTime);
         if (LiftSpeed == Vector2.Zero && prevLiftspeed != Vector2.Zero &&!dontFlingOff){
           Speed = prevLiftspeed;

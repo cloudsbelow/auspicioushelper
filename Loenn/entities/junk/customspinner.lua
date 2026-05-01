@@ -5,7 +5,7 @@ local drawableSprite = require("structs.drawable_sprite")
 local utils = require("utils")
 
 local entity = {}
-local colors = {"danger/crystal>_blue", "danger/crystal>_red", "danger/crystal>_purple", "danger/crystal>_rainbow"}
+local colors = {"danger/crystal>_blue", "danger/crystal>_red", "danger/crystal>_purple", "danger/crystal>_white"}
 entity.name = "auspicioushelper/spinner"
 entity.depth = 2000
 
@@ -19,7 +19,7 @@ entity.placements = {
       numDebris = 4,
       dreamThru = false,
       neverClip = false,
-      color = "danger/crystal>_rainbow",
+      color = "danger/crystal>_white",
       fancy = "",
       border = "000",
     }

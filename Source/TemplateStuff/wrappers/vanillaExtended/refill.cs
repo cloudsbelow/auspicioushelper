@@ -94,8 +94,7 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
   public ParticleType p_shatter;  
   public ParticleType p_regen;
   public ParticleType p_glow;
-  public float respawnTimer;
-  public float respawnTime;
+  RespawnCountdown respawn;
   public bool triggering;
   bool useOnPickup;
   bool useOnRelase;
@@ -152,7 +151,7 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
   MTexture[] texs;
 
   public RefillW2(EntityData d, Vector2 o):this(d.Position + o, d.Bool("twoDash"), d.Bool("oneUse")){
-    respawnTime = d.Float("respawnTimer",2.5f);
+    respawn = new(d.ChannelFloat("respawnTimer",2.5f));
     triggering = d.Bool("triggering",false);
     useOnPickup = d.Bool("useOnPickup",false);
     useOnRelase = d.Bool("useOnRelease",false);
@@ -182,9 +181,8 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
         p*Vector3.Dot(p,v)*(1-MathF.Cos(precession));
       UpdatePrecession(res);
     }
-    if (respawnTimer > 0f){
-      respawnTimer -= Engine.DeltaTime;
-      if (respawnTimer <= 0f) Respawn();
+    if (respawn.Active){
+      if (respawn.Prog(Engine.DeltaTime)) Respawn();
     } else if (base.Scene.OnInterval(0.1f)) {
       level.ParticlesFG.Emit(p_glow, 1, Position, Vector2.One * 5f);
     }
@@ -284,7 +282,7 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
       Input.Rumble(RumbleStrength.Medium, RumbleLength.Medium);
       Collidable = (selfCol = false);
       Add(new Coroutine(RefillRoutine(player)));
-      respawnTimer = respawnTime;
+      respawn.Begin();
       if(triggering)parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new TriggerInfo.EntInfo("refill",this));
     }
   }
