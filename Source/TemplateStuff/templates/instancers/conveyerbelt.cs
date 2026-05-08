@@ -58,7 +58,7 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
       Template nte = addInstance(spos.pos);
       belt.Enqueue(new(){te=nte, extent = j*step+ioff, sp=spos});
     }
-    timer = 1-ioff;
+    timer = 1-initialOffset;
   }
   public override void addTo(Scene scene) {
     spline = SplineEntity.GetSpline(dat,SplineEntity.Types.centripetalNormalized);

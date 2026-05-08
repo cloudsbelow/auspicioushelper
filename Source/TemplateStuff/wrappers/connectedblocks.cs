@@ -243,6 +243,7 @@ public class ConnectedBlocks:Entity{
     {typeof(FireBarrier),(Entity e)=>(e as FireBarrier).solid.RemoveSelf()},
     {typeof(IceBlock),(Entity e)=>(e as IceBlock).solid.RemoveSelf()},
     {typeof(IntroCar),(Entity e)=>(e as IntroCar).wheels.RemoveSelf()},
+    {typeof(SwapBlock), (Entity e)=>(e as SwapBlock).path?.RemoveSelf()},
     {"FrostHelper/CustomFireBarrier",(Entity e)=>((Entity)Util.ReflectGet(e,"solid",false))?.RemoveSelf()}
   };
   static void RemChildren(Util.OrderedSet<Entity> all, templateFiller f, HashSet<Entity> remove){

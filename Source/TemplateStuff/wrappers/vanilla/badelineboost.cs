@@ -432,3 +432,15 @@ public class BadelineBoostW : Entity, ISimpleEnt
     RemoveSelf();
   }
 }
+
+
+public class ChaserW:BadelineOldsite, ISimpleEnt{
+  public Vector2 toffset {get;set;}
+  public Template parent {get;set;}
+  void ITemplateChild.relposTo(Vector2 _, Vector2 __){}
+  static int TemplateCount(Template t){
+    while(t.parent!=null) t=t.parent;
+    return t.GetChildren<ChaserW>().Count;
+  }
+  public ChaserW(EntityData d,Vector2 o):base(d.Position+o,TemplateCount(EntityParser.currentParent)){}
+}

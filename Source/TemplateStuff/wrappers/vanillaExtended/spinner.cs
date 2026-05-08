@@ -15,7 +15,6 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   public Template parent {get;set;} 
   static int uidctr = 0;
   int id;
-  string fancyRecolor;
   bool dontStun;
   bool neverClip;
   public static CrystalColor GetColor(EntityData d){
@@ -86,11 +85,11 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     isRainbow = d.Name=="spinner" && color==CrystalColor.Rainbow;
   }
   void OtherOnPlayer(Player p){
-    Vector2 origpos = Position;
-    Position=Position+Vector2.UnitY*1000;
     if(p.StateMachine.State == Player.StSummitLaunch){
+      Vector2 origpos = Position;
+      Position=Position+Vector2.UnitY*1000;
       foreach(Spinner s in Scene.Tracker.GetEntities<Spinner>()){
-        if((s.Position-origpos).Length()<32 && s.parent==this.parent){
+        if(s.parent==this.parent && (s.Position-origpos).Length()<32){
           s.Components.LockMode=ComponentList.LockModes.Locked;
           s.ClearSprites();
           s.CreateSpritesOther();
@@ -125,13 +124,12 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
       Visible = hvisible && inView;
     } else {
       //base.Update();
-      if(isRainbow && base.Scene.OnInterval(0.08f, offset)) UpdateHue();
-      if (base.Scene.OnInterval(0.25f, offset) && !InView()){
+      if(isRainbow && Scene.OnInterval(0.08f, offset)) UpdateHue();
+      if (Scene.OnInterval(0.25f, offset) && !InView()){
         inView = false; Visible = false; Collidable = false;
       }
-      if (dontStun||base.Scene.OnInterval(0.05f, offset)){
-        Player entity = UpdateHook.cachedPlayer;
-        if(entity != null) scollidable = Math.Abs(entity.X - base.X) < 128f && Math.Abs(entity.Y - base.Y) < 128f;
+      if (dontStun||Scene.OnInterval(0.05f, offset)){
+        if(UpdateHook.cachedPlayer is {} p) scollidable = (p.Position - Position).LInf() < 128f;
       }
       Collidable = hcollidable && scollidable;
       Visible = hvisible && inView;
@@ -203,7 +201,6 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     Calc.PushRandom(randomSeed);
     var (mTexture, borderMain) = Calc.Random.Choose(source.fgTextures);
     List<(MTexture, Vector2, float)> borderList = new();
-    if(fancyRecolor != null) mTexture = Util.ColorRemap.Get(fancyRecolor).RemapTex(mTexture);
     Color color = isRainbow? GetHue(Position):customColor;
     int mw = mTexture.Width/2;
     int mh = mTexture.Height/2;
@@ -279,7 +276,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
       Calc.PushRandom(randomSeed);
       SpinnerDebris.CreateBurst(
         Scene, numdebris,
-        Position, parent.gatheredLiftspeed,
+        Position, parent?.gatheredLiftspeed??Vector2.Zero,
         customColor, source.debrisPrior, OverrideVisualComponent.TryGet(this)
       );
       Calc.PopRandom();

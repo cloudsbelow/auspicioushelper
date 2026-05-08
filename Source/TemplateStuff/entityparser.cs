@@ -274,6 +274,7 @@ anyways i want to praise it more it is wonderful
     clarify("cassetteBlock", Types.unwrapped, static (l,d,o,e)=>new CassetteW(e,o, new EntityID(d.Name,e.ID)));
     clarify("zipMover", Types.unwrapped, static (l,ld,o,e)=>new ZipMoverW(e,o));
     clarify("swapBlock", Types.unwrapped, static (l,ld,o,e)=>new SwapBlockW(e,o));
+    clarify("darkChaser", Types.unwrapped, static (l,ld,o,e)=>new ChaserW(e,o));
 
     defaultModdedSetup();
     foreach(string s in new string[]{"iceBlock","fireBarrier","FrostHelper/CustomFireBarrier"}){

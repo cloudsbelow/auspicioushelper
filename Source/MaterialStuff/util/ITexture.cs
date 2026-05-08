@@ -94,11 +94,6 @@ public abstract class ITexture{
         else DebugConsole.WriteFailure($"Texture failed to load: {gfxPath}",true);
       } else tex=texture;
     }
-    static ModAsset GetAsset(string asset){
-      if(Everest.Content.Get(Util.concatPaths("Graphics",asset)) is { } a) return a;
-      DebugConsole.WriteFailure($"Could not find image at {asset}",true);
-      return null;
-    }
   }
   public class BgWrapper:ITexture{
     public override Texture2D tex{get{

@@ -59,8 +59,9 @@ public class ZipMoverW:ZipMover, IBlockChild{
         Position=np;
         return;
       }
-      pathRenderer.from=np;
-      pathRenderer.to=target;
+      Vector2 halfSize = new Vector2(Width,Height)/2;
+      pathRenderer.from=ppos+toffset+halfSize;
+      pathRenderer.to=target+halfSize;
     } else lsd=parent.gatheredLiftspeed;
     MoveTo(np,lsd+ownLiftspeed);
   }
@@ -155,8 +156,8 @@ public class SwapBlockW:SwapBlock, IBlockChild{
     list.Add(this);
     if(path!=null) list.Add(path);
   }
-  public override void Added(Scene scene) {
-    base.Added(scene);
+  public override void Awake(Scene scene) {
+    base.Awake(scene);
     parent.AddNewEnts([path]);
   }
   static Vector2 fixLs(Vector2 ls, SwapBlock self){
@@ -178,5 +179,9 @@ public class SwapBlockW:SwapBlock, IBlockChild{
   public override void Update(){
     ownLiftspeed=Vector2.Zero;
     base.Update();
+  }
+  public override void Removed(Scene scene) {
+    base.Removed(scene);
+    path?.RemoveSelf();
   }
 }

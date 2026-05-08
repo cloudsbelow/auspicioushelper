@@ -140,11 +140,18 @@ public static class ChannelState{
     Func<double, double, double> pred = null;
     Func<double[], double> func = null;
     double seedval;
-    static Regex termReg = new Regex(@"^[^\(]*",RegexOptions.Compiled);
+    static Regex termReg = new Regex(@"^[^\(]*(?=\()",RegexOptions.Compiled);
     public InlineCalc(string expr){
       to=expr;
-      string term = termReg.Match(expr).Value;
-      if(term==""){
+      var m = termReg.Match(expr);
+      string term = m.Value;
+      if(!m.Success){
+        DebugConsole.WriteFailure($"Unbalanced parenthesis in {expr}", auspicioushelperModule.InFolderMod);
+        term = "";
+        from = Util.listparseflat(expr.RemoveSuffix(")"));
+        pred = static (a,b)=>(a!=0&&b!=0)?1:0;
+        seedval = 1;
+      } else if(term==""){
         try{
           func = channelmath.Parser.ParseToFunc(expr.Substring(1,expr.Length-2),out from);
         }catch(Exception e){
@@ -153,7 +160,7 @@ public static class ChannelState{
         }
       } else {
         if(!Enum.TryParse<Ops>(term, out var op)){
-          DebugConsole.WriteFailure($"Invalid function {op} in {expr}");
+          DebugConsole.WriteFailure($"Invalid function \"{term}\" in {expr}");
           op = Ops.and;
         } 
         pred = op switch {
@@ -209,8 +216,14 @@ public static class ChannelState{
     public void Update(double nstate){
       if(double.IsNaN(nstate)) nstate=0;
       val = nstate;
-      if(mods!=null) foreach(var mod in mods) mod.Update(nstate);
-      if(calcs!=null) foreach(var c in calcs) c.calc.Update(c.index,nstate);
+      if(mods!=null){
+        int nmod = mods.Count;
+        for(int i=0; i<nmod; i++) mods[i].Update(nstate);
+      }
+      if(calcs!=null){
+        int ncalc = calcs.Count;
+        for(int i=0; i<ncalc; i++) calcs[i].calc.Update(calcs[i].index,nstate);
+      }
       if(watching!=null) watching.Apply(nstate);
     }
     public void Remove(bool silent){

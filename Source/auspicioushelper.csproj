@@ -16,8 +16,7 @@
                             ..\Graphics\**\*.*;
                             ..\Ahorn\**\*.*;
                             ..\Loenn\**\*.*;
-                            ..\Effects\**\*.cso;
-                            ..\Maps\**\*.*"
+                            ..\Effects\**\*.cso;"
                     Exclude="..\Loenn\**\private\**\*.*" />
     </ItemGroup>
     <!--Disable "Copy Local" for all references-->

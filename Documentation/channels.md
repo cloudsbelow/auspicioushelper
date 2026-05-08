@@ -1,14 +1,66 @@
-Channels store integer data on string keys - they're a lot like flags and counters but they revert their state to the original from entering the room on death (like coremode). It is recommended to use channel names without white space or special characters other than underscores such as 1_fish or x (for the regex enjoyers, they should match /\w+/). Channels are very performant and are used instead of flags in most auspicioushelper text entires. 
+Channels are similar to flags, but can store any numerical data. They reset when you die and save on room transition. For simplicity, you should avoid channels with special characters. Try sticking to letters, digits and underscores. Auspicious uses channels for everything for better performance, but if you are used to working with flags, they can be used as well.
 
-## Access modifiers:
-Sometimes you might want to invert the value of a channel for a certain entity (or some similarly simple operation) without the use of a Math Controller. Access modifiers can accomplish this! Simply decorate a channel with some operations in brackets. A simple example is inverting the result of some channel x by doing x[\!], which will only be 1 when x is 0. You can chain together modifiers with commas. A more complicated example would be x[+1,%3,==2] which will be tied to the value (x+1)%3==2. In addition to the basic arithmetic operations (+, -, *, /, %, ==, >, <, >=, <=, !) and bitwise operations (~, ^, &, |, <<, >>), we also support max and min which work as expected and x/, x>>, x<< which perform the corresponding operations with orders reversed (so, somewhat unintuitively, ch[x/3] has value 3/ch). Finally, we support 'safe modulo' %s which is in the positive interval even for negative inputs. Note that for entities that set channels, using modifiers will prevent them from setting a new value.
+## Channel Expressions:
+You can do inline logic on channels very! Just put any math you want inside of parenthesis. For instance, (!(x+y) || z==0) will be true if the sum of x and y is zero or if z is equal to 0. Booleans here are numerically represented by 0/1. 
 
-## Flag and counter interoperability
-Yes! Most mods use flags and not channels. Don't panic though! If you are using entity that needs a channel but the value you want is a flag, you can use $*flagname* which will create a channel whose value matches the value of the flag with *flagname*. The same can be achieved for counters by using a '#' instead of a '$'. If you are using an entity that needs flags or coutners but want to use channels, you can do so with @*channelname* which does the opposite. Since channels are integers, any nonzero value counts as an activated flag. 
+You can use flags, counters and sliders as channels as well. A channel starting with a dollarsign *$flagname* will have the value of 
+the flag *flagname*. You can similarly use # for counters and ? for sliders.
 
-This can be combined with access modifiers to do some silly things. Let's say you want a flag that is true when some counter is a multiple of 5. You can do @#counter[\%5,==0]. What this does is first announces that you want to use a channel as a flag with the '@'. Then, the '#' notes that the channel is equal to some counter. Then, we check if counter\%5==0, checking divisibility by 5.
+If you have a channel that you want to use as a flag, channel or slider, you can similarly use *@channelname*. Some entities don't allow channel expressions to be used as flags. Mapping utils gives a helpful GUI to debug all your channel values and set them to whatever you want in order to debug these (and similar) cases. Here are some examples:
+
+```
+// A channel that inverts the value of flag 'cat'
+(!$cat)
+
+// A channel that does some math on another
+(x*2 + 10)
+
+// A channel that is true if all conditions are met
+(numDashes<2 && $hasBerry && max(progress1,progress2)==3)
+
+// A flag based on channel values
+@(backtracking && (cam1 || cam2))
+
+// A channel checking some slider value
+(floor(?slider) == floor(segment))
+
+// A channel that is always false
+(0)
+
+// A channel that is always 10
+(10)
+```
+### Legacy note
+Operations can also be performed on channels by appending modifiers in brackets. The following are equivalent:
+``` 
+- (!$flag)            $flag[!]
+- (floor((y+3)*5)+3)  y[+3, *5, floor, +3]
+- (x && y && (z||w))  and(x,y,or(z,w))
+```
+These operations will remain supported but are less flexible than the newer system.
+
+## CHANNELABLE fields
+Most numerical fields in auspicious, such as falling block speed or holdable throw strength, are 'Channelable' meaning that, in addition to taking numbers, also accept channels. When these channels change, those values will change to match. This can be nice for making adjustable speed belts or similar and is recommended over entity modifier template time manipulation for better liftspeed calculations.
+
+## 'Advanced' setters
+Some entities, such as the channel player trigger and template trigger modifier, can set channels in an advanced way. Channels and their new values can be given in a list with optional keys after ':'. For example
+```
+// Set x and y to 1
+x,y
+
+// Set x to 10 and invert y
+x:10, y:y[!]
+
+// Set z to the sum of x and y
+// This increases x by y every time
+// the setter is triggered
+x:(x+y)
+```
 
 ## Entities and Triggers
+### Channel Approach Controller
+Make one channel value gradually approach another channel value with a speed specified by a third. Can be used for fades, easing and similar.
+
 ### Channel Player Trigger
 Modifies a specified channel when the player does a certain action inside the trigger. These actions include entering and leaving the zone, dashing and jumping. You can choose the operation to perform on the player action (such as addition, xor, etc)
 
