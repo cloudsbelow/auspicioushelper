@@ -1,10 +1,5 @@
 
 
-
-using System.Collections.Generic;
-using System.Reflection.Metadata.Ecma335;
-using Celeste.Mod.auspicioushelper;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
 

@@ -1,7 +1,5 @@
 
 
-
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -166,7 +164,8 @@ internal static class MarkedRoomParser{
       var chain = new TemplateBehaviorChain.Chain(f, hit, forcepos, room.emptyTemplates);
       var disp = chain.NextEnt(); 
       disp??=new EntityData(){Name=EntityParser.TemplateEmptyName,Position=hit.Position,Values=new()}; 
-      if(disp.Name=="auspicioushelper/TemplateDisplacer"){
+      if(disp.Name=="auspicioushelper/TemplateDisplacer"  && disp.Bool("displaceInto",true)){
+        if(!force && disp.Bool("alwaysForcepos",false)) disp=disp.cloneWithForcepos(hit.Position);
         string name2 = name+"_disp";
         var first = chain.NextEnt();
         first??=new EntityData(){

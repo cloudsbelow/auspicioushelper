@@ -91,7 +91,7 @@ internal class BasicPlatform:ITemplateChild{
     ChildMarker.Get(p,t);
   }
   public Vector2 lpos;
-  public virtual void relposTo(Vector2 loc, Vector2 liftspeed){
+  void ITemplateChild.relposTo(Vector2 loc, Vector2 liftspeed){
     if(p == null||p.Scene==null)return;
     if(lpos!=p.Position){
       toffset+=p.Position-lpos;

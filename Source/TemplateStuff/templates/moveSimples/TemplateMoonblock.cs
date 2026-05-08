@@ -3,7 +3,6 @@
 
 using System;
 using Celeste.Mod.Entities;
-using Microsoft.VisualBasic;
 using Microsoft.Xna.Framework;
 using Monocle;
 

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework.Graphics;
@@ -18,13 +19,6 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
     if(info.markingEnt!=null)info.markingEnt.Depth = (int)info.depth;
   }}
   List<Action> chset = new();
-  Action getparamsetter(string key, string channel, float mult){
-    return ()=>{
-      float val = mult*(float)ChannelState.readChannel(channel);
-      passes.setparamvalex(key,val);
-    };
-  }
-  static Regex chr = new Regex(@"@([?$#]?\w*(?:\[[^]]+\])?)((?:[*\/][\d\.]+)?)", RegexOptions.Compiled);
   void setparamval(string key, string val){
     if(string.IsNullOrEmpty(key)) return;
     switch(val.ToLower()){
@@ -33,45 +27,38 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       default: switch(val[0]){
         case '#': passes.setparamvalex(key, Util.toArray(Util.hexToColor(val).ToVector4())); break;
         case '{': case '[': 
-          if(!val.Contains("@")){
-            passes.setparamvalex(key, Util.csparseflat(Util.stripEnclosure(val))); 
-            break;
-          }
           var arr = Util.listparseflat(val, true,false);
-          float[] values = new float[arr.Count];
-          for(int i=0; i<arr.Count; i++){
-            if(arr[i].StartsWith("@")){
-              string chstr = Util.removeWhitespace(arr[i].Substring(1));
-              int index = i;
-              chset.Add(()=>values[index]=(float)ChannelState._readChannel(chstr));
-            } else values[i] = float.Parse(arr[i]);
+          if(arr.All(x=>double.TryParse(x,out _))){
+            passes.setparamvalex(key, Util.csparseflat(Util.stripEnclosure(val)));
+          } else {
+            float[] values = new float[arr.Count];
+            List<(int,ChannelState.FloatCh)> watching = new();
+            for(int i=0; i<arr.Count; i++){
+              if(double.TryParse(arr[i],out var dval)) values[i]=(float)dval;
+              else watching.Add((i,new(arr[i])));
+            }
+            chset.Add(()=>{
+              foreach(var (i,f) in watching) values[i]=f;
+              passes.setparamvalex(key,values);
+            });
           }
-          chset.Add(()=>passes.setparamvalex(key,values));
         break;
         case '@': 
-          var match = chr.Match(val);
-          if (!match.Success){
-            DebugConsole.WriteFailure($"Error parsing channel string {val}"); break;
-          }
-          string ch = match.Groups[1].Value;
-          float mult = 1;
-          if(!string.IsNullOrWhiteSpace(match.Groups[2].Value)){
-            float.TryParse(match.Groups[2].Value.Substring(1), out mult);
-            if(match.Groups[2].Value[0] == '/') mult = 1/mult;
-          }
-          chset.Add(getparamsetter(key, ch, mult));
+          ChannelState.FloatCh ch = new($"({val})");
+          chset.Add(()=>passes.setparamvalex(key,ch));
           break;
         case >='0' and <='9': case '.':
           if(val.Contains('.')){
-            float.TryParse(val, out var f);
+            if(!float.TryParse(val, out var f)) goto default;
             passes.setparamvalex(key,f);
           } else {
-            int.TryParse(val, out var i);
+            if(!int.TryParse(val, out var i)) goto default;
             passes.setparamvalex(key,i);
           }
           break;
         default:
-          DebugConsole.WriteFailure($"Don't know how to parse {val}"); break;
+          DebugConsole.WriteFailure($"Can't parse material parameter {val}",auspicioushelperModule.InFolderMod); 
+          break;
       }break;
     }
   }

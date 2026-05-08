@@ -5,17 +5,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
-using Celeste.Mod.auspicioushelper.Wrappers;
-using Celeste.Mod.Registry;
 using Microsoft.Xna.Framework;
-using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
 using Celeste.Mod.Helpers;
-using System.Diagnostics;
 
 namespace Celeste.Mod.auspicioushelper;
 

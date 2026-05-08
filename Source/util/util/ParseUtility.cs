@@ -268,9 +268,7 @@ public static partial class Util{
         idx++; goto fent;
       }
       if(idx >= str.Length){
-        DebugConsole.Write("Before",str);
         if(TryEmitParseErr(ref str,unescaped,false)) return null;
-        DebugConsole.Write("After",str);
         //goto parsevalue;
       }
       if(escape.TryGetValue(str[idx], out var esc)){
@@ -304,6 +302,56 @@ public static partial class Util{
       if(stripout) o.Add(stripEnclosure(v.Trim()));
       else o.Add(v.Trim());
       if(idx>=str.Length) return o;
+      v="";
+      goto parsevalue;
+  }
+  public static (List<string>,List<char>) listparseflat(string str, List<char> delims){
+    if(string.IsNullOrWhiteSpace(str)) return new(new(),null);
+    Stack<char> unescaped = new Stack<char>();
+    var o = new List<string>();
+    var d = new List<char>();
+    string v="";
+    int idx=0;
+    bool escapeNext = false;
+    parsevalue:
+      if((idx >= str.Length||delims.Contains(str[idx])) && unescaped.Count ==0){
+        if(idx<str.Length) d.Add(str[idx]);
+        idx++; goto fent;
+      }
+      if(idx >= str.Length){
+        if(TryEmitParseErr(ref str,unescaped,false)) return (null,null);
+        //goto parsevalue;
+      }
+      if(escape.TryGetValue(str[idx], out var esc)){
+        unescaped.Push(esc);
+        v+=str[idx]; idx++; goto parsevalue;
+      }
+      if(unescaped.Count>0 && unescaped.Peek()==str[idx]){
+        unescaped.Pop(); 
+        v+=str[idx]; idx++; goto parsevalue;
+      }
+      if(str[idx]=='"'){
+        v+=str[idx]; idx++; goto parsestring;
+      }
+      v+=str[idx]; idx++; goto parsevalue;
+
+    parsestring:
+      if(idx == str.Length){
+        if(TryEmitParseErr(ref str,unescaped,true)) return (null,null);
+        goto parsestring;
+      }
+      if(escapeNext){
+        escapeNext = false; 
+        v+=str[idx]; idx++; goto parsestring;
+      }
+      if(str[idx] == '"'){
+        v+=str[idx]; idx++; goto parsevalue;
+      }
+      v+=str[idx]; idx++; goto parsestring;
+
+    fent:
+      o.Add(v.Trim());
+      if(idx>=str.Length) return (o,d);
       v="";
       goto parsevalue;
   }

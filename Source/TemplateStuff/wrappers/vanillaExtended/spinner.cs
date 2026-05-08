@@ -4,12 +4,9 @@
 
 using System;
 using System.Collections.Generic;
-using Celeste;
-using Celeste.Mod.auspicioushelper;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
-using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper.Wrappers;
 [Tracked]

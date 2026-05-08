@@ -8,12 +8,8 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
-using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Monocle;
-using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.auspicioushelper;
 

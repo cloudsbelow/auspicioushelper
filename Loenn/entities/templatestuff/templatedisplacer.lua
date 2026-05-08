@@ -17,6 +17,8 @@ entity.placements = {
     data = {
       template = "",
       depthoffset=0,
+      displaceInto=true,
+      alwaysForcepos=true,
       
       _loenn_display_template = true,
     }

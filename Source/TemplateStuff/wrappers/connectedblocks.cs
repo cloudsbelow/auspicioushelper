@@ -2,22 +2,14 @@
 
 
 using System;
-using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Formats.Tar;
 using System.Linq;
-using System.Reflection;
-using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
-using Celeste.Mod.Registry;
-using FMOD;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -193,7 +185,8 @@ public class ConnectedBlocks:Entity{
         Position=hit.Position,Values=new(),
       }; 
       
-      if(first.Name=="auspicioushelper/TemplateDisplacer"){
+      if(first.Name=="auspicioushelper/TemplateDisplacer" && first.Bool("displaceInto",true)){
+        if(!force && first.Bool("alwaysForcepos",false)) first=first.cloneWithForcepos(hit.Position);
         templateFiller w = chain.NextFiller();
         int i=0;
         foreach(var n in first.Nodes??[]){

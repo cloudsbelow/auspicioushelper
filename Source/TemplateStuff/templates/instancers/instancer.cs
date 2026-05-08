@@ -2,10 +2,6 @@
 
 
 using System;
-using System.Linq;
-using Celeste;
-using Celeste.Mod.auspicioushelper;
-using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 

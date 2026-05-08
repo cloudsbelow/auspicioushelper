@@ -2,7 +2,6 @@
 
 
 using System;
-using System.Collections;
 using Celeste.Mod.Entities;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;

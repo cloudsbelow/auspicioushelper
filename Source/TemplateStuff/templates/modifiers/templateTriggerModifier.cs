@@ -4,12 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using System.Reflection.Emit;
-using AsmResolver.Collections;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
-using Microsoft.VisualBasic;
 using Microsoft.Xna.Framework;
 using Mono.Cecil;
 using Monocle;
