@@ -326,28 +326,17 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     }
     return false;
   }
-  static void Hook(On.Celeste.Player.orig_OnCollideH orig, Player p, CollisionData d){
+  public static bool CollideHandler(Player p, CollisionData d){
     if(!DDsh(p)){
       TemplateDreamblockModifier t = d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateDreamblockModifier>();
       while(t!=null){
-        if(t.dreaming && t.DreamCheckStart(p,d.Direction,d.Hit, true)) return;
+        if(t.dreaming && t.DreamCheckStart(p,d.Direction,d.Hit, true)) return true;
         t = t.parent?.GetFromTree<TemplateDreamblockModifier>();
       }
-      if(prioThing(p,d)) return;
+      if(prioThing(p,d)) return true;
     }
-    orig(p,d);
-  }
-  static void Hook(On.Celeste.Player.orig_OnCollideV orig, Player p, CollisionData d){
-    if(!DDsh(p)){
-      TemplateDreamblockModifier t = d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateDreamblockModifier>();
-      while(t!=null){
-        if(t.dreaming && t.DreamCheckStart(p,d.Direction,d.Hit, true)) return;
-        t = t.parent?.GetFromTree<TemplateDreamblockModifier>();
-      }
-      if(prioThing(p,d)) return;
-    }
-    orig(p,d);
-  }
+    return false;
+  } 
   static void Hook(On.Celeste.DreamBlock.orig_OnPlayerExit orig, DreamBlock self, Player p){
     if(self is SentinalDb b){
       b.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new DreamInfo(true, b.parent.triggerOnLeave, p.DashDir));
@@ -429,8 +418,6 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
   }
   static ILHook transhook;
   public static HookManager hooks = new HookManager(()=>{
-    On.Celeste.Player.OnCollideH+=Hook;
-    On.Celeste.Player.OnCollideV+=Hook;
     On.Celeste.DreamBlock.OnPlayerExit+=Hook;
     IL.Celeste.Player.DreamDashUpdate+=DDashIL;
     IL.Celeste.Player.DreamDashBegin+=DDashBeginIL;
@@ -439,8 +426,6 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     ddhook = new ILHook(dc2,DashDowndiag);
     transhook = new ILHook(typeof(Player).GetMethod(nameof(Player.orig_Update)),TransitionHook);
   },()=>{
-    On.Celeste.Player.OnCollideH-=Hook;
-    On.Celeste.Player.OnCollideV-=Hook;
     On.Celeste.DreamBlock.OnPlayerExit-=Hook;
     IL.Celeste.Player.DreamDashUpdate-=DDashIL;
     IL.Celeste.Player.DreamDashBegin-=DDashBeginIL;

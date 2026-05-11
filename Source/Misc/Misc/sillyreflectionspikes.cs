@@ -2,36 +2,40 @@
 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Reflection.Emit;
+using Celeste.Mod.auspicioushelper.Import;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
-using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/SillySpikes")]
+[Tracked]
 public class CustomSpikes : Entity{
   public enum Directions {
     Up, Down, Left, Right
   }
+  Vector2 unitDir=> Direction switch {
+    Directions.Up=>-Vector2.UnitY,Directions.Down=>Vector2.UnitY,
+    Directions.Left=>-Vector2.UnitX,Directions.Right=>Vector2.UnitX,
+    _=>Vector2.Zero
+  };
 
 
   public Directions Direction;
   public Vector2 imageOffset;
-  bool dreamThru;
-  bool dashThru;
-  bool fixPickup;
-  bool fixDash;
-  bool fixOnblock;
-  bool fixOwnSpeed;
+  bool dreamThru, dashThru, triggerSpike;
+  bool fixPickup, fixDash, fixOnblock, fixOwnSpeed;
+  int triggerStage=0;
+  float triggerTiming, untriggerTiming;
+  
   LiftspeedSm sm;
   Template parent;
+  Image image;
   public CustomSpikes(EntityData data, Vector2 offset)
     : base(data.Position+offset)
   {
@@ -44,6 +48,10 @@ public class CustomSpikes : Entity{
     fixPickup = data.Bool("fixPickup",true);
     fixDash = data.Bool("fixDash",true);
     fixOnblock = data.Bool("fixOnBlock",true);
+    triggerSpike = data.Bool("TriggerSpike",false);
+    var li = Util.csparseflat(data.Attr("triggerTimer","-1"),-1,-1);
+    triggerTiming = li[0];
+    untriggerTiming = li[1];
     switch (Direction) {
       case Directions.Up:
         base.Collider = new Hitbox(size, 3f, 0f, -3f);
@@ -98,11 +106,11 @@ public class CustomSpikes : Entity{
           break;
       }
       image.Color = c;
+      if(triggerSpike) image.Position-=unitDir*4;
       Add(image);
     }
   }
-  public override void Render()
-  {
+  public override void Render(){
     if (MaterialPipe.clipBounds.CollideExRect(Position.X,Position.Y,Width,Height)){
       Vector2 position = Position;
       Position += imageOffset;
@@ -110,31 +118,79 @@ public class CustomSpikes : Entity{
       Position = position;
     }
   }
-  public void OnCollide(Player p){
+  bool shouldKill(Player p){
     Vector2 realSpeed = p.Speed;
     int s = p.StateMachine.State;
-    if((dreamThru && s==Player.StDreamDash) || (dashThru && s==Player.StDash)) return;
+    if(dreamThru && (s==Player.StDreamDash || CommunalHelperIop.InTunnel(p))) return false;
+    if(dashThru && s==Player.StDash) return false;
+
     if(((fixPickup && s==Player.StPickup) || (fixDash && s==Player.StDash && p.Speed==Vector2.Zero)) && oldSpeed is {} old) realSpeed+=old;
+    if(fixOwnSpeed) realSpeed-=sm?.getLiftspeed()??parent?.gatheredLiftspeed??Vector2.Zero;
+    
     float ms = Math.Max(Math.Abs(p.LiftSpeed.X),Math.Abs(p.LiftSpeed.Y));
     float tsm = Math.Max(p.LiftSpeedGraceTime-(ms==0?0:1/ms)-Engine.DeltaTime, float.Epsilon);
-    if(fixOnblock && p.liftSpeedTimer>=tsm){
-      realSpeed+=p.LiftSpeed;
+    if(fixOnblock && p.liftSpeedTimer>=tsm) realSpeed+=p.LiftSpeed;
+
+    return Direction switch {
+      Directions.Up=>realSpeed.Y >= 0f && p.Bottom <= base.Bottom,
+      Directions.Down=>realSpeed.Y <= 0f,
+      Directions.Left=>realSpeed.X >= 0f,
+      Directions.Right=>realSpeed.X <= 0f,
+      _=>false
+    };
+  }
+  public void OnCollide(Player p){
+    if(shouldKill(p)){
+      if(triggerSpike && triggerStage<2){
+        if(triggerStage==0){
+          triggerStage++;
+          Add(new Coroutine(emergeRoutine()));
+        }
+        return;
+      }
+      p.Die(unitDir*2);
+      parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(null);
     }
-    if(fixOwnSpeed) realSpeed-=sm?.getLiftspeed()??parent?.gatheredLiftspeed??Vector2.Zero;
-    switch (Direction) {
-      case Directions.Up:
-        if (realSpeed.Y >= 0f && p.Bottom <= base.Bottom) p.Die(new Vector2(0f, -1f));
-        break;
-      case Directions.Down:
-        if (realSpeed.Y <= 0f)p.Die(new Vector2(0f, 1f));
-        break;
-      case Directions.Left:
-        if (realSpeed.X >= 0f)p.Die(new Vector2(-1f, 0f));
-        break;
-      case Directions.Right:
-        if (realSpeed.X <= 0f) p.Die(new Vector2(1f, 0f));
-        break;
+  }
+  public static void spikeCheck(Player p){
+    var orig = p.Collider;
+    p.Collider = p.hurtbox;
+    foreach(CustomSpikes c in p.Scene.Tracker.GetEntities<CustomSpikes>()){
+      c.OnCollide(p);
+      if(p.Dead) break;
     }
+    p.Collider = orig;
+  }
+  IEnumerator emergeRoutine(){
+    float countdown = triggerTiming;
+    int target = 2;
+    if(triggerTiming<0){
+      countdown = 0.1f;
+      while(UpdateHook.cachedPlayer is {} p && !p.Dead){
+        var orig = p.Collider;
+        p.Collider = p.hurtbox;
+        bool flag = shouldKill(p);
+        p.Collider = orig;
+      }
+    }
+
+    shift:
+      if(countdown>0.1f){
+        yield return countdown-0.1f;
+        countdown=0.1f;
+      }
+      for(int i=0; i<4; i++){
+        image.Position+=unitDir*Math.Sign(target-1);
+        if(countdown<=0){
+          triggerStage=target;
+        }
+        countdown-=0.05f;
+        yield return 0.05f;
+      }
+      triggerStage=target;
+      if(untriggerTiming<0 || target==0) yield break;
+      target = 0;
+      goto shift;
   }
 
   public bool IsRiding(Solid solid) => Direction switch {

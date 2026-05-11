@@ -6,7 +6,7 @@ You can do inline logic on channels very! Just put any math you want inside of p
 You can use flags, counters and sliders as channels as well. A channel starting with a dollarsign *$flagname* will have the value of 
 the flag *flagname*. You can similarly use # for counters and ? for sliders.
 
-If you have a channel that you want to use as a flag, channel or slider, you can similarly use *@channelname*. Some entities don't allow channel expressions to be used as flags. Mapping utils gives a helpful GUI to debug all your channel values and set them to whatever you want in order to debug these (and similar) cases. Here are some examples:
+Channels are often used for true/false values. Any channel that is not exactly 0 counts as true, and the result of boolean expressions is 0 or 1. If you want a channel that is 'true' for positive values, you should do `(x>0)`. This will either be 0 or 1 (equivalently true or false) depending on whether the condition is met.
 
 ```
 // A channel that inverts the value of flag 'cat'
@@ -18,13 +18,13 @@ If you have a channel that you want to use as a flag, channel or slider, you can
 // A channel that is true if all conditions are met
 (numDashes<2 && $hasBerry && max(progress1,progress2)==3)
 
-// A flag based on channel values
-@(backtracking && (cam1 || cam2))
+// Inner parenthesis are evaluated first
+(backtracking && (cam1 || cam2))
 
 // A channel checking some slider value
 (floor(?slider) == floor(segment))
 
-// A channel that is always false
+// A channel that is always false (equal to 0)
 (0)
 
 // A channel that is always 10

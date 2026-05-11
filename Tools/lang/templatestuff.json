@@ -595,7 +595,9 @@
             "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
-            ]
+            ],
+            "displaceInto": "Whether this will displace into other templates as a child. Uncheck for positional displace only",
+            "alwaysForcepos": "Whether to always place exactly at node position (only works for first item in chain)"
         }
     },
     "entities.auspicioushelper/TemplateResetter": {

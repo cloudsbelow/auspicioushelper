@@ -292,14 +292,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     orig(p);
     triggerFromArr(p.CollideAll<Platform>(p.Position+Vector2.UnitX*(float)p.Facing*4f),new TouchInfo(p,TouchInfo.Type.climbjump));
   }
-  static void Hook(On.Celeste.Player.orig_OnCollideH orig, Player p, CollisionData c){
-    orig(p,c);
-    c.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new TouchInfo(p,TouchInfo.Type.collideH));
-  }
-  static void Hook(On.Celeste.Player.orig_OnCollideV orig, Player p, CollisionData c){
-    orig(p,c);
-    c.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new TouchInfo(p,TouchInfo.Type.collideV));
-  }
   static void Hook(On.Celeste.Player.orig_Update orig, Player p){
     orig(p);
     if(p.onGround){
@@ -395,8 +387,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     On.Celeste.Player.WallJump+=Hook;
     On.Celeste.Player.SuperWallJump+=Hook;
     On.Celeste.Player.ClimbJump+=Hook;
-    On.Celeste.Player.OnCollideH+=Hook;
-    On.Celeste.Player.OnCollideV+=Hook;
     On.Celeste.Player.Update+=Hook;
 
     IL.Celeste.Actor.MoveHExact+=HookMoveH;
@@ -411,8 +401,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     On.Celeste.Player.WallJump-=Hook;
     On.Celeste.Player.SuperWallJump-=Hook;
     On.Celeste.Player.ClimbJump-=Hook;
-    On.Celeste.Player.OnCollideH-=Hook;
-    On.Celeste.Player.OnCollideV-=Hook;
     On.Celeste.Player.Update-=Hook;
     
     IL.Celeste.Actor.MoveHExact-=HookMoveH;

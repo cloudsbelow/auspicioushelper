@@ -6,6 +6,7 @@ using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
+using TouchInfo = Celeste.Mod.auspicioushelper.TemplateTriggerModifier.TouchInfo;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -49,6 +50,27 @@ public static class PlayerHelper{
     if(movewith.Get<ChildMarker>() is ChildMarker cm)parent=cm.parent;
     if(parent!=null) p.LiftSpeed = parent.gatheredLiftspeed;
     else p.LiftSpeed = del/MathF.Max(0.001f,Engine.DeltaTime); 
+  }
+
+  [OnLoad.ILHook(typeof(Player),nameof(Player.OnCollideH))]
+  static void Hook(On.Celeste.Player.orig_OnCollideH orig, Player p, CollisionData d){
+    CustomSpikes.spikeCheck(p);
+    if(TemplateDreamblockModifier.CollideHandler(p,d)) goto end;
+    orig(p,d);
+    d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(
+      new TouchInfo(p,TouchInfo.Type.collideH)
+    );
+    end:;
+  }
+  [OnLoad.ILHook(typeof(Player),nameof(Player.OnCollideV))]
+  static void Hook(On.Celeste.Player.orig_OnCollideV orig, Player p, CollisionData d){
+    CustomSpikes.spikeCheck(p);
+    if(TemplateDreamblockModifier.CollideHandler(p,d)) goto end;
+    orig(p,d);
+    d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(
+      new TouchInfo(p,TouchInfo.Type.collideV)
+    );
+    end:;
   }
 
   [CustomEntity("auspicioushelper/triggerparenttrigger")]

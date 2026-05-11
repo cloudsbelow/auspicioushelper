@@ -32,6 +32,8 @@ entity.placements = {
       fixOnBlock = true,
       canAttach=true,
       width = 8,
+      TriggerSpike = false,
+      triggerTimer = ""
     }
   }
 }
@@ -118,6 +120,12 @@ local function getSpikeSpritesFromTexture(entity, direction, variant, texture)
     local rotation = 0
     local length = horizontal and (entity.height or step) or (entity.width or step)
     local positionOffsetKey = horizontal and "y" or "x"
+    if entity.TriggerSpike then
+      if direction=="left" then offsetX=offsetX-4 end
+      if direction=="right" then offsetX=offsetX+4 end
+      if direction=="up" then offsetY=offsetY-4 end
+      if direction=="down" then offsetY=offsetY+4 end
+    end
 
     local position = {
         x = entity.x,
