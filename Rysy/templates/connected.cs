@@ -130,10 +130,10 @@ public class ConnectedTiles:LonnEntity{
       if(!wrong) for(int i=0; i<tr.w; i++) for(int j=0; j<tr.h; j++){
         tilectx[i+tr.x,j+tr.y]?.RenderAt(b, bounds.tlc+new Int2(i,j)*8, Color);
       } else b.Draw(Gfx.Pixel,bounds,Color);
-      b.Draw(Gfx.Pixel, new IntRect(bounds.x,bounds.y,bounds.w,1), Border);
-      b.Draw(Gfx.Pixel, new IntRect(bounds.x,bounds.y+1,1,bounds.h-2), Border);
-      b.Draw(Gfx.Pixel, new IntRect(bounds.x+bounds.w-1,bounds.y+1,1,bounds.h-2), Border);
-      b.Draw(Gfx.Pixel, new IntRect(bounds.x,bounds.y+bounds.h-1,bounds.w,1), Border);
+      // b.Draw(Gfx.Pixel, new IntRect(bounds.x,bounds.y,bounds.w,1), Border);
+      // b.Draw(Gfx.Pixel, new IntRect(bounds.x,bounds.y+1,1,bounds.h-2), Border);
+      // b.Draw(Gfx.Pixel, new IntRect(bounds.x+bounds.w-1,bounds.y+1,1,bounds.h-2), Border);
+      // b.Draw(Gfx.Pixel, new IntRect(bounds.x,bounds.y+bounds.h-1,bounds.w,1), Border);
     }
     ISelectionCollider ISprite.GetCollider()=>ISelectionCollider.FromRect(bounds);
   }

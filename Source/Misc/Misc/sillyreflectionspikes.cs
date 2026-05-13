@@ -35,10 +35,8 @@ public class CustomSpikes : Entity{
   
   LiftspeedSm sm;
   Template parent;
-  Image image;
-  public CustomSpikes(EntityData data, Vector2 offset)
-    : base(data.Position+offset)
-  {
+  List<Image> images = new();
+  public CustomSpikes(EntityData data, Vector2 offset): base(data.Position+offset){
     Direction = data.Enum("direction",Directions.Up);
     Depth = -1;
     int size = (Direction==Directions.Up || Direction==Directions.Down)? data.Width:data.Height;
@@ -86,7 +84,7 @@ public class CustomSpikes : Entity{
     if(data.tryGetStr("fancy",out var fancyRecolor)) subtex = subtex.Map(Util.ColorRemap.Get(fancyRecolor).RemapTex);
     Color c = Util.hexToColor(data.String("tint","#ffffff"));
     for (int j = 0; j < size / 8; j++) {
-      Image image = new Image(Calc.Random.Choose(subtex));
+      var image = new Image(Calc.Random.Choose(subtex));
       switch (Direction) {
         case Directions.Up:
           image.JustifyOrigin(0.5f, 1f);
@@ -108,7 +106,9 @@ public class CustomSpikes : Entity{
       image.Color = c;
       if(triggerSpike) image.Position-=unitDir*4;
       Add(image);
+      images.Add(image);
     }
+    if(triggerSpike) DebugConsole.Write("timings", triggerTiming, untriggerTiming);
   }
   public override void Render(){
     if (MaterialPipe.clipBounds.CollideExRect(Position.X,Position.Y,Width,Height)){
@@ -156,41 +156,57 @@ public class CustomSpikes : Entity{
     var orig = p.Collider;
     p.Collider = p.hurtbox;
     foreach(CustomSpikes c in p.Scene.Tracker.GetEntities<CustomSpikes>()){
-      c.OnCollide(p);
+      if(p.CollideCheck(c)) c.OnCollide(p);
       if(p.Dead) break;
     }
     p.Collider = orig;
   }
   IEnumerator emergeRoutine(){
     float countdown = triggerTiming;
-    int target = 2;
     if(triggerTiming<0){
-      countdown = 0.1f;
-      while(UpdateHook.cachedPlayer is {} p && !p.Dead){
-        var orig = p.Collider;
-        p.Collider = p.hurtbox;
-        bool flag = shouldKill(p);
-        p.Collider = orig;
-      }
-    }
-
-    shift:
-      if(countdown>0.1f){
-        yield return countdown-0.1f;
-        countdown=0.1f;
-      }
-      for(int i=0; i<4; i++){
-        image.Position+=unitDir*Math.Sign(target-1);
-        if(countdown<=0){
-          triggerStage=target;
+      countdown = 0.4f;
+      while(true){
+        if(countdown>0){
+          countdown = countdown-Engine.DeltaTime;
+          yield return null;
+          continue;
         }
-        countdown-=0.05f;
-        yield return 0.05f;
+        if(UpdateHook.cachedPlayer is {} p && !p.Dead){
+          var orig = p.Collider;
+          p.Collider = p.hurtbox;
+          bool flag = p.CollideCheck(this) && shouldKill(p);
+          p.Collider = orig;
+          if(!flag) break;
+          yield return null;
+        }
       }
-      triggerStage=target;
-      if(untriggerTiming<0 || target==0) yield break;
-      target = 0;
-      goto shift;
+      countdown = 0.05f;
+    }
+    if(countdown >= 0.05f){
+      yield return countdown-0.05f;
+      countdown = 0.05f;
+    }
+    Add(new Coroutine(animate(1,3)));
+    yield return countdown;
+    if(triggerStage<=2) triggerStage = 2;
+    while(triggerStage != 3) yield return null;
+
+    if((countdown = untriggerTiming)<0) yield break;
+    if(countdown >= 0.05f){
+      yield return countdown-0.05f;
+    }
+    Add(new Coroutine(animate(-1,0)));
+  }
+  IEnumerator animate(int dir, int endstate){
+    float prog = 0;
+    while(prog<1){
+      if(Math.Floor(prog*4)!=Math.Floor((prog+=Engine.DeltaTime*8)*4)){
+        foreach(var image in images) image.Position+=unitDir*dir;
+      }
+      if(prog>=1) break;
+      yield return null;
+    }
+    triggerStage = endstate;
   }
 
   public bool IsRiding(Solid solid) => Direction switch {

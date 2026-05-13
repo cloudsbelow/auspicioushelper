@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Celeste.Mod.auspicioushelper.Import;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
@@ -139,10 +140,9 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     if(paths!=null) onCollidePaths = Util.listparseflat(paths);
   }
   DashCollisionResults handleDash(Player player, Vector2 direction){
-    if((prop&Propagation.DashHit) != Propagation.None && (parent!=null)){
+    if((prop&Propagation.DashHit) != Propagation.None){
       OnTrigger(new TouchInfo(player, direction.X!=0?TouchInfo.Type.dashH:TouchInfo.Type.dashV));
-      if(parent.OnDashCollide != null) return parent.OnDashCollide(player, direction);
-      return ((ITemplateChild)parent).propagateDashhit(player, direction);
+      return ((ITemplateChild)this).propagateDashhit(player, direction);
     }
     return DashCollisionResults.NormalOverride;
   }
@@ -241,7 +241,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   }
   public class TouchInfo:TriggerInfo, IUsable{
     public enum Type {
-      collideV, collideH, jump, climbjump, walljump, wallbounce, super, grounded, climbing , dashH, dashV,
+      collideV, collideH, jump, climbjump, walljump, wallbounce, super, grounded, climbing , dashH, dashV, dreamTunnel, dreamTunnelExit,
       invalid, FishExplosion, SeekerExplosion, bumper, SeekerSlam,HoldableHit
     }
     public Type ty;
@@ -265,20 +265,22 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     public override string category => "channel/"+channel;
   }
   static void triggerFromArr(List<Entity> l, TouchInfo t){
-    foreach(Entity p in l) p.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(t);
+    foreach(Entity p in l) if(p.Scene!=null){
+      p.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(t);
+    } 
   }
   static void Hook(On.Celeste.Player.orig_Jump orig, Player p, bool a, bool b){
     bool useCoyote = p.jumpGraceTimer>0 && p.jumpGraceTimer<0.1;
     orig(p,a,b);
     if(a && b)triggerFromArr(p.temp,new TouchInfo(p,TouchInfo.Type.jump));
     if(useCoyote){
-      p.Get<CoyotePlatformMarker>()?.p?.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new TouchInfo(p,TouchInfo.Type.jump));
+      p.Get<PlatCache>()?.coyote?.Get<ChildMarker>()?.Trigger(new TouchInfo(p,TouchInfo.Type.jump));
     }
   }
   static void Hook(On.Celeste.Player.orig_SuperJump orig, Player p){
     orig(p);
     triggerFromArr(p.temp, new TouchInfo(p,TouchInfo.Type.super));
-    p.Get<CoyotePlatformMarker>()?.p?.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(new TouchInfo(p,TouchInfo.Type.super));
+    p.Get<PlatCache>()?.coyote?.Get<ChildMarker>()?.Trigger(new TouchInfo(p,TouchInfo.Type.super));
   }
   static void Hook(On.Celeste.Player.orig_SuperWallJump orig, Player p, int direction){
     orig(p,direction);
@@ -299,6 +301,13 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     }
     if(p.StateMachine.State == Player.StClimb){
       triggerFromArr(p.CollideAll<Platform>(p.Position + Vector2.UnitX*(float)p.Facing), new TouchInfo(p, TouchInfo.Type.climbing));
+    }
+    var m = PlatCache.Get(p);
+    if(CommunalHelperIop.InTunnel(p)){
+      triggerFromArr(m.dreamTunnel = p.CollideAll<Solid>(), new TouchInfo(p,TouchInfo.Type.dreamTunnel));
+    } else if(m.dreamTunnel != null){
+      triggerFromArr(m.dreamTunnel, new TouchInfo(p,TouchInfo.Type.dreamTunnelExit));
+      m.dreamTunnel = null;
     }
   }
   public static void ExplodeThing(Entity e){
@@ -361,15 +370,18 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       c.EmitDelegate(HitDelegate);
     }
   }
-  public class CoyotePlatformMarker:Component{
-    public Platform p = null;
-    public CoyotePlatformMarker():base(false,false){}
-    public void setPlatform(Platform p)=>this.p=p;
+  public class PlatCache:Component{
+    public Platform coyote = null;
+    public List<Entity> dreamTunnel = null;
+    public PlatCache():base(false,false){}
+    public static PlatCache Get(Player p){
+      PlatCache m = p.Get<PlatCache>();
+      if(m==null) p.Add(m = new PlatCache());
+      return m;
+    }
   }
   static void setCoyotePlatform(Player player, Platform platform){
-    CoyotePlatformMarker m = player.Get<CoyotePlatformMarker>();
-    if(m==null) player.Add(m = new CoyotePlatformMarker());
-    m.setPlatform(platform);
+    PlatCache.Get(player).coyote = platform;
   }
   static void HookCoyote(ILContext ctx){
     ILCursor c = new(ctx);

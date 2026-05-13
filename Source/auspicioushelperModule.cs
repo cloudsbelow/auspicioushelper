@@ -124,7 +124,10 @@ public class auspicioushelperModule : EverestModule {
       if(Engine.Instance.scene is LevelLoader l){
         SetFoldermod(l.Level.Session);
         DebugConsole.Write("\n\nReloading Map! In foldermod: ",InFolderMod);
-        if(InFolderMod && Settings.ExtraMappingUtils.KillSessiondonotload) l.Level.Session.DoNotLoad?.Clear();
+        if(InFolderMod && Settings.ExtraMappingUtils.KillSessiondonotload){
+          l.Level.Session.DoNotLoad?.Clear();
+          Session.brokenTempaltes?.Clear();
+        }
         OnReloadMap.run();
         MapenterEv.Run(l.Level.Session.MapData);
         MarkedRoomParser.parseMapdata(l.Level.Session.MapData);

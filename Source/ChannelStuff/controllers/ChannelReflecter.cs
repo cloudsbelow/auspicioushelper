@@ -66,7 +66,7 @@ public class ChannelReflecter:Entity{
       return;
     }
     notFound:
-      if(Scene.OnInterval(1f))DebugConsole.Write("Not found", ident, FoundEntity.find(ident), string.Join(',',refl));
+      //if(Scene.OnInterval(1f))DebugConsole.Write("Not found", ident, FoundEntity.find(ident), string.Join(',',refl));
       ChannelState.SetChannel(channel,ifNull);
   }
 }

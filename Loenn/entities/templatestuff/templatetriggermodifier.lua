@@ -27,6 +27,8 @@ entity.fieldInformation = function(entity)
                 "climbing",
                 "dashH",
                 "dashV",
+                "dreamTunnel",
+                "dreamTunnelExit",
                 "FishExplosion",
                 "SeekerExplosion",
                 "bumper",

@@ -171,9 +171,11 @@ public class SwapBlockW:SwapBlock, IBlockChild{
   static void MOveHook(ILContext ctx){
     ILCursor c = new(ctx);
     while(c.TryGotoNext(MoveType.Before,
-      itr=>itr.MatchCallvirt<Platform>(nameof(Platform.MoveTo))
+      itr=>itr.MatchCall<Platform>(nameof(Platform.MoveTo))
     )){
+      c.EmitLdarg0();
       c.EmitDelegate(fixLs);
+      c.Index++;
     }
   }
   public override void Update(){

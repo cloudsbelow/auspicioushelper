@@ -190,7 +190,7 @@ public class ConnectedBlocks:Entity{
         templateFiller w = chain.NextFiller();
         int i=0;
         foreach(var n in first.Nodes??[]){
-          string idpath = hit.ID.ToString()+"/"+i.ToString()+"/";
+          string idpath = hit.ID.ToString()+"/"+i++.ToString()+"/";
           int deptho = first.Int("depthoffset",0);
           displacers.Add(new(n, new(){disp=w, idpath=idpath, Position=n, depth=deptho}, displacersUsed));
         }

@@ -63,8 +63,8 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
     }
     if(triggerOnBreak) new TriggerInfo.EntInfo("TemplateBlock",this).Pass(this); 
     Audio.Play(breaksfx,Position);
-    destroy(true);
     if(persistent) auspicioushelperModule.Session.brokenTempaltes.Add(fullpath);
+    destroy(true);
   }
   public void OnTrigger(TriggerInfo info){
     if(!triggerable){

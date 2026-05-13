@@ -52,7 +52,7 @@ public static class PlayerHelper{
     else p.LiftSpeed = del/MathF.Max(0.001f,Engine.DeltaTime); 
   }
 
-  [OnLoad.ILHook(typeof(Player),nameof(Player.OnCollideH))]
+  [OnLoad.OnHook(typeof(Player),nameof(Player.OnCollideH))]
   static void Hook(On.Celeste.Player.orig_OnCollideH orig, Player p, CollisionData d){
     CustomSpikes.spikeCheck(p);
     if(TemplateDreamblockModifier.CollideHandler(p,d)) goto end;
@@ -62,7 +62,7 @@ public static class PlayerHelper{
     );
     end:;
   }
-  [OnLoad.ILHook(typeof(Player),nameof(Player.OnCollideV))]
+  [OnLoad.OnHook(typeof(Player),nameof(Player.OnCollideV))]
   static void Hook(On.Celeste.Player.orig_OnCollideV orig, Player p, CollisionData d){
     CustomSpikes.spikeCheck(p);
     if(TemplateDreamblockModifier.CollideHandler(p,d)) goto end;
