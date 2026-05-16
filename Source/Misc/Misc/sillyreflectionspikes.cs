@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Celeste.Mod.auspicioushelper.Import;
 using Celeste.Mod.Entities;
 using Celeste.Mod.Helpers;
+using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Cil;
@@ -198,6 +199,15 @@ public class CustomSpikes : Entity{
     Add(new Coroutine(animate(-1,0)));
   }
   IEnumerator animate(int dir, int endstate){
+
+    Vector2 sfxPos;
+    if(Direction == Directions.Up || Direction == Directions.Down) {
+      sfxPos = Position + Vector2.UnitX*Width/2;
+    } else sfxPos = Position + Vector2.UnitY*Height/2;
+
+    if(dir>0) Audio.Play("event:/auspicioushelper/triggerspikes/out", sfxPos);
+    else Audio.Play("event:/auspicioushelper/triggerspikes/in", sfxPos);
+
     float prog = 0;
     while(prog<1){
       if(Math.Floor(prog*4)!=Math.Floor((prog+=Engine.DeltaTime*8)*4)){

@@ -61,6 +61,7 @@ public class TemplateSwapblock:Template, ITemplateTriggerable{
       bool done = spos.towardsNextDist(speed*Engine.DeltaTime);
       if(done && returning && target == 0){
         Audio.Stop(movesfx);
+        Audio.Play("event:/game/05_mirror_temple/swapblock_return_end", virtLoc);
         movesfx = null;
       }
       if(done && returning) target = Math.Max(target-1,0);
@@ -69,12 +70,12 @@ public class TemplateSwapblock:Template, ITemplateTriggerable{
       }
       ownLiftspeed = (virtLoc-old).SafeNormalize()*Math.Abs(speed);
       childRelposSafe();
-    } else if(graceNext>0){
+    }else if(graceNext>0){
       target++;
       graceNext=0;
     }else{
+      if(!returning && speed!=0) Audio.Play("event:/game/05_mirror_temple/swapblock_move_end", virtLoc);
       speed=0;
-      Audio.Stop(movesfx);
       movesfx = null;
       ownLiftspeed = Vector2.Zero;
     }
