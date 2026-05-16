@@ -35,7 +35,7 @@ public class TemplateSwapblock:Template, ITemplateTriggerable{
     onDash = d.Bool("onDash",true);
     earlyGracetime = d.Float("earlyGracetime",0.2f);
   }
-  bool returning, outgoing = false;
+  bool returning;
   public override void Update(){
     base.Update();
     if(movesfx!=null) Audio.Position(movesfx,virtLoc);
@@ -73,11 +73,9 @@ public class TemplateSwapblock:Template, ITemplateTriggerable{
     }else if(graceNext>0){
       target++;
       graceNext=0;
-    }else if(outgoing){
+    }else{
+      if(!returning && speed!=0) Audio.Play("event:/game/05_mirror_temple/swapblock_move_end", virtLoc);
       speed=0;
-      //Audio.Stop(movesfx);
-      Audio.Play("event:/game/05_mirror_temple/swapblock_move_end", virtLoc);
-      outgoing = false;
       movesfx = null;
       ownLiftspeed = Vector2.Zero;
     }
@@ -92,7 +90,6 @@ public class TemplateSwapblock:Template, ITemplateTriggerable{
       else graceNext = earlyGracetime;
     } else target = Math.Min(target+1,spos.numsegs-1);
     speed=Math.Max(Math.Abs(speed),maxspeed/3);
-    outgoing = true;
   }
   void ITemplateTriggerable.OnTrigger(TriggerInfo s) {
     if(!triggerable) parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(s);
