@@ -291,14 +291,30 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   }
 }
 
-public class DustSpinner:DustStaticSpinner, ISimpleEnt{
+public class DustSpinner:DustStaticSpinner, ISimpleEnt, IChildShaker{
   public Template parent {get;set;}
   public Vector2 toffset {get;set;}
-  public DustSpinner(EntityData e, Vector2 o):base(e,o){}
+  public Vector2 lastShake {get;set;}
+  public DustSpinner(EntityData e, Vector2 o):base(e,o){
+    Get<DustGraphic>().ignoreSolids = true;
+  }
+  bool ownCollidable=true;
   public override void Awake(Scene s){
     Depth = Math.Min(Depth,-50);
     base.Awake(s);
   }
+  void ITemplateChild.parentChangeStat(int vis, int col, int act){
+    ((ISimpleEnt)this).defaultPCS(vis,col,act);
+    if(col!=0) ownCollidable = col>0;
+  }
+  public override void Update() {
+    base.Update();
+    Collidable = Collidable && ownCollidable;
+  }
+  void IChildShaker.OnShake(Vector2 amount) {
+    Get<DustGraphic>().shakeValue+=amount;
+  }
+  bool IChildShaker.OverrideShake => true;
 }
 
 [Pooled]

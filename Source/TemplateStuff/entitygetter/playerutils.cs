@@ -53,21 +53,23 @@ public static class PlayerHelper{
   }
 
   [OnLoad.OnHook(typeof(Player),nameof(Player.OnCollideH))]
+  [Util.WithDetourCtx(1000000)]
   static void Hook(On.Celeste.Player.orig_OnCollideH orig, Player p, CollisionData d){
     CustomSpikes.spikeCheck(p);
     if(TemplateDreamblockModifier.CollideHandler(p,d)) goto end;
     orig(p,d);
-    d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(
+    d.Hit?.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(
       new TouchInfo(p,TouchInfo.Type.collideH)
     );
     end:;
   }
   [OnLoad.OnHook(typeof(Player),nameof(Player.OnCollideV))]
+  [Util.WithDetourCtx(1000000)]
   static void Hook(On.Celeste.Player.orig_OnCollideV orig, Player p, CollisionData d){
     CustomSpikes.spikeCheck(p);
     if(TemplateDreamblockModifier.CollideHandler(p,d)) goto end;
     orig(p,d);
-    d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(
+    d.Hit?.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(
       new TouchInfo(p,TouchInfo.Type.collideV)
     );
     end:;

@@ -328,7 +328,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
   }
   public static bool CollideHandler(Player p, CollisionData d){
     if(!DDsh(p)){
-      TemplateDreamblockModifier t = d.Hit.Get<ChildMarker>()?.parent.GetFromTree<TemplateDreamblockModifier>();
+      TemplateDreamblockModifier t = d.Hit?.Get<ChildMarker>()?.parent.GetFromTree<TemplateDreamblockModifier>();
       while(t!=null){
         if(t.dreaming && t.DreamCheckStart(p,d.Direction,d.Hit, true)) return true;
         t = t.parent?.GetFromTree<TemplateDreamblockModifier>();

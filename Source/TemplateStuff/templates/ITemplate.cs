@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using MonoMod.Cil;
 using Celeste.Mod.Helpers;
+using Celeste.Mod.auspicioushelper.Wrappers;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -56,6 +57,7 @@ public interface IChildShaker{
   void OnShakeFrame(Vector2 amount){
     VanillaShake(amount);
   }
+  bool OverrideShake=>false;
 }
 
 public class Template:Entity, ITemplateChild{
@@ -423,9 +425,9 @@ public class Template:Entity, ITemplateChild{
       if(bar!=null)Remove(bar);
       Add(bar = new(()=>{
         foreach(Entity e in GetChildren<Entity>(Propagation.Shake)){
+          if(e is IChildShaker s && s.OverrideShake) continue;
           prevpos.TryAdd(e,e.Position);
           e.Position+=ownShakeVec;
-          if(e is IChildShaker s) s.OnShakeFrame(ownShakeVec);
         }
       }));
       shakeHooks.enable();
@@ -439,16 +441,19 @@ public class Template:Entity, ITemplateChild{
   IEnumerator shakeRoutine(){
     while(shakeTimer>0){
       float nTimer = shakeTimer-Engine.DeltaTime;
-      if(getShakeVector(nTimer) is Vector2 v)ownShakeVec=v;
+      if(getShakeVector(nTimer) is Vector2 v){
+        ownShakeVec = v;
+        foreach(Entity e in GetChildren<Entity>(Propagation.Shake)){
+          if(e is IChildShaker s) s.OnShakeFrame(ownShakeVec);
+        }
+      }
       shakeTimer = nTimer;
       yield return null;
     }
     ownShakeVec = Vector2.Zero;
     Remove(bar);
     bar=null;
-    foreach(Entity e in GetChildren<Entity>(Propagation.Shake)){
-      if(e is IChildShaker s) s.OnShakeFrame(ownShakeVec);
-    }
+    
     shroutine = null;
     yield break;
   }

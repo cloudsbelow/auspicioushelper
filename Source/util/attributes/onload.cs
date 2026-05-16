@@ -11,6 +11,12 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
+public static partial class Util{
+  [AttributeUsage(AttributeTargets.Method, AllowMultiple=false, Inherited=false)]
+  public class WithDetourCtx(int prio=0, string[] before=null, string[] after=null):Attribute{
+    public DetourConfig Get()=>new DetourConfig(nameof(auspicioushelper),prio,before,after){};
+  }
+}
 [AttributeUsage(AttributeTargets.Field|AttributeTargets.Method, AllowMultiple=true, Inherited=false)]
 public class OnLoad:Attribute{
   public OnLoad(){
@@ -33,6 +39,7 @@ public class OnLoad:Attribute{
     internal static MonoMod.RuntimeDetour.ILHook apply(Util.HookTarget mode, MethodInfo m, Type ty, string methodStr, Type[] spec = null){
       if(mode == Util.HookTarget.Placeholder) return null;
       var p = m.GetParameters();
+      var cfg = m.GetCustomAttribute<Util.WithDetourCtx>()?.Get();
       if(p.Length!=1 || p[0].ParameterType!=typeof(ILContext) || !m.IsStatic){
         DebugConsole.WriteFailure($"ILHook attr {m} on {ty}.{methodStr} illegal",true);
       }
@@ -41,7 +48,7 @@ public class OnLoad:Attribute{
         DebugConsole.WriteFailure($"Could not add hook to nonexistent method {ty}.{methodStr} ({mode})",true);
         return null;
       }
-      return new MonoMod.RuntimeDetour.ILHook(methodbase, (ILContext ctx)=>m.Invoke(null,[ctx]));
+      return new MonoMod.RuntimeDetour.ILHook(methodbase, (ILContext ctx)=>m.Invoke(null,[ctx]), cfg);
     }
     public override void Apply(MethodInfo m){
       var hook = apply(mode,m,ty,methodStr,types);
@@ -62,8 +69,7 @@ public class OnLoad:Attribute{
     public OnHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal, params Type[] spec):this(ty,method,mode)=>types=spec;
     internal static Hook apply(Util.HookTarget mode, MethodInfo m, Type ty, string methodStr, Type[] spec=null){
       if(mode == Util.HookTarget.Placeholder) return null;
-      //DebugConsole.Write($"doing on hook on {ty}.{methodStr} ({mode}) via",m);
-      var p = m.GetParameters();
+      var cfg = m.GetCustomAttribute<Util.WithDetourCtx>()?.Get();
       if(!m.IsStatic){
         DebugConsole.WriteFailure($"On hook attr {m} on {ty}.{methodStr} illegal",true);
       }
@@ -73,7 +79,7 @@ public class OnLoad:Attribute{
         return null;
       }
       try{
-        return new Hook(methodbase, m);
+        return new Hook(methodbase, m, cfg);
       }catch(Exception ex){
         throw new Exception($"Failed on hook on {ty}.{methodStr} using {m}: ${ex.Message}");
       }
