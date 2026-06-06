@@ -13,19 +13,23 @@ namespace Celeste.Mod.auspicioushelper;
 public class ChannelSprite:Entity{
   public int num;
   public Sprite sprite;
+  public Image image;
   public enum edgeTypes{
     loop, clamp, hide,
   }
   edgeTypes ty; 
   string channel;
+  ChannelState.FloatCh scaleX, scaleY, rotation;
   public ChannelSprite(EntityData d, Vector2 offset):base(d.Position+offset){
     channel=d.Attr("channel","");
-    Add(sprite=GFX.SpriteBank.Create(d.Attr("xml_spritename")));
-    sprite.Position.X=d.Int("offsetX",0);
-    sprite.Position.Y=d.Int("offsetY",0);
-    if(d.Bool("attached",false)){
+    if(d.String("image_path") is {} istr) Add(image=new(GFX.Game[istr]));
+    image?.CenterOrigin();
+    if(d.String("xml_spritename") is {} sstr) Add(sprite=GFX.SpriteBank.Create(sstr));
+
+    if(d.Bool("attached",false) || d.Nodes?.Length>0){
+      Vector2 pos = d.Nodes?.Length>0? d.Nodes[0]:Position; 
       Add(new StaticMover{
-        SolidChecker = checkSolid
+        SolidChecker = solid=>solid.CollidePoint(pos)
       });
     }
     num = d.Int("cases",1);
@@ -35,9 +39,10 @@ public class ChannelSprite:Entity{
       _=>edgeTypes.hide,
     };
     Depth=d.Int("depth",2);
-  }
-  private bool checkSolid(Solid solid){
-    return Collide.CheckPoint(solid, Position);
+
+    scaleX = d.ChannelFloat("scaleX",1);
+    scaleY = d.ChannelFloat("scaleY",1);
+    rotation = d.ChannelFloat("rotation",0);
   }
   public void setChVal(double got){
     int val = (int) Math.Floor(got);
@@ -46,7 +51,7 @@ public class ChannelSprite:Entity{
         case edgeTypes.loop: val=(val%num+num)%num; break;
         case edgeTypes.clamp: val=Math.Clamp(val,0,num-1);break;
         default:
-          sprite.Visible=false;
+          sprite?.Visible=false;
           return;
       }
     }
@@ -55,6 +60,17 @@ public class ChannelSprite:Entity{
   }
   public override void Added(Scene scene){
     base.Added(scene);
-    Add(new ChannelTracker(channel, setChVal, true));
+    if(!string.IsNullOrEmpty(channel))Add(new ChannelTracker(channel, setChVal, true));
+  }
+  public override void Update() {
+    base.Update();
+    if(sprite!=null){
+      sprite.Rotation = rotation*MathF.PI/360;
+      sprite.Scale = new(scaleX,scaleY);
+    }
+    if(image!=null){
+      image.Rotation = rotation*MathF.PI/360;
+      image.Scale = new(scaleX,scaleY);
+    }
   }
 }

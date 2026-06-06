@@ -91,7 +91,6 @@ public static class PlayerHelper{
       public PlayerInfo(Player p, Template t, bool use=true){
         entity=p;
         sts=Util.TrimSt(p,p.StateMachine.State);
-        parent = t;
         this.use=use;
       }
       public override bool shouldTrigger => use;

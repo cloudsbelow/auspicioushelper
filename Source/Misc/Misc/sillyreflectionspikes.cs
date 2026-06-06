@@ -37,6 +37,7 @@ public class CustomSpikes : Entity{
   LiftspeedSm sm;
   Template parent;
   List<Image> images = new();
+  LedgeBlocker lb;
   public CustomSpikes(EntityData data, Vector2 offset): base(data.Position+offset){
     Direction = data.Enum("direction",Directions.Up);
     Depth = -1;
@@ -54,18 +55,18 @@ public class CustomSpikes : Entity{
     switch (Direction) {
       case Directions.Up:
         base.Collider = new Hitbox(size, 3f, 0f, -3f);
-        Add(new LedgeBlocker());
+        Add(lb = new LedgeBlocker());
         break;
       case Directions.Down:
         base.Collider = new Hitbox(size, 3f);
         break;
       case Directions.Left:
         base.Collider = new Hitbox(3f, size, -3f);
-        Add(new LedgeBlocker());
+        Add(lb = new LedgeBlocker());
         break;
       case Directions.Right:
         base.Collider = new Hitbox(3f, size);
-        Add(new LedgeBlocker());
+        Add(lb = new LedgeBlocker());
         break;
     }
 
@@ -109,7 +110,7 @@ public class CustomSpikes : Entity{
       Add(image);
       images.Add(image);
     }
-    if(triggerSpike) DebugConsole.Write("timings", triggerTiming, untriggerTiming);
+    if(triggerSpike) lb.Blocking=false;
   }
   public override void Render(){
     if (MaterialPipe.clipBounds.CollideExRect(Position.X,Position.Y,Width,Height)){
@@ -190,6 +191,7 @@ public class CustomSpikes : Entity{
     Add(new Coroutine(animate(1,3)));
     yield return countdown;
     if(triggerStage<=2) triggerStage = 2;
+    lb?.Blocking=true;
     while(triggerStage != 3) yield return null;
 
     if((countdown = untriggerTiming)<0) yield break;
@@ -217,6 +219,7 @@ public class CustomSpikes : Entity{
       yield return null;
     }
     triggerStage = endstate;
+    lb?.Blocking = triggerStage>=2;
   }
 
   public bool IsRiding(Solid solid) => Direction switch {

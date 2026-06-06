@@ -150,5 +150,10 @@ public class ChildMarker:Component{
   public bool propagatesTo(Template other){
     return ((ITemplateChild) parent).propagatesTo(other)!=Template.Propagation.None;
   }
+  public bool inTreeOf(Template other){
+    var cur = parent;
+    while(cur!=other) if((cur=cur.parent)==null) return false;
+    return true;
+  }
   public void Trigger(TriggerInfo t)=>parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(t);
 }

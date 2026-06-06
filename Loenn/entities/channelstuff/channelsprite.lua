@@ -14,12 +14,15 @@ entity.placements = {
     name = "Channel Sprite",
     data = {
       channel = "",
-      attached = false,
       edge_type = "loop",
       xml_spritename = "auspicioushelper_example1",
       cases=3,
       depth=2,
       materialIdentifiers="",
+      scaleX="1",
+      scaleY="1",
+      rotation="0",
+      image_path = "",
     }
   }
 }

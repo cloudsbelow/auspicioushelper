@@ -493,3 +493,10 @@ public class TileOccluder:OnAnyRemoveComp{
     On.Celeste.LightingRenderer.BeforeRender -= HandleThing;
   }, auspicioushelperModule.OnEnterMap);
 }
+
+// public class TilegridSelector:OverrideVisualComponent{
+//   TileGrid tg;
+//   AnimatedTiles anim;
+//   VirtualMap<char> data;
+//   public override void 
+// }

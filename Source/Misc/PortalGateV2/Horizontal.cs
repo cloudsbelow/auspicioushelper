@@ -301,7 +301,7 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
   [CustomEntity("auspicioushelper/PortalGateH")]
   [CustomloadEntity(nameof(Load))]
   public static class Pair{
-    static void Load(Level l, LevelData ld, Vector2 o, EntityData d){
+    public static void Load(Level l, LevelData ld, Vector2 o, EntityData d){
       var c = Util.hexToColor(d.Attr("color_hex","ffffffaa"));
       PortalInfo pi = new(){
         canAttach = d.Bool("attached",true),
@@ -309,7 +309,7 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
         instantCam = d.Bool("instant_camera",false)
       };
       var e1 = new PortalFaceH(o+d.Position, d.Height, d.Bool("right_facing_f0"), false, pi){color=c};
-      var e2 = new PortalFaceH(o+d.Nodes[0], d.Height, d.Bool("right_facing_f1"), d.Bool("flipGravity"), pi){color=c};
+      var e2 = new PortalFaceH(o+d.Nodes[0], d.Height, d.Bool("right_facing_f1",true), d.Bool("flipGravity"), pi){color=c};
       e1.other = e2;
       e2.other = e1;
       l.Add([e1,e2]);

@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Cil;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -22,7 +23,7 @@ public static class EntityParser{
   }
   public enum Types{
     unable, platformbasic, unwrapped, template,
-    basic, removeSMbasic, managedBasic,
+    basic, managedBasic,
     iopClarified, initiallyerrors,
     puffer,
   }
@@ -106,7 +107,7 @@ anyways i want to praise it more it is wonderful
           if(t is Puffer) loaders[d.Name] = (l,d,o,e)=>{currentParent.addEnt(new PufferW(l,(Puffer) loader(l,d,o,e))); return null;};
           etype = parseMap[d.Name] = Types.unwrapped;
         }else{
-          etype = parseMap[d.Name] = Types.removeSMbasic;
+          etype = parseMap[d.Name] = Types.basic;
         }
         loaders.TryAdd(d.Name,loader);
         //DebugConsole.Write($"{d.Name} auto-classified as {etype}");
@@ -169,19 +170,21 @@ anyways i want to praise it more it is wonderful
         currentParent = null;
         return e;
       case Types.basic:
-        if(e!=null){
-          t.AddBasicEnt(e,simoffset+d.Position-t.roundLoc);
-        }
-        goto done;
-      case Types.removeSMbasic: case Types.managedBasic:
-        List<StaticMover> SMRemove = new List<StaticMover>();
         foreach(Component c in e.Components) if(c is StaticMover sm){
           if(c is LiftspeedSm lsm) lsm.parent = currentParent;
-          new DynamicData(sm).Set("__auspiciousSM", new TriggerInfo.SmInfo(t,e));
-          SMRemove.Add(sm);
-          smhooks.enable();
+          if(sm.SolidChecker is {} sc){
+            sm.SolidChecker = s=>(s.Get<ChildMarker>()?.inTreeOf(t)??false) && sc(s);
+          }
+          if(sm.JumpThruChecker is {} jc){
+            sm.JumpThruChecker = jt=>(jt.Get<ChildMarker>()?.inTreeOf(t)??false) && jc(jt);
+          }
+          Action<Platform> old = sm.OnAttach;
+          sm.OnAttach = p=>{
+            //deliberately no null check because otherwise this is a Bad Situation
+            (sm.Entity.Get<ChildMarker>().data as BasicMultient.EntEnt).detatched=true;
+            if(old!=null) old(p);
+          };
         }
-        foreach(StaticMover sm in SMRemove) e.Remove(sm);
         t.AddBasicEnt(e,simoffset+d.Position-t.roundLoc);
         goto done;
       default:
@@ -191,18 +194,6 @@ anyways i want to praise it more it is wonderful
       currentParent = null;
       return null;
   }
-  static void triggerPlatformsHook(On.Celeste.StaticMover.orig_TriggerPlatform orig, StaticMover sm){
-    var smd = new DynamicData(sm);
-    if(smd.TryGet<TriggerInfo.SmInfo>("__auspiciousSM", out var info)){
-      info.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(info);
-    }
-    else orig(sm);
-  }
-  static HookManager smhooks = new HookManager(()=>{
-    On.Celeste.StaticMover.TriggerPlatform+=triggerPlatformsHook;
-  },()=>{
-    On.Celeste.StaticMover.TriggerPlatform-=triggerPlatformsHook;
-  },auspicioushelperModule.OnEnterMap);
   static EntityParser(){
     DefaultLD = (LevelData)RuntimeHelpers.GetUninitializedObject(typeof(LevelData));
     DefaultLD.Name = "ohmygoodnessiwanttodie";
@@ -211,16 +202,20 @@ anyways i want to praise it more it is wonderful
     clarify("jumpThru",       Types.platformbasic, static (l,ld,offset,e) => new JumpThruW(e, offset));
     clarify("glider",         Types.unwrapped,     static (l,ld,offset,e) => new Glider(e, offset));
     clarify("seekerBarrier",  Types.platformbasic, static (l,ld,offset,e) => new SeekerBarrier(e, offset));
+    clarify("auspicioushelper/PortalGateH", Types.unwrapped, static (l,ld,o,e)=>{
+      PortalFaceH.Pair.Load(l,ld,o,e);
+      return null;
+    }, true);
 
-    clarify("spikesUp",            Types.removeSMbasic, static (l,ld,offset,e) => new Spikes(e, offset, Spikes.Directions.Up));
-    clarify("spikesDown",          Types.removeSMbasic, static (l,ld,offset,e) => new Spikes(e, offset, Spikes.Directions.Down));
-    clarify("spikesLeft",          Types.removeSMbasic, static (l,ld,offset,e) => new Spikes(e, offset, Spikes.Directions.Left));
-    clarify("spikesRight",         Types.removeSMbasic, static (l,ld,offset,e) => new Spikes(e, offset, Spikes.Directions.Right));
+    clarify("spikesUp",            Types.basic, static (l,ld,offset,e) => new Spikes(e, offset, Spikes.Directions.Up));
+    clarify("spikesDown",          Types.basic, static (l,ld,offset,e) => new Spikes(e, offset, Spikes.Directions.Down));
+    clarify("spikesLeft",          Types.basic, static (l,ld,offset,e) => new Spikes(e, offset, Spikes.Directions.Left));
+    clarify("spikesRight",         Types.basic, static (l,ld,offset,e) => new Spikes(e, offset, Spikes.Directions.Right));
 
-    clarify("triggerSpikesUp",     Types.removeSMbasic, static (l,ld,offset,e) => new TriggerSpikes(e, offset, TriggerSpikes.Directions.Up));
-    clarify("triggerSpikesDown",   Types.removeSMbasic, static (l,ld,offset,e) => new TriggerSpikes(e, offset, TriggerSpikes.Directions.Down));
-    clarify("triggerSpikesLeft",   Types.removeSMbasic, static (l,ld,offset,e) => new TriggerSpikes(e, offset, TriggerSpikes.Directions.Left));
-    clarify("triggerSpikesRight",  Types.removeSMbasic, static (l,ld,offset,e) => new TriggerSpikes(e, offset, TriggerSpikes.Directions.Right));
+    clarify("triggerSpikesUp",     Types.basic, static (l,ld,offset,e) => new TriggerSpikes(e, offset, TriggerSpikes.Directions.Up));
+    clarify("triggerSpikesDown",   Types.basic, static (l,ld,offset,e) => new TriggerSpikes(e, offset, TriggerSpikes.Directions.Down));
+    clarify("triggerSpikesLeft",   Types.basic, static (l,ld,offset,e) => new TriggerSpikes(e, offset, TriggerSpikes.Directions.Left));
+    clarify("triggerSpikesRight",  Types.basic, static (l,ld,offset,e) => new TriggerSpikes(e, offset, TriggerSpikes.Directions.Right));
     
     clarify("spring", Types.managedBasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.Floor));
     clarify("wallSpringLeft", Types.managedBasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.WallLeft));

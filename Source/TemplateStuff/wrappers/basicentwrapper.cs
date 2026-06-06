@@ -40,7 +40,6 @@ public class BasicMultient:ITemplateChild{
     ents.Add(en);
     e.Depth+=depthoffset;
     if(e.Scene == null && this.Scene != null) Scene.Add(e);
-    hooks.enable();
     ChildMarker.Get(e,parent).data = en;
   }
   public void relposTo(Vector2 loc, Vector2 liftspeed){
@@ -90,6 +89,7 @@ public class BasicMultient:ITemplateChild{
     }
     ents.Clear();
   }
+  [OnLoad.OnHook(typeof(Decal),nameof(Decal.Added))]
   static void Hook(On.Celeste.Decal.orig_Added orig, Decal d, Scene s){
     orig(d,s);
     if(d.Get<ChildMarker>()?.parent is Template t){
@@ -98,21 +98,21 @@ public class BasicMultient:ITemplateChild{
       }
     }
   }
+  [OnLoad.OnHook(typeof(Follower),nameof(Follower.OnGainLeaderUtil))]
   static void Hook(On.Celeste.Follower.orig_OnGainLeaderUtil orig, Follower f, Leader l){
     orig(f,l);
     if(f.Entity?.Get<ChildMarker>()?.data is EntEnt ent) ent.detatched = true;
   }
+  [OnLoad.OnHook(typeof(Follower),nameof(Follower.OnLoseLeaderUtil))]
   static void Hook(On.Celeste.Follower.orig_OnLoseLeaderUtil orig, Follower f){
     orig(f);
     if(f.Entity?.Get<ChildMarker>()?.data is EntEnt ent) ent.detatched = false;
   }
-  static HookManager hooks = new(()=>{
-    On.Celeste.Decal.Added+=Hook;
-    On.Celeste.Follower.OnGainLeaderUtil += Hook;
-    On.Celeste.Follower.OnLoseLeaderUtil += Hook;
-  },()=>{
-    On.Celeste.Decal.Added-=Hook;
-    On.Celeste.Follower.OnGainLeaderUtil -= Hook;
-    On.Celeste.Follower.OnLoseLeaderUtil -= Hook;
-  },auspicioushelperModule.OnEnterMap);
+  [OnLoad.OnHook(typeof(StaticMover), nameof(StaticMover.TriggerPlatform))]
+  static void Hook(On.Celeste.StaticMover.orig_TriggerPlatform orig, StaticMover sm){
+    if(sm.Platform==null && sm.Entity.Get<ChildMarker>() is {} cm){
+      cm.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new TriggerInfo.SmInfo(sm.Entity));
+    }
+    orig(sm);
+  }
 }

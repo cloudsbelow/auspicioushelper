@@ -52,7 +52,6 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
     public DashhitInfo(Player p, Vector2 d, Template t):base(){
       entity = p; 
       dir=getDir(d);
-      parent = t;
     }
     public override string category=>"dashHit/"+dir.ToString();
   }

@@ -1,9 +1,9 @@
 - Name: auspicioushelper
-  Version: 0.4.2.1
+  Version: 0.4.3
   DLL: bin/auspicioushelper.dll
   Dependencies:
     - Name: EverestCore
-      Version: 1.5961.0
+      Version: 1.5720.0
   OptionalDependencies:
     - Name: SpeedrunTool
       Version: 3.24.5

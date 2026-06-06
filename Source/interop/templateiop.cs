@@ -18,7 +18,6 @@ public static class TemplateIop{
     public const int platformbasic = 1; //basic platform; use moveV/moveH when moving
     public const int unwrapped = 2; //use this entity directly; do not put into tree
     public const int basic = 3; //basic entity; movement done via position change
-    public const int removeSMbasic = 4; //basic but will remove all staticmovers on construction (use for conventionally attached items)
   }
 
   //Here is a template class with callbacks when stuff changes in the template. If you leave values
@@ -86,7 +85,6 @@ public static class TemplateIopExp{
       1=>EntityParser.Types.platformbasic,
       2=>EntityParser.Types.unwrapped,
       3=>EntityParser.Types.basic,
-      4=>EntityParser.Types.removeSMbasic,
       _=>EntityParser.Types.unable,
     };
   }

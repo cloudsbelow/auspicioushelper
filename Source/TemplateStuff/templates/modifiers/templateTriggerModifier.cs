@@ -22,19 +22,9 @@ public interface ITemplateTriggerable{
 }
 
 public abstract class TriggerInfo{
-  public Template parent;
   public Entity entity;
   public class SmInfo:TriggerInfo{
-    public SmInfo(Template p, Entity e){
-      this.parent = p; this.entity = e;
-    }
-    public static SmInfo getInfo(StaticMover sm){
-      var smd = new DynamicData(sm);
-      if(smd.TryGet<SmInfo>("__auspiciousSM", out var info)){
-        return info;
-      }
-      return new SmInfo(null,sm.Entity);
-    }
+    public SmInfo(Entity e)=>this.entity = e;
     public override string category => "staticmover/"+entity.ToString();
   }
   public class EntInfo:TriggerInfo{
@@ -120,7 +110,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     if(!d.Bool("propagateInside",true)) prop &= ~Propagation.Inside;
     if(!d.Bool("propagateShake",true)) prop &= ~Propagation.Shake;
     if(!d.Bool("propagateDashHit",true)) prop &= ~Propagation.DashHit;
-    passTrigger = d.Bool("propagateTrigger",false);
+    passTrigger = d.Bool("propagateTrigger",true);
     hideTrigger = d.Bool("hideTrigger",false);
     blockTrigger = d.Bool("blockTrigger",false);
     delay = d.Float("delay",-1);
@@ -184,7 +174,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       goto end;
     }
     if(TriggerInfo.Test(sm)){
-      if(passTrigger)triggerParent.OnTrigger(sm);
+      if(passTrigger) triggerParent.OnTrigger(sm);
     } else modifierParent?.OnTrigger(sm);
     end:
       if(TriggerInfo.Test(sm)) adv?.Apply();

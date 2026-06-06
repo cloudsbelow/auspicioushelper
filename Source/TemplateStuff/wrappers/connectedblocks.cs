@@ -273,14 +273,22 @@ public class ConnectedBlocks:Entity{
   public static void addAllSms(Entity e, Util.OrderedSet<Entity> all){
     if(all.Contains(e) || e is IShouldntInduct) return;
     List<StaticMover> sms = null;
-    if(e is Platform p) sms = p.staticMovers;
+    if(e is Platform p){
+      sms = p.staticMovers;
+      if(e is JumpThru jt) foreach (StaticMover sm in e.Scene.Tracker.GetComponents<StaticMover>()){
+        if (sm.Platform == null && sm.IsRiding(jt)) sms.Add(sm);
+      }
+      if(e is Solid s) foreach (StaticMover sm in e.Scene.Tracker.GetComponents<StaticMover>()){
+        if (sm.Platform == null && sm.IsRiding(s)) sms.Add(sm);
+      }
+    }
     if(MaddiesIop.at != null && e.GetType() == MaddiesIop.at){
       Solid intSolid = MaddiesIop.playerInteractingSolid.get(e);
       sms = new();
       bool old = intSolid.Collidable;
       intSolid.Collidable=true;
-      foreach (StaticMover smover in e.Scene.Tracker.GetComponents<StaticMover>()){
-        if (smover.Platform == null && smover.IsRiding(intSolid)) sms.Add(smover);
+      foreach (StaticMover sm in e.Scene.Tracker.GetComponents<StaticMover>()){
+        if (sm.Platform == null && sm.IsRiding(intSolid)) sms.Add(sm);
       }
       intSolid.Collidable=old;
       //sms = MaddiesIop.playerInteractingSolid.get(e).staticMovers;
