@@ -18,6 +18,7 @@ entity.placements = {
       types="*",
       combinationMode="or",
       log=false,
+      tangible = false,
       
       _loenn_display_template = true,
     }

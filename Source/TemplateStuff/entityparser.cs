@@ -23,9 +23,8 @@ public static class EntityParser{
   }
   public enum Types{
     unable, platformbasic, unwrapped, template,
-    basic, managedBasic,
-    iopClarified, initiallyerrors,
-    puffer,
+    basic,
+    iopClarified, initiallyerrors
   }
   public static LevelData DefaultLD;
   static Dictionary<string, Types> parseMap = new Dictionary<string, Types>();
@@ -46,8 +45,8 @@ public static class EntityParser{
     cloaders[name] = comploader;
     loaders[name] = createComp;
   }
-  public static Entity createComp(Level l, LevelData d, Vector2 o, EntityData e){
-    Component c = cloaders[e.Name](l,d,o,e);
+  public static Entity createComp(Level l, LevelData ld, Vector2 o, EntityData e){
+    Component c = cloaders[e.Name](l,ld,o,e);
     if(c!=null){
       currentParent.addEnt(new IopControlled(c));
     }
@@ -104,7 +103,17 @@ anyways i want to praise it more it is wonderful
         }else if(t is Platform){
           etype = parseMap[d.Name] = Types.platformbasic;
         }else if(t is Actor || t is ITemplateChild){
-          if(t is Puffer) loaders[d.Name] = (l,d,o,e)=>{currentParent.addEnt(new PufferW(l,(Puffer) loader(l,d,o,e))); return null;};
+          if(t is Puffer) loaders[d.Name] = (l,ld,o,e)=>{
+            currentParent.addEnt(new PufferW(l,(Puffer) loader(l,ld,o,e))); 
+            return null;
+          };
+          if(t.Get<Holdable>() is {}) loaders[d.Name] = (l,ld,o,e)=>{
+            Actor a = (Actor) loader(l,ld,o,e);
+            var item = new HoldableW(a, a.Get<Holdable>(), e.Bool("ausp_keepHoldingAlways",false));
+            currentParent.addEnt(item);
+            a.Add(item);
+            return null;
+          };
           etype = parseMap[d.Name] = Types.unwrapped;
         }else{
           etype = parseMap[d.Name] = Types.basic;
@@ -143,20 +152,18 @@ anyways i want to praise it more it is wonderful
     if(etype == Types.template){
       if(string.IsNullOrWhiteSpace(d.Attr("template")) && t.t.chain==null && d is not TemplateDisplacer.DisplacerData){
         DebugConsole.WriteFailure($"Empty template did not get culled from template room");
-        goto done;
+        goto done2;
       }
     }
     
     currentParent = t;
     EntityData data = TemplateTemplate.withReplace(d);
     Entity e = null; 
+    Finder.StartLoad(data, t.fullpath);
     using (new Template.ChainLock()) e = loader(l,ld,simoffset,data);
     if(e==null) goto done;
     e.SourceData = data;
     ChildMarker.Get(e,t);
-    if(path!=null && Finder.flagged.TryGetValue(path+$"/{d.ID}",out var ident)){
-      foreach(var a in ident) a(e);
-    }
     switch(etype){
       case Types.platformbasic:
         if(e is Platform p){
@@ -191,6 +198,8 @@ anyways i want to praise it more it is wonderful
         goto done;
     }
     done:
+      Finder.EndingLoad(data,l);
+    done2:
       currentParent = null;
       return null;
   }
@@ -200,7 +209,6 @@ anyways i want to praise it more it is wonderful
 
     clarify("dreamBlock",     Types.platformbasic, static (l,ld,offset,e) => new DreamBlock(e, offset));
     clarify("jumpThru",       Types.platformbasic, static (l,ld,offset,e) => new JumpThruW(e, offset));
-    clarify("glider",         Types.unwrapped,     static (l,ld,offset,e) => new Glider(e, offset));
     clarify("seekerBarrier",  Types.platformbasic, static (l,ld,offset,e) => new SeekerBarrier(e, offset));
     clarify("auspicioushelper/PortalGateH", Types.unwrapped, static (l,ld,o,e)=>{
       PortalFaceH.Pair.Load(l,ld,o,e);
@@ -217,17 +225,17 @@ anyways i want to praise it more it is wonderful
     clarify("triggerSpikesLeft",   Types.basic, static (l,ld,offset,e) => new TriggerSpikes(e, offset, TriggerSpikes.Directions.Left));
     clarify("triggerSpikesRight",  Types.basic, static (l,ld,offset,e) => new TriggerSpikes(e, offset, TriggerSpikes.Directions.Right));
     
-    clarify("spring", Types.managedBasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.Floor));
-    clarify("wallSpringLeft", Types.managedBasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.WallLeft));
-    clarify("wallSpringRight", Types.managedBasic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.WallRight));
+    clarify("spring", Types.basic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.Floor));
+    clarify("wallSpringLeft", Types.basic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.WallLeft));
+    clarify("wallSpringRight", Types.basic, static (l,ld,offset,e)=>new Spring(e,offset,Spring.Orientations.WallRight));
     clarify("spinner", Types.unwrapped, static (l,ld,offset,e)=>e.Bool("dust")?new Wrappers.DustSpinner(e,offset):new Wrappers.Spinner(e,offset));
     
     clarify("lamp",Types.basic,static (l,ld,offset,e)=>new Lamp(offset + e.Position, e.Bool("broken")));
     clarify("hangingLamp",Types.basic,static (l,ld,offset,e)=>new HangingLamp(e,offset+e.Position));
-    clarify("seeker",Types.basic,static (l,d,o,e)=>new Seeker(e, o));
-    clarify("dashSwitchH",Types.unwrapped,static (l,d,o,e)=>new Wrappers.DashSwitchW(e,o,new EntityID(d.Name,e.ID)));
-    clarify("dashSwitchV",Types.unwrapped,static (l,d,o,e)=>new Wrappers.DashSwitchW(e,o,new EntityID(d.Name,e.ID)));
-    clarify("lightning", Types.basic, static (l,d,o,e)=>{
+    clarify("seeker",Types.basic,static (l,ld,o,e)=>new Seeker(e, o));
+    clarify("dashSwitchH",Types.unwrapped,static (l,ld,o,e)=>new Wrappers.DashSwitchW(e,o,new EntityID(ld.Name,e.ID)));
+    clarify("dashSwitchV",Types.unwrapped,static (l,ld,o,e)=>new Wrappers.DashSwitchW(e,o,new EntityID(ld.Name,e.ID)));
+    clarify("lightning", Types.basic, static (l,ld,o,e)=>{
       if(!e.Bool("perLevel") && l.Session.GetFlag("disable_lightning")) return null;
       LightningRenderer lr = l.Tracker.GetEntity<LightningRenderer>();
       if(lr!=null) lr.StartAmbience();
@@ -238,25 +246,25 @@ anyways i want to praise it more it is wonderful
     clarify("refill",Types.unwrapped,static (l,ld,offset,e)=>(Entity) new RefillW2(e,offset));
     clarify("infiniteStar", Types.unwrapped, static (l,ld,o,e)=>new FeatherW(e,o));
     clarify("booster",Types.unwrapped,static (l,ld,o,e)=>new BoosterW(e,o)); 
-    clarify("cameraTargetTrigger", Types.basic, static (l,d,o,e)=>{
+    clarify("cameraTargetTrigger", Types.basic, static (l,ld,o,e)=>{
       string text2 = e.Attr("deleteFlag");
       if(string.IsNullOrEmpty(text2) || !l.Session.GetFlag(text2)){
         return new CameraTargetTrigger(e,o);
       } else return null;
     });
 
-    clarify("movingPlatform",Types.platformbasic,static (l,d,o,e)=>{
+    clarify("movingPlatform",Types.platformbasic,static (l,ld,o,e)=>{
       MovingPlatform movingPlatform = new MovingPlatform(e, o);
       if (e.Has("texture")) movingPlatform.OverrideTexture = e.Attr("texture");
       return movingPlatform;
     });
-    clarify("blackGem",Types.basic,static (l,d,o,e)=>new HeartGem(e,o));
-    clarify("wire",Types.unwrapped,static (l,d,o,e)=>new CWire(e,o));
-    clarify("cliffflag",Types.unwrapped,static (l,d,o,e)=>new CFlagline(e,o));
-    clarify("clothesline",Types.unwrapped,static (l,d,o,e)=>new CClothsline(e,o));
-    clarify("lightningBlock",Types.unwrapped,static (l,d,o,e)=>new LightningBreakerW(e,o));
+    clarify("blackGem",Types.basic,static (l,ld,o,e)=>new HeartGem(e,o));
+    clarify("wire",Types.unwrapped,static (l,ld,o,e)=>new CWire(e,o));
+    clarify("cliffflag",Types.unwrapped,static (l,ld,o,e)=>new CFlagline(e,o));
+    clarify("clothesline",Types.unwrapped,static (l,ld,o,e)=>new CClothsline(e,o));
+    clarify("lightningBlock",Types.unwrapped,static (l,ld,o,e)=>new LightningBreakerW(e,o));
     foreach(string c in new string[]{"Red","Yellow","Green"}){
-      clarify(c.ToLower()+"Blocks", Types.platformbasic, (l,d,o,e)=>{
+      clarify(c.ToLower()+"Blocks", Types.platformbasic, (l,ld,o,e)=>{
         ClutterBlockGenerator.Init(l);
         var col = Enum.Parse<ClutterBlock.Colors>(c);
         ClutterBlockGenerator.Add((int)(e.Position.X/8f), (int)(e.Position.Y/8), e.Width/8, e.Height/8,col);
@@ -264,27 +272,27 @@ anyways i want to praise it more it is wonderful
         return null;
       });
     }
-    clarify("introCar", Types.unwrapped, static (l,d,o,e)=>new IntroCarW(e,o));
-    clarify("crumbleBlock", Types.unwrapped, static (l,d,o,e)=>new CrumbleBlockW(e,o));
-    clarify("cassetteBlock", Types.unwrapped, static (l,d,o,e)=>new CassetteW(e,o, new EntityID(d.Name,e.ID)));
+    clarify("introCar", Types.unwrapped, static (l,ld,o,e)=>new IntroCarW(e,o));
+    clarify("crumbleBlock", Types.unwrapped, static (l,ld,o,e)=>new CrumbleBlockW(e,o));
+    clarify("cassetteBlock", Types.unwrapped, static (l,ld,o,e)=>new CassetteW(e,o, new EntityID(ld.Name,e.ID)));
     clarify("zipMover", Types.unwrapped, static (l,ld,o,e)=>new ZipMoverW(e,o));
     clarify("swapBlock", Types.unwrapped, static (l,ld,o,e)=>new SwapBlockW(e,o));
     clarify("darkChaser", Types.unwrapped, static (l,ld,o,e)=>new ChaserW(e,o));
 
     defaultModdedSetup();
     foreach(string s in new string[]{"iceBlock","fireBarrier","FrostHelper/CustomFireBarrier"}){
-      clarify(s, Types.unwrapped, static (l,d,o,e)=>{
-        currentParent.addEnt(new HookVanilla.FireIcePatch(origLoader(e.Name)(l,d,o,e)));
+      clarify(s, Types.unwrapped, static (l,ld,o,e)=>{
+        currentParent.addEnt(new HookVanilla.FireIcePatch(origLoader(e.Name)(l,ld,o,e)));
         return null;
       });
     }
-    clarify(["trackSpinner","rotateSpinner"],Types.unwrapped, static(l,d,o,e)=>{
+    clarify(["trackSpinner","rotateSpinner"],Types.unwrapped, static(l,ld,o,e)=>{
       string[] fields = e.Name switch {
         "trackSpinner"=>HookVanilla.AnchorLocMod._TrackSp,
         "rotateSpinner"=>HookVanilla.AnchorLocMod._RotateSp,
         _=>[]
       };
-      Entity ent = origLoader(e.Name)(l,d,o,e);
+      Entity ent = origLoader(e.Name)(l,ld,o,e);
       currentParent.addEnt(new HookVanilla.AnchorLocMod(ent,fields));
       return null;
     });
@@ -310,160 +318,160 @@ anyways i want to praise it more it is wonderful
 
   static Level.EntityLoader skitzoGuess(string name){
     switch(name){
-      case "jumpThru": return static (l,d,o,e)=>new JumpthruPlatform(e, o);
-      case "refill": return static (l,d,o,e)=>new Refill(e, o);
-      case "infiniteStar": return static (l,d,o,e)=>new FlyFeather(e, o);
-      case "strawberry": return static (l,d,o,e)=>new Strawberry(e, o, new EntityID(d.Name,e.ID));
-      case "summitgem": return static (l,d,o,e)=>new SummitGem(e, o, new EntityID(d.Name,e.ID));
-      case "fallingBlock": return static (l,d,o,e)=>new FallingBlock(e, o);
-      case "zipMover": return static (l,d,o,e)=>new ZipMover(e, o);
-      case "crumbleBlock": return static (l,d,o,e)=>new CrumblePlatform(e, o);
-      case "dreamBlock": return static (l,d,o,e)=>new DreamBlock(e, o);
-      case "touchSwitch": return static (l,d,o,e)=>new TouchSwitch(e, o);
-      case "switchGate": return static (l,d,o,e)=>new SwitchGate(e, o);
-      case "negaBlock": return static (l,d,o,e)=>new NegaBlock(e, o);
-      case "key": return static (l,d,o,e)=>new Key(e, o, new EntityID(d.Name,e.ID));
-      case "lockBlock": return static (l,d,o,e)=>new LockBlock(e, o, new EntityID(d.Name,e.ID));
-      case "movingPlatform": return static (l,d,o,e)=>new MovingPlatform(e, o);
-      case "blockField": return static (l,d,o,e)=>new BlockField(e, o);
-      case "cloud": return static (l,d,o,e)=>new Cloud(e, o);
-      case "booster": return static (l,d,o,e)=>new Booster(e, o);
-      case "moveBlock": return static (l,d,o,e)=>new MoveBlock(e, o);
-      case "light": return static (l,d,o,e)=>new PropLight(e, o);
-      case "swapBlock": return static (l,d,o,e)=>new SwapBlock(e, o);
-      case "torch": return static (l,d,o,e)=>new Torch(e, o, new EntityID(d.Name,e.ID));
-      case "seekerBarrier": return static (l,d,o,e)=>new SeekerBarrier(e, o);
-      case "theoCrystal": return static (l,d,o,e)=>new TheoCrystal(e, o);
-      case "glider": return static (l,d,o,e)=>new Glider(e, o);
-      case "theoCrystalPedestal": return static (l,d,o,e)=>new TheoCrystalPedestal(e, o);
-      case "badelineBoost": return static (l,d,o,e)=>new BadelineBoostW(e, o);
-      case "wallBooster": return static (l,d,o,e)=>new WallBooster(e, o);
-      case "bounceBlock": return static (l,d,o,e)=>new BounceBlock(e, o);
-      case "coreModeToggle": return static (l,d,o,e)=>new CoreModeToggle(e, o);
-      case "iceBlock": return static (l,d,o,e)=>new IceBlock(e, o);
-      case "fireBarrier": return static (l,d,o,e)=>new FireBarrier(e, o);
-      case "eyebomb": return static (l,d,o,e)=>new Puffer(e, o);
-      case "flingBird": return static (l,d,o,e)=>new FlingBird(e, o);
-      case "flingBirdIntro": return static (l,d,o,e)=>new FlingBirdIntro(e, o);
-      case "lightningBlock": return static (l,d,o,e)=>new LightningBreakerBox(e, o);
-      case "sinkingPlatform": return static (l,d,o,e)=>new SinkingPlatform(e, o);
-      case "friendlyGhost": return static (l,d,o,e)=>new AngryOshiro(e, o);
-      case "seeker": return static (l,d,o,e)=>new Seeker(e, o);
-      case "seekerStatue": return static (l,d,o,e)=>new SeekerStatue(e, o);
-      case "slider": return static (l,d,o,e)=>new Slider(e, o);
-      case "templeBigEyeball": return static (l,d,o,e)=>new TempleBigEyeball(e, o);
-      case "crushBlock": return static (l,d,o,e)=>new CrushBlock(e, o);
-      case "bigSpinner": return static (l,d,o,e)=>new Bumper(e, o);
-      case "starJumpBlock": return static (l,d,o,e)=>new StarJumpBlock(e, o);
-      case "floatySpaceBlock": return static (l,d,o,e)=>new FloatySpaceBlock(e, o);
-      case "glassBlock": return static (l,d,o,e)=>new GlassBlock(e, o);
-      case "goldenBlock": return static (l,d,o,e)=>new GoldenBlock(e, o);
-      case "fireBall": return static (l,d,o,e)=>new FireBall(e, o);
-      case "risingLava": return static (l,d,o,e)=>new RisingLava(e, o);
-      case "sandwichLava": return static (l,d,o,e)=>new SandwichLava(e, o);
-      case "killbox": return static (l,d,o,e)=>new Killbox(e, o);
-      case "fakeHeart": return static (l,d,o,e)=>new FakeHeart(e, o);
-      case "finalBoss": return static (l,d,o,e)=>new FinalBoss(e, o);
-      case "finalBossMovingBlock": return static (l,d,o,e)=>new FinalBossMovingBlock(e, o);
-      case "dashBlock": return static (l,d,o,e)=>new DashBlock(e, o, new EntityID(d.Name,e.ID));
-      case "invisibleBarrier": return static (l,d,o,e)=>new InvisibleBarrier(e, o);
-      case "exitBlock": return static (l,d,o,e)=>new ExitBlock(e, o);
-      case "coverupWall": return static (l,d,o,e)=>new CoverupWall(e, o);
-      case "crumbleWallOnRumble": return static (l,d,o,e)=>new CrumbleWallOnRumble(e, o, new EntityID(d.Name,e.ID));
-      case "tentacles": return static (l,d,o,e)=>new ReflectionTentacles(e, o);
-      case "playerSeeker": return static (l,d,o,e)=>new PlayerSeeker(e, o);
-      case "chaserBarrier": return static (l,d,o,e)=>new ChaserBarrier(e, o);
-      case "introCrusher": return static (l,d,o,e)=>new IntroCrusher(e, o);
-      case "bridge": return static (l,d,o,e)=>new Bridge(e, o);
-      case "bridgeFixed": return static (l,d,o,e)=>new BridgeFixed(e, o);
-      case "bird": return static (l,d,o,e)=>new BirdNPC(e, o);
-      case "introCar": return static (l,d,o,e)=>new IntroCar(e, o);
-      case "memorial": return static (l,d,o,e)=>new Memorial(e, o);
-      case "wire": return static (l,d,o,e)=>new Wire(e, o);
-      case "cobweb": return static (l,d,o,e)=>new Cobweb(e, o);
-      case "hahaha": return static (l,d,o,e)=>new Hahaha(e, o);
-      case "bonfire": return static (l,d,o,e)=>new Bonfire(e, o);
-      case "colorSwitch": return static (l,d,o,e)=>new ClutterSwitch(e, o);
-      case "resortmirror": return static (l,d,o,e)=>new ResortMirror(e, o);
-      case "towerviewer": return static (l,d,o,e)=>new Lookout(e, o);
-      case "picoconsole": return static (l,d,o,e)=>new PicoConsole(e, o);
-      case "wavedashmachine": return static (l,d,o,e)=>new WaveDashTutorialMachine(e, o);
-      case "oshirodoor": return static (l,d,o,e)=>new MrOshiroDoor(e, o);
-      case "templeMirrorPortal": return static (l,d,o,e)=>new TempleMirrorPortal(e, o);
-      case "reflectionHeartStatue": return static (l,d,o,e)=>new ReflectionHeartStatue(e, o);
-      case "resortRoofEnding": return static (l,d,o,e)=>new ResortRoofEnding(e, o);
-      case "gondola": return static (l,d,o,e)=>new Gondola(e, o);
-      case "birdForsakenCityGem": return static (l,d,o,e)=>new ForsakenCitySatellite(e, o);
-      case "whiteblock": return static (l,d,o,e)=>new WhiteBlock(e, o);
-      case "plateau": return static (l,d,o,e)=>new Plateau(e, o);
-      case "soundSource": return static (l,d,o,e)=>new SoundSourceEntity(e, o);
-      case "templeMirror": return static (l,d,o,e)=>new TempleMirror(e, o);
-      case "templeEye": return static (l,d,o,e)=>new TempleEye(e, o);
-      case "clutterCabinet": return static (l,d,o,e)=>new ClutterCabinet(e, o);
-      case "floatingDebris": return static (l,d,o,e)=>new FloatingDebris(e, o);
-      case "foregroundDebris": return static (l,d,o,e)=>new ForegroundDebris(e, o);
-      case "moonCreature": return static (l,d,o,e)=>new MoonCreature(e, o);
-      case "lightbeam": return static (l,d,o,e)=>new LightBeam(e, o);
-      case "door": return static (l,d,o,e)=>new Door(e, o);
-      case "trapdoor": return static (l,d,o,e)=>new Trapdoor(e, o);
-      case "resortLantern": return static (l,d,o,e)=>new ResortLantern(e, o);
-      case "water": return static (l,d,o,e)=>new Water(e, o);
-      case "waterfall": return static (l,d,o,e)=>new WaterFall(e, o);
-      case "bigWaterfall": return static (l,d,o,e)=>new BigWaterfall(e, o);
-      case "clothesline": return static (l,d,o,e)=>new Clothesline(e, o);
-      case "cliffflag": return static (l,d,o,e)=>new CliffFlags(e, o);
-      case "cliffside_flag": return static (l,d,o,e)=>new CliffsideWindFlag(e, o);
-      case "flutterbird": return static (l,d,o,e)=>new FlutterBird(e, o);
-      case "SoundTest3d": return static (l,d,o,e)=>new _3dSoundTest(e, o);
-      case "SummitBackgroundManager": return static (l,d,o,e)=>new AscendManager(e, o);
-      case "summitGemManager": return static (l,d,o,e)=>new SummitGemManager(e, o);
-      case "heartGemDoor": return static (l,d,o,e)=>new HeartGemDoor(e, o);
-      case "summitcheckpoint": return static (l,d,o,e)=>new SummitCheckpoint(e, o);
-      case "summitcloud": return static (l,d,o,e)=>new SummitCloud(e, o);
-      case "coreMessage": return static (l,d,o,e)=>new CoreMessage(e, o);
-      case "playbackTutorial": return static (l,d,o,e)=>new PlayerPlayback(e, o);
-      case "playbackBillboard": return static (l,d,o,e)=>new PlaybackBillboard(e, o);
-      case "cutsceneNode": return static (l,d,o,e)=>new CutsceneNode(e, o);
-      case "kevins_pc": return static (l,d,o,e)=>new KevinsPC(e, o);
-      case "templeGate": return static (l,d,o,e)=>new TempleGate(e,o, d.Name);
-      case "payphone": return static (l,d,o,e)=>new Payphone(e.Position+o);
-      case "templeCrackedBlock": return static (l,d,o,e)=>new TempleCrackedBlock(new EntityID(d.Name,e.ID),e,o);
+      case "jumpThru": return static (l,ld,o,e)=>new JumpthruPlatform(e, o);
+      case "refill": return static (l,ld,o,e)=>new Refill(e, o);
+      case "infiniteStar": return static (l,ld,o,e)=>new FlyFeather(e, o);
+      case "strawberry": return static (l,ld,o,e)=>new Strawberry(e, o, new EntityID(ld.Name,e.ID));
+      case "summitgem": return static (l,ld,o,e)=>new SummitGem(e, o, new EntityID(ld.Name,e.ID));
+      case "fallingBlock": return static (l,ld,o,e)=>new FallingBlock(e, o);
+      case "zipMover": return static (l,ld,o,e)=>new ZipMover(e, o);
+      case "crumbleBlock": return static (l,ld,o,e)=>new CrumblePlatform(e, o);
+      case "dreamBlock": return static (l,ld,o,e)=>new DreamBlock(e, o);
+      case "touchSwitch": return static (l,ld,o,e)=>new TouchSwitch(e, o);
+      case "switchGate": return static (l,ld,o,e)=>new SwitchGate(e, o);
+      case "negaBlock": return static (l,ld,o,e)=>new NegaBlock(e, o);
+      case "key": return static (l,ld,o,e)=>new Key(e, o, new EntityID(ld.Name,e.ID));
+      case "lockBlock": return static (l,ld,o,e)=>new LockBlock(e, o, new EntityID(ld.Name,e.ID));
+      case "movingPlatform": return static (l,ld,o,e)=>new MovingPlatform(e, o);
+      case "blockField": return static (l,ld,o,e)=>new BlockField(e, o);
+      case "cloud": return static (l,ld,o,e)=>new Cloud(e, o);
+      case "booster": return static (l,ld,o,e)=>new Booster(e, o);
+      case "moveBlock": return static (l,ld,o,e)=>new MoveBlock(e, o);
+      case "light": return static (l,ld,o,e)=>new PropLight(e, o);
+      case "swapBlock": return static (l,ld,o,e)=>new SwapBlock(e, o);
+      case "torch": return static (l,ld,o,e)=>new Torch(e, o, new EntityID(ld.Name,e.ID));
+      case "seekerBarrier": return static (l,ld,o,e)=>new SeekerBarrier(e, o);
+      case "theoCrystal": return static (l,ld,o,e)=>new TheoCrystal(e, o);
+      case "glider": return static (l,ld,o,e)=>new Glider(e, o);
+      case "theoCrystalPedestal": return static (l,ld,o,e)=>new TheoCrystalPedestal(e, o);
+      case "badelineBoost": return static (l,ld,o,e)=>new BadelineBoostW(e, o);
+      case "wallBooster": return static (l,ld,o,e)=>new WallBooster(e, o);
+      case "bounceBlock": return static (l,ld,o,e)=>new BounceBlock(e, o);
+      case "coreModeToggle": return static (l,ld,o,e)=>new CoreModeToggle(e, o);
+      case "iceBlock": return static (l,ld,o,e)=>new IceBlock(e, o);
+      case "fireBarrier": return static (l,ld,o,e)=>new FireBarrier(e, o);
+      case "eyebomb": return static (l,ld,o,e)=>new Puffer(e, o);
+      case "flingBird": return static (l,ld,o,e)=>new FlingBird(e, o);
+      case "flingBirdIntro": return static (l,ld,o,e)=>new FlingBirdIntro(e, o);
+      case "lightningBlock": return static (l,ld,o,e)=>new LightningBreakerBox(e, o);
+      case "sinkingPlatform": return static (l,ld,o,e)=>new SinkingPlatform(e, o);
+      case "friendlyGhost": return static (l,ld,o,e)=>new AngryOshiro(e, o);
+      case "seeker": return static (l,ld,o,e)=>new Seeker(e, o);
+      case "seekerStatue": return static (l,ld,o,e)=>new SeekerStatue(e, o);
+      case "slider": return static (l,ld,o,e)=>new Slider(e, o);
+      case "templeBigEyeball": return static (l,ld,o,e)=>new TempleBigEyeball(e, o);
+      case "crushBlock": return static (l,ld,o,e)=>new CrushBlock(e, o);
+      case "bigSpinner": return static (l,ld,o,e)=>new Bumper(e, o);
+      case "starJumpBlock": return static (l,ld,o,e)=>new StarJumpBlock(e, o);
+      case "floatySpaceBlock": return static (l,ld,o,e)=>new FloatySpaceBlock(e, o);
+      case "glassBlock": return static (l,ld,o,e)=>new GlassBlock(e, o);
+      case "goldenBlock": return static (l,ld,o,e)=>new GoldenBlock(e, o);
+      case "fireBall": return static (l,ld,o,e)=>new FireBall(e, o);
+      case "risingLava": return static (l,ld,o,e)=>new RisingLava(e, o);
+      case "sandwichLava": return static (l,ld,o,e)=>new SandwichLava(e, o);
+      case "killbox": return static (l,ld,o,e)=>new Killbox(e, o);
+      case "fakeHeart": return static (l,ld,o,e)=>new FakeHeart(e, o);
+      case "finalBoss": return static (l,ld,o,e)=>new FinalBoss(e, o);
+      case "finalBossMovingBlock": return static (l,ld,o,e)=>new FinalBossMovingBlock(e, o);
+      case "dashBlock": return static (l,ld,o,e)=>new DashBlock(e, o, new EntityID(ld.Name,e.ID));
+      case "invisibleBarrier": return static (l,ld,o,e)=>new InvisibleBarrier(e, o);
+      case "exitBlock": return static (l,ld,o,e)=>new ExitBlock(e, o);
+      case "coverupWall": return static (l,ld,o,e)=>new CoverupWall(e, o);
+      case "crumbleWallOnRumble": return static (l,ld,o,e)=>new CrumbleWallOnRumble(e, o, new EntityID(ld.Name,e.ID));
+      case "tentacles": return static (l,ld,o,e)=>new ReflectionTentacles(e, o);
+      case "playerSeeker": return static (l,ld,o,e)=>new PlayerSeeker(e, o);
+      case "chaserBarrier": return static (l,ld,o,e)=>new ChaserBarrier(e, o);
+      case "introCrusher": return static (l,ld,o,e)=>new IntroCrusher(e, o);
+      case "bridge": return static (l,ld,o,e)=>new Bridge(e, o);
+      case "bridgeFixed": return static (l,ld,o,e)=>new BridgeFixed(e, o);
+      case "bird": return static (l,ld,o,e)=>new BirdNPC(e, o);
+      case "introCar": return static (l,ld,o,e)=>new IntroCar(e, o);
+      case "memorial": return static (l,ld,o,e)=>new Memorial(e, o);
+      case "wire": return static (l,ld,o,e)=>new Wire(e, o);
+      case "cobweb": return static (l,ld,o,e)=>new Cobweb(e, o);
+      case "hahaha": return static (l,ld,o,e)=>new Hahaha(e, o);
+      case "bonfire": return static (l,ld,o,e)=>new Bonfire(e, o);
+      case "colorSwitch": return static (l,ld,o,e)=>new ClutterSwitch(e, o);
+      case "resortmirror": return static (l,ld,o,e)=>new ResortMirror(e, o);
+      case "towerviewer": return static (l,ld,o,e)=>new Lookout(e, o);
+      case "picoconsole": return static (l,ld,o,e)=>new PicoConsole(e, o);
+      case "wavedashmachine": return static (l,ld,o,e)=>new WaveDashTutorialMachine(e, o);
+      case "oshirodoor": return static (l,ld,o,e)=>new MrOshiroDoor(e, o);
+      case "templeMirrorPortal": return static (l,ld,o,e)=>new TempleMirrorPortal(e, o);
+      case "reflectionHeartStatue": return static (l,ld,o,e)=>new ReflectionHeartStatue(e, o);
+      case "resortRoofEnding": return static (l,ld,o,e)=>new ResortRoofEnding(e, o);
+      case "gondola": return static (l,ld,o,e)=>new Gondola(e, o);
+      case "birdForsakenCityGem": return static (l,ld,o,e)=>new ForsakenCitySatellite(e, o);
+      case "whiteblock": return static (l,ld,o,e)=>new WhiteBlock(e, o);
+      case "plateau": return static (l,ld,o,e)=>new Plateau(e, o);
+      case "soundSource": return static (l,ld,o,e)=>new SoundSourceEntity(e, o);
+      case "templeMirror": return static (l,ld,o,e)=>new TempleMirror(e, o);
+      case "templeEye": return static (l,ld,o,e)=>new TempleEye(e, o);
+      case "clutterCabinet": return static (l,ld,o,e)=>new ClutterCabinet(e, o);
+      case "floatingDebris": return static (l,ld,o,e)=>new FloatingDebris(e, o);
+      case "foregroundDebris": return static (l,ld,o,e)=>new ForegroundDebris(e, o);
+      case "moonCreature": return static (l,ld,o,e)=>new MoonCreature(e, o);
+      case "lightbeam": return static (l,ld,o,e)=>new LightBeam(e, o);
+      case "door": return static (l,ld,o,e)=>new Door(e, o);
+      case "trapdoor": return static (l,ld,o,e)=>new Trapdoor(e, o);
+      case "resortLantern": return static (l,ld,o,e)=>new ResortLantern(e, o);
+      case "water": return static (l,ld,o,e)=>new Water(e, o);
+      case "waterfall": return static (l,ld,o,e)=>new WaterFall(e, o);
+      case "bigWaterfall": return static (l,ld,o,e)=>new BigWaterfall(e, o);
+      case "clothesline": return static (l,ld,o,e)=>new Clothesline(e, o);
+      case "cliffflag": return static (l,ld,o,e)=>new CliffFlags(e, o);
+      case "cliffside_flag": return static (l,ld,o,e)=>new CliffsideWindFlag(e, o);
+      case "flutterbird": return static (l,ld,o,e)=>new FlutterBird(e, o);
+      case "SoundTest3d": return static (l,ld,o,e)=>new _3dSoundTest(e, o);
+      case "SummitBackgroundManager": return static (l,ld,o,e)=>new AscendManager(e, o);
+      case "summitGemManager": return static (l,ld,o,e)=>new SummitGemManager(e, o);
+      case "heartGemDoor": return static (l,ld,o,e)=>new HeartGemDoor(e, o);
+      case "summitcheckpoint": return static (l,ld,o,e)=>new SummitCheckpoint(e, o);
+      case "summitcloud": return static (l,ld,o,e)=>new SummitCloud(e, o);
+      case "coreMessage": return static (l,ld,o,e)=>new CoreMessage(e, o);
+      case "playbackTutorial": return static (l,ld,o,e)=>new PlayerPlayback(e, o);
+      case "playbackBillboard": return static (l,ld,o,e)=>new PlaybackBillboard(e, o);
+      case "cutsceneNode": return static (l,ld,o,e)=>new CutsceneNode(e, o);
+      case "kevins_pc": return static (l,ld,o,e)=>new KevinsPC(e, o);
+      case "templeGate": return static (l,ld,o,e)=>new TempleGate(e,o, ld.Name);
+      case "payphone": return static (l,ld,o,e)=>new Payphone(e.Position+o);
+      case "templeCrackedBlock": return static (l,ld,o,e)=>new TempleCrackedBlock(new EntityID(ld.Name,e.ID),e,o);
 
-      case "eventTrigger": return static (l,d,o,e)=>new EventTrigger(e, o);
-      case "musicFadeTrigger": return static (l,d,o,e)=>new MusicFadeTrigger(e, o);
-      case "musicTrigger": return static (l,d,o,e)=>new MusicTrigger(e, o);
-      case "altMusicTrigger": return static (l,d,o,e)=>new AltMusicTrigger(e, o);
-      case "cameraOffsetTrigger": return static (l,d,o,e)=>new CameraOffsetTrigger(e, o);
-      case "lightFadeTrigger": return static (l,d,o,e)=>new LightFadeTrigger(e, o);
-      case "bloomFadeTrigger": return static (l,d,o,e)=>new BloomFadeTrigger(e, o);
-      case "cameraAdvanceTargetTrigger": return static (l,d,o,e)=>new CameraAdvanceTargetTrigger(e, o);
-      case "respawnTargetTrigger": return static (l,d,o,e)=>new RespawnTargetTrigger(e, o);
-      case "changeRespawnTrigger": return static (l,d,o,e)=>new ChangeRespawnTrigger(e, o);
-      case "windTrigger": return static (l,d,o,e)=>new WindTrigger(e, o);
-      case "windAttackTrigger": return static (l,d,o,e)=>new WindAttackTrigger(e, o);
-      case "oshiroTrigger": return static (l,d,o,e)=>new OshiroTrigger(e, o);
-      case "interactTrigger": return static (l,d,o,e)=>new InteractTrigger(e, o);
-      case "checkpointBlockerTrigger": return static (l,d,o,e)=>new CheckpointBlockerTrigger(e, o);
-      case "lookoutBlocker": return static (l,d,o,e)=>new LookoutBlocker(e, o);
-      case "stopBoostTrigger": return static (l,d,o,e)=>new StopBoostTrigger(e, o);
-      case "noRefillTrigger": return static (l,d,o,e)=>new NoRefillTrigger(e, o);
-      case "ambienceParamTrigger": return static (l,d,o,e)=>new AmbienceParamTrigger(e, o);
-      case "creditsTrigger": return static (l,d,o,e)=>new CreditsTrigger(e, o);
-      case "goldenBerryCollectTrigger": return static (l,d,o,e)=>new GoldBerryCollectTrigger(e, o);
-      case "moonGlitchBackgroundTrigger": return static (l,d,o,e)=>new MoonGlitchBackgroundTrigger(e, o);
-      case "blackholeStrength": return static (l,d,o,e)=>new BlackholeStrengthTrigger(e, o);
-      case "birdPathTrigger": return static (l,d,o,e)=>new BirdPathTrigger(e, o);
-      case "spawnFacingTrigger": return static (l,d,o,e)=>new SpawnFacingTrigger(e, o);
-      case "detachFollowersTrigger": return static (l,d,o,e)=>new DetachStrawberryTrigger(e, o);
-      case "rumbleTrigger": return static (l,d,o,e)=>new RumbleTrigger(e,o,new EntityID(d.Name,e.ID+10000000));
-      case "minitextboxTrigger": return static (l,d,o,e)=>new MiniTextboxTrigger(e,o,new EntityID(d.Name,e.ID+10000000));
+      case "eventTrigger": return static (l,ld,o,e)=>new EventTrigger(e, o);
+      case "musicFadeTrigger": return static (l,ld,o,e)=>new MusicFadeTrigger(e, o);
+      case "musicTrigger": return static (l,ld,o,e)=>new MusicTrigger(e, o);
+      case "altMusicTrigger": return static (l,ld,o,e)=>new AltMusicTrigger(e, o);
+      case "cameraOffsetTrigger": return static (l,ld,o,e)=>new CameraOffsetTrigger(e, o);
+      case "lightFadeTrigger": return static (l,ld,o,e)=>new LightFadeTrigger(e, o);
+      case "bloomFadeTrigger": return static (l,ld,o,e)=>new BloomFadeTrigger(e, o);
+      case "cameraAdvanceTargetTrigger": return static (l,ld,o,e)=>new CameraAdvanceTargetTrigger(e, o);
+      case "respawnTargetTrigger": return static (l,ld,o,e)=>new RespawnTargetTrigger(e, o);
+      case "changeRespawnTrigger": return static (l,ld,o,e)=>new ChangeRespawnTrigger(e, o);
+      case "windTrigger": return static (l,ld,o,e)=>new WindTrigger(e, o);
+      case "windAttackTrigger": return static (l,ld,o,e)=>new WindAttackTrigger(e, o);
+      case "oshiroTrigger": return static (l,ld,o,e)=>new OshiroTrigger(e, o);
+      case "interactTrigger": return static (l,ld,o,e)=>new InteractTrigger(e, o);
+      case "checkpointBlockerTrigger": return static (l,ld,o,e)=>new CheckpointBlockerTrigger(e, o);
+      case "lookoutBlocker": return static (l,ld,o,e)=>new LookoutBlocker(e, o);
+      case "stopBoostTrigger": return static (l,ld,o,e)=>new StopBoostTrigger(e, o);
+      case "noRefillTrigger": return static (l,ld,o,e)=>new NoRefillTrigger(e, o);
+      case "ambienceParamTrigger": return static (l,ld,o,e)=>new AmbienceParamTrigger(e, o);
+      case "creditsTrigger": return static (l,ld,o,e)=>new CreditsTrigger(e, o);
+      case "goldenBerryCollectTrigger": return static (l,ld,o,e)=>new GoldBerryCollectTrigger(e, o);
+      case "moonGlitchBackgroundTrigger": return static (l,ld,o,e)=>new MoonGlitchBackgroundTrigger(e, o);
+      case "blackholeStrength": return static (l,ld,o,e)=>new BlackholeStrengthTrigger(e, o);
+      case "birdPathTrigger": return static (l,ld,o,e)=>new BirdPathTrigger(e, o);
+      case "spawnFacingTrigger": return static (l,ld,o,e)=>new SpawnFacingTrigger(e, o);
+      case "detachFollowersTrigger": return static (l,ld,o,e)=>new DetachStrawberryTrigger(e, o);
+      case "rumbleTrigger": return static (l,ld,o,e)=>new RumbleTrigger(e,o,new EntityID(ld.Name,e.ID+10000000));
+      case "minitextboxTrigger": return static (l,ld,o,e)=>new MiniTextboxTrigger(e,o,new EntityID(ld.Name,e.ID+10000000));
 
-      case "rotateSpinner": return static (l,d,o,e)=>{
+      case "rotateSpinner": return static (l,ld,o,e)=>{
         if(e.Bool("star",false)) return new StarRotateSpinner(e,o);
         if(e.Bool("dust",false)) return new DustRotateSpinner(e,o);
         return new BladeRotateSpinner(e,o);
       };
-      case "trackSpinner": return static (l,d,o,e)=>{
+      case "trackSpinner": return static (l,ld,o,e)=>{
         if(e.Bool("star",false)) return new StarTrackSpinner(e,o);
         if(e.Bool("dust",false)) return new DustTrackSpinner(e,o);
         return new BladeTrackSpinner(e,o);
@@ -474,9 +482,9 @@ anyways i want to praise it more it is wonderful
   public static void defaultModdedSetup(){
     FrostHelperStuff.setup();
     MaddiesStuff.setup();
-    clarify("VortexHelper/PurpleBooster",Types.basic,static (l,d,o,e)=>{
+    clarify("VortexHelper/PurpleBooster",Types.basic,static (l,ld,o,e)=>{
       if(e.Bool("lavender")) e.Name = "VortexHelper/LavenderBooster";
-      return Level.EntityLoaders.GetValueOrDefault(e.Name)?.Invoke(l,d,o,e);
+      return Level.EntityLoaders.GetValueOrDefault(e.Name)?.Invoke(l,ld,o,e);
     });
   }
 }

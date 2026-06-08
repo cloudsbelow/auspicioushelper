@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Monocle;
@@ -27,14 +28,21 @@ public class OverrideVisualComponent:OnAnyRemoveComp{
   public static OverrideVisualComponent Get(Entity e){
     if(e.Get<OverrideVisualComponent>() is {} o) return o;
     OverrideVisualComponent comp;
-    if(custom.TryGetValue(e.GetType(),out var fn)){
-      comp = fn(e);
-    } else if(e is ICustomMatRender){
-      comp = new ICustomMatRender.CustomOverrider();
-    } else comp = new OverrideVisualComponent();
-    e.Add(comp);
-    return comp;
+    Type t = e.GetType();
+    while(t!=null && t!=typeof(Entity)){
+      if(custom.TryGetValue(t, out var fn)){
+        comp = fn(e);
+        goto done;
+      }
+      t=t.BaseType;
+    }
+    if(e is ICustomMatRender) comp = new ICustomMatRender.CustomOverrider();
+    else comp = new OverrideVisualComponent();
+    done:
+      e.Add(comp);
+      return comp;
   }
+  public virtual OverrideVisualComponent withOptions(string options)=>this;
   public static OverrideVisualComponent TryGet(Entity e)=>e.Get<OverrideVisualComponent>();
   
   public OverrideVisualComponent():base(false,false){}
@@ -54,10 +62,15 @@ public class OverrideVisualComponent:OnAnyRemoveComp{
   public virtual void setNvis(bool newvis){
     nvis = newvis;
   }
+  protected virtual void AddedOverride(IOverrideVisuals o, short prio){}
   public void AddToOverride(VisualOverrideDescr v){
-    if(GetOverriderIdx(v.o)!=-1){
-      SetStealUse(v.o,v.steal,v.use);
-      return;
+    int alr = GetOverriderIdx(v.o);
+    if(alr != -1){
+      if(parents[alr].order != v.order) RemoveFromOverride(v.o);
+      else{
+        SetStealUse(v.o,v.steal,v.use);
+        return;
+      }
     }
     int idx = 0;
     bool stolen = false;
@@ -65,22 +78,25 @@ public class OverrideVisualComponent:OnAnyRemoveComp{
       stolen |= parents[idx].steal;
       idx++;
     }
-    parents.Insert(idx, v);
-    if(stolen) return;
-    if(v.use)v.o.AddC(this);
-    if(!v.steal)return;
-    while(++idx<parents.Count){
-      if(v.use)parents[idx].o.RemoveC(this);
-      if(parents[idx].steal)break;
-    }
-    setNvis(false);
+    VisualOverrideDescr v_ = new(v.o,v.order, false,false);
+    parents.Insert(idx, v_);
+    AddedOverride(v.o,v.order);
+    SetStealUse(v.o, v.steal, v.use);
   }
+  protected virtual void RemovedOverride(IOverrideVisuals o){}
   public void RemoveFromOverride(IOverrideVisuals v){
     int idx = GetOverriderIdx(v);
     if(idx==-1)return;
     SetStealUse(v,false,false);
     parents.RemoveAt(idx);
+    RemovedOverride(v);
   }
+  protected const int NOSTEALPRIO = 40000;
+  protected int GetPrio(IOverrideVisuals v){
+    for(int i=0; i<parents.Count; i++) if(parents[i].o==v) return parents[i].order;
+    return NOSTEALPRIO;
+  }
+  protected virtual void NewStealPrio(bool stolen, int prio){}
   public void SetStealUse(IOverrideVisuals v, bool nsteal, bool nuse){
     int idx = GetOverriderIdx(v, out var stolen);
     if(idx==-1) throw new Exception("StealUse set not in thing");
@@ -104,8 +120,12 @@ public class OverrideVisualComponent:OnAnyRemoveComp{
         if(nsteal)descr.o.RemoveC(this);
         else descr.o.AddC(this);
       }
-      if(descr.steal)return;
+      if(descr.steal){
+        NewStealPrio(true, nsteal? desc.order : descr.order);
+        return;
+      }
     }
+    NewStealPrio(nsteal, nsteal? desc.order : NOSTEALPRIO);
     setNvis(!nsteal);
   }
   public void CopyOther(OverrideVisualComponent c){

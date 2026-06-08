@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
@@ -12,13 +13,58 @@ using MonoMod.RuntimeDetour;
 
 namespace Celeste.Mod.auspicioushelper;
 
-public static class Finder{
+public static partial class Finder{
   [ResetEvents.NullOn(ResetEvents.RunTimes.OnReload)]
   static List<Action<Entity>> finding = null;
   [ResetEvents.NullOn(ResetEvents.RunTimes.OnReload)]
   static Entity last = null;
   [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
   public static Dictionary<string, List<Action<Entity>>> flagged = new();
+
+  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [Import.SpeedrunToolIop.Static]
+  static Dictionary<string, List<TypeHandlerCallback>> typeHandler = new();
+  public class TypeHandlerCallback(Action<Entity> action):OnAnyRemoveComp(false,false){
+    List<string> registered = new();
+    public void EntityAdded(Entity e)=>action(e);
+    // If a scene for retroactive is passed in, it MUST be during the AWAKE section of updateLists
+    public TypeHandlerCallback RegisterTo(string s, Scene retroactive = null){
+      if(registered.Contains(s)) return this;
+      if(!typeHandler.TryGetValue(s, out var li)) typeHandler.Add(s, li=new());
+      li.Add(this);
+      registered.Add(s);
+      if(retroactive is Level level){
+        EntityList l = level.Entities;
+        foreach(Entity e in l.entities.Concat(l.toAdd)){
+          var name = e.SourceData is {} sd? sd.Name : e switch {
+            SolidTiles=>"fg", BackgroundTiles=>"bg", Player=>"player", _=> null
+          };
+          if(name==s) action(e);
+        }
+      }
+      return this;
+    }
+    public void Retroactive(Level retroactive){
+      EntityList l = retroactive.Entities;
+      HashSet<string> grr = [..registered];
+      foreach(Entity e in l.entities.Concat(l.toAdd)){
+        var name = e.SourceData is {} sd? sd.Name : e switch {
+          SolidTiles=>"fg", BackgroundTiles=>"bg", Player=>"player", _=> null
+        };
+        if(grr.Contains(name)) action(e);
+      }
+    }
+    public override void OnRemove() {
+      foreach(string s in registered){
+        if(typeHandler.TryGetValue(s, out var li)){
+          li.Remove(this);
+          if(li.Count == 0) typeHandler.Remove(s);
+        }
+      }
+      registered.Clear();
+    }
+  }
+
   public static void watch(string path, Action<Entity> thing){
     foreach(var sig in path.Split(',')) try{
       if(string.IsNullOrWhiteSpace(sig)) continue;
@@ -42,10 +88,15 @@ public static class Finder{
     waiting.Add((path,ident));
     watch(path,e=>FoundEntity.addIdent(e,path));
   }
+  public static void StartLoad(EntityData d, string prefix = ""){
+    last = null; finding = null;
+    if(flagged.TryGetValue(prefix+d.ID.ToString(), out var ident)){
+      finding = ident;
+    }
+  }
   static void StartingLoad(EntityData d){
     last = null; finding = null;
     if(flagged.TryGetValue(d.ID.ToString(), out var ident)){
-      //DebugConsole.Write($"Searcing for {d.ID} since there are actions on ({ident.Count})");
       finding = ident;
     }
   }
@@ -64,7 +115,6 @@ public static class Finder{
         DebugConsole.WriteFailure($"Failed to find the entity {d.Name} with id {d.ID} - (maybe this entity adds itself non-standardly?)");
         if(auspicioushelperModule.InFolderMod) DebugConsole.MakePostcard($"Failed to find the entity {d.Name} with id {d.ID}. This entity may not be compatible or there may be mod conflicts.");
       } else {
-        DebugConsole.Write($"Found the entity {d.Name} with id {d.ID} - position {last.Position}");
         addingLevel = l;
         foreach(var a in finding) a(last);
         addingLevel = null;
@@ -73,6 +123,25 @@ public static class Finder{
     finding = null;
     last = null;
   }
+
+  [OnLoad.OnHook(typeof(EntityList),nameof(EntityList.Add),Util.HookTarget.Normal,[typeof(Entity)])]
+  public static void AddHook(On.Monocle.EntityList.orig_Add_Entity orig, EntityList self, Entity e){
+    if(self.Scene is Level l){
+      if(finding!=null)last = e??last;
+      if(e is Player p && flagged.TryGetValue("player",out var waaa)){
+        DebugConsole.Write($"Found new player; {waaa.Count} actions");
+        foreach(var a in waaa) a(p); 
+      } 
+      var name = e.SourceData is {} sd? sd.Name : e switch {
+        SolidTiles=>"fg", BackgroundTiles=>"bg", Player=>"player", _=> null
+      };
+      if(name!=null && typeHandler.TryGetValue(name, out var handlers)){
+        foreach(var h in handlers) h.EntityAdded(e);
+      }
+    }
+    orig(self, e);
+  } 
+
   [OnLoad.ILHook(typeof(Level),nameof(Level.orig_LoadLevel))]
   public static void LLILHook(ILContext ctx){
     var c = new ILCursor(ctx);
@@ -99,165 +168,5 @@ public static class Finder{
     return;
     bad:
       DebugConsole.WriteFailure("Failed to add hook to entity finder",true);
-  }
-  [OnLoad.OnHook(typeof(EntityList),nameof(EntityList.Add),Util.HookTarget.Normal,[typeof(Entity)])]
-  public static void AddHook(On.Monocle.EntityList.orig_Add_Entity orig, EntityList self, Entity e){
-    if(self.Scene is Level l){
-      //if(e!=null)DebugConsole.Write("Add "+ e?.ToString());
-      if(finding!=null)last = e??last;
-      if(e is Player p && flagged.TryGetValue("player",out var waaa)){
-        DebugConsole.Write($"Found new player; {waaa.Count} actions");
-        foreach(var a in waaa) a(p); 
-      } 
-    }
-    orig(self, e);
-  } 
-
-
-
-
-  [CustomEntity("auspicioushelper/FinderDepth")]
-  [MapenterEv(nameof(Search))]
-  [CustomloadEntity]
-  public class MarkingFlag:Entity{
-    static void Search(EntityData d){
-      Finder.watch(d.Attr("path"),(e)=>e.Depth = d.Int("depth",e.Depth));
-    }
-  }
-
-  [CustomEntity("auspicioushelper/FinderCollider")]
-  [MapenterEv(nameof(Search))]
-  [CustomloadEntity]
-  public class ColliderModifier:Entity{
-    class WrapperImg(Entity on, CMod from, Color[] colors):Entity(on.Position){
-      public override void Update() {
-        base.Update();
-        if(on.Scene == null) RemoveSelf();
-        Depth = Math.Max(on.Depth+1,2);
-      }
-      public override void Render() {
-        if(from != null && !on.Collider.Equals(from.replace)) return;
-        IntRect r = new FloatRect(on).munane();
-        if(!on.Collidable){
-          if(colors.Length<3 || !MaterialPipe.clipBounds.CollideIr(r)) return;
-          Color c = colors[2];
-          for(int i=0; i<r.w-1; i+=2){
-            Draw.Rect(new IntRect(r.x+i,r.y,1,1),c);
-            Draw.Rect(new IntRect(r.x+i+1,r.y+r.h-1,1,1),c);
-          }
-          for(int i=0; i<r.h-1; i+=2){
-            Draw.Rect(new IntRect(r.x,r.y+i+1,1,1),c);
-            Draw.Rect(new IntRect(r.x+r.w-1,r.y+i,1,1),c);
-          }
-          return;
-        }
-        base.Render();
-        if(colors.Length==1 || colors[1].A==255) Draw.Rect(r,colors[0]);
-        else Draw.HollowRect(r,colors[0]);
-        if(colors.Length==1) return;
-        Draw.Rect(r.expandAll_(-1),colors[1]);
-      }
-    }
-    class CMod:ChannelTracker{
-      Collider orig;
-      public Collider replace;
-      bool restorable;
-      Entity e;
-      public CMod(EntityData d, Entity e, string c):base(c){
-        orig = e.Collider;
-        replace = buildCollider(d);
-        this.e=e;
-        SetOnchange(OnChange,true);
-        restorable = d.Bool("restorable",true);
-      }
-      void OnChange(double nval){
-        if(nval!=0) e.Collider = replace;
-        else if(restorable && e.Collider.Equals(replace)) e.Collider = orig; 
-      }
-    }
-    static void Search(EntityData d){
-      Finder.watch(d.Attr("path"),(e)=>{
-        CMod c=null;
-        if(d.tryGetStr("channel", out var str)){
-          e.Add(c=new CMod(d,e,str));
-        } else e.Collider = buildCollider(d);
-        if(Util.listparseflat(d.Attr("boundsColors","")).Map(Util.hexToColor) is {Count: >0} a){
-          addingLevel.Add(new WrapperImg(e,c,a.ToArray()));
-        }
-      });
-    }
-
-    static Regex pattern = new Regex(@"(\w+):(.+)",RegexOptions.Compiled);
-    static Collider buildCollider(EntityData d){
-      List<string> things = Util.listparseflat(d.String("collider","rect:[-8,-8,16,16]"));
-      var c = things.Map(Collider (s)=>{
-        var M = pattern.Match(s);
-        if(!M.Success) DebugConsole.WriteFailure("Failed to parse collider "+s);
-        var u = Util.stripEnclosure(M.Groups[2].Value);
-        switch(M.Groups[1].Value.ToLower()){
-          case "circle": case "c":
-            float[] vals = Util.csparseflat(u,8,0,0);
-            return new Circle(vals[0],vals[1],vals[2]);
-          case "hitbox": case "hb": case "h":
-            vals = Util.csparseflat(u,8,8,0,0);
-            return new Hitbox(vals[0],vals[1],vals[2],vals[3]);
-          case "rectangle": case "rect": case "r":
-            vals = Util.csparseflat(u,0,0,8,8);
-            return new Hitbox(vals[2],vals[3],vals[0],vals[1]);
-        }
-        throw new Exception("Failed to parse collider "+s);
-      });
-      if(c.Count==1) return c[0];
-      return new ColliderList(c.ToArray());
-    }
-  }
-
-  [CustomEntity("auspicioushelper/CollisionCounter")]
-  [MapenterEv(nameof(Search))]
-  public class CollisionCounter:Entity{
-    class GroupMarker:OnAnyRemoveComp{
-      (int, bool) loc;
-      public GroupMarker((int,bool) loc):base(false,false){
-        this.loc=loc;
-      }
-      public override void Added(Entity entity) {
-        base.Added(entity);
-        if(!groups.TryGetValue(loc, out var ss)) groups.Add(loc,ss=new());
-        ss.Add(this);
-      }
-      public override void OnRemove(){
-        if(groups.TryGetValue(loc, out var ss))ss.Remove(this);
-      }
-    }
-    [Import.SpeedrunToolIop.Static]
-    [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
-    static Dictionary<(int,bool),List<GroupMarker>> groups = new();
-    static void Search(EntityData d){
-      int num = d.ID;
-      watch(d.Attr("groupA",""),(e)=>e.Add(new GroupMarker((num,false))));
-      watch(d.Attr("groupB",""),(e)=>e.Add(new GroupMarker((num,true))));
-    }
-    int num;
-    bool aCollidable=true;
-    bool bCollidable=true;
-    string channel="";
-    int tCount;
-    public CollisionCounter(EntityData d, Vector2 o):base(d.Position+o){
-      num = d.ID;
-      tCount = d.Attr("groupA","").Split(",").Length+d.Attr("groupB","").Split(",").Length;
-      aCollidable=d.Bool("onlyCollidableA",true);
-      bCollidable=d.Bool("onlyCollidableB",true);
-      channel = d.Attr("channel","numCollisions");
-    }
-    public override void Update() {
-      base.Update();
-      var l1 = groups.GetValueOrDefault((num,false))?.FilterMap((GroupMarker c,out Entity e)=>(e=c.Entity).Collidable||!aCollidable);
-      var l2 = groups.GetValueOrDefault((num,true))?.FilterMap((GroupMarker c,out Entity e)=>(e=c.Entity).Collidable||!bCollidable);
-      if(l1 == null || l2 == null) return;
-      if(l1.Count+l2.Count>tCount) DebugConsole.MakePostcard("Mysterious! please contact cloudsbelow that you've recieved this!");
-      int count = 0;
-      foreach(var e in l1) using(Util.WithRestore(ref e.Collidable,true)) foreach(var f in l2) if(f.CollideCheck(e)) count++;
-      ChannelState.SetChannel(channel,count);
-    }
   }
 }

@@ -15,7 +15,7 @@ entity.placements = {
       depthoffset=0,
       channel = "",
       freeze = false,
-      do_boost = true,
+      do_boost = false,
       refreshEntsAlways = false,
       
       _loenn_display_template = true,

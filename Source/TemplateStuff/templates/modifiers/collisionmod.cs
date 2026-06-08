@@ -8,6 +8,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateCollisionModifier")]
 [MapenterEv(nameof(Search))]
+[Tracked]
 public class TemplateCollisionModifier:Template, Template.IRegisterEnts{
   public static void Search(EntityData d){
     foreach(var p in Util.listparseflat(d.Attr("paths",""))) if(!p.Contains('*')) Finder.enqueueIdent(p);
@@ -92,8 +93,8 @@ public class TemplateCollisionModifier:Template, Template.IRegisterEnts{
     and, xor, or, typeMinusPath, pathMinusType
   }
   CombinationMode mode;
-  HittableComp comp;
-  bool log;
+  HittableComp comp = null;
+  public bool log, tangible;
   public TemplateCollisionModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateCollisionModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
@@ -106,14 +107,30 @@ public class TemplateCollisionModifier:Template, Template.IRegisterEnts{
       if(type=="*") invTypes=true;
       else types.Add(type,true);
     }
-    Add(comp = new(this));
+    if(paths==null && Util.removeWhitespace(d.Attr("types",""))=="*" && !log){
+      types = null;
+    } else Add(comp = new(this));
     mode = d.Enum("combinationMode",CombinationMode.or);
     log = d.Bool("log",false);
+    tangible = d.Bool("tangible",false);
   }
+  public class TangibleMarker():Component(false,false){}
   public override void RegisterEnts(List<Entity> l) {
     base.RegisterEnts(l);
-    foreach(var i in l) if(i.Get<ChildMarker>()?.parent.GetFromTree<TemplateCollisionModifier>()==this){
-      i.Collider = new FilterCollider(comp,i.Collider);
+    if(comp!=null) foreach(var i in l){
+      var cur = i.Get<ChildMarker>()?.parent.GetFromTree<TemplateCollisionModifier>();
+      if(cur==null) continue;
+      while(cur.comp == null) cur = cur.parent.GetFromTree<TemplateCollisionModifier>();
+      if(cur==this){
+        DebugConsole.Write("\nHERE\n");
+        DebugConsole.LogFullStackTrace();
+        i.Collider = new FilterCollider(comp,i.Collider);
+      }
     }
+    if(tangible) foreach(var i in l){
+      if((i is Platform || i.GetType()==MaddiesIop.jt) && i.Get<TangibleMarker>()==null){
+        i.Add(new TangibleMarker());
+      }
+    } 
   }
 }

@@ -13,6 +13,7 @@ entity.placements = {
       can_be_ID_path = true,
       identifier = "fg",
       materialLayer = "",
+      types = "",
       dontNormalRender = true,
       toggleChannel = "",
       priority = -1,

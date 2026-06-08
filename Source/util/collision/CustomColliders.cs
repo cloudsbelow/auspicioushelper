@@ -93,6 +93,7 @@ public sealed class MiptileCollider:Grid{
       }
       d.Set("ausp_mipgrid", grid = new MiptileCollider(g));
       grid.lastentity = g.Entity;
+      grid.Entity = g.Entity;
     }
     return grid;
   }

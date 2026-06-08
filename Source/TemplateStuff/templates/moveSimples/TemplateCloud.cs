@@ -11,13 +11,12 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateCloud")]
 public class TemplateCloud:TemplateDisappearer, ITemplateTriggerable{
-  bool fragile, triggered, fromRiding, disableCbb, followGravity;
+  bool fragile, triggered, fromRiding, disableCbb, followGravity, sideCoyote;
   RespawnCountdown respawn;
-  float pos = 0;
+  float speed, pos=0;
   ChannelState.Vec2Ch nextClouddir;
   Vector2 cloudDir;
   protected override Vector2 virtLoc=>Position+pos*cloudDir;
-  float speed;
   public TemplateCloud(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateCloud(EntityData d, Vector2 offset, int depthoffset):base(d,d.Position+offset,depthoffset){
     Add(new Coroutine(cloudRoutine()));
@@ -26,6 +25,7 @@ public class TemplateCloud:TemplateDisappearer, ITemplateTriggerable{
     fromRiding = d.Bool("fromRiding",true);
     nextClouddir = d.ChannelVec2("cloudDir",0,1,true);
     followGravity = d.Bool("followGravity", false);
+    sideCoyote = d.Bool("sideCoyote",false);
     if(disableCbb = d.Bool("noDoubleBoost",true)) ResetEvents.LazyEnable(typeof(CloudboostBlocker));
   }
   void Move(){
@@ -55,6 +55,7 @@ public class TemplateCloud:TemplateDisappearer, ITemplateTriggerable{
         if(UpdateHook.cachedPlayer is Player p && hasPlayerRider() && p.Speed.Y>=0){
           if(disableCbb) p.Add(new CloudboostBlocker(-200*cloudDir.X));
           p.Speed=-200*cloudDir;
+          if(sideCoyote && p.StateMachine.State == Player.StClimb) p.StartJumpGraceTime();
         }
         if(!fragile) goto returning;
         destroyChildren(true);

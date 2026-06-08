@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Microsoft.Xna.Framework;
@@ -77,15 +78,35 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       ent.Position = oldpos;
       return false;
     }
+    public bool CollideTangible(Collider c, Vector2 offset, CollisionDirection movedir=CollisionDirection.yes){ 
+      var ent = c.Entity;
+      Vector2 oldpos = ent.Position;
+      ent.Position = ent.Position+offset;
+      foreach(var a in colliders) if((movedir&a.dir)!=0 && a.dir.HasFlag(CollisionDirection.tangibleFlag) && a.c.Collide(c)){
+        ent.Position = oldpos;
+        return true;
+      }
+      ent.Position = oldpos;
+      return false;
+    }
+    public void setTangible(){
+      for(int i=0; i<colliders.Count; i++){
+        if(colliders[i].c.Entity.Get<TemplateCollisionModifier.TangibleMarker>()!=null){
+          colliders[i] = new(colliders[i].c, colliders[i].dir|CollisionDirection.tangibleFlag);
+        }
+      }
+    }
     public bool Collide(QueryIn q, Vector2 offset, CollisionDirection movedir){
       movedir = movedir|CollisionDirection.yes;
       foreach(var a in q.colliders) if(Collide(a,offset,movedir)) return true;
+      if(q.tangibleOnly is {} li) foreach(var a in li) if(CollideTangible(a,offset,movedir)) return true;
       return false;
     }
     public bool Collide(QueryIn q, Vector2 offset)=>Collide(q,offset,Util.getCollisionDir(offset));
   }
   public class QueryIn{
     public List<Collider> colliders = new();
+    public List<Collider> tangibleOnly = null;
     public FloatRect bounds = FloatRect.empty;
     public HashSet<Platform> gotten;
     public bool Collide(Collider c){
@@ -101,7 +122,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     }
   }
   static Collider asMgUtil(Collider c)=>c is Grid g? MiptileCollider.fromGrid(g):c;
-  public static QueryBounds getQinfo(FloatRect f, HashSet<Entity> exclude, Scene Scene){
+  public static QueryBounds getQinfo(FloatRect f, HashSet<Entity> exclude, Scene Scene, bool checkIntangible=false){
     QueryBounds res  =new();
     foreach(Solid s in Scene.Tracker.GetEntities<Solid>()){
       if(!s.Collidable || exclude.Contains(s) || s.Collider is not {} c || !f.CollideFr(new FloatRect(s))) continue;
@@ -131,6 +152,10 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
   }
   public static QueryIn getQself(Template self, bool useUncol){
     QueryIn res = new();
+    foreach(TemplateCollisionModifier tcm in self.Scene.Tracker.GetEntities<TemplateCollisionModifier>()) if(tcm.tangible){
+      res.tangibleOnly = new();
+      break;
+    }
     FloatRect bounds = FloatRect.empty;
     var all = self.GetChildren<Solid>(Propagation.Shake);
     res.gotten = new(all);
@@ -138,8 +163,12 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
       if(useUncol || s.Collidable){
         res.colliders.Add(asMgUtil(s.Collider));
         bounds = bounds._union(new FloatRect(s));
+      } else if(res.tangibleOnly != null){
+        res.tangibleOnly.Add(asMgUtil(s.Collider));
+        bounds = bounds._union(new FloatRect(s));
       }
     }
+    if(res.tangibleOnly?.Count==0) res.tangibleOnly=null;
     res.bounds = bounds;
     return res;
   }
@@ -296,6 +325,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     QueryBounds q = getQinfo(qbounds,toExclude,self.Scene);
     q.breakable = fbs;
     if(useJts) AddJumpthrus(qbounds,q,s,toExclude,self.Scene);
+    if(s.tangibleOnly != null) q.setTangible();
     return new(q,s);
   }
   public Query getq(Vector2 maxpotentialmovemagn)=>getq(this, maxpotentialmovemagn,moveThroughDashblocks,hitJumpthrus,useOwnUncollidable);

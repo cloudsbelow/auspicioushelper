@@ -96,7 +96,7 @@ public class templateFiller{
           }
         }
       } else {
-        ret.SpriteOverlay = new AnimatedTiles(intercept.w,intercept.h,intercept.bank){Visible=false,Active=false};
+        ret.SpriteOverlay = new AnimatedTiles(intercept.w,intercept.h,intercept.bank){Visible=false, Active=false, Alpha=0};
       } 
       intercept = null;
       return ret;

@@ -22,6 +22,7 @@ public interface ICustomHoldableRelease{
     if(s.Entity is ICustomHoldableRelease c && c.replaceNormalRelease && s.OnRelease!=null){
       s.OnRelease(force);
     } else orig(s,force);
+    if(s.Entity.Get<HoldableW>() is {} hw) s.Entity.Collidable &= hw.afterCol;
     releasing = null;
   }
   static float ThrowDelegate(float orig, Player p){

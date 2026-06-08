@@ -19,6 +19,7 @@ entity.placements = {
       fromRiding = true,
       noDoubleBoost = true,
       followGravity=true,
+      sideCoyote=false,
     }
   }
 }

@@ -74,6 +74,50 @@ public interface ISimpleWrapper:ITemplateChild{
     wrapped.Position = (loc+toffset).Round();
   }
 }
+internal class HoldableW(Actor a, Holdable h, bool canKeep):Component(false,false),ISimpleWrapper{
+  Template.Propagation ITemplateChild.prop=>Template.Propagation.Shake;
+  public Template parent {get;set;}
+  public Vector2 toffset {get;set;}
+  Vector2 lpos;
+  bool disrupted;
+  public bool afterCol = true;
+  public Entity wrapped {get=>a; set=>a=value as Actor;}
+  void ITemplateChild.destroy(bool particles) {
+    if(h.Holder is { } p) p.Drop(); 
+    wrapped.RemoveSelf();
+  }
+  void ITemplateChild.parentChangeStat(int vis, int col, int act) {
+    if(vis!=0) wrapped.Visible = vis>0;
+    if(act!=0) wrapped.Active = col>0;
+    if(col!=0){
+      if(canKeep) afterCol = col>0;
+      if(h.Holder is { } p){
+        if(canKeep) return;
+        if(col<0) p.Drop();
+      } 
+      wrapped.Collidable = col>0;
+    }
+  }
+  void ITemplateChild.setOffset(Vector2 ppos) {
+    lpos = ppos;
+    toffset = wrapped.Position-ppos;
+  }
+  void ITemplateChild.relposTo(Vector2 loc, Vector2 liftspeed){
+    if(disrupted) return;
+    if(a.Position != lpos+toffset || h.Holder!=null){
+      disrupted=true;
+      return;
+    }
+    lpos = loc;
+    if(a.Collidable){
+      var delta = loc+toffset-a.Position;
+      disrupted |= a.MoveH(delta.X);
+      disrupted |= a.MoveV(delta.Y);
+    } else {
+      a.Position = loc+toffset;
+    }
+  }
+}
 
 internal class BasicPlatform:ITemplateChild{
   public Template parent{get;set;}

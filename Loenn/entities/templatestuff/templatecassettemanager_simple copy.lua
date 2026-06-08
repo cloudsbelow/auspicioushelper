@@ -19,7 +19,7 @@ entity.placements = {
 
       inactiveDepth=8999,
       patternAngle=0,
-      patternScale=4,
+      patternScale=2,
       patternOffset=0,
       patternWeight=0.5,
       borderColor="",

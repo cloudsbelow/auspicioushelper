@@ -33,7 +33,7 @@ public class TemplateSwapblock:Template, ITemplateTriggerable{
     returnable = d.Bool("returning",false);
     triggerable = d.Bool("triggerable");
     onDash = d.Bool("onDash",true);
-    earlyGracetime = d.Float("earlyGracetime",0.2f);
+    earlyGracetime = d.Float("earlyGracetime",-1);
   }
   bool returning;
   public override void Update(){
@@ -49,8 +49,9 @@ public class TemplateSwapblock:Template, ITemplateTriggerable{
         movesfx = Audio.Play("event:/game/05_mirror_temple/swapblock_return", virtLoc);
       }
     }
-    if(progress == target && graceNext>0){
+    if(progress==target && graceNext>0){
       target++;
+      if(returnable) target=Math.Min(target+1, spos.numsegs-1);
       graceNext=0;
     }
     graceNext-=Engine.DeltaTime;
@@ -71,7 +72,10 @@ public class TemplateSwapblock:Template, ITemplateTriggerable{
       ownLiftspeed = (virtLoc-old).SafeNormalize()*Math.Abs(speed);
       childRelposSafe();
     }else if(graceNext>0){
+      // Yes... this logic is happening for the second time?? I'm confused 
+      // too but I recall bad things happening when this wasn't here...
       target++;
+      if(returnable) target=Math.Min(target+1, spos.numsegs-1);
       graceNext=0;
     }else{
       if(!returning && speed!=0) Audio.Play("event:/game/05_mirror_temple/swapblock_move_end", virtLoc);
@@ -81,15 +85,14 @@ public class TemplateSwapblock:Template, ITemplateTriggerable{
     }
   }
   public void activate(){
-    if(movesfx!=null)Audio.Stop(movesfx);
+    if(movesfx!=null) Audio.Stop(movesfx);
     movesfx = Audio.Play("event:/game/05_mirror_temple/swapblock_move", virtLoc);
     returnTimer = 0.8f;
     returning = false;
-    if(!returnable){
-      if(progress==target) target++;
-      else graceNext = earlyGracetime;
-    } else target = Math.Min(target+1,spos.numsegs-1);
-    speed=Math.Max(Math.Abs(speed),maxspeed/3);
+    if(progress==target || graceNext<0) target++;
+    else graceNext = earlyGracetime;
+    if(returnable) target = Math.Min(target+1, spos.numsegs-1);
+    speed=Math.Max(Math.Abs(speed), maxspeed/3);
   }
   void ITemplateTriggerable.OnTrigger(TriggerInfo s) {
     if(!triggerable) parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(s);

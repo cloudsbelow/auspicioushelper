@@ -9,7 +9,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 [Flags]
 public enum CollisionDirection{
-  none=0, up=1, right=2, down=4, left=8, yes = 16, solid=31, ground=yes|up
+  none=0, up=1, right=2, down=4, left=8, yes = 16, solid=31, ground=yes|up, tangibleFlag=32
 }
 public static class SolidMiptree{
   const float bsize =32;

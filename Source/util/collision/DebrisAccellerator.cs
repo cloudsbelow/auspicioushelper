@@ -164,9 +164,10 @@ public class TileDebris:FastDebris{
   }
   bool playSound = true;
   public void ImpactSfx(float spd){
-    if (playSound){
-      string path = "event:/game/general/debris_dirt";
-      if (tileset == '4' || tileset == '5' || tileset == '6' || tileset == '7' || tileset == 'a' || tileset == 'c' || tileset == 'd' || tileset == 'e' || tileset == 'f' || tileset == 'd' || tileset == 'g'){
+    if(!playSound) return;
+    if (!GFX.FGAutotiler.TryGetCustomDebrisImpactSfx(out var path, tileset)){
+      path = "event:/game/general/debris_dirt";
+      if (tileset=='4' || tileset=='5' || tileset=='6' || tileset=='7' || tileset=='a' || tileset=='c' || tileset=='d' || tileset=='e' || tileset=='f' || tileset=='d' || tileset=='g'){
         path = "event:/game/general/debris_stone";
       } else if (tileset == '9'){
         path = "event:/game/general/debris_wood";
@@ -200,7 +201,10 @@ public class TileDebris:FastDebris{
     speed = Vector2.Zero;
     fadeLerp = 0f;
     rotateSign = Calc.Random.Choose(1, -1);
-    if(GFX.FGAutotiler.TryGetCustomDebris(out var path, tileset)){
+    if(RecolorTiles.debris.TryGetValue(tileset, out var texs)){
+      image.Texture = texs.Length==1? texs[0] : Calc.Random.Choose(texs); 
+    } 
+    else if(GFX.FGAutotiler.TryGetCustomDebris(out var path, tileset)){
       List<MTexture> atlasSubtextures = GFX.Game.GetAtlasSubtextures("debris/" + path);
       image.Texture = Calc.Random.Choose(atlasSubtextures);
     }else if (GFX.Game.Has("debris/" + tileset)){

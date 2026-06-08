@@ -7,6 +7,8 @@ using Monocle;
 using Celeste.Mod.Helpers;
 using MonoMod.Cil;
 using Microsoft.Xna.Framework.Graphics;
+using System.Runtime.CompilerServices;
+using System.Linq;
 
 namespace Celeste.Mod.auspicioushelper.Wrappers;
 
@@ -494,9 +496,111 @@ public class TileOccluder:OnAnyRemoveComp{
   }, auspicioushelperModule.OnEnterMap);
 }
 
-// public class TilegridSelector:OverrideVisualComponent{
-//   TileGrid tg;
-//   AnimatedTiles anim;
-//   VirtualMap<char> data;
-//   public override void 
-// }
+public class TilegridSelector(TileGrid tg, AnimatedTiles at, VirtualMap<char> data):OverrideVisualComponent{
+  public class TilegridWrapper(TilegridSelector sel):Component(false,false){
+    public override void Render(){
+      Util.HybridSet<char> ban = new();
+      foreach(var (c,o) in sel.over) if(o.stealPrio<NOSTEALPRIO) ban.Add(c);
+      sel.RenderPred(ban.Contains);
+    }
+  }
+  class TileOverride(char c, TilegridSelector parent):OverrideVisualComponent{
+    public int stealPrio = NOSTEALPRIO;
+    protected override void NewStealPrio(bool stolen, int prio){
+      if(stolen != (stealPrio!=NOSTEALPRIO)) parent.ChangeStealcount(stolen);
+      stealPrio=prio;
+    }
+    public override void renderMaterial(IMaterialLayer l, Camera cam) {
+      if(Entity.Scene != null && parent.ovis){
+        int prio = GetPrio(l as IOverrideVisuals);
+        if(parent.stealPrio < prio) return;
+        char ch = c;
+        parent.RenderPred((char check)=>check!=ch);
+      }
+    }
+  }
+  TilegridWrapper w;
+  Dictionary<char, TileOverride> over = new();
+  int stealPrio = NOSTEALPRIO;
+  int stolenCount = 0;
+  protected override void NewStealPrio(bool stolen, int prio) => stealPrio=prio;
+  protected override void AddedOverride(IOverrideVisuals o, short prio) {
+    base.AddedOverride(o, prio);
+  }
+  public override void renderMaterial(IMaterialLayer l, Camera cam) {
+    if(over.Count==0 || stolenCount==0){
+      base.renderMaterial(l, cam);
+    } else if(ovis && Entity.Scene!=null) {
+      int prio = GetPrio(l as IOverrideVisuals);
+      Util.HybridSet<char> ban = new();
+      foreach(var (c,o) in over) if(o.stealPrio < prio) ban.Add(c);
+      RenderPred(ban.Contains);
+    }
+  }
+  public override void OnRemove() {
+    base.OnRemove();
+    foreach(var (c,o) in over){
+      o.OnRemove();
+      o.Entity = null;
+    }
+    over.Clear(); 
+  }
+  public void ChangeStealcount(bool steal){
+    stolenCount += steal?1:-1;
+    if(w==null){
+      w=new(this);
+      Entity.Add(w);
+    }
+    w.Visible = stolenCount>0;
+    tg.Visible = stolenCount==0;
+    at.Visible = stolenCount==0;
+  }
+  public override OverrideVisualComponent withOptions(string s){
+    if(s.Length>1) DebugConsole.WriteFailure("Sorry! we only allow one tiletype per fg:id at the moment", auspicioushelperModule.InFolderMod);
+    if(!over.TryGetValue(s[0], out var o)){
+      over.Add(s[0], o = new(s[0], this));
+      o.Entity = Entity;
+    }
+    return o;
+  }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public void RenderPred(Func<char,bool> excludePred){
+    var tgl = tg;
+    var atl = at;
+    var dat = data;
+    if(tgl.Alpha<=0 && atl.Alpha<=0) return;
+    if(tgl.ClipCamera == null && Entity.Scene is Level level) tg.ClipCamera = level.Camera;
+    Rectangle clip = tgl.GetClippedRenderTiles();
+    Vector2 tgpos = tgl.Position + Entity.Position;
+    Vector2 atpos = atl.Position + Entity.Position;
+    Color tgc = tgl.Color*tgl.Alpha;
+    Color atc = atl.Color*atl.Alpha;
+
+    for(int i=clip.Left; i<clip.Right; i++) for(int j=clip.Top; j<clip.Bottom; j++){
+      if(excludePred(dat[i,j])) continue;
+      if(tgl.Alpha>0 && tgl.Tiles[i,j] is {} tiletex){
+        Vector2 loc = tgpos + new Vector2(8*i, 8*j);
+        Draw.SpriteBatch.Draw(tiletex.Texture.Texture_Safe, loc, tiletex.ClipRect, tgc);
+      }
+      if(atl.Alpha>0 && atl.tiles[i,j] is {} list){
+        for (int k = 0; k < list.Count; k++){
+          AnimatedTiles.Tile tile = list[k];
+          AnimatedTilesBank.Animation animation = atl.Bank.Animations[tile.AnimationID];
+          var frame = animation.Frames[(int)tile.Frame % animation.Frames.Length];
+          frame.Draw(atpos+animation.Offset + new Vector2(i*8+4, i*8+4), animation.Origin, atc, tile.Scale);
+        }
+      }
+    }
+  }
+  [OnLoad]
+  static void Setup(){
+    custom.Add(typeof(SolidTiles), e=>{
+      var st = e as SolidTiles;
+      return new TilegridSelector(st.Tiles, st.AnimatedTiles, st.tileTypes);
+    });
+    // custom.Add(typeof(BackgroundTiles), e=>{
+    //   var bt = e as BackgroundTiles; 
+    //   return new TilegridSelector(bt.Tiles, bt.AnimatedTiles, bt.tile);
+    // });
+  }
+}
