@@ -17,6 +17,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   int id;
   bool dontStun;
   bool neverClip;
+  bool saturated = false;
   public static CrystalColor GetColor(EntityData d){
     if(Enum.TryParse<CrystalColor>(d.Attr("color"), ignoreCase: true, out var r))return r;
     return d.Name == "spinner"? CrystalColor.Blue:CrystalColor.Rainbow;
@@ -118,7 +119,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
       Collidable = false;
       if(InView()){
         inView=true;
-        if(!expanded) CreateSprites();
+        if(!expanded) CreateSpritesOther();
         if(isRainbow) UpdateHue();
       }
       Visible = hvisible && inView;
@@ -147,7 +148,7 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     base.Awake(scene);
     if(InView()){
       inView = true;
-      if(!expanded) CreateSprites();
+      if(!expanded) CreateSpritesOther();
       if(isRainbow) UpdateHue();
       Visible = hvisible && inView;
     }
@@ -264,6 +265,32 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
       if(filler != null)temp.AddNewEnts([filler]);
       if(border != null)temp.AddNewEnts([border]);
     }
+    if(OverrideVisualComponent.TryGet(this) is {} en){
+      if(filler != null) OverrideVisualComponent.Get(filler).CopyOther(en);
+      if(border != null) OverrideVisualComponent.Get(border).CopyOther(en);
+      saturated = true;
+    }
+  }
+  [OnLoad]
+  static void SetupFillerCapturer(){
+    OverrideVisualComponent.custom.Add(typeof(Spinner),e=>{
+      Spinner s = (Spinner) e;
+      var o = new OverrideVisualComponent();
+      UpdateHook.AddAfterUpdate(()=>{
+        if(s.filler!=null) OverrideVisualComponent.Get(s.filler).CopyOther(o);
+        if(s.border!=null) OverrideVisualComponent.Get(s.border).CopyOther(o);
+      },false,false);
+      return o;
+    });
+    OverrideVisualComponent.custom.Add(typeof(CrystalStaticSpinner),e=>{
+      CrystalStaticSpinner s = (CrystalStaticSpinner) e;
+      var o = new OverrideVisualComponent();
+      UpdateHook.AddAfterUpdate(()=>{
+        if(s.filler!=null) OverrideVisualComponent.Get(s.filler).CopyOther(o);
+        if(s.border!=null) OverrideVisualComponent.Get(s.border).CopyOther(o);
+      },false,false);
+      return o;
+    });
   }
   void ITemplateChild.AddAllChildren(List<Entity> l){
     l.Add(this);
@@ -287,7 +314,13 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   [OnLoad.OnHook(typeof(CrystalStaticSpinner),nameof(CrystalStaticSpinner.CreateSprites))]
   static void addSpritesHook(On.Celeste.CrystalStaticSpinner.orig_CreateSprites orig, CrystalStaticSpinner self){
     if(self is Spinner s) s.CreateSpritesOther();
-    else orig(self);
+    else {
+      orig(self);
+      if(OverrideVisualComponent.TryGet(self) is {} o){
+        if(self.filler!=null) OverrideVisualComponent.Get(self.filler).CopyOther(o);
+        if(self.border!=null) OverrideVisualComponent.Get(self.border).CopyOther(o);
+      }
+    }
   }
 }
 

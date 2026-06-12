@@ -139,7 +139,7 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
   }
   string NiceName(){
     string s= ToString().TrimStart();
-    return s.StartsWith("Celeste.Mod.auspicioushelper")? s["Celeste.Mod.auspicioushelper".Length..]:s;
+    return s.RemovePrefix("Celeste.Mod.auspicioushelper");
   }
   public virtual void onRemove(){
     foreach(var h in handles)h.Free();

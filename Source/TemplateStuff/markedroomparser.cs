@@ -252,7 +252,8 @@ internal static class MarkedRoomParser{
       var bgtd = Util.toCharmap(l.Bg, tilepadding);
       var fgt = new SolidTiles(-Vector2.One*tilepadding*8,fgtd);
       var bgt = new BackgroundTiles(-Vector2.One*tilepadding*8,bgtd);
-      foreach(var pair in templates){
+      foreach(var pair in templates) if(pair.Value.tiledata.createStatically==false){
+        // We only do static initialization for tiles that are not already static.
         pair.Value.tiledata.initStatic(fgt,bgt);
       }
     }

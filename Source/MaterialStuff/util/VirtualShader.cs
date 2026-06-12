@@ -25,8 +25,12 @@ public class VirtualShader{
     cacheNum = -1;
     this.path=path;
   }
-  static readonly string[] baseVals = {"time","Time","cpos","CamPos","pscale","Dimensions","quiet"};
-  public void setBaseparams(){
+  static readonly string[] baseVals = {
+    "time","Time","cpos","CamPos","pscale","Dimensions", //0-5
+    "quiet","Photosensitive", "ColdCoreMode", "DeltaTime", //6-9
+    "TransformMatrix", "ViewMatrix"
+  };
+  public void setBaseparams(bool first){
     var p = shader.Parameters;
     uint b = baseParamvals;
     while(b!=0){
@@ -40,6 +44,17 @@ public class VirtualShader{
         case 4: p["pscale"].SetValue(RenderTargetPool.pixelSize); break;
         case 5: p["Dimensions"].SetValue(RenderTargetPool.size); break;
         case 6: p["quiet"].SetValue(Settings.Instance.DisableFlashes? 1f:0f); break;
+        case 7: p["Photosensitive"].SetValue(Settings.Instance.DisableFlashes); break;
+        case 8: p["ColdCoreMode"].SetValue((Engine.Scene as Level)?.CoreMode == Session.CoreModes.Cold); break;
+        case 9: p["DeltaTime"].SetValue(Engine.DeltaTime); break;
+        case 10: 
+          Int2 dim = RenderTargetPool.size;
+          p["TransformMatrix"].SetValue(Matrix.CreateOrthographicOffCenter(0,dim.x,dim.y,0,0,1)); 
+          break;
+        case 11: 
+          Matrix m = first && Engine.Scene is Level lv? lv.Camera.Matrix : Matrix.Identity;
+          p["ViewMatrix"].SetValue(m);
+          break;
       };
     }
   }
@@ -156,7 +171,7 @@ public class VirtualShaderList:IEnumerable<VirtualShader>{
     shaders[idx]?.setparamvalex(key, t);
   }
   public void setbaseparams(){
-    foreach(var s in shaders)s?.setBaseparams();
+    for(int i=0; i<shaders.Count; i++) shaders[i]?.setBaseparams(i==0);
   }
   public int Count=>shaders.Count;
   public IEnumerator<VirtualShader> GetEnumerator() {

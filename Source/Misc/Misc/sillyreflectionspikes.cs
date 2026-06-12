@@ -38,6 +38,7 @@ public class CustomSpikes : Entity{
   Template parent;
   List<Image> images = new();
   LedgeBlocker lb;
+  PlayerCollider pc;
   public CustomSpikes(EntityData data, Vector2 offset): base(data.Position+offset){
     Direction = data.Enum("direction",Directions.Up);
     Depth = -1;
@@ -70,7 +71,7 @@ public class CustomSpikes : Entity{
         break;
     }
 
-    Add(new PlayerCollider(OnCollide));
+    Add(pc=new PlayerCollider(OnCollide));
     if(EntityParser.currentParent is {} te){
       parent = te;
     } else if(data.Bool("canAttach")) Add(sm = new LiftspeedSm{
@@ -151,14 +152,14 @@ public class CustomSpikes : Entity{
         return;
       }
       p.Die(unitDir*2);
-      parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(null);
+      //parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(null);
     }
   }
   public static void spikeCheck(Player p){
     var orig = p.Collider;
     p.Collider = p.hurtbox;
     foreach(CustomSpikes c in p.Scene.Tracker.GetEntities<CustomSpikes>()){
-      if(p.CollideCheck(c)) c.OnCollide(p);
+      if(p.CollideCheck(c)) c.pc.OnCollide(p);
       if(p.Dead) break;
     }
     p.Collider = orig;
