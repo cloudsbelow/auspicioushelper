@@ -14,7 +14,7 @@ public class CassetteW:CassetteBlock, ISimpleEnt{
   Vector2 ppos;
   public Vector2 toffset {get;set;}
   public CassetteW(EntityData d, Vector2 o, EntityID id):base(d,o.Round(),id){
-    hooks.enable();
+    ResetEvents.Hooks<CassetteW>.enable();
   }
   void setPosition(Vector2 ls){
     MoveTo((ppos+toffset+Vector2.UnitY*(2-blockHeight)).Round(), (parent?.gatheredLiftspeed??Vector2.Zero)+ls);
@@ -125,23 +125,18 @@ public class CassetteW:CassetteBlock, ISimpleEnt{
       }
     });
   }
+  [ResetEvents.OnHook(typeof(CassetteBlock),nameof(CassetteBlock.FindInGroup))]
   static void Hook(On.Celeste.CassetteBlock.orig_FindInGroup orig, CassetteBlock s,CassetteBlock o){
     if(s is CassetteW w){
       w.findInGroupGood(w);
     }else orig(s,o);
   }
+  [ResetEvents.OnHook(typeof(CassetteBlock),nameof(CheckForSame))]
   static bool Hook(On.Celeste.CassetteBlock.orig_CheckForSame orig, CassetteBlock s,float x, float y){
     if(s is CassetteW w){
       return w.CheckForSameGood(x,y);
     } else return orig(s,x,y);
   }
-  static HookManager hooks = new(()=>{
-    On.Celeste.CassetteBlock.FindInGroup+=Hook;
-    On.Celeste.CassetteBlock.CheckForSame+=Hook;
-  }, ()=>{
-    On.Celeste.CassetteBlock.FindInGroup-=Hook;
-    On.Celeste.CassetteBlock.CheckForSame-=Hook;
-  },auspicioushelperModule.OnEnterMap);
 }
 
 [Tracked]
@@ -198,5 +193,5 @@ public class CassetteBlockFixer:Entity{
     On.Celeste.CassetteBlock.ShiftSize-=Hook;
     On.Celeste.CassetteBlock.WillToggle-=Hook;
     On.Celeste.CassetteBlock.ctor_Vector2_EntityID_float_float_int_float-=Hook;
-  },auspicioushelperModule.OnEnterMap);
+  },ResetEvents.Times.LvlCleanup);
 }

@@ -28,7 +28,7 @@ public class TrackedCassette:Cassette{
     id = d.Attr("identifier", "");
     messageLineWidth = d.Int("line_width",900);
     flag = d.Attr("flag","");
-    hooks.enable();
+    ResetEvents.Hooks<TrackedCassette>.enable();
   }
   public override void Added(Scene scene){
     base.Added(scene);
@@ -44,6 +44,7 @@ public class TrackedCassette:Cassette{
     }
     return true;
   }
+  [ResetEvents.ILHook(typeof(Cassette), nameof(Cassette.Added))]
   private static void IL_AddedHook(ILContext il){
     var cursor = new ILCursor(il);
     if(!cursor.TryGotoNext(MoveType.Before, instr=>instr.MatchStfld<Cassette>("IsGhost"))){
@@ -56,6 +57,7 @@ public class TrackedCassette:Cassette{
   }
 
   private static bool interceptNextSave;
+  [ResetEvents.OnHook(typeof(SaveData),nameof(SaveData.RegisterCassette))]
   private static void registerCassetteHook(On.Celeste.SaveData.orig_RegisterCassette orig, SaveData s, AreaKey a){
     if(interceptNextSave){
       interceptNextSave = false;
@@ -64,6 +66,7 @@ public class TrackedCassette:Cassette{
     orig(s,a);
   }
   private static string interceptNextMessage = "";
+  [ResetEvents.OnHook(typeof(UnlockedBSide),nameof(UnlockedBSide.Added))]
   private static void CassetteMessageAdded(On.Celeste.Cassette.UnlockedBSide.orig_Added orig, Entity self, Scene s){
     orig(self, s);
     if(!string.IsNullOrEmpty(interceptNextMessage)){
@@ -75,6 +78,7 @@ public class TrackedCassette:Cassette{
       }
     }
   }
+  [ResetEvents.ILHook(typeof(Cassette),nameof(CollectRoutine))]
   private static IEnumerator collectRoutineHook(On.Celeste.Cassette.orig_CollectRoutine orig, Cassette self, Player player){
     bool priorSessionstate = self.SceneAs<Level>().Session.Cassette;
     if(self is TrackedCassette c){
@@ -99,15 +103,4 @@ public class TrackedCassette:Cassette{
       self.SceneAs<Level>().Session.Cassette = priorSessionstate;
     }
   }
-  public static HookManager hooks = new HookManager(()=>{
-    IL.Celeste.Cassette.Added+=IL_AddedHook;
-    On.Celeste.Cassette.CollectRoutine+=collectRoutineHook;
-    On.Celeste.SaveData.RegisterCassette+=registerCassetteHook;
-    On.Celeste.Cassette.UnlockedBSide.Added += CassetteMessageAdded;
-  },void()=>{
-    IL.Celeste.Cassette.Added-=IL_AddedHook;
-    On.Celeste.Cassette.CollectRoutine-=collectRoutineHook;
-    On.Celeste.SaveData.RegisterCassette-=registerCassetteHook;
-    On.Celeste.Cassette.UnlockedBSide.Added-=CassetteMessageAdded;
-  }, auspicioushelperModule.OnEnterMap);
 }

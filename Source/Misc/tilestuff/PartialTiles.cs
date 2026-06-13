@@ -20,6 +20,7 @@ internal class PartialTiles{
   public static MTexture tex = null;
   public static MTexture ttex = null;
   const ulong FULL = ulong.MaxValue;
+  [ResetEvents.NullOn(ResetEvents.Times.LvlCleanup)]
   public static bool usingPartialtiles = false;
   static void HookBefore(XmlElement tileset){
     if(tileset.HasAttribute("ausp_partialtiles")){
@@ -30,7 +31,7 @@ internal class PartialTiles{
       }
       DebugConsole.Write($"Setting up PartialTiles for {(tileset.HasAttribute("displayName")?tileset.Attr("displayName"):tileset.Attr("path"))}");
       usingPartialtiles = true;
-      ResetEvents.LazyEnable(typeof(PixelLeniencyTrigger));
+      ResetEvents.Hooks<PixelLeniencyTrigger>.enable();
     } else {
       tex = (ttex = null);
     }
@@ -189,8 +190,7 @@ internal class PartialTiles{
       DebugConsole.WriteFailure("Could not make hooks for partial capturing",true);
   }
 
-  static PersistantAction resetState;
-  [Command("ausp_usingPartialtiles","Whether the map is currently using partialtiles")]
+  [Command("auspdebug_usingPartialtiles","Whether the map is currently using partialtiles")]
   public static void ausp_usingPartialtiles(){
     Engine.Commands.Log($"Partial tiles: {(usingPartialtiles?"on":"off")}");
   }
@@ -200,14 +200,10 @@ internal class PartialTiles{
     IL.Celeste.Autotiler.Generate += GenerateHook;
     On.Celeste.Autotiler.Generate += CapturingHook;
     On.Celeste.SolidTiles.ctor += HookSolidtiles;
-    auspicioushelperModule.OnEnterMap.enroll(resetState = new(()=>{
-      usingPartialtiles = false;
-    }));
   },()=>{
     IL.Celeste.Autotiler.ctor -= ParseHook;
     IL.Celeste.Autotiler.Generate -= GenerateHook;
     On.Celeste.Autotiler.Generate -= CapturingHook;
     On.Celeste.SolidTiles.ctor -= HookSolidtiles;
-    resetState.remove();
   });
 }

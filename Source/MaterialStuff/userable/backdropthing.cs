@@ -37,7 +37,7 @@ public class BackdropCapturer{
       this.b=b;
     }
   }
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload, ResetEvents.RunTimes.OnExit)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   [Import.SpeedrunToolIop.Static]
   public static Dictionary<Backdrop,BackdropRef> back = new();
   [Import.SpeedrunToolIop.Static]
@@ -75,7 +75,7 @@ public class BackdropCapturer{
       setupForLevel(l);
     }
     public void setupForLevel(Level l){
-      expensiveHooks.enable();
+      ResetEvents.Hooks<BackdropCapturer>.enable();
       if(last==l && validWhen==validNumber) return;
       validWhen = validNumber;
       foreach(var b in captured){
@@ -136,13 +136,14 @@ public class BackdropCapturer{
     }
     public override string ToString()=>base.ToString()+":"+selector;
   }
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   [Import.SpeedrunToolIop.Static]
   public static Dictionary<string, CapturedBackdrops> groups = new();
   public static CapturedBackdrops Get(string s){
     if(groups.TryGetValue(s, out var c)) return c;
     return  groups[s] = new(null,s);
   }
+  [ResetEvents.OnHook(typeof(Backdrop),nameof(Backdrop.IsVisible))]
   static bool Hook(On.Celeste.Backdrop.orig_IsVisible orig, Backdrop self, Level l){
     bool res = orig(self, l);
     if(back.TryGetValue(self, out var br)){
@@ -209,9 +210,4 @@ public class BackdropCapturer{
       c.Index++;
     }
   }
-  public static HookManager expensiveHooks = new(()=>{
-    On.Celeste.Backdrop.IsVisible+=Hook;
-  },()=>{
-    On.Celeste.Backdrop.IsVisible-=Hook;
-  },auspicioushelperModule.OnEnterMap);
 }

@@ -14,7 +14,7 @@ public class DowntransOverride:Trigger{
   bool disabled;
   public DowntransOverride(EntityData d, Vector2 o):base(d,o){
     disabled = d.Bool("disabled",false);
-    ResetEvents.LazyEnable(typeof(DowntransOverride));
+    ResetEvents.Hooks<DowntransOverride>.enable();
   }
   static bool tryReplace(bool orig, Player p){
     float minWidth = float.PositiveInfinity;

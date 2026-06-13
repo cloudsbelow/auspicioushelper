@@ -50,7 +50,7 @@ public class auspicioushelperModuleSession : EverestModuleSession {
     [OnLoad.OnHook(typeof(Level),nameof(Level.Reload))]
     static void Hook(On.Celeste.Level.orig_Reload orig, Level s){
       if(auspicioushelperModule.Session?.respDat is {} r){
-        if(s.Session.Level!=r.level) auspicioushelperModule.OnNewScreen.run(); 
+        if(s.Session.Level!=r.level) ResetEvents.OnNewScreen.run(); 
         s.Session.Level=r.level; 
         s.Session.RespawnPoint=r.loc;
         orig(s);

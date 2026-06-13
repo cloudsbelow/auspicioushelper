@@ -34,12 +34,15 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
   Color color;
   List<uint> handles = new();
   [Import.SpeedrunToolIop.Static]
-  [ResetEvents.NullOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.NullOn(ResetEvents.Times.NewAssets)]
   static Solid fakeSolid;
   Vector2 renderOffset;
   LiftspeedSm sm;
   Vector2 movementCounter;
   public PortalFaceH(Vector2 pos, float height, bool facingRight, bool vflip, PortalInfo pinfo = default):base(pos){
+    ResetEvents.Hooks<PortalFaceH>.enable();
+    ResetEvents.Hooks<IColliderWrapper>.enable();
+    
     Collider = new Hitbox(1,height,facingRight?0:-1,0);
     flipped=vflip;
     info = pinfo;
@@ -313,7 +316,6 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
       e1.other = e2;
       e2.other = e1;
       l.Add([e1,e2]);
-      ResetEvents.LazyEnable(typeof(PortalFaceH),typeof(IColliderWrapper));
 
       if(fakeSolid?.Scene != null && fakeSolid.Scene!=l){
         fakeSolid.RemoveSelf();

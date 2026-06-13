@@ -13,7 +13,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateTemplate")]
 public class TemplateTemplate:Template{
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReset)]
+  [ResetEvents.ClearOn(ResetEvents.Times.LvlReset)]
   static Dictionary<string,string> replace = new();
   class WithReplace:IDisposable{
     List<(string,string)> old;
@@ -63,7 +63,7 @@ public class TemplateTemplate:Template{
     return nd;
   }
   Dictionary<string,string> substitutes = new();
-  [ResetEvents.NullOn(ResetEvents.RunTimes.OnEnter)]
+  [ResetEvents.NullOn(ResetEvents.Times.LvlCleanup)]
   static uint counter = 1;
   const string baseChars="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   static int getCharIdx(char c) =>c switch {
@@ -90,7 +90,7 @@ public class TemplateTemplate:Template{
     return true;
   }
   List<uint> owned = new();
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   [Import.SpeedrunToolIop.Static]
   static Dictionary<uint,TemplateTemplate> owns = new();
 

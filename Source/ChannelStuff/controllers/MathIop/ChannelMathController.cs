@@ -469,7 +469,6 @@ public class ChannelMathController:Entity{
     registerInterop("timeSinceTrans",(List<string> strs)=>{
       return UpdateHook.TimeSinceTransMs;
     });
-    FmodIop.cbs.enable();
   }
   static ChannelMathController(){
     setupDefaultInterop();

@@ -276,7 +276,7 @@ public static partial class Util{
     return x;
   }
 
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   static Dictionary<(Type,string),object> cachedReflection = new();
   public static object ReflectGet(object c, string m, bool canInvoke=true){
     Type t = c.GetType();

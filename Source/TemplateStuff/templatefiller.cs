@@ -330,7 +330,7 @@ public class templateFiller{
   [CustomloadEntity]
   public class FillerSwitcher:templateFiller{
     static HashSet<FillerSwitcher> used = new();
-    [ResetEvents.RunOn(ResetEvents.RunTimes.OnReset)]
+    [ResetEvents.RunOn(ResetEvents.Times.LvlReset)]
     static void Reset(){
       foreach(var use in used) use.idx=-1;
       used.Clear();

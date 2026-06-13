@@ -431,7 +431,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     IL.Celeste.Player.DreamDashBegin-=DDashBeginIL;
     ddhook?.Dispose();
     transhook?.Dispose();
-  },auspicioushelperModule.OnEnterMap);
+  },ResetEvents.Times.LvlCleanup);
 
   [CustomEntity("auspicioushelper/CustomDreamlayer")]
   [CustomloadEntity]
@@ -442,7 +442,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     Color inside;
     float contentAlpha;
     float[] density;
-    [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+    [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
     [Import.SpeedrunToolIop.Static]
     static Dictionary<string, CustomDreamRenderer> layers = new();
     public static BasicMaterialLayer Get(string ident){

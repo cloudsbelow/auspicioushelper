@@ -28,7 +28,7 @@ public interface IBooster{
     else return null;
   }
   public static void startBoostPlayer(Player p, Entity s){
-    ResetEvents.LazyEnable(typeof(IBooster));
+    ResetEvents.Hooks<IBooster>.enable();
     tryReleaseCurrent(p);
     locked = true;
     inst.Center = s.Center;
@@ -36,7 +36,7 @@ public interface IBooster{
     p.Boost(inst);
   }
   public static void startRedBoostPlayer(Player p, Entity s){
-    ResetEvents.LazyEnable(typeof(IBooster));
+    ResetEvents.Hooks<IBooster>.enable();
     tryReleaseCurrent(p);
     locked = true;
     inst.Center = s.Center;

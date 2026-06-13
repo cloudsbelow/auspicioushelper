@@ -123,7 +123,7 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     f2 = temp;
     Done(true);
   }
-  [ResetEvents.NullOn(ResetEvents.RunTimes.OnReset)]
+  [ResetEvents.NullOn(ResetEvents.Times.LvlReset)]
   static bool dontEnforce=false;
   [OnLoad.OnHook(typeof(Level),nameof(Level.EnforceBounds))]
   static void Hook(On.Celeste.Level.orig_EnforceBounds orig, Level l, Player p){

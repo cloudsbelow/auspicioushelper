@@ -58,6 +58,7 @@ public static class ResetEvents{
         }
       }
 
+      List<(MethodInfo, LazyThing)> items = new();
       foreach(var m in t.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)){
         if(m.IsDefined(typeof(RunOn))){
           if(m.ReturnType!=null){}
@@ -68,22 +69,23 @@ public static class ResetEvents{
           foreach(var r in getLists(c.times)) r.enroll(p);
         }
 
-        List<(MethodInfo, LazyThing)> items = new();
         foreach(var attr in m.GetCustomAttributes<LazyThing>()){
           items.Add((m,attr));
         }
       }
+      if(items.Count>0) lazyClassStuff.Add(t,items);
     }
   }
   static Dictionary<Type, List<(MethodInfo, LazyThing)>> lazyClassStuff = new();
   static Dictionary<Type, Func<Times>> cachedBTypes = new();
-  static class Hooks<T>{
+  public static class Hooks<T>{
     static bool enabled = false;
     static List<Action> onDispose = null;
     static Times times = Times.None;
     public static Times enable(){
       if(enabled) return times;
       enabled = true;
+      DebugConsole.Write($"Tried to enable", typeof(T), lazyClassStuff.GetValueOrDefault(typeof(T))?.Count);
 
       Times childTimes = Times.None;
       var cur = typeof(T);
@@ -94,7 +96,6 @@ public static class ResetEvents{
         onDispose = new();
         foreach(var (m,a) in list){
           if(a.apply(m) is {} thing) onDispose.Add(thing);
-          else DebugConsole.WriteFailure("Tell clouds you got this message plz <3",true);
         }
       } else times = childTimes;
 
@@ -118,9 +119,14 @@ public static class ResetEvents{
     }
     static void disable(){
       enabled = false;
-      if(onDispose!=null) foreach(var a in onDispose) a();
-      onDispose.Clear();
+      if(onDispose!=null){
+        foreach(var a in onDispose) a();
+        onDispose.Clear();
+      }
     } 
+    public static void enableAll(){
+      foreach(var (t,m) in lazyClassStuff) ensureDep(t);
+    }
   }
 
   [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]

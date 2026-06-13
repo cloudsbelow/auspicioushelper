@@ -17,15 +17,14 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
   int id;
   bool dontStun;
   bool neverClip;
-  bool saturated = false;
   public static CrystalColor GetColor(EntityData d){
     if(Enum.TryParse<CrystalColor>(d.Attr("color"), ignoreCase: true, out var r))return r;
     return d.Name == "spinner"? CrystalColor.Blue:CrystalColor.Rainbow;
   }
   class SpinnerSource{
-    [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+    [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
     static Util.TexDataContext ctx = new();
-    [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+    [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
     static Dictionary<string, SpinnerSource> sources = new();
     public List<(MTexture,MTexture)> fgTextures;
     public List<(MTexture,MTexture)> bgTextures;
@@ -268,7 +267,6 @@ public class Spinner:CrystalStaticSpinner, ISimpleEnt{
     if(OverrideVisualComponent.TryGet(this) is {} en){
       if(filler != null) OverrideVisualComponent.Get(filler).CopyOther(en);
       if(border != null) OverrideVisualComponent.Get(border).CopyOther(en);
-      saturated = true;
     }
   }
   [OnLoad]

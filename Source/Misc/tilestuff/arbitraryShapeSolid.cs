@@ -13,7 +13,7 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/ArbitrarySolid")]
 [MapenterEv(nameof(precache))]
 public class ArbitraryShapeSolid:Solid{
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   static Dictionary<CKey, (Vector2, MipGrid, TileOccluder)> cache = new();
   MTexture imag;
   float rot;

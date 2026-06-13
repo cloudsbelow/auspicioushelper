@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.auspicioushelper;
 public static class BorderGenerator{
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnEnter)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   static Dictionary<string,MTexture> items = new();
   static T ReadAt<T>(this T[] arr, int w, int x, int y){
     if(x<0 || x>=w || y<0 || y>=arr.Length/w) return default;

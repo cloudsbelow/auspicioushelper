@@ -140,7 +140,6 @@ public static class SolidMiptree{
   const int levelLimit = 10;
   public static Dictionary<Type, Func<Entity, CollisionDirection>> cdirdict = new();
   static public void Construct(Scene scene, IntRect bounds){
-    MaddiesIop.hooks.enable();
     offset = new Vector2(bounds.x,bounds.y);
     if(bounds.w!=lbounds.w || bounds.h!=lbounds.h){
       levels.Clear();

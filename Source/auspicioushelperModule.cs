@@ -31,12 +31,6 @@ public class auspicioushelperModule : EverestModule {
     Instance = this;
     Logger.SetLogLevel(nameof(auspicioushelperModule), LogLevel.Info);
   }
-  public static ActionList OnEnterMap = new ActionList();
-  public static ActionList OnExitMap = new ActionList();
-  public static ActionList OnReloadMap = new ActionList();
-  public static ActionList OnNewScreen = new ActionList();
-  public static ActionList OnReset = new ActionList();
-
 
 
   [OnLoad.EverestEvent(typeof(Everest.Events.Level), nameof(Everest.Events.Level.OnTransitionTo))]
@@ -46,8 +40,8 @@ public class auspicioushelperModule : EverestModule {
     MarkedRoomParser.clearDynamicRooms();
     if(Session is {} s)s.transitions++;
 
-    OnReset.run();
-    OnNewScreen.run();
+    ResetEvents.OnLvlReset.run();
+    ResetEvents.OnNewScreen.run();
   }
 
   [OnLoad.OnHook(typeof(ChangeRespawnTrigger),nameof(ChangeRespawnTrigger.OnEnter))]
@@ -70,13 +64,13 @@ public class auspicioushelperModule : EverestModule {
       ChannelState.unwatchTemporary(false);
       UpdateHook.TimeSinceTransMs = 1000000;
 
-      OnReset.run();
+      ResetEvents.OnLvlReset.run();
     }
     LastLvl = l.Session.LevelData.Name;
     orig(l,playerIntro,isFromLoader);
   }
 
-  [ResetEvents.NullOn(ResetEvents.RunTimes.OnExit)]
+  [ResetEvents.NullOn(ResetEvents.Times.LvlCleanup)]
   public static bool InFolderMod;
   static void SetFoldermod(Session s){
     try{
@@ -89,11 +83,10 @@ public class auspicioushelperModule : EverestModule {
     }
   }
   static void OnEnter(Session session){
-    OnExitMap.run();
-    OnReset.run();
-    OnNewScreen.run();
-    OnReloadMap.run();
-    OnEnterMap.run();
+    ResetEvents.OnLvlCleanup.run();
+    ResetEvents.OnNewAssets.run();
+    ResetEvents.OnNewScreen.run();
+    ResetEvents.OnLvlReset.run();
 
     SetFoldermod(session);
     DebugConsole.Write($"\n\nEntering Map! Folder mod: {InFolderMod}");
@@ -110,9 +103,25 @@ public class auspicioushelperModule : EverestModule {
       if(ex is DebugConsole.PassingException p) throw p;
     }
   }
+  static void OnDebugEnter(Session session){
+    ResetEvents.OnNewScreen.run();
+    ResetEvents.OnLvlReset.run();
+    
+    if(session?.MapData!=null){
+      MapenterEv.Run(session.MapData);
+      MarkedRoomParser.parseMapdata(session.MapData);
+      DebugConsole.Write("Entered Level");
+    } else DebugConsole.Write("Session or mapdata null");
+  }
 
   [OnLoad.EverestEvent(typeof(Everest.Events.Level), nameof(Everest.Events.Level.OnExit))]
-  static void OnExit(Level l, LevelExit e, LevelExit.Mode m, Session s, HiresSnow h)=>OnExitMap.run();
+  static void OnExit(Level l, LevelExit e, LevelExit.Mode m, Session s, HiresSnow h){
+    DebugConsole.Write("Level exit");
+    ResetEvents.OnLvlReset.run();
+    ResetEvents.OnNewScreen.run();
+    ResetEvents.OnNewAssets.run();
+    ResetEvents.OnLvlCleanup.run();
+  }
 
   public static int CACHENUM;
   [OnLoad.EverestEvent(typeof(Everest.Events.AssetReload), nameof(Everest.Events.AssetReload.OnAfterReload))]
@@ -128,10 +137,12 @@ public class auspicioushelperModule : EverestModule {
           l.Level.Session.DoNotLoad?.Clear();
           Session.brokenTempaltes?.Clear();
         }
-        OnReloadMap.run();
+        ResetEvents.OnNewAssets.run();
         MapenterEv.Run(l.Level.Session.MapData);
         MarkedRoomParser.parseMapdata(l.Level.Session.MapData);
-      } 
+      } else if(Engine.Instance.scene is MapEditor editor){
+        ResetEvents.OnNewAssets.run();
+      }
     } catch (Exception ex){
       if(ex is DebugConsole.PassingException p) throw p;
       else DebugConsole.Write($"reloading error: {ex}");
@@ -150,12 +161,15 @@ public class auspicioushelperModule : EverestModule {
     OnEnter(session);
     if(fromsave) Session?.load(session);
   }
-  
+
   [OnLoad.ILHook(typeof(Commands),"LoadIdLevel")]
+  static void OnEnterCommand(ILContext ctx)=>OnEnterManip(ctx, OnEnter);
+
   [OnLoad.ILHook(typeof(MapEditor),nameof(MapEditor.LoadLevel))]
   [OnLoad.ILHook(typeof(MapEditor),"orig_LoadLevel")]
   [OnLoad.ILHook(typeof(MapEditor),"MakeMapEditorBetter")]
-  static void OtherOnenter(ILContext ctx){
+  static void OnEnterDebug(ILContext ctx)=>OnEnterManip(ctx, OnDebugEnter);
+  static void OnEnterManip(ILContext ctx, Action<Session> choice){
     ILCursor c = new(ctx);
     VariableDefinition v = new(ctx.Import(typeof(Vector2?)));
     c.Body.Variables.Add(v);
@@ -173,6 +187,7 @@ public class auspicioushelperModule : EverestModule {
     } 
     if(flag) DebugConsole.WriteFailure("Could not add command onenter hook",false);
   }
+  
   public override void Load() {
     DebugConsole.Write("Loading");
     OnLoad.Run();
@@ -201,5 +216,9 @@ public class auspicioushelperModule : EverestModule {
     HookManager.disableAll();
     DebugConsole.Close();
     MapHider.setUnhide();
+  }
+  [Command("auspdebug_enableAllHooks", "enables all lazily loaded hooks in auspicioushelper")]
+  public static void EnableAllHooks(){
+    ResetEvents.Hooks<auspicioushelperModule>.enableAll();   
   }
 }

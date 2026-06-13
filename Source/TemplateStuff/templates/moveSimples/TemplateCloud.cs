@@ -26,7 +26,7 @@ public class TemplateCloud:TemplateDisappearer, ITemplateTriggerable{
     nextClouddir = d.ChannelVec2("cloudDir",0,1,true);
     followGravity = d.Bool("followGravity", false);
     sideCoyote = d.Bool("sideCoyote",false);
-    if(disableCbb = d.Bool("noDoubleBoost",true)) ResetEvents.LazyEnable(typeof(CloudboostBlocker));
+    if(disableCbb = d.Bool("noDoubleBoost",true)) ResetEvents.Hooks<CloudboostBlocker>.enable();
   }
   void Move(){
     pos+=Engine.DeltaTime*speed;

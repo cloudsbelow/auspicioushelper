@@ -17,13 +17,14 @@ namespace Celeste.Mod.auspicioushelper;
 public class RedbubbleSpeed:Trigger{
   float nspeed;
   public RedbubbleSpeed(EntityData d, Vector2 o):base(d,o){
-    hooks.enable();
+    ResetEvents.Hooks<RedbubbleSpeed>.enable();
     nspeed = d.Float("newSpeed",240f);
   }
   static float getSpeed(float oldspeed, Player p){
     if(p.CollideFirst<RedbubbleSpeed>() is {} t) return t.nspeed;
     return oldspeed;
   }
+  [ResetEvents.ILHook(typeof(Player), nameof(Player.RedDashCoroutine), Util.HookTarget.Coroutine)]
   static void CoroutineHook(ILContext ctx){
     ILCursor c = new(ctx);
     if(c.TryGotoNextBestFit(MoveType.After,
@@ -34,12 +35,4 @@ public class RedbubbleSpeed:Trigger{
       c.EmitDelegate(getSpeed);
     } else DebugConsole.WriteFailure("Failed to make redbubble speed hook",true);
   }
-  static ILHook coroutinehook;
-  static HookManager hooks = new(()=>{
-    MethodInfo dc = typeof(Player).GetMethod("RedDashCoroutine",BindingFlags.Instance | BindingFlags.NonPublic);
-    MethodInfo dc2 = dc.GetStateMachineTarget();
-    coroutinehook = new(dc2, CoroutineHook);
-  },()=>{
-
-  }, auspicioushelperModule.OnEnterMap);
 }

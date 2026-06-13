@@ -9,7 +9,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 public static partial class Util{
   public class ColorRemap{
-    [ResetEvents.ClearOn(ResetEvents.RunTimes.OnEnter)]
+    [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
     static Dictionary<string, ColorRemap> remaps = new();
     public static ColorRemap Get(string id){
       id = id.AsClean();

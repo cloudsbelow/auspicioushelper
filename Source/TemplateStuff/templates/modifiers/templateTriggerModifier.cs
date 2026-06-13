@@ -408,5 +408,5 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     IL.Celeste.Actor.MoveHExact-=HookMoveH;
     IL.Celeste.Actor.MoveVExact-=HookMoveV;
     coyoteHook.Dispose();
-  }, auspicioushelperModule.OnEnterMap);
+  }, ResetEvents.Times.LvlCleanup);
 }

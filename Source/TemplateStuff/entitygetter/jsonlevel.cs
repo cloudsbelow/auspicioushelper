@@ -26,7 +26,7 @@ public class EvilPackedTemplateRoom:Entity{
     public bool Equals(PackedRoomCacheKey other)=>offset==other.offset && worldpos==other.worldpos && id==other.id;
     public override readonly string ToString()=>$"id: {id}, room offset: {offset}, position: {worldpos-offset}";
   }
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   static Dictionary<PackedRoomCacheKey,List<MarkedRoomParser.TemplateRoom>> parsed = new();
   const int latestVersion = 1;
   public EvilPackedTemplateRoom(EntityData d,Vector2 offset):base(Vector2.Zero){

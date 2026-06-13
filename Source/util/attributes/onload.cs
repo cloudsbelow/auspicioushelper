@@ -32,15 +32,21 @@ public class OnLoad:Attribute{
     public LoadHook(Type ty, string method, Util.HookTarget mode=Util.HookTarget.Normal, params Type[] spec):
       this(ty,method,mode)=>types=spec;
   }
-  public class ILHook(Type ty, string method, Util.HookTarget mode=Util.HookTarget.Normal, params Type[] spec):
-    LoadHook(ty,method,mode,spec){
+  public class ILHook:LoadHook{
+    public ILHook(Type ty, string method, Util.HookTarget mode=Util.HookTarget.Normal, params Type[] spec):
+      base(ty,method,mode,spec){}
+    public ILHook(Type ty, string method, Util.HookTarget mode=Util.HookTarget.Normal):
+      base(ty,method,mode){}
     public override void Apply(MethodInfo m){
       if(Util.applyILHook(mode,m,ty,methodStr,types) is not {} hook) return;
       HookManager.cleanupActions.enroll(hook.Dispose, $"{ty}.{methodStr}: dispose ilhook {m}");
     }
   }
-  public class OnHook(Type ty, string method, Util.HookTarget mode=Util.HookTarget.Normal, params Type[] spec): 
-    LoadHook(ty,method,mode,spec){
+  public class OnHook:LoadHook{
+    public OnHook(Type ty, string method, Util.HookTarget mode=Util.HookTarget.Normal, params Type[] spec):
+      base(ty,method,mode,spec){}
+    public OnHook(Type ty, string method, Util.HookTarget mode=Util.HookTarget.Normal):
+      base(ty,method,mode){}
     public override void Apply(MethodInfo m){
       if(Util.ApplyOnhook(mode,m,ty,methodStr,types) is not {} hook) return;
       HookManager.cleanupActions.enroll(hook.Dispose, $"{ty}.{methodStr}: dispose onhook {m}");

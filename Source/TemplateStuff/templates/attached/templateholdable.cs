@@ -17,6 +17,7 @@ namespace Celeste.Mod.auspicioushelper;
 public interface ICustomHoldableRelease{
   bool replaceNormalRelease {get;}
   static Player releasing;
+  [ResetEvents.OnHook(typeof(Holdable),nameof(Holdable.Release))]
   static void ReleaseHook(On.Celeste.Holdable.orig_Release orig, Holdable s, Vector2 force){
     releasing = s.Holder;
     if(s.Entity is ICustomHoldableRelease c && c.replaceNormalRelease && s.OnRelease!=null){
@@ -32,6 +33,7 @@ public interface ICustomHoldableRelease{
     return speed.X;
   }
   Vector2 GetRecoil(Player p)=>new (80,0);
+  [ResetEvents.ILHook(typeof(Player),nameof(Player.Throw))]
   static void ThrowHook(ILContext ctx){
     ILCursor c = new(ctx);
     if(c.TryGotoNextBestFit(MoveType.After, i=>i.MatchLdcR4(80), i=>i.MatchLdarg0())){
@@ -40,19 +42,11 @@ public interface ICustomHoldableRelease{
     } else DebugConsole.WriteFailure("Could not add recoil hook", true);
   }
   bool TryPickup(Player p)=>true;
+  [ResetEvents.OnHook(typeof(Holdable),nameof(Holdable.Pickup))]
   static bool TryPickup(On.Celeste.Holdable.orig_Pickup orig, Holdable h, Player p){
     if(h.Entity is ICustomHoldableRelease c && !c.TryPickup(p)) return false;
     return orig(h,p);
   }
-  public static HookManager hooks = new(()=>{
-    On.Celeste.Holdable.Release+=ReleaseHook;
-    IL.Celeste.Player.Throw += ThrowHook;
-    On.Celeste.Holdable.Pickup += TryPickup;
-  },()=>{
-    On.Celeste.Holdable.Release-=ReleaseHook;
-    IL.Celeste.Player.Throw -= ThrowHook;
-    On.Celeste.Holdable.Pickup -= TryPickup;
-  },auspicioushelperModule.OnEnterMap);
 }
 
 [CustomEntity("auspicioushelper/templateholdable")]
@@ -102,6 +96,8 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
   ChannelState.BoolCh dontPickup;
   int down = 1;
   public TemplateHoldable(EntityData d, Vector2 offset):base(d.Position+offset){
+    ResetEvents.Hooks<TemplateHoldable>.enable();
+    
     Position+=new Vector2(d.Width/2, d.Height);
     hoffset = d.Nodes.Length>0?(d.Nodes[0]-new Vector2(d.Width/2, d.Height)):new Vector2(0,-d.Height/2);
     Collider = new Hitbox(d.Width,d.Height,-d.Width/2,-d.Height);
@@ -129,7 +125,6 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     LiftSpeedGraceTime = 0.1f;
     keepCollidableAlways = d.Bool("always_collidable",false);
     origpos = Position;
-    hooks.enable();
     this.d=d;
 
     playerfrac = d.ChannelFloat("player_momentum_weight",1);
@@ -517,6 +512,8 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     if(flag) te.setCollidability(false);
   }
   bool inRelpos=false;
+  
+  [ResetEvents.OnHook(typeof(Player),nameof(Player.Pickup))]
   static bool PickupHook(On.Celeste.Player.orig_Pickup orig, Player self, Holdable hold){
     bool ret =  orig(self, hold);
     if(ret && hold.Entity is TemplateHoldable t){
@@ -524,6 +521,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     }
     return ret;
   }
+  [ResetEvents.OnHook(typeof(Actor),nameof(Actor.MoveHExact))]
   static bool MoveHHook(On.Celeste.Actor.orig_MoveHExact orig, Actor self, int amount, Collision cb, Solid pusher){
     //DebugConsole.Write($"HereH", self, amount, pusher, self.Scene.TimeActive, self.Position.X, jumpthruMoving);
     if(/*(pusher != null || jumpthruMoving>0) &&*/ self is TemplateHoldable s && s.te!=null){
@@ -539,6 +537,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       return orig(self, amount, cb, pusher);
     }
   }
+  [ResetEvents.OnHook(typeof(Actor),nameof(Actor.MoveVExact))]
   static bool MoveVHook(On.Celeste.Actor.orig_MoveVExact orig, Actor self, int amount, Collision cb, Solid pusher){
     if(/*(pusher != null || jumpthruMoving>0) &&*/ self is TemplateHoldable s && s.te!=null){
       if(pusher?.Get<ChildMarker>()?.propagatesTo(s.te)??false) return false;
@@ -553,6 +552,7 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
       return orig(self, amount, cb, pusher);
     }
   }
+  [ResetEvents.OnHook(typeof(Player),nameof(Player.Update))]
   static void PlayerUpdateHook(On.Celeste.Player.orig_Update orig, Player p){
     TemplateHoldable flag = null;
     if(p.Holding != null && p.Holding.Entity is TemplateHoldable th && th.keepCollidableAlways){
@@ -563,20 +563,5 @@ public class TemplateHoldable:Actor, ICustomHoldableRelease{
     if(flag!=null){
       flag.te?.setCollidability(true);
     }
-  }
-  static HookManager hooks = new HookManager(()=>{
-    On.Celeste.Player.Pickup += PickupHook;
-    On.Celeste.Actor.MoveHExact+=MoveHHook;
-    On.Celeste.Actor.MoveVExact+=MoveVHook;
-    On.Celeste.Player.Update+=PlayerUpdateHook;
-    ICustomHoldableRelease.hooks.enable();
-  },()=>{
-    On.Celeste.Player.Pickup -= PickupHook;
-    On.Celeste.Actor.MoveHExact-=MoveHHook;
-    On.Celeste.Actor.MoveVExact-=MoveVHook;
-    On.Celeste.Player.Update-=PlayerUpdateHook;
-  },auspicioushelperModule.OnEnterMap);
-  public override string ToString() {
-    return base.ToString()+this.GetHashCode();
   }
 }

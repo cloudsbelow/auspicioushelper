@@ -244,7 +244,7 @@ public static class ChannelState{
     return val;
   }
   [Import.SpeedrunToolIop.Static]
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnExit,ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   private static Dictionary<string, ChannelVal> state = new ();
 
   public static double readChannel(string ch)=>_readChannel(Util.removeWhitespace(ch));

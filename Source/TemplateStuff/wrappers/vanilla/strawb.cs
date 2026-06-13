@@ -21,7 +21,7 @@ public class FeatherW:FlyFeather, ISimpleEnt{
   public Template parent {get;set;}
   public Vector2 toffset {get;set;}
   public FeatherW(EntityData d, Vector2 o):base(d,o){
-    ResetEvents.LazyEnable(typeof(FeatherW));
+    ResetEvents.Hooks<FeatherW>.enable();
   } 
   [ResetEvents.OnHook(typeof(FlyFeather),nameof(FlyFeather.Respawn))]
   static void Hook(On.Celeste.FlyFeather.orig_Respawn orig, FlyFeather s){

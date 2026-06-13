@@ -12,7 +12,8 @@ public static class MaddiesIop{
   public static Type samah;
   public static Util.FieldHelper<bool> side;
   public static Util.FieldHelper<Solid> playerInteractingSolid;
-  public static HookManager hooks = new(()=>{
+  [ResetEvents.RunOn(ResetEvents.Times.LvlCleanup)]
+  static void Get(){
     jt = Util.getModdedType("MaxHelpingHand","Celeste.Mod.MaxHelpingHand.Entities.SidewaysJumpThru");
     dt = Util.getModdedType("MaxHelpingHand","Celeste.Mod.MaxHelpingHand.Entities.UpsideDownJumpThru");
     at = Util.getModdedType("MaxHelpingHand","Celeste.Mod.MaxHelpingHand.Entities.AttachedSidewaysJumpThru");
@@ -20,5 +21,5 @@ public static class MaddiesIop{
     if(jt == null) return;
     side = new Util.FieldHelper<bool>(jt, "AllowLeftToRight", true);
     playerInteractingSolid = new(at,"playerInteractingSolid");
-  }, auspicioushelperModule.OnEnterMap);
+  }
 }

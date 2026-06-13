@@ -28,7 +28,6 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     prop &= ~Propagation.Riding;
     hitJumpthrus = data.Bool("hitJumpthrus",false);
     moveThroughDashblocks = data.Bool("throughDashblocks",false);
-    if(hitJumpthrus) MaddiesIop.hooks.enable();
   }
   bool dislocated = false;
   public bool detatched=>dislocated;

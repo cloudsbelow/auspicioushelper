@@ -42,6 +42,7 @@ public static class FmodIop{
       }
     }
   }
+  [OnLoad]
   public static void Register(){
     ChannelMathController.registerInterop("fmodP", (List<string> strs)=>{
       Vector2 cpos = ChannelMathController.callingController.Position;
@@ -96,7 +97,8 @@ public static class FmodIop{
       return 1;
     });
   }
-  public static HookManager cbs = new HookManager(Register,bool ()=>{
+  [ResetEvents.RunOn(ResetEvents.Times.NewAssets)]
+  static void Clean(){
     clean();
     foreach(var pair in evs){
       if(!trusted.Contains(pair.Key))Audio.Stop(pair.Value);
@@ -104,6 +106,5 @@ public static class FmodIop{
     evs.Clear();
     trusted.Clear();
     toremove.Clear();
-    return false;
-  },auspicioushelperModule.OnReset);
+  }
 } 
