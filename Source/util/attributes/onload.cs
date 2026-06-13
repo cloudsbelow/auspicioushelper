@@ -11,12 +11,6 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
-public static partial class Util{
-  [AttributeUsage(AttributeTargets.Method, AllowMultiple=false, Inherited=false)]
-  public class WithDetourCtx(int prio=0, string[] before=null, string[] after=null):Attribute{
-    public DetourConfig Get()=>new DetourConfig(nameof(auspicioushelper),prio,before,after){};
-  }
-}
 [AttributeUsage(AttributeTargets.Field|AttributeTargets.Method, AllowMultiple=true, Inherited=false)]
 public class OnLoad:Attribute{
   public OnLoad(){
@@ -25,87 +19,37 @@ public class OnLoad:Attribute{
     public virtual void Apply(MethodInfo m){}
     public virtual void Apply(FieldInfo f){}
   }
-  public class ILHook:CustomOnload{
-    string methodStr;
-    Type ty;
-    Util.HookTarget mode;
-    Type[] types=null;
-    public ILHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal){
+  public abstract class LoadHook:CustomOnload{
+    protected string methodStr;
+    protected Type ty;
+    protected Util.HookTarget mode;
+    protected Type[] types=null;
+    public LoadHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal){
       methodStr=method;
       this.ty=ty;
       this.mode=mode;
     }
-    public ILHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal, params Type[] spec):this(ty,method,mode)=>types=spec;
-    internal static MonoMod.RuntimeDetour.ILHook apply(Util.HookTarget mode, MethodInfo m, Type ty, string methodStr, Type[] spec = null){
-      if(mode == Util.HookTarget.Placeholder) return null;
-      var p = m.GetParameters();
-      var cfg = m.GetCustomAttribute<Util.WithDetourCtx>()?.Get();
-      if(p.Length!=1 || p[0].ParameterType!=typeof(ILContext) || !m.IsStatic){
-        DebugConsole.WriteFailure($"ILHook attr {m} on {ty}.{methodStr} illegal",true);
-      }
-      MethodBase methodbase = Util.GetMethod(ty,methodStr,mode,spec);
-      if(methodbase == null){
-        DebugConsole.WriteFailure($"Could not add hook to nonexistent method {ty}.{methodStr} ({mode})",true);
-        return null;
-      }
-      return new MonoMod.RuntimeDetour.ILHook(methodbase, (ILContext ctx)=>m.Invoke(null,[ctx]), cfg);
-    }
+    public LoadHook(Type ty, string method, Util.HookTarget mode=Util.HookTarget.Normal, params Type[] spec):
+      this(ty,method,mode)=>types=spec;
+  }
+  public class ILHook(Type ty, string method, Util.HookTarget mode=Util.HookTarget.Normal, params Type[] spec):
+    LoadHook(ty,method,mode,spec){
     public override void Apply(MethodInfo m){
-      var hook = apply(mode,m,ty,methodStr,types);
-      if(hook == null) return;
-      HookManager.cleanupActions.enroll(new ScheduledAction(hook.Dispose, $"dispose ILHOOK<{ty}> {methodStr}"));
+      if(Util.applyILHook(mode,m,ty,methodStr,types) is not {} hook) return;
+      HookManager.cleanupActions.enroll(hook.Dispose, $"{ty}.{methodStr}: dispose ilhook {m}");
     }
   }
-  public class OnHook:CustomOnload{
-    string methodStr;
-    Type ty;
-    Util.HookTarget mode;
-    Type[] types=null;
-    public OnHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal){
-      methodStr=method;
-      this.ty=ty;
-      this.mode=mode;
-    }
-    public OnHook(Type ty, string method, Util.HookTarget mode = Util.HookTarget.Normal, params Type[] spec):this(ty,method,mode)=>types=spec;
-    internal static Hook apply(Util.HookTarget mode, MethodInfo m, Type ty, string methodStr, Type[] spec=null){
-      if(mode == Util.HookTarget.Placeholder) return null;
-      var cfg = m.GetCustomAttribute<Util.WithDetourCtx>()?.Get();
-      if(!m.IsStatic){
-        DebugConsole.WriteFailure($"On hook attr {m} on {ty}.{methodStr} illegal",true);
-      }
-      MethodBase methodbase = Util.GetMethod(ty,methodStr,mode,spec);
-      if(methodbase == null){
-        DebugConsole.WriteFailure($"Could not add hook to nonexistent method {ty}.{methodStr} ({mode})",true);
-        return null;
-      }
-      try{
-        return new Hook(methodbase, m, cfg);
-      }catch(Exception ex){
-        throw new Exception($"Failed on hook on {ty}.{methodStr} using {m}: ${ex.Message}");
-      }
-    }
+  public class OnHook(Type ty, string method, Util.HookTarget mode=Util.HookTarget.Normal, params Type[] spec): 
+    LoadHook(ty,method,mode,spec){
     public override void Apply(MethodInfo m){
-      var hook = apply(mode,m,ty,methodStr,types);
-      if(hook == null) return;
-      HookManager.cleanupActions.enroll(new ScheduledAction(hook.Dispose, $"dispose ONHOOK<{ty}> {methodStr}"));
+      if(Util.ApplyOnhook(mode,m,ty,methodStr,types) is not {} hook) return;
+      HookManager.cleanupActions.enroll(hook.Dispose, $"{ty}.{methodStr}: dispose onhook {m}");
     }
   }
-  public class EverestEvent:CustomOnload{
-    Type type;
-    string evstr;
-    public EverestEvent(Type ty, string evstr){
-      this.type = ty; this.evstr = evstr;
-    }
-    internal static Action apply(MethodInfo m, Type t, string ev){
-      var evt = t.GetEvent(ev);
-      var delType = evt.EventHandlerType;
-      var del = Delegate.CreateDelegate(delType,null,m);
-      evt.AddEventHandler(null,del);
-      return ()=>evt.RemoveEventHandler(null,del);
-    }
+  public class EverestEvent(Type type, string evstr):CustomOnload{
     public override void Apply(MethodInfo m){
-      var v = apply(m,type,evstr);
-      HookManager.cleanupActions.enroll(new ScheduledAction(v, $"dispose {m} on everest event {type}.{evstr}"));
+      if(Util.applyEverestEvent(m,type,evstr) is not {} ev) return;
+      HookManager.cleanupActions.enroll(ev, $"{type}.{evstr} dispose everest event {m}");
     }
   }
   public static void Run(){
@@ -130,26 +74,5 @@ public class OnLoad:Attribute{
         }
       }
     }
-  }
-}
-
-public partial class Util{
-  public enum HookTarget{
-    Normal, Coroutine, PropGet, PropSet, Placeholder
-  }
-  public static MethodBase GetMethod(Type ty, string methodStr, HookTarget mode, Type[] types){
-    if(methodStr == "") return types==null?ty.GetConstructors()[0]:ty.GetConstructor(Util.GoodBindingFlags,types);
-    if(types!=null) return mode switch{
-      HookTarget.Normal=>ty.GetMethod(methodStr, Util.GoodBindingFlags, types),
-      HookTarget.Coroutine=>ty.GetMethod(methodStr, Util.GoodBindingFlags, types)?.GetStateMachineTarget(),
-      _=>null
-    }; 
-    else return mode switch {
-      HookTarget.Normal=>ty.GetMethod(methodStr, Util.GoodBindingFlags),
-      HookTarget.Coroutine=>ty.GetMethod(methodStr, Util.GoodBindingFlags)?.GetStateMachineTarget(),
-      HookTarget.PropGet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetGetMethod(true),
-      HookTarget.PropSet=>ty.GetProperty(methodStr, Util.GoodBindingFlags)?.GetSetMethod(true),
-      _=>null
-    };
   }
 }
