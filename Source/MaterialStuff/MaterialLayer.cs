@@ -64,13 +64,13 @@ internal class LayerMarkingEntity:Entity{
   }
   public override void Removed(Scene scene) {
     if(layer.enabled && layer.markingEntity == this){
-      DebugConsole.Write($"Layer is still active! is it ok {layer}!");
+      MaterialPipe.removeLayer(layer);
     }
     base.Removed(scene);
   }
   public override void SceneEnd(Scene scene) {
     if(layer.enabled && layer.markingEntity == this){
-      DebugConsole.Write($"Layer is still active! is it ok {layer}!");
+      MaterialPipe.removeLayer(layer);
     }
     base.SceneEnd(scene);
   }
@@ -143,6 +143,7 @@ public class BasicMaterialLayer:IMaterialLayerSimple, IOverrideVisuals{
   }
   public virtual void onRemove(){
     foreach(var h in handles)h.Free();
+    // DebugConsole.Write($"disabled layer {NiceName()}");
   }
   bool dirtyWilldraw=false;
   public List<OverrideVisualComponent> willdraw=new();

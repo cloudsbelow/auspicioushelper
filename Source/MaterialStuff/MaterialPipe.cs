@@ -21,6 +21,7 @@ public static class MaterialPipe {
   static public bool check(IMaterialLayer l)=>layers.Contains(l);
   [ResetEvents.RunOn(ResetEvents.Times.LvlCleanup)]
   static void Clear(){
+    foreach(var l in layers) if(l.enabled) l.onRemove();
     layers.Clear();
     entering.Clear();
     leaving.Clear();
@@ -220,11 +221,5 @@ public static class MaterialPipe {
   public static void SceneEnd(On.Celeste.Level.orig_End orig, Level l){
     foreach(var v in layers) removeLayer(v);
     orig(l);
-  }
-  [ResetEvents.RunOn(ResetEvents.Times.LvlCleanup)]
-  public static void Cleanup(){
-    foreach(var l in layers) removeLayer(l);
-    toRemove.Clear();
-    layers.Clear();
   }
 }

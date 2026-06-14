@@ -238,6 +238,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisualsEasy, Template.
       bounceAny |= colliding && comp.dbm.bounce;
       return (comp,colliding);
     });
+    if(li.Count==0 && p.dreamBlock is SentinalDb sdb) bounceAny=sdb.parent.bounce;
     if(!bounceAny) return false;
     Vector2 mult = Vector2.One;
     Collider orig = p.Collider;

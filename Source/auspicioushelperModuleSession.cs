@@ -25,7 +25,13 @@ public class auspicioushelperModuleSession : EverestModuleSession {
   public int transitions = 0;
 
   public void save(){
-    if(respDat==null) channelData = ChannelState.save();
+    if(respDat==null){
+      channelData = ChannelState.save();
+      foreach(var (k,v) in channelData) if(k.StartsWith(ChannelState.SavedataPrefix)){
+        DebugConsole.Write("Flushed savedata", k,v);
+        auspicioushelperModule.SaveData.savedataChannels[k] = v;
+      }
+    }
   }
   public void load(Session s){
     if(respDat is {} r && s!=null){
