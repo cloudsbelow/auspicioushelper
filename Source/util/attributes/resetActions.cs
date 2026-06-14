@@ -85,7 +85,7 @@ public static class ResetEvents{
     public static Times enable(){
       if(enabled) return times;
       enabled = true;
-      DebugConsole.Write($"Tried to enable", typeof(T), lazyClassStuff.GetValueOrDefault(typeof(T))?.Count);
+      DebugConsole.Write($"Enabling lazy hooks in", typeof(T), lazyClassStuff.GetValueOrDefault(typeof(T))?.Count);
 
       Times childTimes = Times.None;
       var cur = typeof(T);

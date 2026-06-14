@@ -48,8 +48,9 @@ public static partial class Util{
       And, AndShortcircut, Or, OrShortcircuit
     }
     InvocationMode mode;
-    public FunctionList(InvocationMode mode = InvocationMode.OrShortcircuit){
+    public FunctionList(InvocationMode mode = InvocationMode.OrShortcircuit, params Func<T1,bool>[] initial){
       this.mode = mode;
+      foreach(var fn in initial) Add(fn);
     }
     public void Add(Func<T1,bool> n){
       if(!funcs.Contains(n))funcs.Add(n);

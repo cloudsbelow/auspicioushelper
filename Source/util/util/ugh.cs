@@ -123,6 +123,14 @@ public static partial class Util{
     for(int i=0; i<data.Count; i++) res.Add(pred(data[i]));
     return res;
   } 
+  public static List<T2> MapAndFilter<T1,T2>(this List<T1> data, Func<T1,(T2, bool)> pred){
+    List<T2> res = new();
+    for(int i=0; i<data.Count; i++){
+      var (r, yes) = pred(data[i]);
+      if(yes) res.Add(r);
+    }
+    return res;
+  } 
   public static List<T2> Map<T1,T2>(this List<T1> data, Func<T1,int,T2> pred){
     List<T2> res = new(data.Count);
     for(int i=0; i<data.Count; i++) res.Add(pred(data[i],i));

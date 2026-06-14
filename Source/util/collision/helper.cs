@@ -1,6 +1,8 @@
 
 
 
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using Monocle;
 
@@ -38,5 +40,25 @@ public static class CollisionExtensions{
   }
   public static bool OnGroundCached(this Actor a, ref CachedCollision cache, Vector2 at, int downCheck=1){
     using(new Util.AutoRestore<Vector2>(ref a.Position, at)) return OnGroundCached(a,ref cache, downCheck);
+  }
+}
+
+public class QuickCollider<T>{
+  List<(FloatRect, T)> items = new();
+  FloatRect bounds = FloatRect.empty;
+  public int Count=>items.Count;
+  public void Add(T item, FloatRect itemBounds){
+    items.Add(new(itemBounds,item));
+    bounds = bounds._union(itemBounds);
+  }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public IEnumerable<T> Test(FloatRect test){
+    if(!bounds.CollideFr(test)) yield break;
+    foreach(var i in items) if(i.Item1.CollideFr(test)) yield return i.Item2;
+  }
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public IEnumerable<T> TestPoint(Vector2 test){
+    if(!bounds.CollidePoint(test)) yield break;
+    foreach(var i in items) if(i.Item1.CollidePoint(test)) yield return i.Item2;
   }
 }

@@ -21,24 +21,10 @@ using MonoMod.Utils;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateDreamblockModifier")]
-public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IRegisterEnts{
+public class TemplateDreamblockModifier:Template,IOverrideVisualsEasy, Template.IRegisterEnts{
   public HashSet<OverrideVisualComponent> comps  {get;set;}= new();
-  public void AddC(OverrideVisualComponent c)=>comps.Add(c);
-  public void RemoveC(OverrideVisualComponent c)=>comps.Remove(c);
-  public bool dirty {get;set;}
   static Dictionary<Type, Collider> colTypes = new();
-  bool triggerOnEnter;
-  bool triggerOnLeave;
-  bool useVisuals = true;
-  bool reverse=false;
-  bool conserve=false;
-  public class DreamInfo:TriggerInfo{
-    bool exiting;
-    Vector2 dir;
-    bool trigger=true;
-    public DreamInfo(bool exiting, bool trigger, Vector2 dir){
-      this.exiting=exiting;this.trigger=trigger;this.dir=dir;
-    }
+  public class DreamInfo(bool exiting, bool trigger, Vector2 dir):TriggerInfo{
     public override bool shouldTrigger => trigger;
     public override string category=> $"Dream/{exiting}/{dir.X},{dir.Y}";
   }
@@ -49,20 +35,21 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     public DreamMarkerComponent(TemplateDreamblockModifier t, Collider c = null):base(false,false){
       Collider = c; dbm = t;
     }
+    public bool IsColliding(Entity item){
+      if(!dbm.dreaming || Entity.Collidable == false) return false;
+      if(Collider==null) return item.CollideCheck(Entity);
+      Collider orig = Entity.Collider;
+      Entity.Collider=Collider;
+      var flag = item.CollideCheck(Entity);
+      Entity.Collider=orig;
+      return flag;
+    }
     public static DreamBlock CheckContinue(DreamBlock db, Player p){
       if(db!=null) return db;
       foreach(DreamMarkerComponent c in p.Scene.Tracker.GetComponents<DreamMarkerComponent>()){
-        if(!c.dbm.dreaming || c.Entity.Collidable == false) continue;
-        bool flag=false;
-        if(c.Collider==null) flag = p.CollideCheck(c.Entity);
-        else{
-          Collider orig = c.Entity.Collider;
-          c.Entity.Collider=c.Collider;
-          flag = p.CollideCheck(c.Entity);
-          c.Entity.Collider=orig;
-        }
-        if(flag){
+        if(c.IsColliding(p)){
           c.dbm.fake.lastEntity=c.Entity;
+          if(c.dbm.bounce) Anti0fZone.SolidAnti0fComp.AddReason(p, "bouncedb", ()=>p.StateMachine.State==Player.StDreamDash);
           return c.dbm.fake;
         } 
       }
@@ -72,15 +59,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
       p.Position.Y+=1;
       bool flag=false;
       foreach(DreamMarkerComponent c in p.Scene.Tracker.GetComponents<DreamMarkerComponent>()){
-        if(!c.dbm.dreaming || c.Entity.Collidable == false) continue;
-        if(c.Collider==null) flag = p.CollideCheck(c.Entity);
-        else{
-          Collider orig = c.Entity.Collider;
-          c.Entity.Collider=c.Collider;
-          flag = p.CollideCheck(c.Entity);
-          c.Entity.Collider=orig;
-        }
-        if(flag) break;
+        if(flag=c.IsColliding(p)) break;
       }
       p.Position.Y-=1;
       return flag;
@@ -92,12 +71,9 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     public SentinalDb():base(null,Vector2.Zero){}
   }
   SentinalDb fake;
-  string channel;
-  bool allowTransition;
-  string customVisualGroup;
-  bool priority;
-  bool tryDashhit;
-  bool sendDashhit;
+  string channel, customVisualGroup;
+  bool priority, tryDashhit, sendDashhit, triggerOnEnter, triggerOnLeave;
+  bool reverse, conserve, bounce, useVisuals, allowTransition;
   public TemplateDreamblockModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateDreamblockModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,offset+d.Position,depthoffset){
@@ -108,6 +84,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
     useVisuals = d.Bool("useVisuals",true);
     reverse = d.Bool("reverse",false);
     conserve = d.Bool("conserve",false);
+    bounce = d.Bool("bounce",false);
     allowTransition = d.Bool("allowTransition",false);
     customVisualGroup = d.Attr("customVisualGroup", "");
     priority = d.Bool("priority",true);
@@ -247,10 +224,42 @@ public class TemplateDreamblockModifier:Template,IOverrideVisuals, Template.IReg
       GetFromTree<ITemplateTriggerable>()?.OnTrigger(new DreamInfo(false, triggerOnEnter, p.DashDir));
       p.dreamBlock = fake;
       fake.lastEntity = from;
+      if(bounce) Anti0fZone.SolidAnti0fComp.AddReason(p, "bouncedb", ()=>p.StateMachine.State==Player.StDreamDash);
       if(from?.Get<ChildMarker>()?.parent is { } entparent) p.LiftSpeed = entparent.gatheredLiftspeed;
       if(sendDashhit) ((ITemplateChild) this).propagateDashhit(p,dir);
     }
     return flag;
+  }
+  public static bool tryBounce(Player p){
+    bool bounceAny=false;
+    var li = p.Scene.Tracker.GetComponents<DreamMarkerComponent>().MapAndFilter(x=>{
+      var comp = (DreamMarkerComponent) x;
+      bool colliding = comp.IsColliding(p);
+      bounceAny |= colliding && comp.dbm.bounce;
+      return (comp,colliding);
+    });
+    if(!bounceAny) return false;
+    Vector2 mult = Vector2.One;
+    Collider orig = p.Collider;
+    FloatRect origShape = new FloatRect(p);
+    if(p.Speed.X!=0){
+      var x = p.Collider.Left + (p.Speed.X>0?p.Collider.Width-1:0);
+      p.Collider = new Hitbox(1,2, x,p.Collider.CenterY-1);
+      foreach(var c in li) if(c.IsColliding(p)) goto no;
+      if(p.CollideCheck<Solid>()) mult.X=-1;
+      no:;
+      p.Collider = orig;
+    }
+    if(p.Speed.Y!=0){
+      var y = p.Collider.Top + (p.Speed.Y>0?p.Collider.Height-1:0);
+      p.Collider = new Hitbox(2,1, p.Collider.CenterX-1,y);
+      foreach(var c in li) if(c.IsColliding(p)) goto no;
+      if(p.CollideCheck<Solid>()) mult.Y=-1;
+      no:;
+      p.Collider = orig;
+    }
+    p.Speed *= mult;
+    return mult!=Vector2.One;
   }
   bool dreaming=true;
   static bool Eligible(Player p){

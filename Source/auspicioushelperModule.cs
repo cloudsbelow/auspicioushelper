@@ -103,24 +103,29 @@ public class auspicioushelperModule : EverestModule {
       if(ex is DebugConsole.PassingException p) throw p;
     }
   }
+  [ResetEvents.NullOn(ResetEvents.Times.NewAssets)]
+  static bool resetInDebug;
   static void OnDebugEnter(Session session){
-    ResetEvents.OnNewScreen.run();
-    ResetEvents.OnLvlReset.run();
-    
-    if(session?.MapData!=null){
-      MapenterEv.Run(session.MapData);
-      MarkedRoomParser.parseMapdata(session.MapData);
-      DebugConsole.Write("Entered Level");
-    } else DebugConsole.Write("Session or mapdata null");
+    //We narrowly avoid disaster since SRT clears state on reload. If it did not,
+    //the srt thjrough a debug map-occupying reload would cause the world to end.
+    if(resetInDebug) OnEnter(session); //thjis case blows up if SRT keeps state
+    else{
+      ResetEvents.OnNewScreen.run();   //this case blows up if assets have changed
+      ResetEvents.OnLvlReset.run();   
+    }
   }
 
   [OnLoad.EverestEvent(typeof(Everest.Events.Level), nameof(Everest.Events.Level.OnExit))]
   static void OnExit(Level l, LevelExit e, LevelExit.Mode m, Session s, HiresSnow h){
-    DebugConsole.Write("Level exit");
+    DebugConsole.Write("Level exit", m);
     ResetEvents.OnLvlReset.run();
     ResetEvents.OnNewScreen.run();
-    ResetEvents.OnNewAssets.run();
-    ResetEvents.OnLvlCleanup.run();
+    if(m!=LevelExit.Mode.Restart && m!=LevelExit.Mode.GoldenBerryRestart){
+      ResetEvents.OnNewAssets.run();
+      ResetEvents.OnLvlCleanup.run();
+    } else {
+      ChannelState.clearChannels();
+    }
   }
 
   public static int CACHENUM;
@@ -142,18 +147,13 @@ public class auspicioushelperModule : EverestModule {
         MarkedRoomParser.parseMapdata(l.Level.Session.MapData);
       } else if(Engine.Instance.scene is MapEditor editor){
         ResetEvents.OnNewAssets.run();
+        resetInDebug = true;
       }
     } catch (Exception ex){
       if(ex is DebugConsole.PassingException p) throw p;
       else DebugConsole.Write($"reloading error: {ex}");
     }
     Session?.load(null);
-  }
-
-  [OnLoad.OnHook(typeof(Level),nameof(Level.GiveUp))]
-  public static void GiveUp(On.Celeste.Level.orig_GiveUp orig, Level l,int returnIndex, bool restartArea, bool minimal, bool showHint){
-    ChannelState.clearChannels();
-    orig(l,returnIndex,restartArea,minimal,showHint);
   }
   
   [OnLoad.EverestEvent(typeof(Everest.Events.Level),nameof(Everest.Events.Level.OnEnter))]
@@ -180,7 +180,7 @@ public class auspicioushelperModule : EverestModule {
     )){
       c.EmitStloc(v);
       c.EmitDup();
-      c.EmitDelegate(OnEnter);
+      c.EmitDelegate(choice);
       c.EmitLdloc(v);
       c.Index+=2;
       flag=false;

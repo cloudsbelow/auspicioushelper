@@ -78,7 +78,7 @@ public class TrackedCassette:Cassette{
       }
     }
   }
-  [ResetEvents.ILHook(typeof(Cassette),nameof(CollectRoutine))]
+  [ResetEvents.OnHook(typeof(Cassette),nameof(CollectRoutine))]
   private static IEnumerator collectRoutineHook(On.Celeste.Cassette.orig_CollectRoutine orig, Cassette self, Player player){
     bool priorSessionstate = self.SceneAs<Level>().Session.Cassette;
     if(self is TrackedCassette c){

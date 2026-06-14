@@ -5,13 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks.Dataflow;
-using IL.Celeste.Mod.UI;
-using Microsoft.VisualBasic;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Monocle;
-using MonoMod.Utils;
 using FloatVec = System.Numerics.Vector<float>;
 using Vec = System.Numerics.Vector;
 

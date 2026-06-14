@@ -17,9 +17,10 @@ entity.placements = {
       player_colliders = true,
       always_walljumpcheck = false,
       triggers = false,
-      solids = false,
+      solids = true,
       cover_whole_room=false,
       ForceGroundCollide = "None",
+      minImmediateSteps = "",
     }
   }
 }
