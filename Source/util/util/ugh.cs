@@ -113,6 +113,13 @@ public static partial class Util{
     }
     return n;
   }
+  public static int[] ArgSort<T>(this List<T> items, Comparison<T> comp){
+    int count = items.Count;
+    int[] arr = new int[count];
+    for(int i=0; i<count; i++) arr[i]=i;
+    arr.Sort((a,b)=>comp(items[a],items[b]));
+    return arr;
+  }
   public static T2[] Map<T1,T2>(this T1[] data, Func<T1,T2> pred){
     T2[] res = new T2[data.Length];
     for(int i=0; i<data.Length; i++)res[i] = pred(data[i]);
