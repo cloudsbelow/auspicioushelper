@@ -209,6 +209,7 @@ public class ConditionalStrawb:Entity, IStrawberry{
     state=Strawb.idling;
     Collidable = true;
   }
+  [OnLoad.OnHook(typeof(Player),nameof(Player.Die))]
   public static PlayerDeadBody handleDie(On.Celeste.Player.orig_Die orig, Player p, Vector2 dir, bool b1, bool b2){
     Session session = p.level.Session;
     var e = p.Leader.Followers.FirstOrDefault(x=>x.Entity is ConditionalStrawb s && s.deathless)?.Entity;
@@ -234,6 +235,7 @@ public class ConditionalStrawb:Entity, IStrawberry{
     ent.Position = p.Position;
     Engine.Instance.scene.Add(ent);
   }
+  [OnLoad.OnHook(typeof(Player),"")]
   public static void playerCtorHook(On.Celeste.Player.orig_ctor orig, Player p, Vector2 pos, PlayerSpriteMode s){
     orig(p,pos,s);
     //DebugConsole.Write("here in strawb");
@@ -241,12 +243,4 @@ public class ConditionalStrawb:Entity, IStrawberry{
       if(e.data.Name == "auspicioushelper/ConditionalStrawb" || e.data.Name == "auspicioushelper/ConditionalStrawbTracked") restoreFollower(p,e);
     }
   }
-  [OnLoad]
-  public static HookManager hooks = new HookManager(()=>{
-    On.Celeste.Player.ctor += playerCtorHook;
-    On.Celeste.Player.Die += handleDie;
-  }, void ()=>{
-    On.Celeste.Player.ctor -= playerCtorHook;
-    On.Celeste.Player.Die -= handleDie;
-  });
 }
