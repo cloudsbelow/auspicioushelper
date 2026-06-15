@@ -152,7 +152,7 @@ public class JuckterField:Entity{
     foreach(var l in locs) bounds=bounds.union_(l);
     Depth = -100000;
     size = new(d.Width,d.Height);
-    ResetEvents.LazyEnable(typeof(IColliderWrapper));
+    ResetEvents.Hooks<IColliderWrapper>.enable();
   }
   void AddEnt(Entity e, int i){
     JuckterBase.Set(e,this,i);

@@ -133,7 +133,6 @@ public static class HookVanilla{
       lpos = wrapped.Position;
     }
   }
-  static FgOver thing;
   [OnLoad.ILHook(typeof(DashBlock),nameof(DashBlock.Awake))]
   [OnLoad.ILHook(typeof(FakeWall),nameof(FakeWall.Added))]
   [OnLoad.ILHook(typeof(CoverupWall),nameof(CoverupWall.Added))]

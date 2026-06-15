@@ -11,8 +11,8 @@ namespace Celeste.Mod.auspicioushelper;
 public class ChannelFadeTrigger:Trigger{
   string channel;
   string activeChannel;
-  FloatChannel from;
-  FloatChannel to;
+  ChannelState.FloatCh from;
+  ChannelState.FloatCh to;
   private PositionModes positionMode;
   bool active=true;
   byte onlyOnce;

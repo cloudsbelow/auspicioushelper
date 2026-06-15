@@ -18,7 +18,7 @@ public class LiftspeedThing:Trigger{
   static LinkedList<Settings> overRules = new();
   [Import.SpeedrunToolIop.Static]
   static Settings appliedRules = new();
-  [ResetEvents.RunOn(ResetEvents.RunTimes.OnReset)]
+  [ResetEvents.RunOn(ResetEvents.Times.LvlReset)]
   static void fix(){
     appliedRules = new();
     overRules.Clear();
@@ -39,7 +39,7 @@ public class LiftspeedThing:Trigger{
   Settings rules;
   bool everywhere;
   public LiftspeedThing(EntityData d, Vector2 o):base(d,o){
-    hooks.enable();
+    ResetEvents.Hooks<LiftspeedThing>.enable();
     rules = new(){
       disable = d.Bool("dontGiveLiftspeed",false),
       gracetimeMultiplier = d.Float("gracetimeMultiplier",1),
@@ -66,7 +66,7 @@ public class LiftspeedThing:Trigger{
     ownNode = null;
     FixRules();
   }
-  static Hook lsh;
+  [ResetEvents.OnHook(typeof(Actor), nameof(Actor.LiftSpeed), Util.HookTarget.PropSet)]
   static void SetHook(Action<Actor,Vector2> orig, Actor a, Vector2 ls){
     if(a is Player p){
       if(appliedRules.disable) {
@@ -103,11 +103,5 @@ public class LiftspeedThing:Trigger{
       c.EmitDelegate(BoostOnce);
     }
   }
-  static HookManager hooks = new(()=>{
-    lsh = new Hook(typeof(Actor).GetProperty(nameof(Actor.LiftSpeed)).SetMethod,SetHook);
-  },()=>{
-    lsh.Dispose();
-    FixRules();
-  }, auspicioushelperModule.OnEnterMap);
 }
 

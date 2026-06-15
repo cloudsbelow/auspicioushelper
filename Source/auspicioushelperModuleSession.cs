@@ -25,7 +25,13 @@ public class auspicioushelperModuleSession : EverestModuleSession {
   public int transitions = 0;
 
   public void save(){
-    if(respDat==null) channelData = ChannelState.save();
+    if(respDat==null){
+      channelData = ChannelState.save();
+      foreach(var (k,v) in channelData) if(k.StartsWith(ChannelState.SavedataPrefix)){
+        DebugConsole.Write("Flushed savedata", k,v);
+        auspicioushelperModule.SaveData.savedataChannels[k] = v;
+      }
+    }
   }
   public void load(Session s){
     if(respDat is {} r && s!=null){
@@ -50,7 +56,7 @@ public class auspicioushelperModuleSession : EverestModuleSession {
     [OnLoad.OnHook(typeof(Level),nameof(Level.Reload))]
     static void Hook(On.Celeste.Level.orig_Reload orig, Level s){
       if(auspicioushelperModule.Session?.respDat is {} r){
-        if(s.Session.Level!=r.level) auspicioushelperModule.OnNewScreen.run(); 
+        if(s.Session.Level!=r.level) ResetEvents.OnNewScreen.run(); 
         s.Session.Level=r.level; 
         s.Session.RespawnPoint=r.loc;
         orig(s);

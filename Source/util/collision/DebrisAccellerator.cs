@@ -111,28 +111,6 @@ public class FastDebris:Actor{
       foreach(NeedsAcceleratorComp c in nc) if(c.Entity.Active) c.onTree();
     }
   }
-
-  static bool Hook(On.Celeste.Actor.orig_MoveHExact orig, Actor a, int move, Collision oncollide, Solid pusher){
-    if(a is FastDebris d && pusher != null){
-      d.NaiveMove(Vector2.UnitX*move);
-      return false;
-    }
-    return orig(a,move,oncollide,pusher);
-  }
-  static bool Hook(On.Celeste.Actor.orig_MoveVExact orig, Actor a, int move, Collision oncollide, Solid pusher){
-    if(a is FastDebris d && pusher != null){
-      d.NaiveMove(Vector2.UnitY*move);
-      return false;
-    }
-    return orig(a,move,oncollide,pusher);
-  }
-  static HookManager hooks = new HookManager(()=>{
-    On.Celeste.Actor.MoveHExact+=Hook;
-    On.Celeste.Actor.MoveVExact+=Hook;
-  },()=>{
-    On.Celeste.Actor.MoveHExact-=Hook;
-    On.Celeste.Actor.MoveVExact-=Hook;
-  });
 }
 
 [Pooled]

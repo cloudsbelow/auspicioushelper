@@ -23,13 +23,14 @@ entity.placements = {
       allowTransition=false,
       tryDashhit=true,
       sendDashhit=false,
+      bounce=false,
       
       _loenn_display_template = true,
     }
   }
 }
 entity.fieldOrder = {
-  "x","y", "template","depthoffset", "normalChannel","customVisualGroup","reverse","conserve","triggerOnEnter","triggerOnLeave"
+  "x","y", "template","depthoffset", "normalChannel","customVisualGroup","reverse","conserve","bounce","allowTransition","triggerOnEnter","triggerOnLeave"
 }
 entity.fieldInformation = function(entity)
     return {

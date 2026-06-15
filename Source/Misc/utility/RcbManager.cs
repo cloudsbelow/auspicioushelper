@@ -17,7 +17,7 @@ public class RcbHelper{
     is checking the wall to their left, we use RIGHT.
   */
   public static void give(bool dir_right, float pos, int frames=2){
-    ResetEvents.LazyEnable(typeof(RcbHelper));
+    ResetEvents.Hooks<RcbHelper>.enable();
     if(dir_right){
       if(rightframes>0) right = Math.Max(pos,right);
       else right = pos;

@@ -26,7 +26,7 @@ public class PixelLeniencyTrigger:Trigger{
     }
   }
   static Ruleset defaultRules=>new(){staticSlip=0, fallingSlip=0, maxGroundedStep=0, maxStepSlope=0, fallDepth=3, snapDown=0, forceSlip=false};
-  [ResetEvents.RunOn(ResetEvents.RunTimes.OnReset)]
+  [ResetEvents.RunOn(ResetEvents.Times.LvlReset)]
   static void SetRules(){
     curRules = defaultRules;
     overRules.Clear();
@@ -45,7 +45,7 @@ public class PixelLeniencyTrigger:Trigger{
   public static void SetCurrent(Ruleset r, bool onlyIfDefault = false){
     if(onlyIfDefault && !curRules.Equals(defaultRules)) return;
     curRules = r;
-    ResetEvents.LazyEnable(typeof(PixelLeniencyTrigger));
+    ResetEvents.Hooks<PixelLeniencyTrigger>.enable();
     FixRules();    
   }
   public PixelLeniencyTrigger(EntityData d, Vector2 o):base(d,o){
@@ -58,7 +58,7 @@ public class PixelLeniencyTrigger:Trigger{
     rules.forceSlip = d.Bool("alwaysForceSlip",true);
     temp = d.Bool("onlyWhenInside");
     setOnAwake = d.Bool("setOnAwake");
-    ResetEvents.LazyEnable(typeof(PixelLeniencyTrigger));
+    ResetEvents.Hooks<PixelLeniencyTrigger>.enable();
   }
   LinkedListNode<Ruleset> ownNode;
   public override void Awake(Scene scene) {

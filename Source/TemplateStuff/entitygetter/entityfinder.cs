@@ -14,14 +14,14 @@ using MonoMod.RuntimeDetour;
 namespace Celeste.Mod.auspicioushelper;
 
 public static partial class Finder{
-  [ResetEvents.NullOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.NullOn(ResetEvents.Times.NewAssets)]
   static List<Action<Entity>> finding = null;
-  [ResetEvents.NullOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.NullOn(ResetEvents.Times.NewAssets)]
   static Entity last = null;
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   public static Dictionary<string, List<Action<Entity>>> flagged = new();
 
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   [Import.SpeedrunToolIop.Static]
   static Dictionary<string, List<TypeHandlerCallback>> typeHandler = new();
   public class TypeHandlerCallback(Action<Entity> action):OnAnyRemoveComp(false,false){
@@ -79,7 +79,7 @@ public static partial class Finder{
       "Please remember to format your path to match: \\d+(/\\d+)*");
     }
   }
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   static HashSet<(string,string)> waiting=new();
   public static void enqueueIdent(string path, string ident=null){
     ident??=path;

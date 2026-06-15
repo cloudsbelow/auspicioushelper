@@ -56,12 +56,10 @@ public abstract class ITexture{
   }
   public class ImageWrapper:ITexture{
     static Dictionary<string, Texture2D> cached = new();
-    static ImageWrapper(){
-      auspicioushelperModule.OnEnterMap.enroll(new ScheduledAction(()=>{
-        foreach(var c in cached) c.Value.Dispose();
-        cached.Clear();
-        return false;
-      },"clear cached images"));
+    [ResetEvents.RunOn(ResetEvents.Times.NewAssets)]
+    static void Clear(){
+      foreach(var c in cached) c.Value.Dispose();
+      cached.Clear();
     }
     public override Texture2D tex {get;}
     public ImageWrapper(string gfxPath){

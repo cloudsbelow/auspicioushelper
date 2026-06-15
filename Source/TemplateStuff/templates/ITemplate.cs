@@ -110,7 +110,7 @@ public class Template:Entity, ITemplateChild{
     this.Visible = false;
     Depth = 10000+depthoffset;
     this.ownidpath=getOwnID(data);
-    MovementLock.skiphooks.enable();
+    ResetEvents.Hooks<MovementLock>.enable();
     SourceData = data;
     if(string.IsNullOrEmpty(templateStr) && !ChainLock.locked){
       EmptySetup(data);
@@ -120,7 +120,7 @@ public class Template:Entity, ITemplateChild{
   public Template(Vector2 pos, int depthoffset=0):base(pos){
     this.Visible = false;
     Depth = 10000+depthoffset;
-    MovementLock.skiphooks.enable();
+    ResetEvents.Hooks<MovementLock>.enable();
     this.ownidpath="";
   }
   public virtual void relposTo(Vector2 loc, Vector2 parentLiftspeed){
@@ -158,7 +158,6 @@ public class Template:Entity, ITemplateChild{
     lastRoundloc=orig;
   }
   public bool PropagateEither(Template other,Propagation req){
-    DebugConsole.Write("lalaa",this,other,this.parent,other.parent, this.prop, other.prop);
     Template c=other;
     while(c!=null){
       if(c==this) return true;
@@ -168,7 +167,7 @@ public class Template:Entity, ITemplateChild{
     c=this;
     while(c!=null){
       if(c==other) return true;
-      if((c.prop & req)!= req) {DebugConsole.Write("breaking", c.prop); break;};
+      if((c.prop & req)!= req) break;
       c=c.parent;
     }
     return false;
@@ -198,7 +197,7 @@ public class Template:Entity, ITemplateChild{
   public void MarkExpanded()=>expanded=true;
   public bool isExpanded=>expanded;
   struct RecursionMarker:IDisposable{
-    [ResetEvents.NullOn(ResetEvents.RunTimes.OnReset)]
+    [ResetEvents.NullOn(ResetEvents.Times.LvlReset)]
     static int count=0;
     public RecursionMarker(){count++;}
     void IDisposable.Dispose(){count--;}
@@ -513,6 +512,7 @@ public class MovementLock:IDisposable{
       alreadyX.Clear(); alreadyY.Clear();
     }
   }
+  [ResetEvents.OnHook(typeof(Actor),nameof(Actor.MoveHExact))]
   static bool moveHHook(On.Celeste.Actor.orig_MoveHExact orig, Actor self, int move, Collision cb, Solid pusher){
     if(pusher == null && cb == null && canSkip){
       if(alreadyX.Contains(self))return false;
@@ -522,6 +522,7 @@ public class MovementLock:IDisposable{
     }
     return orig(self, move, cb, pusher);
   }
+  [ResetEvents.OnHook(typeof(Actor),nameof(Actor.MoveVExact))]
   static bool moveVHook(On.Celeste.Actor.orig_MoveVExact orig, Actor self, int move, Collision cb, Solid pusher){
     if(pusher == null && cb == null && canSkip){
       if(alreadyY.Contains(self)){
@@ -535,6 +536,7 @@ public class MovementLock:IDisposable{
     }
     return orig(self, move, cb, pusher);
   }
+  [ResetEvents.OnHook(typeof(Actor),nameof(Actor.NaiveMove))]
   static void naiveMoveHook(On.Celeste.Actor.orig_NaiveMove orig, Actor self, Vector2 move){
     if(canSkip){
       if(alreadyX.Contains(self))move.X=0;
@@ -544,6 +546,7 @@ public class MovementLock:IDisposable{
     }
     orig(self,move);
   }
+  [ResetEvents.ILHook(typeof(Solid),nameof(Solid.MoveHExact))]
   static void SolidIL(ILContext ctx){
     ILCursor c = new(ctx);
     ILLabel targ=null;
@@ -565,15 +568,4 @@ public class MovementLock:IDisposable{
   }
   public static bool movedX(Actor a)=>alreadyX.Contains(a);
   public static bool movedY(Actor a)=>alreadyY.Contains(a);
-  public static HookManager skiphooks = new HookManager(()=>{
-    On.Celeste.Actor.MoveHExact+=moveHHook;
-    On.Celeste.Actor.MoveVExact+=moveVHook;
-    On.Celeste.Actor.NaiveMove+=naiveMoveHook;
-    IL.Celeste.Solid.MoveHExact+=SolidIL;
-  },void ()=>{
-    On.Celeste.Actor.MoveHExact-=moveHHook;
-    On.Celeste.Actor.MoveVExact-=moveVHook;
-    On.Celeste.Actor.NaiveMove-=naiveMoveHook;
-    IL.Celeste.Solid.MoveHExact-=SolidIL;
-  }, auspicioushelperModule.OnEnterMap);
 }

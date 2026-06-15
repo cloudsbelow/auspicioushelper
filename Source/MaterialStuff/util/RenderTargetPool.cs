@@ -15,13 +15,6 @@ public static class RenderTargetPool{
   public const int maxCanUse = 128;
   [Import.SpeedrunToolIop.Static]
   public static Stack<int> available = new();
-  static RenderTargetPool(){
-    Clear();
-    auspicioushelperModule.OnEnterMap.enroll(new ScheduledAction(()=>{
-      Clear();
-      return false;
-    },"RenderTargetPool Clear"));
-  }
   public static int currentWidth {get; private set;} = 320;
   public static int currentHeight {get; private set;} = 180;
   public static Vector2 pixelSize=>new Vector2(1/(float)currentWidth,1/(float)currentHeight);
@@ -54,7 +47,7 @@ public static class RenderTargetPool{
     }
     public void Claim(){
       if(index != -1) throw new Exception("Handle already allocated");
-      if(available.Count ==0) throw new Exception("Render target pool is empty");
+      if(available.Count ==0) throw new Exception($"Render target pool is empty");
       index = available.Pop();
       instate = state;
       if(index>=Pool.Count){
@@ -83,6 +76,7 @@ public static class RenderTargetPool{
     auspicioushelperGFX.gd.Clear(Color.Red);
   }
   public static RenderTargetHandle zero;
+  [ResetEvents.RunOn(ResetEvents.Times.LvlCleanup)]
   public static void Clear(){
     foreach(var v in Pool) v.Dispose();
     Pool.Clear();
@@ -96,4 +90,5 @@ public static class RenderTargetPool{
     auspicioushelperGFX.gd.Clear(Color.Red);
     Resize(320,180,true);
   }
+  static RenderTargetPool()=>Clear();
 }

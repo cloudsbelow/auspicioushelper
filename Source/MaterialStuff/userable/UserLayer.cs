@@ -189,7 +189,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
   HashSet<OverrideVisualComponent> waiting = null;
   //[Import.SpeedrunToolIop.Static]
   static HashSet<UserLayer> hasWaiting = new();
-  [ResetEvents.RunOn(ResetEvents.RunTimes.OnReset)]
+  [ResetEvents.RunOn(ResetEvents.Times.NewAssets)]
   public static void ClearWaiting(){
     foreach(var l in hasWaiting) l.waiting = null;
     hasWaiting.Clear();

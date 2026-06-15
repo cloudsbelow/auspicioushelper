@@ -13,7 +13,7 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/DecalRecolor")]
 [MapenterEv(nameof(Preload))]
 public class DecalRecolor:Entity{
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   [Import.SpeedrunToolIop.Static]
   static Util.Trie<Util.SetStack<Util.ColorRemap>> Recolors=new();
   public ref struct DecalRerouter:IDisposable{
@@ -30,11 +30,11 @@ public class DecalRecolor:Entity{
   enum Scopes{
     invalid, wholeMap, wholeRoom, areaOnly
   }
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReset)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   [Import.SpeedrunToolIop.Static]
   static List<(FloatRect,DecalRecolor)> zones = new();
   static void Preload(EntityData d){
-    hooks.enable();
+    ResetEvents.Hooks<DecalRecolor>.enable();
     if(d.Enum<Scopes>("scope",Scopes.wholeMap)==Scopes.wholeMap)Apply(d);
   }
   static Handle Apply(string tex, string val){
@@ -68,6 +68,7 @@ public class DecalRecolor:Entity{
     base.Removed(scene);
     if(scope==Scopes.wholeRoom)Unapply(hs);
   }
+  [ResetEvents.OnHook(typeof(Decal),nameof(Decal.orig_ctor))]
   static void DecalCtor(Action<Decal,string,Vector2,Vector2,int> orig, Decal self, string tex, Vector2 pos, Vector2 scale, int depth){
     if(Recolors.TryGet(tex.RemoveSuffix(".png"), out var st) && st.Count>0) { 
       Util.ColorRemap remap=st.Peek();
@@ -89,14 +90,4 @@ public class DecalRecolor:Entity{
     base.Added(scene);
     RemoveSelf();
   }
-  static Hook ctorhook;
-  public static HookManager hooks = new(()=>{
-    // On.Celeste.Decal.Added+=DecalAdded;
-    // On.Celeste.Decal.Awake+=DecalAwake;
-    ctorhook = new Hook(typeof(Decal).GetMethod(nameof(Decal.orig_ctor)), DecalCtor);
-  },()=>{
-    // On.Celeste.Decal.Added-=DecalAdded;
-    // On.Celeste.Decal.Awake-=DecalAwake;
-    ctorhook.Dispose();
-  });
 }

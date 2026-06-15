@@ -102,7 +102,6 @@ public class TemplateCassetteManager:Entity{
       }
       ini = new timingDesc().fromDict(Util.kvparseflat(d.Attr("onactivate","")));
       deini = new timingDesc().fromDict(Util.kvparseflat(d.Attr("ondeactivate")));
-      hooks.enable();
     } else {
       subordinate = true;
       material = new();
@@ -226,6 +225,7 @@ public class TemplateCassetteManager:Entity{
     }
     Advance(Engine.DeltaTime);
   }
+  [OnLoad.OnHook(typeof(Celeste),nameof(Celeste.Freeze))]
   static void onFreeze(On.Celeste.Celeste.orig_Freeze orig, float amount){
     if(Engine.FreezeTimer<amount){
       foreach(TemplateCassetteManager m in Engine.Instance.scene.Tracker.GetEntities<TemplateCassetteManager>()){
@@ -234,9 +234,4 @@ public class TemplateCassetteManager:Entity{
     }
     orig(amount);
   }
-  static HookManager hooks = new(()=>{
-    On.Celeste.Celeste.Freeze += onFreeze;
-  }, ()=>{
-    On.Celeste.Celeste.Freeze -= onFreeze;
-  }, auspicioushelperModule.OnEnterMap);
 }

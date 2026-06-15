@@ -9,5 +9,5 @@ namespace Celeste.Mod.auspicioushelper;
 public class auspicioushelperModuleSaveData : EverestModuleSaveData {
   
   public HashSet<string> collectedTrackedCassettes = new HashSet<string>();
-  public Dictionary<string, int> savedataChannels = new();
+  public Dictionary<string, double> savedataChannels = new();
 }

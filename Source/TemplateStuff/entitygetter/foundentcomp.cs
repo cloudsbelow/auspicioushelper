@@ -15,7 +15,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 public class FoundEntity:OnAnyRemoveComp{
   Util.HybridSet<string> idents = new();
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   [Import.SpeedrunToolIop.Static]
   static Dictionary<string, FoundEntity> found = new();
   public FoundEntity():base(false,false){}

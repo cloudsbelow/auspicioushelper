@@ -56,7 +56,7 @@ public interface CachedUserMaterial:IMaterialLayer{
 [Tracked]
 internal class MaterialController:Entity{
   static Dictionary<string, CachedUserMaterial> loadedMats = new();
-  [ResetEvents.RunOn(ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.RunOn(ResetEvents.Times.NewAssets)]
   static void Reload(){
     loadedMats.Clear();
     if((Engine.Instance.scene as LevelLoader)?.Level is {} l){

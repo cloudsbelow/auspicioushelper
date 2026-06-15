@@ -13,7 +13,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateBehaviorChain")]
 public class TemplateBehaviorChain:Entity{
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReset)]
+  [ResetEvents.ClearOn(ResetEvents.Times.LvlReset | ResetEvents.Times.ChangeScreen)]
   public static Dictionary<Vector2,EntityData> mainRoom=new();
   [OnLoad]
   public static void setup(){

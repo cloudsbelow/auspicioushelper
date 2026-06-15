@@ -20,6 +20,7 @@ internal class PartialTiles{
   public static MTexture tex = null;
   public static MTexture ttex = null;
   const ulong FULL = ulong.MaxValue;
+  [ResetEvents.NullOn(ResetEvents.Times.LvlCleanup)]
   public static bool usingPartialtiles = false;
   static void HookBefore(XmlElement tileset){
     if(tileset.HasAttribute("ausp_partialtiles")){
@@ -30,7 +31,8 @@ internal class PartialTiles{
       }
       DebugConsole.Write($"Setting up PartialTiles for {(tileset.HasAttribute("displayName")?tileset.Attr("displayName"):tileset.Attr("path"))}");
       usingPartialtiles = true;
-      ResetEvents.LazyEnable(typeof(PixelLeniencyTrigger));
+      ResetEvents.Hooks<PartialTiles>.enable();
+      ResetEvents.Hooks<PixelLeniencyTrigger>.enable();
     } else {
       tex = (ttex = null);
     }
@@ -88,6 +90,8 @@ internal class PartialTiles{
     if(ter.Masked!=null) foreach(var m in ter.Masked) Add(m.Tiles,masks);
     tex = (ttex = null);
   }
+
+  [OnLoad.ILHook(typeof(Autotiler),"")]
   public static void ParseHook(ILContext ctx){
     var c = new ILCursor(ctx);
     if(c.TryGotoNextBestFit(MoveType.After, 
@@ -126,6 +130,7 @@ internal class PartialTiles{
     }
     return null;
   }
+  [ResetEvents.OnHook(typeof(Autotiler),nameof(Autotiler.Generate))]
   static Autotiler.Generated CapturingHook(On.Celeste.Autotiler.orig_Generate orig, Autotiler self, 
     VirtualMap<char> mapData, int startX, int startY, int tilesX, int tilesY, bool forceSolid, char forceID, Autotiler.Behaviour behaviour
   ){
@@ -139,7 +144,9 @@ internal class PartialTiles{
     } else gen = orig(self, mapData, startX,startY,tilesX,tilesY,forceSolid,forceID,behaviour);
     return gen;
   }
+
   static SolidTiles building;
+  [ResetEvents.OnHook(typeof(SolidTiles),"")]
   static void HookSolidtiles(On.Celeste.SolidTiles.orig_ctor orig, SolidTiles self, Vector2 position, VirtualMap<char> data){
     if(self is FgTiles || !usingPartialtiles){
       orig(self, position, data);
@@ -148,13 +155,7 @@ internal class PartialTiles{
     building = self;
     orig(self, position, data);
     self.Collider = new MiptileCollider(new(capturing), Vector2.One);
-    //MipGrid m = new(capturing);
     capturing = null; 
-    // DebugConsole.Write("Setting captruing to null");
-    // DebugConsole.Write("layer height", m.layers.Count);
-    // DebugConsole.Write(MipGrid.getBlockstr(m.layers[0].getBlock(18,18)));
-    // //1 Int2{1817, 1581} Int2{1825, 1592} 2176 2024
-    // DebugConsole.Write("Result:", m.collideInFrame(IntRect.fromCorners(new(1817, 1581),new(1825, 1592))));
   }
   static bool MatchGenarea(ILCursor c, MoveType m, int tilesloc){
     return c.TryGotoNextBestFit(m,
@@ -165,6 +166,7 @@ internal class PartialTiles{
       //i=>i.MatchCallvirt(typeof(VirtualMap<Monocle.MTexture>), "set_Item")
     );
   }
+  [ResetEvents.ILHook(typeof(Autotiler),nameof(Autotiler.Generate))]
   static void GenerateHook(ILContext ctx){
     ILCursor c= new(ctx);
     for(int i=0; i<2; i++){
@@ -189,25 +191,8 @@ internal class PartialTiles{
       DebugConsole.WriteFailure("Could not make hooks for partial capturing",true);
   }
 
-  static PersistantAction resetState;
-  [Command("ausp_usingPartialtiles","Whether the map is currently using partialtiles")]
+  [Command("auspdebug_usingPartialtiles","Whether the map is currently using partialtiles")]
   public static void ausp_usingPartialtiles(){
     Engine.Commands.Log($"Partial tiles: {(usingPartialtiles?"on":"off")}");
   }
-  [OnLoad]
-  public static HookManager hooks = new(()=>{
-    IL.Celeste.Autotiler.ctor += ParseHook;
-    IL.Celeste.Autotiler.Generate += GenerateHook;
-    On.Celeste.Autotiler.Generate += CapturingHook;
-    On.Celeste.SolidTiles.ctor += HookSolidtiles;
-    auspicioushelperModule.OnEnterMap.enroll(resetState = new(()=>{
-      usingPartialtiles = false;
-    }));
-  },()=>{
-    IL.Celeste.Autotiler.ctor -= ParseHook;
-    IL.Celeste.Autotiler.Generate -= GenerateHook;
-    On.Celeste.Autotiler.Generate -= CapturingHook;
-    On.Celeste.SolidTiles.ctor -= HookSolidtiles;
-    resetState.remove();
-  });
 }

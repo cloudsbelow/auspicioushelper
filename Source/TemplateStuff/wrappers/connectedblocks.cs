@@ -69,7 +69,6 @@ public class ConnectedBlocks:Entity{
   }
   public const int padding = 1;
   static void processScene(Scene scene, Int2 levelOffset){
-    MaddiesIop.hooks.enable();
     List<(IntRect,ConnectedBlocks)> allThings = new();
     foreach(ConnectedBlocks c in scene.Tracker.GetEntities<ConnectedBlocks>()) if(!c.used){
       allThings.Add(new(new(c),c));

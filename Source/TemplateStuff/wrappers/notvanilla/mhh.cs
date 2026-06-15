@@ -16,7 +16,6 @@ public class MaddiesStuff{
       set=>base.parent = value;
     }
     public SidewaysJt(Entity w, Template parent):base(parent){
-      MaddiesIop.hooks.enable();
       wrapped = w;
       allowLeftToRight = MaddiesIop.side.get(wrapped);
       wrapped.Add(this);

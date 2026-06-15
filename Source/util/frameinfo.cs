@@ -16,7 +16,7 @@ public class UpdateHook:Component{
       lockctr--;
     }
     public static bool locked=>lockctr>0;
-    [ResetEvents.ClearOn(ResetEvents.RunTimes.OnExit)]
+    [ResetEvents.ClearOn(ResetEvents.Times.LvlCleanup)]
     public static List<Action> afterUpd = new();
     static bool updateBefore = false;
     static bool updateAfter = false;
@@ -60,7 +60,7 @@ public class UpdateHook:Component{
   public Action beforeAction=null;
   public Action afterAction=null;
   public bool updatedThisFrame = false;
-  [ResetEvents.NullOn(ResetEvents.RunTimes.OnNewScreen)]
+  [ResetEvents.NullOn(ResetEvents.Times.ChangeScreen)]
   public static float TimeSinceTransMs=0;
   public static HashSet<string> updateListFlags = new();
   static bool updating = false;

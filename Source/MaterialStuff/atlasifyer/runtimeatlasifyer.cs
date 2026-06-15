@@ -13,7 +13,7 @@ namespace Celeste.Mod.auspicioushelper;
 public static class Atlasifyer{
   static Dictionary<string, MTexture> contains=new();
   static List<MTexture> texs=new();
-  [ResetEvents.RunOn(ResetEvents.RunTimes.OnEnter)]
+  [ResetEvents.RunOn(ResetEvents.Times.LvlCleanup)]
   public static void Reset(){
     if(texs.Count>0)DebugConsole.Write("Clearing atlases");
     contains.Clear();

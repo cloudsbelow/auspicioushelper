@@ -15,8 +15,10 @@ using MonoMod.Utils;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/water")]
-[TrackedAs(typeof(Water))]
-public class FancyWater:Water, ISimpleEnt{
+//[TrackedAs(typeof(Water))]
+[Tracked]
+public class FancyWater:Entity,ISimpleEnt{
+  const float SurfaceInset = 5;
   public Vector2 toffset {get;set;}
   public Template parent {get;set;}
   Template.Propagation ITemplateChild.prop=>Template.Propagation.Riding | Template.Propagation.Shake;
@@ -27,7 +29,7 @@ public class FancyWater:Water, ISimpleEnt{
   }
   Edges edges = Edges.none;
   FloatRect relativeDraw;
-  public FancyWater(EntityData d, Vector2 o):base(d.Position+o,false,false,d.Width,d.Height){
+  public FancyWater(EntityData d, Vector2 o):base(d.Position+o/*,false,false,d.Width,d.Height*/){
     if(d.Bool("hasTop",true))edges|=Edges.top;
     if(d.Bool("hasBottom",false))edges|=Edges.bottom;
     if(d.Bool("hasLeft",false))edges|=Edges.left;
@@ -35,8 +37,9 @@ public class FancyWater:Water, ISimpleEnt{
     Vector2 tlc = new(edges.HasFlag(Edges.left)?8:0,edges.HasFlag(Edges.top)?8:0);
     Vector2 brc = new Vector2(Width,Height)-new Vector2(edges.HasFlag(Edges.right)?8:0,edges.HasFlag(Edges.bottom)?8:0);
     relativeDraw = FloatRect.fromCorners(tlc,brc);
-    addSurfacesSimple(new(Width,Height));
-    TopSurface = new FakeTopsurface(this);
+    //addSurfacesSimple(new(Width,Height));
+    //TopSurface = new FakeTopsurface(this);
+    Collider = new Hitbox(d.Width,d.Height);
   }
   void ITemplateChild.relposTo(Vector2 loc, Vector2 ls){
     Vector2 delta = (loc+toffset)-Position;
@@ -48,11 +51,42 @@ public class FancyWater:Water, ISimpleEnt{
     Position = loc+toffset;
   }
   public override void Render(){
-    Draw.Rect(Position.X+relativeDraw.x,Position.Y+relativeDraw.y, relativeDraw.w,relativeDraw.h,Color.Red);
-    if(surfaces.Count>0){
-      GameplayRenderer.End();
-      foreach(var surface in surfaces) surface.Render(Position);
-      GameplayRenderer.Begin();
+    // Draw.Rect(Position.X+relativeDraw.x,Position.Y+relativeDraw.y, relativeDraw.w,relativeDraw.h,Color.Red);
+    // if(surfaces.Count>0){
+    //   GameplayRenderer.End();
+    //   foreach(var surface in surfaces) surface.Render(Position);
+    //   GameplayRenderer.Begin();
+    // }
+    if(!leader) return;
+    var (s,f) = thing;
+    foreach(var r in f){
+      Draw.Rect(r.x,r.y,r.w,r.h,Color.Blue*0.3f);
+      Draw.HollowRect(r.x,r.y,r.w,r.h,Color.Blue);
+    }
+    var cs = new List<Color>(){Color.White, Color.Yellow, Color.Green, Color.LightGray};
+    for(int i=0; i<s.Count; i++){
+      var c = cs[i%cs.Count];
+      foreach(var e in s[i]){
+        Draw.Line(e.a,e.b,c);
+      }
+    }
+  }
+  bool leader = true;
+  (List<List<EdgeFinder.Segment>>, List<FloatRect>) thing;
+  public override void Awake(Scene scene) {
+    base.Awake(scene);
+    if(!leader) return;
+    List<FloatRect> bounds = new();
+    List<Edges> edges = new();
+    foreach(FancyWater fw in scene.Tracker.GetEntities<FancyWater>()){
+      if(fw!=this) fw.leader=false;
+      bounds.Add(new(fw));
+      edges.Add(fw.edges);
+    }
+    try{
+      thing = EdgeFinder.Find(bounds,edges);
+    } catch(Exception ex){
+      DebugConsole.Write("ex",ex);
     }
   }
   bool ITemplateChild.hasPlayerRider()=>UpdateHook.cachedPlayer?.CollideCheck(this)??false;
@@ -63,7 +97,7 @@ public class FancyWater:Water, ISimpleEnt{
       point = p; normal = n;
     }
   }
-  List<BentSurface> surfaces = new();
+  /*List<BentSurface> surfaces = new();
   class BentSurface{
     Edgepoint[] points;
     VertexPositionColor[] mesh;
@@ -219,97 +253,242 @@ public class FancyWater:Water, ISimpleEnt{
     }while((dir=nextCCWOuter(dir))!=Edges.top);
     if(current.Count>0) surfaces.Add(new(current,loop));
   }
+  */
   static float sixtyfac = MathF.Sqrt(3)/2;
   static Vector2 sixty(Vector2 m, Vector2 s)=>m*sixtyfac+s/2;
-  Int2 edgeToVec(Edges e)=> e switch{
+  static Int2 edgeToVec(Edges e)=> e switch{
     Edges.left=>new(-1,0),
     Edges.right=>new(1,0),
     Edges.top=>new(0,-1),
     Edges.bottom=>new(0,1),
     _=>throw new Exception("non singular edge")
   };
-  Edges nextCCWInner(Edges e)=> e switch{
+  static Edges nextCCWInner(Edges e)=> e switch{
     Edges.left=>Edges.bottom,
     Edges.right=>Edges.top,
     Edges.top=>Edges.left,
     Edges.bottom=>Edges.right,
     _=>throw new Exception("non singular edge")
   };
-  Edges nextCCWOuter(Edges e)=> e switch{
+  static Edges nextCCWOuter(Edges e)=> e switch{
     Edges.left=>Edges.top,
     Edges.right=>Edges.bottom,
     Edges.top=>Edges.right,
     Edges.bottom=>Edges.left,
     _=>throw new Exception("non singular edge")
   };
-  class FakeTopsurface:Surface{
+  class FakeTopsurface:Water.Surface{
     FancyWater fw;
     public FakeTopsurface(FancyWater w):base(Vector2.Zero,-Vector2.UnitY,0,0){
       fw=w;
     }
-    [OnLoad.OnHook(typeof(Surface),nameof(Surface.DoRipple))]
-    static void Hook(On.Celeste.Water.Surface.orig_DoRipple o, Surface s, Vector2 p, float str){
-      if(s is FakeTopsurface fts){fts.fw.DoRipple(p,str);}
+    [OnLoad.OnHook(typeof(Water.Surface),nameof(Water.Surface.DoRipple))]
+    static void Hook(On.Celeste.Water.Surface.orig_DoRipple o, Water.Surface s, Vector2 p, float str){
+      if(s is FakeTopsurface fts){}//fts.fw.DoRipple(p,str)
       else o(s,p,str);
     }
   }
-  // bool CollectCCW(Dictionary<Int2, Edges> e, MipGrid.Layer cull, Int2 at, Edges edge, List<Edgepoint> into){
-  //   Int2 dir = edgeToVec(edge);
-  //   e[at] = e[at]&~edge;
-  //   Edges no = nextCCWOuter(edge);
-  //   Edges ni = nextCCWInner(edge);
-  //   if(!e.GetValueOrDefault(at+edgeToVec(no)).HasFlag(edge))
-  //   if(cull.collidePoint(at+dir)){
-  //     if(e.GetValueOrDefault(at+dir).HasFlag(ni)) return CollectCCW(e,cull,at,ni,into);
-  //   }
-  //   return false;
-  // }
-  // List<Edgepoint> extractEdges(Dictionary<Int2, Edges> e, MipGrid.Layer cull){
-  //   return null;
-  // }
-  // void Build(List<FancyWater> things, SolidTiles occlude){
-  //   MiptileCollider.fromGrid(occlude.Collider as Grid);
-  //   List<IntRect> bounds = things.Map(x=>new IntRect(x));
-  //   Int2 tlc = bounds.ReduceMap(x=>x.tlc,Int2.Min,Int2.One*int.MaxValue);
-  //   Int2 extents = bounds.ReduceMap(x=>x.brc-tlc, Int2.Max, Int2.Zero);
-  //   MipGrid.Layer inside = new((extents.x+7)/8,(extents.y+7)/8);
-  //   foreach(var b in bounds)inside.SetRect(true, b.tlc-tlc, b.brc-tlc);
-  //   Dictionary<Int2, Edges> e = new();
-  //   for(int i=0; i<things.Count; i++){
-  //     var f = things[i];
-  //     var b = bounds[i];
-  //     if(f.edges.HasFlag(Edges.left)) for(int j=0; j<b.h; j++){
-  //       Int2 loc = new Int2(b.x,b.y+j)-tlc;
-  //       e[loc] = e.GetValueOrDefault(loc) | Edges.left;
-  //     }
-  //     if(f.edges.HasFlag(Edges.right)) for(int j=0; j<b.h; j++){
-  //       Int2 loc = new Int2(b.x+b.w-1,b.y+j)-tlc;
-  //       e[loc] = e.GetValueOrDefault(loc) | Edges.right;
-  //     }
-  //     if(f.edges.HasFlag(Edges.top)) for(int j=0; j<b.h; j++){
-  //       Int2 loc = new Int2(b.x+j,b.y)-tlc;
-  //       e[loc] = e.GetValueOrDefault(loc) | Edges.top;
-  //     }
-  //     if(f.edges.HasFlag(Edges.left)) for(int j=0; j<b.h; j++){
-  //       Int2 loc = new Int2(b.x+j,b.y+b.h-1)-tlc;
-  //       e[loc] = e.GetValueOrDefault(loc) | Edges.bottom;
-  //     }
-  //   }
-  // }
-  // bool searched = false;
-  // void ITemplateChild.templateAwake(){
-  //   if(!searched){
-  //     List<FancyWater> l = new();
-  //     foreach(var c in parent.children) if(c is FancyWater w && !w.searched) l.Add(w);
-  //     Build(l, parent.fgt);
-  //   }
-  // }
-  // public override void Awake(Scene scene){
-  //   base.Awake(scene);
-  //   if(!searched){
-  //     List<FancyWater> l = new();
-  //     foreach(var w in scene.Tracker.GetEntities<Water>()) if(w is FancyWater fw && fw.parent==null && !fw.searched) l.Add(fw);
-  //     Build(l, (scene as Level).SolidTiles);
-  //   }
-  // }
+  
+
+
+
+  static class EdgeFinder{
+    static (List<float>, Dictionary<float,int>) Ordering(IEnumerable<float> items){
+      Dictionary<float,int> found = new();
+      foreach(var i in items) found[i]=0;
+      List<float> sorted = found.Keys.ToList();
+      sorted.Sort();
+      for(int i=0; i<sorted.Count; i++) found[sorted[i]]=i;
+      return (sorted,found);
+    }
+    record struct EdgeInnerSegment(){
+      public int a,b;
+      public bool c1,c2,used;
+      public Edges edge;
+      public override string ToString()=> $"Edge<{edge}>(a<{c1}>:{a}, b<{c2}>:{b})";
+    }
+    struct RawEdge(){
+      public int r,a,b;
+      public Edges edge = Edges.none;
+      public override string ToString()=> $"RawEdge<{edge}>({r}: {a},{b})";
+    }
+    public struct Segment(){
+      public Vector2 a,b;
+      public Edges edge;
+      public override string ToString()=> $"Segment<{edge}>({a} -> {b})";
+    }
+    static Edges getInRange(List<RawEdge> items, int low, int high, int interval){
+      Edges ret = Edges.none;
+      for(int i=low; i<high; i++){
+        var descr = items[i];
+        if(descr.a<=interval && descr.b>interval) ret|=descr.edge;
+      }
+      return ret;
+    }
+    static List<EdgeInnerSegment>[] getSegments(int rs, int w, bool reverse, List<RawEdge> opening, List<RawEdge> closing){
+      opening.Sort(reverse? static(a,b)=>b.r-a.r : static (a,b)=>a.r-b.r);
+      closing.Sort(reverse? static(a,b)=>b.r-a.r : static (a,b)=>a.r-b.r);
+      int oi = 0;
+      int ci = 0;
+      int[] c = new int[w];
+      int[] d = new int[w];
+      var ret = new List<EdgeInnerSegment>[rs];
+      // DebugConsole.Write($"get ({string.Join(" ", opening)}) ({string.Join(" ", closing)})");
+
+      for(int r=reverse? rs-1:0; r<rs && r>=0; r+=reverse? -1:1){
+        int loi = oi;
+        int lci = ci;
+        for(int i=0; i<w; i++) d[i]=c[i];
+        while(oi<opening.Count && opening[oi].r==r){
+          var descr = opening[oi];
+          for(int i=descr.a; i<descr.b; i++) c[i]++;
+          oi++;
+        }
+        while(ci<closing.Count && closing[ci].r==r){
+          var descr = closing[ci];
+          for(int i=descr.a; i<descr.b; i++) c[i]--;
+          ci++;
+        }
+        // DebugConsole.Write($"Line {r} ({string.Join(" ",d)}) -> ({string.Join(" ",c)})");
+        List<EdgeInnerSegment> ne = new();
+        EdgeInnerSegment oe = new(){a=0};
+        EdgeInnerSegment ce = new(){a=0};
+        for(int i=0; i<w; i++){
+          Edges hereOpen = (c[i]!=0 && d[i]==0)? getInRange(opening, loi, oi, i) : Edges.none;
+          Edges hereClose = (c[i]==0 && d[i]!=0)? getInRange(closing, lci, ci, i) : Edges.none;
+          if(oe.edge != hereOpen){
+            if(oe.edge != Edges.none) ne.Add(oe with {b=i, c2 = d[i]!=0});
+            oe = new(){a=i, edge=hereOpen, c1 = i!=0 && d[i-1]!=0};
+          }
+          if(ce.edge != hereClose){
+            if(ce.edge != Edges.none) ne.Add(ce with {a=i, c1 = c[i]!=0});
+            ce = new(){b=i, edge=hereClose, c2 = i!=0 && c[i-1]!=0};
+          }
+        }
+        ret[r] = ne.Count>0? ne:null;
+      }
+      return ret;
+    }
+    static (int, int, bool)? nextEdge(List<EdgeInnerSegment>[] h, List<EdgeInnerSegment>[] v,  (int, int, bool) edge, bool prev){
+      var (r,idx,vert) = edge;
+      EdgeInnerSegment e = (vert? v:h)[r][idx];
+      Edges ntype = (prev? !e.c1:e.c2)? nextCCWOuter(e.edge) : nextCCWInner(e.edge);
+      var arr = (vert? h:v)[prev? e.a:e.b];
+      if(arr!=null) for(int i=0; i<arr.Count; i++){
+         if(arr[i].edge==ntype && (prev? arr[i].b:arr[i].a)==r) return (prev? e.a:e.b, i, !vert); 
+      }
+      return null;
+    }
+    static List<(int, int, bool)> Extract(List<EdgeInnerSegment>[] h, List<EdgeInnerSegment>[] v,  (int, int, bool) start){
+      var cur = start;
+      while(nextEdge(h,v,cur,true) is { } prev && prev!=start) cur=prev;
+
+      var res = new List<(int, int, bool)>();
+      while(true){
+        var (r,i,vert) = cur;
+        var e = (vert? v:h)[r][i];
+        if(e.used) break;
+        (vert? v:h)[r][i] = e with {used=true};
+        res.Add(cur);
+        if(nextEdge(h,v,cur,false) is not {} next) break;
+        cur = next;
+      }
+      return res;
+    }
+
+    static List<IntRect> dif(List<IntRect> items, int numLow, int rs, int w){
+      var starts = items.ArgSort((a,b)=> a.x-b.x);
+      var ends = items.ArgSort((a,b)=> a.right - b.right);
+
+      int[] c = new int[w];
+      int si=0;
+      int ei=0;
+      Dictionary<(int,int), (int,int)> active = new();
+      List<IntRect> done = new();
+      for(int r=0; r<rs; r++){
+        while(si<starts.Length && items[starts[si]].x==r){
+          var idx = starts[si++];
+          var item = items[idx];
+          for(int i=item.top; i<item.bottom; i++) c[i] += idx<numLow? 1:-numLow;
+        }
+        while(ei<ends.Length && items[ends[ei]].right==r){
+          var idx = ends[ei++];
+          var item = items[idx];
+          for(int i=item.top; i<item.bottom; i++) c[i] -= idx<numLow? 1:-numLow;
+        }
+        int b=-1;
+        // DebugConsole.Write($"Line {r} ({string.Join(" ",c)})");
+        for(int i=0; i<w; i++){
+          if(b==-1 && c[i]>0) b=i;
+          if(b>=0 && c[i]<=0) {
+            if(active.TryGetValue((b,i), out var cur)) active[(b,i)]=(cur.Item1, r);
+            else active.Add((b,i),(r,r));
+            b=-1;
+          }
+        }
+        int ridx = done.Count;
+        foreach(var ((y1,y2),(x1,x2)) in active) if(x2!=r) done.Add(new(x1,y1, r-x1,y2-y1));
+        for(int i=ridx; i<done.Count; i++) active.Remove((done[i].y, done[i].bottom));
+      }
+      return done;
+    }
+
+    public static (List<List<Segment>>, List<FloatRect>) Find(List<FloatRect> rects, List<Edges> edges){
+      var (iToX, XToI) = Ordering(rects.Select(r=>r.x).Concat(rects.Select(r=>r.x+r.w)));
+      var (iToY, YToI) = Ordering(rects.Select(r=>r.y).Concat(rects.Select(r=>r.y+r.h)));
+      var toi = (Vector2 v)=>new Int2(XToI[v.X], YToI[v.Y]);
+      var tof = (int x, int y)=>new Vector2(iToX[x], iToY[y]);
+      var tofv = (Int2 v)=>new Vector2(iToX[v.x], iToY[v.y]);
+
+      var irs = rects.Map(r=>IntRect.fromCorners(toi(r.tlc), toi(r.brc)));
+      var hseg = getSegments(iToY.Count, iToX.Count, true,
+        irs.Map((ir, i)=>new RawEdge(){r=ir.y+ir.h, a=ir.x, b=ir.x+ir.w, edge=edges[i]&Edges.bottom}),
+        irs.Map((ir, i)=>new RawEdge(){r=ir.y, a=ir.x, b=ir.x+ir.w, edge=edges[i]&Edges.top})
+      );
+      var vseg = getSegments(iToX.Count, iToY.Count, false,
+        irs.Map((ir, i)=>new RawEdge(){r=ir.x, a=ir.y, b=ir.y+ir.h, edge=edges[i]&Edges.left}),
+        irs.Map((ir, i)=>new RawEdge(){r=ir.x+ir.w, a=ir.y, b=ir.y+ir.h, edge=edges[i]&Edges.right})
+      );
+
+      List<List<Segment>> ret = new();
+      List<FloatRect> neg = new();
+      for(int vert_=0; vert_<2; vert_++){
+        var li = vert_!=0? vseg:hseg;
+        for(int r=0; r<li.Length; r++) if(li[r]!=null){
+          for(int i=0; i<li[r].Count; i++) if(!li[r][i].used){
+            var arr = Extract(hseg, vseg, (r,i,vert_!=0));
+            ret.Add(arr.Map(x=>{
+              var (r,i,vert) = x;
+              var e = (vert? vseg:hseg)[r][i];
+              Segment s = new(){
+                edge=e.edge, 
+                a=vert? tof(r, e.a):tof(e.a, r), 
+                b=vert? tof(r, e.b):tof(e.b, r)
+              };
+              neg.Add(FloatRect.fromCornersUnordered(s.a, s.b-SurfaceInset*(Vector2) edgeToVec(e.edge)));
+              return s;
+            }));
+          }
+        }
+      }
+      //foreach(var s in ret) DebugConsole.Write($"\n{string.Join(", ",s)}\n");
+
+      (iToX, XToI) = Ordering(iToX.Concat(neg.Select(r=>r.x)).Concat(neg.Select(r=>r.x+r.w)));
+      (iToY, YToI) = Ordering(iToY.Concat(neg.Select(r=>r.y)).Concat(neg.Select(r=>r.y+r.h)));
+      var yirs = rects.Select(r=>IntRect.fromCorners(toi(r.tlc), toi(r.brc)));
+      var nirs = neg.Select(r=>IntRect.fromCorners(toi(r.tlc), toi(r.brc)));
+      var rs = dif(yirs.Concat(nirs).ToList(), irs.Count, iToX.Count, iToY.Count);
+      //foreach(var r in rs) DebugConsole.Write($"{r}");
+
+      return (ret, rs.Map(r=>FloatRect.fromCorners(tofv(r.tlc),tofv(r.brc))));
+    }
+    [OnLoad]
+    static void Test(){
+      try{
+        Find([new(0,0,3,3),new(3,3,3,3), new(0,6,6,3), new(0,12,6,3)],[Edges.all,Edges.all,Edges.all,Edges.all]);
+      } catch(Exception e){
+        DebugConsole.Write("error",e);
+      }
+    }
+  }
 }

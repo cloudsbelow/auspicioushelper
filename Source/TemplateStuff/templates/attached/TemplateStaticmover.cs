@@ -39,19 +39,14 @@ public class StaticmoverLock:MovementLock,IDisposable{
     enq.Add(new(s,move));
     return true;
   }
+  [ResetEvents.OnHook(typeof(Solid),nameof(Solid.MoveHExact))]
   static void SolidMove(On.Celeste.Solid.orig_MoveHExact orig, Solid s, int m){
     using(new StaticmoverLock()) orig(s,m);
   }
+  [ResetEvents.OnHook(typeof(Solid),nameof(Solid.MoveVExact))]
   static void SolidMove(On.Celeste.Solid.orig_MoveVExact orig, Solid s, int m){
     using(new StaticmoverLock()) orig(s,m);
   }
-  public static HookManager hooks = new(()=>{
-    On.Celeste.Solid.MoveHExact+=SolidMove;
-    On.Celeste.Solid.MoveVExact+=SolidMove;
-  },()=>{
-    On.Celeste.Solid.MoveHExact-=SolidMove;
-    On.Celeste.Solid.MoveVExact-=SolidMove;
-  }, auspicioushelperModule.OnEnterMap);
 }
 
 [CustomEntity("auspicioushelper/TemplateStaticmover")]
@@ -72,14 +67,15 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
   
   public TemplateStaticmover(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateStaticmover(EntityData d, Vector2 offset, int depthoffset):base(d,d.Position+offset,depthoffset){
+    ResetEvents.Hooks<TemplateStaticmover>.enable();
+    ResetEvents.Hooks<StaticmoverLock>.enable();
+    
     channel = d.Attr("channel","");
     ridingTrigger = d.Bool("ridingTrigger",true);
     enableUnrooted = d.Bool("EnableUnrooted",false);
     conveyRiding = d.Bool("conveyRiding",false);
     convertTriggering = d.Bool("triggerAsRiding",false);
     attachToJt = d.Bool("attachToJumpthru",false);
-    ResetEvents.LazyEnable(typeof(TemplateStaticmover));
-    StaticmoverLock.hooks.enable();
     Add(new BeforeAfterRender(()=>{
       if(this.ownShakeVec == Vector2.Zero){
         if(!firstZeroAfter) return;

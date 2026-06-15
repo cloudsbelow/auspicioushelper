@@ -41,7 +41,6 @@ public class ChannelTracker : OnAnyRemoveComp{
   }
   public class ChannelTrackerList{
     List<ChannelTracker> list = new();
-    internal IReadOnlyList<ChannelTracker> getList()=>list;
     HashSet<ChannelTracker> toRemove = new();
     List<ChannelTracker> deferredAdd = new();
     List<ChannelTracker> deferredRemove = new();
@@ -104,6 +103,13 @@ public class ChannelTracker : OnAnyRemoveComp{
       toRemove.Clear();
       return list.Count>0;
     }
+    public void ClearInto(List<ChannelTracker> nlist){
+      foreach(var ct in list){
+        ct.inList = null;
+        nlist.Add(ct);
+      }
+      list.Clear();
+    }
     public void Add(ChannelTracker ct){
       if(locked){
         deferredAdd.Add(ct);
@@ -118,14 +124,4 @@ public class ChannelTracker : OnAnyRemoveComp{
     }
     public int Count=>list.Count;
   }
-}
-
-public class FloatChannel{
-  string channel=null;
-  float flt;
-  public FloatChannel(string str){
-    if(str.StartsWith('@')) channel = Util.removeWhitespace(str.Substring(1));
-    else flt = float.Parse(str);
-  }
-  public static implicit operator float(FloatChannel obj)=>obj.channel==null?obj.flt:(float)ChannelState.readChannel(obj.channel);
 }

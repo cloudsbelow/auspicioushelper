@@ -13,7 +13,7 @@ public interface IColliderWrapper{
   Collider wrapped=>null;
   Collider interceptReplace(Collider o);
   ref struct CollideDetourLock:IDisposable{
-    [ResetEvents.NullOn(ResetEvents.RunTimes.OnReset)]
+    [ResetEvents.NullOn(ResetEvents.Times.LvlReset)]
     static int active=0;
     public CollideDetourLock(){active++;}
     void IDisposable.Dispose()=>active--;

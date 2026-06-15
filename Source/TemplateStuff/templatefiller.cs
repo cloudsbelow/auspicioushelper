@@ -70,6 +70,7 @@ public class templateFiller{
     }
     static TileView intercept;
     public static bool intercepting => intercept!=null;
+    [OnLoad.OnHook(typeof(Autotiler),nameof(Autotiler.Generate))]
     static Autotiler.Generated Hook(On.Celeste.Autotiler.orig_Generate orig, Autotiler self, 
       VirtualMap<char> mapData, int startX, int startY, int tilesX, int tilesY, bool forceSolid, char forceID, Autotiler.Behaviour behaviour
     ){
@@ -101,15 +102,7 @@ public class templateFiller{
       intercept = null;
       return ret;
     }
-    static HookManager hooks = new HookManager(()=>{
-      On.Celeste.Autotiler.Generate+=Hook;
-    },()=>{
-      On.Celeste.Autotiler.Generate-=Hook;
-    });
-    public void InterceptNext(){
-      hooks.enable();
-      intercept = this;
-    }
+    public void InterceptNext()=>intercept=this;
   } 
   //there's history for this class being as dumb as it is. you don't want to know it.
   internal class PaddedMap{
@@ -330,7 +323,7 @@ public class templateFiller{
   [CustomloadEntity]
   public class FillerSwitcher:templateFiller{
     static HashSet<FillerSwitcher> used = new();
-    [ResetEvents.RunOn(ResetEvents.RunTimes.OnReset)]
+    [ResetEvents.RunOn(ResetEvents.Times.LvlReset)]
     static void Reset(){
       foreach(var use in used) use.idx=-1;
       used.Clear();

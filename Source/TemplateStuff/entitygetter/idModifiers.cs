@@ -125,7 +125,7 @@ public static partial class Finder{
       }
     }
     [Import.SpeedrunToolIop.Static]
-    [ResetEvents.ClearOn(ResetEvents.RunTimes.OnReload)]
+    [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
     static Dictionary<(int,bool),List<GroupMarker>> groups = new();
     static void Search(EntityData d){
       int num = d.ID;

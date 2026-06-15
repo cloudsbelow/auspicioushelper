@@ -244,9 +244,10 @@ public static class ChannelState{
     return val;
   }
   [Import.SpeedrunToolIop.Static]
-  [ResetEvents.ClearOn(ResetEvents.RunTimes.OnExit,ResetEvents.RunTimes.OnReload)]
+  [ResetEvents.ClearOn(ResetEvents.Times.NewAssets)]
   private static Dictionary<string, ChannelVal> state = new ();
-
+  public const string SavedataPrefix = "SD_";
+  public const string FastSavedataPrefix = "SD__";
   public static double readChannel(string ch)=>_readChannel(Util.removeWhitespace(ch));
   internal static double _readChannel(string ch){
     if(state.TryGetValue(ch, out var v)) return v.val;
@@ -276,6 +277,9 @@ public static class ChannelState{
       if(ch[0]=='#')(Engine.Instance.scene as Level)?.Session.SetCounter(ch.Substring(1),(int)nval);
       if(ch[0]=='?')(Engine.Instance.scene as Level)?.Session.SetSlider(ch.Substring(1),(float)nval);
     }
+    if(ch.StartsWith(FastSavedataPrefix)){
+      auspicioushelperModule.SaveData?.savedataChannels[ch]=nval;
+    }
   }
   public static double watch(ChannelTracker b){
     if(b.channel == null) return 0;
@@ -296,14 +300,20 @@ public static class ChannelState{
       if(ch[0]=='#') ret = AddVal(ch, (Engine.Instance.scene as Level)?.Session.GetCounter(ch.Substring(1))??0);
       if(ch[0]=='$') ret = AddVal(ch, ((Engine.Instance.scene as Level)?.Session.GetFlag(ch.Substring(1))??false)?1:0);
       if(ch[0]=='?') ret = AddVal(ch, (Engine.Instance.scene as Level)?.Session.GetSlider(ch.Substring(1))??0);
-    } else ret = AddVal(ch,0);
+    } else {
+      double val = 0;
+      if(ch.StartsWith(SavedataPrefix)){
+        if(auspicioushelperModule.SaveData.savedataChannels.TryGetValue(ch, out var sdval)) val=sdval;
+      }
+      ret = AddVal(ch,val);
+    }
     TemplateTemplate.addBlame(ch,TemplateTemplate.Loc.Channel);
     return ret;
   }
   static List<ChannelTracker> UnwatchGetPersistant(){
     List<ChannelTracker> ret = new();
     foreach(var (k,v) in state){
-      if(v.watching?.RemoveTemp()??false) foreach(var ct in v.watching.getList()) ret.Add(ct);
+      if(v.watching?.RemoveTemp()??false) v.watching.ClearInto(ret);
       else v.watching=null;
     }
     return ret;
@@ -311,7 +321,7 @@ public static class ChannelState{
   static void RemoveUncleanAndDeps(){
     HashSet<string> toRemove = new();
     foreach(var (k,v) in state){
-      if(!checkClean(k) || v.val==0){
+      if(!checkClean(k) || k.StartsWith('_') || (v.val==0 && !k.StartsWith("SD_"))){
         toRemove.Add(k);
         v.Remove(true);
       }else{
@@ -324,7 +334,10 @@ public static class ChannelState{
   public static void unwatchTemporary(bool keepPersist){
     var li = UnwatchGetPersistant();
     RemoveUncleanAndDeps();
-    foreach(var ct in li) if(keepPersist || ct.Entity.TagCheck(Tags.Global)) watch(ct);
+    foreach(var ct in li) if(keepPersist || ct.Entity.TagCheck(Tags.Global)){
+      var nv = watch(ct);
+      if(nv!=ct.value) ct.setChVal(nv);
+    }
   }
   static Queue<string> ToForceRemove = new();
   static bool removing;
@@ -443,19 +456,12 @@ public static class ChannelState{
 
 
 
-
-
-
-
-
-
-
   public static Dictionary<string,double> save(){
     Dictionary<string,double> s=new();
     foreach(var (ch,v) in state){
-      if(ch.Length>=1 && (ch[0]=='$'||ch[0]=='#'||ch[0]=='?'))continue;
+      if(ch.Length>=1 && (ch[0]=='$'||ch[0]=='#'||ch[0]=='?'||ch[0]=='_'))continue;
       if(ch.Contains(TemplateTemplate.randomChar)||!checkClean(ch)) continue;
-      if(v.val!=0) s.Add(ch,v.val);
+      if(v.val!=0 || ch.StartsWith(SavedataPrefix)) s.Add(ch,v.val);
     }
     return s;
   }

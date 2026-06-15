@@ -12,30 +12,6 @@ using System.Linq;
 
 namespace Celeste.Mod.auspicioushelper.Wrappers;
 
-internal static class TileHooks{
-  static Rectangle hookAnimT(On.Celeste.AnimatedTiles.orig_GetClippedRenderTiles orig, AnimatedTiles a, int extend){
-    Rectangle r = orig(a,extend);
-    if(a.Entity is IBoundsHaver e){
-      return e.GetTilebounds(a.Entity.Position+a.Position, r);
-    }
-    return r;
-  }
-  static Rectangle hookTiles(On.Monocle.TileGrid.orig_GetClippedRenderTiles orig, TileGrid a){
-    Rectangle r = orig(a);
-    if(a.Entity is IBoundsHaver e){
-      return e.GetTilebounds(a.Entity.Position+a.Position, r);
-    }
-    return r;
-  }
-  public static HookManager hooks = new HookManager(()=>{
-    On.Celeste.AnimatedTiles.GetClippedRenderTiles+=hookAnimT;
-    On.Monocle.TileGrid.GetClippedRenderTiles+=hookTiles;
-  },void ()=>{
-    On.Celeste.AnimatedTiles.GetClippedRenderTiles-=hookAnimT;
-    On.Monocle.TileGrid.GetClippedRenderTiles-=hookTiles;
-  },auspicioushelperModule.OnEnterMap);
-}
-
 public interface IBoundsHaver{
   FloatRect bounds {get; set;}
   public Rectangle GetTilebounds(Vector2 loc, Rectangle isect){
@@ -44,6 +20,22 @@ public interface IBoundsHaver{
     FloatRect levelclip = FloatRect.fromCorners(tlc, brc);
     levelclip.expandAll(0);
     return levelclip._intersect(new FloatRect(isect)).munane();
+  }
+  [ResetEvents.OnHook(typeof(AnimatedTiles),nameof(AnimatedTiles.GetClippedRenderTiles))]
+  static Rectangle Hook(On.Celeste.AnimatedTiles.orig_GetClippedRenderTiles orig, AnimatedTiles a, int extend){
+    Rectangle r = orig(a,extend);
+    if(a.Entity is IBoundsHaver e){
+      return e.GetTilebounds(a.Entity.Position+a.Position, r);
+    }
+    return r;
+  }
+  [ResetEvents.OnHook(typeof(TileGrid),nameof(TileGrid.GetClippedRenderTiles))]
+  static Rectangle Hook(On.Monocle.TileGrid.orig_GetClippedRenderTiles orig, TileGrid a){
+    Rectangle r = orig(a);
+    if(a.Entity is IBoundsHaver e){
+      return e.GetTilebounds(a.Entity.Position+a.Position, r);
+    }
+    return r;
   }
 }
 
@@ -55,7 +47,7 @@ internal class BgTiles:BackgroundTiles, ISimpleEnt, IBoundsHaver{
   public BgTiles(templateFiller t, Vector2 posoffset, int depthoffset):base(posoffset+t.data.offset, t.tiledata.bgt){
     toffset = t.data.offset;
     Depth+=depthoffset;
-    TileHooks.hooks.enable();
+    ResetEvents.Hooks<BgTiles>.enable();
     RemoveTag(Tags.Global);
   }
   public void setOffset(Vector2 ppos){}
@@ -81,7 +73,7 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
   public FgTiles(templateFiller t, Vector2 posoffset, int depthoffset):base(posoffset+t.data.offset, t.tiledata.fgt){
     toffset = t.data.offset;
     Depth+=depthoffset;
-    TileHooks.hooks.enable();
+    ResetEvents.Hooks<FgTiles>.enable();
     tileTypes = t.tiledata.fgt;
     Add(new TileOccluder(t.tiledata.tileOcc));
     OnDashCollide = (Player p, Vector2 dir)=>((ITemplateChild) this).propagateDashhit(p,dir);
@@ -282,9 +274,7 @@ public class TileOccluder:OnAnyRemoveComp{
     size = new(w*cellW,h*cellH);
     return this;
   }
-  public TileOccluder():base(true,true){
-    hooks.enable();
-  }
+  public TileOccluder():base(true,true)=>ResetEvents.Hooks<TileOccluder>.enable();
   public TileOccluder(Vector2 cellsize, Vector2 offset):this(){
     cellW=cellsize.X;
     cellH=cellsize.Y;
@@ -425,12 +415,13 @@ public class TileOccluder:OnAnyRemoveComp{
   bool lvis=false;
   static List<FloatRect> rects = new();
   static List<TileOccluder> occs = new();
-  [ResetEvents.RunOn(ResetEvents.RunTimes.OnReset)]
+  [ResetEvents.RunOn(ResetEvents.Times.LvlReset)]
   static void Clear(){
     rects.Clear();
     occs.Clear();
   }
 
+  [ResetEvents.OnHook(typeof(LightingRenderer),nameof(LightingRenderer.BeforeRender))]
   public static void HandleThing(On.Celeste.LightingRenderer.orig_BeforeRender orig, LightingRenderer self, Scene l){
     rects.Clear();
     occs.Clear();
@@ -469,6 +460,7 @@ public class TileOccluder:OnAnyRemoveComp{
       }
     }
   }
+  [ResetEvents.ILHook(typeof(LightingRenderer),nameof(LightingRenderer.DrawLightOccluders))]
   static void OccluderHook(ILContext ctx){
     ILCursor c = new(ctx);
     if(c.TryGotoNextBestFit(MoveType.After,
@@ -487,13 +479,6 @@ public class TileOccluder:OnAnyRemoveComp{
       c.EmitDelegate(OccludeAll);
     } else DebugConsole.WriteFailure("Failed to add light hooks", true);
   }
-  static HookManager hooks = new(()=>{
-    IL.Celeste.LightingRenderer.DrawLightOccluders += OccluderHook;
-    On.Celeste.LightingRenderer.BeforeRender += HandleThing;
-  }, ()=>{
-    IL.Celeste.LightingRenderer.DrawLightOccluders -= OccluderHook;
-    On.Celeste.LightingRenderer.BeforeRender -= HandleThing;
-  }, auspicioushelperModule.OnEnterMap);
 }
 
 public class TilegridSelector(TileGrid tg, AnimatedTiles at, VirtualMap<char> data):OverrideVisualComponent{

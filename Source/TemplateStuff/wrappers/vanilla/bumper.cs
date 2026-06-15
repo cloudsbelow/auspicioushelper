@@ -68,7 +68,7 @@ public class PufferW:Component, ISimpleWrapper{
     DebugConsole.Write("Here Puffer");
     l.Add(e = p);
     e.Add(this);
-    ResetEvents.LazyEnable(typeof(PufferW));
+    ResetEvents.Hooks<PufferW>.enable();
     origin = e.anchorPosition;
   }
   void ITemplateChild.setOffset(Vector2 ppos)=>toffset = origin-ppos;
