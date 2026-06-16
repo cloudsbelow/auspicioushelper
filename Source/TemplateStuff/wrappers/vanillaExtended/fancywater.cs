@@ -18,7 +18,7 @@ namespace Celeste.Mod.auspicioushelper;
 //[TrackedAs(typeof(Water))]
 [Tracked]
 public class FancyWater:Entity,ISimpleEnt{
-  const float SurfaceInset = 5;
+  const float SurfaceInset = 4;
   public Vector2 toffset {get;set;}
   public Template parent {get;set;}
   Template.Propagation ITemplateChild.prop=>Template.Propagation.Riding | Template.Propagation.Shake;
@@ -28,15 +28,16 @@ public class FancyWater:Entity,ISimpleEnt{
     none=0, left=1, right=2, top=4, bottom=8, all=15
   }
   Edges edges = Edges.none;
-  FloatRect relativeDraw;
+  Color fillColor, surfaceColor;
+  Color[] rayColors;
+  List<FloatRect> fills;//VertexPositionColor[] inner;
   public FancyWater(EntityData d, Vector2 o):base(d.Position+o/*,false,false,d.Width,d.Height*/){
     if(d.Bool("hasTop",true))edges|=Edges.top;
     if(d.Bool("hasBottom",false))edges|=Edges.bottom;
     if(d.Bool("hasLeft",false))edges|=Edges.left;
     if(d.Bool("hasRight",false))edges|=Edges.right;
-    Vector2 tlc = new(edges.HasFlag(Edges.left)?8:0,edges.HasFlag(Edges.top)?8:0);
-    Vector2 brc = new Vector2(Width,Height)-new Vector2(edges.HasFlag(Edges.right)?8:0,edges.HasFlag(Edges.bottom)?8:0);
-    relativeDraw = FloatRect.fromCorners(tlc,brc);
+    fillColor = Util.hexToColor(d.Attr("fillColor","293E4B4D"));
+    surfaceColor = Util.hexToColor(d.Attr("surfaceColor","6CA5C8CC"));
     //addSurfacesSimple(new(Width,Height));
     //TopSurface = new FakeTopsurface(this);
     Collider = new Hitbox(d.Width,d.Height);
@@ -50,29 +51,27 @@ public class FancyWater:Entity,ISimpleEnt{
     }
     Position = loc+toffset;
   }
+  bool ITemplateChild.hasPlayerRider()=>UpdateHook.cachedPlayer?.CollideCheck(this)??false;
+  public override void Update() {
+    foreach(var surface in surfaces) surface.Update(Engine.DeltaTime);
+  }
   public override void Render(){
-    // Draw.Rect(Position.X+relativeDraw.x,Position.Y+relativeDraw.y, relativeDraw.w,relativeDraw.h,Color.Red);
-    // if(surfaces.Count>0){
-    //   GameplayRenderer.End();
-    //   foreach(var surface in surfaces) surface.Render(Position);
-    //   GameplayRenderer.Begin();
-    // }
     if(!leader) return;
-    var (s,f) = thing;
-    foreach(var r in f){
-      Draw.Rect(r.x,r.y,r.w,r.h,Color.Blue*0.3f);
-      Draw.HollowRect(r.x,r.y,r.w,r.h,Color.Blue);
-    }
-    var cs = new List<Color>(){Color.White, Color.Yellow, Color.Green, Color.LightGray};
-    for(int i=0; i<s.Count; i++){
-      var c = cs[i%cs.Count];
-      foreach(var e in s[i]){
-        Draw.Line(e.a,e.b,c);
-      }
+    // var cs = new List<Color>(){Color.White, Color.Yellow, Color.Green, Color.LightGray};
+    // for(int i=0; i<s.Count; i++){
+    //   var c = cs[i%cs.Count];
+    //   foreach(var e in s[i].Item1){
+    //     Draw.Line(e.a,e.b,c);
+    //   }
+    // }
+    foreach(var r in fills) Draw.Rect(r.tlc+Position, (int)r.w, (int)r.h, fillColor);
+    if(surfaces.Count>0){
+      GameplayRenderer.End();
+      foreach(var surface in surfaces) surface.Render(Position);
+      GameplayRenderer.Begin();
     }
   }
   bool leader = true;
-  (List<List<EdgeFinder.Segment>>, List<FloatRect>) thing;
   public override void Awake(Scene scene) {
     base.Awake(scene);
     if(!leader) return;
@@ -80,24 +79,30 @@ public class FancyWater:Entity,ISimpleEnt{
     List<Edges> edges = new();
     foreach(FancyWater fw in scene.Tracker.GetEntities<FancyWater>()){
       if(fw!=this) fw.leader=false;
-      bounds.Add(new(fw));
+      bounds.Add(FloatRect.RelativeTo(fw,Position));
       edges.Add(fw.edges);
     }
-    try{
-      thing = EdgeFinder.Find(bounds,edges);
-    } catch(Exception ex){
-      DebugConsole.Write("ex",ex);
-    }
+    var thing = EdgeFinder.Find(bounds,edges);
+    fills = thing.Item2;
+    // inner = new VertexPositionColor[thing.Item2.Count];
+    // for(int i=0; i<thing.Item2.Count; i++){
+    //   var r=
+    // }
+    foreach(var (s,l) in thing.Item1) surfaces.Add(ParseSurface(s,l));
   }
-  bool ITemplateChild.hasPlayerRider()=>UpdateHook.cachedPlayer?.CollideCheck(this)??false;
+
+
+
+
   struct Edgepoint{
     public Vector2 point;
     public Vector2 normal;
     public Edgepoint(Vector2 p, Vector2 n){
       point = p; normal = n;
     }
+    public override string ToString()=>$"Edgepoint<{normal}>({point})";
   }
-  /*List<BentSurface> surfaces = new();
+  List<BentSurface> surfaces = new();
   class BentSurface{
     Edgepoint[] points;
     VertexPositionColor[] mesh;
@@ -105,37 +110,34 @@ public class FancyWater:Entity,ISimpleEnt{
     int surfaceidx;
     bool loop;
     class Ripple{
-      public float pos=0;
-      public float speed=0;
-      public float height=3;
-      public float percent=0;
-      public float duration=2;
+      public float pos=0, speed=0, height=3, percent=0, duration=2;
     }
-    List<Ripple> ripples;
+    List<Ripple> ripples = new();
     class Tension{
-      public float pos=0;
-      public float str=4;
+      public float pos=0, str=4;
     }
-    List<Tension> tensions;
-    float timer=0;
-    float waviness=0.05f;
-    public BentSurface(List<Edgepoint> arr, bool loop){
+    List<Tension> tensions = new();
+    float timer=0, waviness=0.45f;
+    FancyWater parent;
+    public BentSurface(List<Edgepoint> arr, bool loop, FancyWater parent){
+      this.parent=parent;
       this.loop=loop;
       points = arr.ToArray();
       heights = new float[points.Length];
       surfaceidx = (arr.Count-(loop?0:1))*2*3;
       mesh = new VertexPositionColor[surfaceidx*2];
       for(int i=0; i<surfaceidx; i++){
-        mesh[i].Color = FillColor;
-        mesh[i+surfaceidx].Color = SurfaceColor;
+        mesh[i].Color = parent.fillColor;
+        mesh[i+surfaceidx].Color = parent.surfaceColor;
       }
     }
     public void Render(Vector2 loc){
-      int start = loop?points.Length-1:0;
+      int start = loop?0:points.Length-1;
+      //for(int i=0; i<heights.Length; i++) heights[i]=SurfaceInset-1;
       Vector3 p11 = (points[start].point+loc).Expand();
       Vector3 p12 = (points[start].point+loc+points[start].normal*heights[start]).Expand();
       Vector3 p13 = (points[start].point+loc+points[start].normal*(heights[start]+1)).Expand();
-      for(int i=loop?0:1; i<points.Length; i++){
+      for(int i=points.Length - (loop? 1:2); i>=0; i--){
         int o = i*6;
         Vector3 p21 = (points[i].point+loc).Expand();
         Vector3 p22 = (points[i].point+loc+points[i].normal*heights[i]).Expand();
@@ -167,14 +169,15 @@ public class FancyWater:Entity,ISimpleEnt{
       float f=n-b;
       return l*(1-f)+f*h;
     }
-    public void Update(){
+    public void Update(float dt){
+      if(dt==0) return;
+      timer+=dt;
       int n = points.Length-(loop?0:1);
-      for(int i=0; i<heights.Length; i++) heights[i]=0;
-      for (int i = ripples.Count - 1; i >= 0; i--){
-        var r = ripples[i];
-        if(r.percent>1) ripples.RemoveAt(i);
-        r.percent+=Engine.DeltaTime/r.duration;
-        r.pos+=Engine.DeltaTime*r.speed;
+      for(int i=0; i<heights.Length; i++) heights[i]=SurfaceInset-1;
+      ripples.RemoveAll(r=>{
+        r.percent+=dt/r.duration;
+        if(r.percent>1) return true;;
+        r.pos+=dt*r.speed;
         if(r.pos<0 || r.pos>n){
           if(loop){
             r.pos=Util.SafeMod(r.pos,n);
@@ -194,13 +197,15 @@ public class FancyWater:Entity,ISimpleEnt{
           float s = j>=4? Util.CRemap(d,4,8,-0.75f,0) : Util.CRemap(d,0,4,1,-0.75f);
           heights[j]+= s*r.height * Util.CubeIn(1f-r.percent);
         }
-      }
+        return false;
+      });
+
       float taus = n/2f/MathF.PI;
       float f=!loop?waviness:MathF.Max(1f,MathF.Round(taus*waviness))/taus;
       for(int i=0; i<heights.Length; i++){
-        heights[i]=Util.Clamp(heights[i],-4,4);
-        Math.Sin(timer + i*f);
+        heights[i]=Util.Clamp(heights[i]+MathF.Sin(timer + i*f),0,8);
       }
+
       foreach (Tension t in tensions){
         int start = (int)Math.Floor(t.pos-8);
         int k=0;
@@ -219,41 +224,37 @@ public class FancyWater:Entity,ISimpleEnt{
   void DoRipple(Vector2 p, float str){
 
   }
-  void addSurfacesSimple(Vector2 size){
+  BentSurface ParseSurface(List<EdgeFinder.Segment> li, bool loop){
     List<Edgepoint> current = new();
-    Edges dir = Edges.top;
-    if(edges.HasFlag(Edges.left))size.X+=4;
-    if(edges.HasFlag(Edges.right))size.X+=4;
-    Vector2 center = size/2;
-    if(edges.HasFlag(Edges.left))center.X-=2;
-    if(edges.HasFlag(Edges.right))center.X+=2;
-    bool loop=true;
-    do{
-      bool has = edges.HasFlag(dir);
-      if(!has){
-        if(current.Count!=0) surfaces.Add(new(current,loop=false));
-        current.Clear();
-        continue;
-      }
-      bool lasthas = edges.HasFlag(nextCCWInner(dir));
-      var norm = edgeToVec(dir);
-      var lvec = edgeToVec(nextCCWInner(dir));
-      if(has && lasthas){
-        Vector2 pivot = center+(norm+lvec)*(size/2-Vector2.One*8);
-        //if(current.Count==0)current.Add(new (pivot,lvec));
-        current.Add(new(pivot, sixty(lvec, norm)));
-        current.Add(new(pivot, sixty(norm,lvec)));
-      }
-      float stop = (size*lvec).L1()-(edges.HasFlag(nextCCWOuter(dir))?8:0);
-      Vector2 start = center+lvec*size/2+norm*(size/2-Vector2.One*8);
-      for(int i=(has&&lasthas)?8:0; i<=stop; i+=4){
-        current.Add(new(start-lvec*i,norm));
-      }
+
+    for(int i=0; i<li.Count; i++){
+      Edges dir = li[i].edge;
+      Edges nextdir = i< li.Count-1? li[i+1].edge:(loop? li[0].edge:Edges.none);
+      Edges prevdir = i!=0? li[i-1].edge:(loop? li[li.Count-1].edge:Edges.none);
+      Vector2 a = li[i].a;
+      Vector2 b = li[i].b;
+      var l = (b-a).LInf();
+      float start = (prevdir==nextCCWOuter(dir))? SurfaceInset:0;
+      float end = (nextdir==nextCCWInner(dir))? l-SurfaceInset:l;
+      int num = (int) MathF.Ceiling((end-start)/4);
+      Vector2 norm = edgeToVec(dir);
       
-    }while((dir=nextCCWOuter(dir))!=Edges.top);
-    if(current.Count>0) surfaces.Add(new(current,loop));
+      for(int s=0; s<=num; s++){
+        float lerp = (start*(num-s) + end*s) / (num*l);
+        Vector2 point = a*(1-lerp) + b*lerp;
+        current.Add(new(point-SurfaceInset*norm, norm));
+      }
+      if(nextdir==nextCCWInner(dir)){
+        Vector2 nextnorm = edgeToVec(nextdir);
+        var pivot = b - SurfaceInset*(norm+nextnorm);
+        current.Add(new(pivot, sixty(norm,nextnorm)));
+        current.Add(new(pivot, sixty(nextnorm,norm)));
+      }
+    }
+    if(loop) current.Add(current[0]);
+    return new(current,loop,this);
   }
-  */
+  
   static float sixtyfac = MathF.Sqrt(3)/2;
   static Vector2 sixty(Vector2 m, Vector2 s)=>m*sixtyfac+s/2;
   static Int2 edgeToVec(Edges e)=> e switch{
@@ -261,7 +262,7 @@ public class FancyWater:Entity,ISimpleEnt{
     Edges.right=>new(1,0),
     Edges.top=>new(0,-1),
     Edges.bottom=>new(0,1),
-    _=>throw new Exception("non singular edge")
+    _=>throw new Exception($"non singular edge {e}")
   };
   static Edges nextCCWInner(Edges e)=> e switch{
     Edges.left=>Edges.bottom,
@@ -379,9 +380,10 @@ public class FancyWater:Entity,ISimpleEnt{
       }
       return null;
     }
-    static List<(int, int, bool)> Extract(List<EdgeInnerSegment>[] h, List<EdgeInnerSegment>[] v,  (int, int, bool) start){
+    static (List<(int, int, bool)>, bool) Extract(List<EdgeInnerSegment>[] h, List<EdgeInnerSegment>[] v,  (int, int, bool) start){
       var cur = start;
-      while(nextEdge(h,v,cur,true) is { } prev && prev!=start) cur=prev;
+      while(nextEdge(h,v,cur,true) is { } prev && (cur=prev)!=start);
+      bool loop = cur==start;
 
       var res = new List<(int, int, bool)>();
       while(true){
@@ -393,7 +395,7 @@ public class FancyWater:Entity,ISimpleEnt{
         if(nextEdge(h,v,cur,false) is not {} next) break;
         cur = next;
       }
-      return res;
+      return (res,loop);
     }
 
     static List<IntRect> dif(List<IntRect> items, int numLow, int rs, int w){
@@ -433,7 +435,7 @@ public class FancyWater:Entity,ISimpleEnt{
       return done;
     }
 
-    public static (List<List<Segment>>, List<FloatRect>) Find(List<FloatRect> rects, List<Edges> edges){
+    public static (List<(List<Segment>,bool)>, List<FloatRect>) Find(List<FloatRect> rects, List<Edges> edges){
       var (iToX, XToI) = Ordering(rects.Select(r=>r.x).Concat(rects.Select(r=>r.x+r.w)));
       var (iToY, YToI) = Ordering(rects.Select(r=>r.y).Concat(rects.Select(r=>r.y+r.h)));
       var toi = (Vector2 v)=>new Int2(XToI[v.X], YToI[v.Y]);
@@ -450,14 +452,14 @@ public class FancyWater:Entity,ISimpleEnt{
         irs.Map((ir, i)=>new RawEdge(){r=ir.x+ir.w, a=ir.y, b=ir.y+ir.h, edge=edges[i]&Edges.right})
       );
 
-      List<List<Segment>> ret = new();
+      List<(List<Segment>,bool)> ret = new();
       List<FloatRect> neg = new();
       for(int vert_=0; vert_<2; vert_++){
         var li = vert_!=0? vseg:hseg;
         for(int r=0; r<li.Length; r++) if(li[r]!=null){
           for(int i=0; i<li[r].Count; i++) if(!li[r][i].used){
-            var arr = Extract(hseg, vseg, (r,i,vert_!=0));
-            ret.Add(arr.Map(x=>{
+            var (arr,loop) = Extract(hseg, vseg, (r,i,vert_!=0));
+            ret.Add((arr.Map(x=>{
               var (r,i,vert) = x;
               var e = (vert? vseg:hseg)[r][i];
               Segment s = new(){
@@ -467,7 +469,7 @@ public class FancyWater:Entity,ISimpleEnt{
               };
               neg.Add(FloatRect.fromCornersUnordered(s.a, s.b-SurfaceInset*(Vector2) edgeToVec(e.edge)));
               return s;
-            }));
+            }),loop));
           }
         }
       }
@@ -481,14 +483,6 @@ public class FancyWater:Entity,ISimpleEnt{
       //foreach(var r in rs) DebugConsole.Write($"{r}");
 
       return (ret, rs.Map(r=>FloatRect.fromCorners(tofv(r.tlc),tofv(r.brc))));
-    }
-    [OnLoad]
-    static void Test(){
-      try{
-        Find([new(0,0,3,3),new(3,3,3,3), new(0,6,6,3), new(0,12,6,3)],[Edges.all,Edges.all,Edges.all,Edges.all]);
-      } catch(Exception e){
-        DebugConsole.Write("error",e);
-      }
     }
   }
 }
