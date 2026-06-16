@@ -15,9 +15,20 @@ using MonoMod.Utils;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/water")]
-//[TrackedAs(typeof(Water))]
+[TrackedAs(typeof(Water))]
 [Tracked]
-public class FancyWater:Entity,ISimpleEnt{
+public class FancyWater:Water,ISimpleEnt{
+  class FakeTopsurface:Water.Surface{
+    FancyWater fw;
+    public FakeTopsurface(FancyWater w):base(Vector2.Zero,-Vector2.UnitY,0,0){
+      fw=w;
+    }
+    [OnLoad.OnHook(typeof(Water.Surface),nameof(Water.Surface.DoRipple))]
+    static void Hook(On.Celeste.Water.Surface.orig_DoRipple o, Water.Surface s, Vector2 p, float str){
+      if(s is FakeTopsurface fts) fts.fw.DoRipple(p,str);
+      else o(s,p,str);
+    }
+  }
   const float SurfaceInset = 4;
   public Vector2 toffset {get;set;}
   public Template parent {get;set;}
@@ -31,16 +42,16 @@ public class FancyWater:Entity,ISimpleEnt{
   Color fillColor, surfaceColor;
   Color[] rayColors;
   List<FloatRect> fills;//VertexPositionColor[] inner;
-  public FancyWater(EntityData d, Vector2 o):base(d.Position+o/*,false,false,d.Width,d.Height*/){
+  public FancyWater(EntityData d, Vector2 o):base(d.Position+o,false,false,d.Width,d.Height){
     if(d.Bool("hasTop",true))edges|=Edges.top;
     if(d.Bool("hasBottom",false))edges|=Edges.bottom;
     if(d.Bool("hasLeft",false))edges|=Edges.left;
     if(d.Bool("hasRight",false))edges|=Edges.right;
     fillColor = Util.hexToColor(d.Attr("fillColor","293E4B4D"));
     surfaceColor = Util.hexToColor(d.Attr("surfaceColor","6CA5C8CC"));
-    //addSurfacesSimple(new(Width,Height));
-    //TopSurface = new FakeTopsurface(this);
+    TopSurface = new FakeTopsurface(this);
     Collider = new Hitbox(d.Width,d.Height);
+    Remove(Get<DisplacementRenderHook>());
   }
   void ITemplateChild.relposTo(Vector2 loc, Vector2 ls){
     Vector2 delta = (loc+toffset)-Position;
@@ -52,11 +63,36 @@ public class FancyWater:Entity,ISimpleEnt{
     Position = loc+toffset;
   }
   bool ITemplateChild.hasPlayerRider()=>UpdateHook.cachedPlayer?.CollideCheck(this)??false;
-  public override void Update() {
+  public override void Update(){
+    if(leader!=null) return;
     foreach(var surface in surfaces) surface.Update(Engine.DeltaTime);
+    foreach(WaterInteraction w in Scene.Tracker.GetComponents<WaterInteraction>()){
+      bool f1 = contains.Contains(w);
+      var old = Collider;
+      bool f2 = fills.Any(x=>{
+        Collider = new Hitbox(x.w,x.h,x.x,x.y);
+        return w.Check(this);
+      });
+      Collider = old;
+      if(f1!=f2){
+        var loc = w.AbsoluteCenter;
+        DoRipple(loc,1f);
+        if (f1){
+          if(w.IsDashing()) Audio.Play("event:/char/madeline/water_dash_out", loc, "deep", 0);
+          else Audio.Play("event:/char/madeline/water_out", loc, "deep", 0);
+          w.DrippingTimer = 2f;
+        } else {
+          if (w.IsDashing()) Audio.Play("event:/char/madeline/water_dash_in", loc, "deep", 0);
+          else Audio.Play("event:/char/madeline/water_in", loc, "deep", 0);
+          w.DrippingTimer = 0f;
+        }
+        if(!f1) contains.Add(w);
+        else contains.Remove(w);
+      }
+    }
   }
   public override void Render(){
-    if(!leader) return;
+    if(leader!=null) return;
     // var cs = new List<Color>(){Color.White, Color.Yellow, Color.Green, Color.LightGray};
     // for(int i=0; i<s.Count; i++){
     //   var c = cs[i%cs.Count];
@@ -71,14 +107,14 @@ public class FancyWater:Entity,ISimpleEnt{
       GameplayRenderer.Begin();
     }
   }
-  bool leader = true;
+  FancyWater leader = null;
   public override void Awake(Scene scene) {
     base.Awake(scene);
-    if(!leader) return;
+    if(leader!=null) return;
     List<FloatRect> bounds = new();
     List<Edges> edges = new();
     foreach(FancyWater fw in scene.Tracker.GetEntities<FancyWater>()){
-      if(fw!=this) fw.leader=false;
+      if(fw!=this) fw.leader=this;
       bounds.Add(FloatRect.RelativeTo(fw,Position));
       edges.Add(fw.edges);
     }
@@ -90,6 +126,7 @@ public class FancyWater:Entity,ISimpleEnt{
     // }
     foreach(var (s,l) in thing.Item1) surfaces.Add(ParseSurface(s,l));
   }
+  
 
 
 
@@ -117,9 +154,12 @@ public class FancyWater:Entity,ISimpleEnt{
       public float pos=0, str=4;
     }
     List<Tension> tensions = new();
+    class Ray{
+
+    }
     float timer=0, waviness=0.45f;
     FancyWater parent;
-    public BentSurface(List<Edgepoint> arr, bool loop, FancyWater parent){
+    public BentSurface(List<Edgepoint> arr, List<int> donot, bool loop, FancyWater parent){
       this.parent=parent;
       this.loop=loop;
       points = arr.ToArray();
@@ -130,36 +170,26 @@ public class FancyWater:Entity,ISimpleEnt{
         mesh[i].Color = parent.fillColor;
         mesh[i+surfaceidx].Color = parent.surfaceColor;
       }
-    }
-    public void Render(Vector2 loc){
-      int start = loop?0:points.Length-1;
-      //for(int i=0; i<heights.Length; i++) heights[i]=SurfaceInset-1;
-      Vector3 p11 = (points[start].point+loc).Expand();
-      Vector3 p12 = (points[start].point+loc+points[start].normal*heights[start]).Expand();
-      Vector3 p13 = (points[start].point+loc+points[start].normal*(heights[start]+1)).Expand();
+
+      int sssss = loop?0:points.Length-1;
+      Vector3 p11 = points[sssss].point.Expand();
       for(int i=points.Length - (loop? 1:2); i>=0; i--){
         int o = i*6;
-        Vector3 p21 = (points[i].point+loc).Expand();
-        Vector3 p22 = (points[i].point+loc+points[i].normal*heights[i]).Expand();
-        Vector3 p23 = (points[i].point+loc+points[i].normal*(heights[i]+1)).Expand();
-        mesh[o].Position = p11;
-        mesh[o+1].Position = p12;
+        Vector3 p21 = points[i].point.Expand();
+        mesh[o].Position = p11;//new Vector3(float.NaN, float.NaN, float.NaN);
         mesh[o+2].Position = p21;
         mesh[o+3].Position = p21;
-        mesh[o+4].Position = p12;
-        mesh[o+5].Position = p22;
-        int o2 = o+surfaceidx;
-        mesh[o2].Position = p12;
-        mesh[o2+1].Position = p13;
-        mesh[o2+2].Position = p22;
-        mesh[o2+3].Position = p22;
-        mesh[o2+4].Position = p13;
-        mesh[o2+5].Position = p23;
         p11 = p21;
-        p12 = p22;
-        p13 = p23;
       }
-      GFX.DrawVertices((Engine.Instance.scene as Level).Camera.matrix, mesh, mesh.Length);
+      foreach(var i in donot){
+        mesh[(i-1)*6].Position = new(float.NaN, float.NaN, float.NaN);
+      }
+    }
+    public void Render(Vector2 loc){
+      var m = (Engine.Instance.scene as Level).Camera.matrix;
+      m.M41 += loc.X;
+      m.M42 += loc.Y;
+      GFX.DrawVertices(m, mesh, mesh.Length);
     }
     float heightAt(int n)=>loop||(n>=0&&n<points.Length)? heights[Util.SafeMod(n,points.Length)]:0;
     float heightLerp(float n){
@@ -172,7 +202,7 @@ public class FancyWater:Entity,ISimpleEnt{
     public void Update(float dt){
       if(dt==0) return;
       timer+=dt;
-      int n = points.Length-(loop?0:1);
+      int n = points.Length-(loop?2:1);
       for(int i=0; i<heights.Length; i++) heights[i]=SurfaceInset-1;
       ripples.RemoveAll(r=>{
         r.percent+=dt/r.duration;
@@ -194,7 +224,7 @@ public class FancyWater:Entity,ISimpleEnt{
             else break;
           }
           float d = Math.Abs(r.pos - j);
-          float s = j>=4? Util.CRemap(d,4,8,-0.75f,0) : Util.CRemap(d,0,4,1,-0.75f);
+          float s = d>=4? Util.CRemap(d,4,8,-0.75f,0) : Util.CRemap(d,0,4,1,-0.75f);
           heights[j]+= s*r.height * Util.CubeIn(1f-r.percent);
         }
         return false;
@@ -203,7 +233,7 @@ public class FancyWater:Entity,ISimpleEnt{
       float taus = n/2f/MathF.PI;
       float f=!loop?waviness:MathF.Max(1f,MathF.Round(taus*waviness))/taus;
       for(int i=0; i<heights.Length; i++){
-        heights[i]=Util.Clamp(heights[i]+MathF.Sin(timer + i*f),0,8);
+        heights[i]=Util.Clamp(heights[i]+MathF.Sin(timer + i*f),0,12);
       }
 
       foreach (Tension t in tensions){
@@ -219,13 +249,87 @@ public class FancyWater:Entity,ISimpleEnt{
         }
       }
       if(loop)heights[^1]=heights[0];
+
+
+      int sssss = loop?0:points.Length-1;
+      Vector3 p12 = (points[sssss].point+points[sssss].normal*heights[sssss]).Expand();
+      Vector3 p13 = (points[sssss].point+points[sssss].normal*(heights[sssss]+1)).Expand();
+      for(int i=points.Length - (loop? 1:2); i>=0; i--){
+        int o = i*6;
+        Vector3 p22 = (points[i].point+points[i].normal*heights[i]).Expand();
+        Vector3 p23 = (points[i].point+points[i].normal*(heights[i]+1)).Expand();
+        mesh[o+1].Position = p12;
+        mesh[o+4].Position = p12;
+        mesh[o+5].Position = p22;
+        int o2 = o+surfaceidx;
+        mesh[o2].Position = p12;
+        mesh[o2+1].Position = p13;
+        mesh[o2+2].Position = p22;
+        mesh[o2+3].Position = p22;
+        mesh[o2+4].Position = p13;
+        mesh[o2+5].Position = p23;
+        p12 = p22;
+        p13 = p23;
+      }
+    }
+    Vector2 pointAt(int i)=>points[i].point+points[i].normal*SurfaceInset;
+    Vector2 pointAt(float i){
+      int l = loop? Util.SafeMod((int)Math.Floor(i),points.Length-1):Math.Clamp((int)Math.Floor(i), 0, points.Length-2);
+      float fac =  i-l;
+      return pointAt(l)*(1-fac) + pointAt(l+1)*fac;
+    }
+    (float,float)? bestMatchPoint(Vector2 p, float maxRange){
+      var n = points.Length - (loop?1:0);
+      float best = -1;
+      maxRange+=4;
+      float bestl = maxRange*1.5f;
+      for(int i=0; i<n; i++){
+        var d = (pointAt(i)-p).Length();
+        if(d>3.5*maxRange){
+          i += (int) Math.Floor((d-2.5*maxRange)/4);
+          continue;
+        }
+        if(d<bestl){
+          best=i;
+          bestl=d;
+        }
+      }
+      if(best==-1) return null;
+      float bf = 0;
+      for(float i=-0.5f; i<=0.5f; i+=0.25f){
+        var d = (pointAt(best+i)-p).Length();
+        if(d<bestl){
+          bf=i;
+          bestl=d;
+        }
+      }
+      if(bestl > maxRange-4) return null;
+      return (best+bf, bestl);
+    }
+    public void tryRipple(Vector2 p, float multiplier){
+      if(bestMatchPoint(p, 12) is not {} pair) return;
+      float dur = 3f;
+      if(points.Length<51){
+        dur *= Calc.ClampedMap(points.Length-1, 0f, 50, 0.25f);
+        multiplier *= Calc.ClampedMap(points.Length-1, 0f, 50, 0.5f);
+      }
+      if(pair.Item2>6) multiplier*=Calc.ClampedMap(pair.Item2, 6,12,1,0);
+
+      ripples.Add(new Ripple{
+        pos=pair.Item1, speed=-20, height=2*multiplier, percent=0f, duration=dur
+      });
+      ripples.Add(new Ripple{
+        pos=pair.Item1, speed=20, height=2*multiplier, percent=0f, duration=dur
+      });
     }
   }
   void DoRipple(Vector2 p, float str){
-
+    if(leader is { } l) l.DoRipple(p,str);
+    else for(int i=0; i<surfaces.Count; i++) surfaces[i].tryRipple(p-Position,str);
   }
   BentSurface ParseSurface(List<EdgeFinder.Segment> li, bool loop){
     List<Edgepoint> current = new();
+    List<int> donot = new();
 
     for(int i=0; i<li.Count; i++){
       Edges dir = li[i].edge;
@@ -249,10 +353,10 @@ public class FancyWater:Entity,ISimpleEnt{
         var pivot = b - SurfaceInset*(norm+nextnorm);
         current.Add(new(pivot, sixty(norm,nextnorm)));
         current.Add(new(pivot, sixty(nextnorm,norm)));
-      }
+      } else donot.Add(current.Count);
     }
     if(loop) current.Add(current[0]);
-    return new(current,loop,this);
+    return new(current, donot,loop,this);
   }
   
   static float sixtyfac = MathF.Sqrt(3)/2;
@@ -278,17 +382,6 @@ public class FancyWater:Entity,ISimpleEnt{
     Edges.bottom=>Edges.left,
     _=>throw new Exception("non singular edge")
   };
-  class FakeTopsurface:Water.Surface{
-    FancyWater fw;
-    public FakeTopsurface(FancyWater w):base(Vector2.Zero,-Vector2.UnitY,0,0){
-      fw=w;
-    }
-    [OnLoad.OnHook(typeof(Water.Surface),nameof(Water.Surface.DoRipple))]
-    static void Hook(On.Celeste.Water.Surface.orig_DoRipple o, Water.Surface s, Vector2 p, float str){
-      if(s is FakeTopsurface fts){}//fts.fw.DoRipple(p,str)
-      else o(s,p,str);
-    }
-  }
   
 
 
@@ -383,7 +476,7 @@ public class FancyWater:Entity,ISimpleEnt{
     static (List<(int, int, bool)>, bool) Extract(List<EdgeInnerSegment>[] h, List<EdgeInnerSegment>[] v,  (int, int, bool) start){
       var cur = start;
       while(nextEdge(h,v,cur,true) is { } prev && (cur=prev)!=start);
-      bool loop = cur==start;
+      bool loop = cur==start && nextEdge(h,v,cur,true)!=null;
 
       var res = new List<(int, int, bool)>();
       while(true){

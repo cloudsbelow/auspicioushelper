@@ -183,7 +183,6 @@ public partial class Anti0fZone:Entity{
   public static Util.FunctionList<Player> runNaive = new(Util.FunctionList<Player>.InvocationMode.Or, naiveCheck);
   public static Util.FunctionList<Player> exitNaive = new(Util.FunctionList<Player>.InvocationMode.OrShortcircuit);
 
-  static ILHook updateHook;
   [ResetEvents.ILHook(typeof(Player),nameof(Player.orig_Update))]
   static void ILUpdateHook(ILContext ctx){
     var c = new ILCursor(ctx);
