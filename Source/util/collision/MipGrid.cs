@@ -332,6 +332,7 @@ public class MipGrid{
   internal List<Layer> layers;
   internal int width;
   internal int height;
+  public Int2 size=>new(width,height);
   internal int highestlevel;
   const ulong FULL = 0xffff_ffff_ffff_ffffUL;
   const ulong BYTEMARKER = 0x0101_0101_0101_0101UL;

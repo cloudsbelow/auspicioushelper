@@ -4,6 +4,7 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -13,7 +14,7 @@ namespace Celeste.Mod.auspicioushelper;
 
 public sealed class MiptileCollider:Grid{
   public MipGrid mg;
-  Vector2 cellsize;
+  internal Vector2 cellsize;
   // Left/right/top/bottom all use width and height
   public override float Width { get => cellsize.X*cx; }
   public override float Height { get => cellsize.Y*cy; }

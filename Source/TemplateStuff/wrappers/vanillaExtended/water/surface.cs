@@ -4,20 +4,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
-using Celeste.Mod.auspicioushelper.Wrappers;
-using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
-using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
-[CustomEntity("auspicioushelper/water")]
-[TrackedAs(typeof(Water))]
-[Tracked]
-public class FancyWater:Water,ISimpleEnt{
+public partial class FancyWater{
+  const float SurfaceInset = 4;
   class FakeTopsurface:Water.Surface{
     FancyWater fw;
     public FakeTopsurface(FancyWater w):base(Vector2.Zero,-Vector2.UnitY,0,0){
@@ -29,107 +23,6 @@ public class FancyWater:Water,ISimpleEnt{
       else o(s,p,str);
     }
   }
-  const float SurfaceInset = 4;
-  public Vector2 toffset {get;set;}
-  public Template parent {get;set;}
-  Template.Propagation ITemplateChild.prop=>Template.Propagation.Riding | Template.Propagation.Shake;
-  float drag = 1;
-  [Flags]
-  enum Edges{
-    none=0, left=1, right=2, top=4, bottom=8, all=15
-  }
-  Edges edges = Edges.none;
-  Color fillColor, surfaceColor;
-  Color[] rayColors;
-  List<FloatRect> fills;//VertexPositionColor[] inner;
-  public FancyWater(EntityData d, Vector2 o):base(d.Position+o,false,false,d.Width,d.Height){
-    if(d.Bool("hasTop",true))edges|=Edges.top;
-    if(d.Bool("hasBottom",false))edges|=Edges.bottom;
-    if(d.Bool("hasLeft",false))edges|=Edges.left;
-    if(d.Bool("hasRight",false))edges|=Edges.right;
-    fillColor = Util.hexToColor(d.Attr("fillColor","293E4B4D"));
-    surfaceColor = Util.hexToColor(d.Attr("surfaceColor","6CA5C8CC"));
-    TopSurface = new FakeTopsurface(this);
-    Collider = new Hitbox(d.Width,d.Height);
-    Remove(Get<DisplacementRenderHook>());
-  }
-  void ITemplateChild.relposTo(Vector2 loc, Vector2 ls){
-    Vector2 delta = (loc+toffset)-Position;
-    foreach(Actor a in Scene.Tracker.GetEntities<Actor>()) if(a.CollideCheck(this)){
-      a.MoveH(delta.X*drag);
-      a.MoveV(delta.Y*drag);
-      a.LiftSpeed = ls*drag;
-    }
-    Position = loc+toffset;
-  }
-  bool ITemplateChild.hasPlayerRider()=>UpdateHook.cachedPlayer?.CollideCheck(this)??false;
-  public override void Update(){
-    if(leader!=null) return;
-    foreach(var surface in surfaces) surface.Update(Engine.DeltaTime);
-    foreach(WaterInteraction w in Scene.Tracker.GetComponents<WaterInteraction>()){
-      bool f1 = contains.Contains(w);
-      var old = Collider;
-      bool f2 = fills.Any(x=>{
-        Collider = new Hitbox(x.w,x.h,x.x,x.y);
-        return w.Check(this);
-      });
-      Collider = old;
-      if(f1!=f2){
-        var loc = w.AbsoluteCenter;
-        DoRipple(loc,1f);
-        if (f1){
-          if(w.IsDashing()) Audio.Play("event:/char/madeline/water_dash_out", loc, "deep", 0);
-          else Audio.Play("event:/char/madeline/water_out", loc, "deep", 0);
-          w.DrippingTimer = 2f;
-        } else {
-          if (w.IsDashing()) Audio.Play("event:/char/madeline/water_dash_in", loc, "deep", 0);
-          else Audio.Play("event:/char/madeline/water_in", loc, "deep", 0);
-          w.DrippingTimer = 0f;
-        }
-        if(!f1) contains.Add(w);
-        else contains.Remove(w);
-      }
-    }
-  }
-  public override void Render(){
-    if(leader!=null) return;
-    // var cs = new List<Color>(){Color.White, Color.Yellow, Color.Green, Color.LightGray};
-    // for(int i=0; i<s.Count; i++){
-    //   var c = cs[i%cs.Count];
-    //   foreach(var e in s[i].Item1){
-    //     Draw.Line(e.a,e.b,c);
-    //   }
-    // }
-    foreach(var r in fills) Draw.Rect(r.tlc+Position, (int)r.w, (int)r.h, fillColor);
-    if(surfaces.Count>0){
-      GameplayRenderer.End();
-      foreach(var surface in surfaces) surface.Render(Position);
-      GameplayRenderer.Begin();
-    }
-  }
-  FancyWater leader = null;
-  public override void Awake(Scene scene) {
-    base.Awake(scene);
-    if(leader!=null) return;
-    List<FloatRect> bounds = new();
-    List<Edges> edges = new();
-    foreach(FancyWater fw in scene.Tracker.GetEntities<FancyWater>()){
-      if(fw!=this) fw.leader=this;
-      bounds.Add(FloatRect.RelativeTo(fw,Position));
-      edges.Add(fw.edges);
-    }
-    var thing = EdgeFinder.Find(bounds,edges);
-    fills = thing.Item2;
-    // inner = new VertexPositionColor[thing.Item2.Count];
-    // for(int i=0; i<thing.Item2.Count; i++){
-    //   var r=
-    // }
-    foreach(var (s,l) in thing.Item1) surfaces.Add(ParseSurface(s,l));
-  }
-  
-
-
-
 
   struct Edgepoint{
     public Vector2 point;
@@ -142,18 +35,15 @@ public class FancyWater:Water,ISimpleEnt{
   List<BentSurface> surfaces = new();
   class BentSurface{
     Edgepoint[] points;
-    VertexPositionColor[] mesh;
+    public VertexPositionColor[] mesh;
     float[] heights;
     int surfaceidx;
+    public int rayidx;
     bool loop;
     class Ripple{
       public float pos=0, speed=0, height=3, percent=0, duration=2;
     }
     List<Ripple> ripples = new();
-    class Tension{
-      public float pos=0, str=4;
-    }
-    List<Tension> tensions = new();
     class Ray{
 
     }
@@ -164,7 +54,9 @@ public class FancyWater:Water,ISimpleEnt{
       this.loop=loop;
       points = arr.ToArray();
       heights = new float[points.Length];
-      surfaceidx = (arr.Count-(loop?0:1))*2*3;
+      rayidx = (arr.Count-(loop?0:1))*2*3;
+      surfaceidx = rayidx+0;
+
       mesh = new VertexPositionColor[surfaceidx*2];
       for(int i=0; i<surfaceidx; i++){
         mesh[i].Color = parent.fillColor;
@@ -236,16 +128,17 @@ public class FancyWater:Water,ISimpleEnt{
         heights[i]=Util.Clamp(heights[i]+MathF.Sin(timer + i*f),0,12);
       }
 
-      foreach (Tension t in tensions){
-        int start = (int)Math.Floor(t.pos-8);
-        int k=0;
-        for(int j = start>=0?start: (loop? Util.SafeMod(start,n):0); k++<13; j++){
-          if(j>=n){
-            if(loop) j=0;
-            else break;
-          }
-          float d = Util.CRemap(Math.Abs(t.pos-j), 0,6, 1,0);
-          heights[j]+= Util.CubeOut(d) * t.str *12f;
+      foreach(Player p in parent.Scene.Tracker.GetEntities<Player>()){
+        var pos = p.Center-parent.Position;
+        if(p.StateMachine.State!=Player.StSwim || bestMatchPoint(pos,8) is not {} best) continue;
+        if(inBasis(best.Item1, pos).X>8) continue;
+        var down = GelperIop.downVec(p);
+
+        foreach(var (loc, dist) in allMatchPoint(pos,32)){
+          Vector2 basis = inBasis(loc, pos);
+          float d = Util.CRemap(Math.Abs(basis.Y), 0,16, 1,0);
+          float nscore = Calc.ClampedMap(Vector2.Dot(points[loc].normal, down), -0.6f, 0.4f);
+          heights[loc]+= Util.CubeOut(d) * Calc.ClampedMap(basis.X, -4,4) * 3 * nscore;
         }
       }
       if(loop)heights[^1]=heights[0];
@@ -278,6 +171,11 @@ public class FancyWater:Water,ISimpleEnt{
       float fac =  i-l;
       return pointAt(l)*(1-fac) + pointAt(l+1)*fac;
     }
+    Vector2 normalAt(float i){
+      int l = loop? Util.SafeMod((int)Math.Floor(i),points.Length-1):Math.Clamp((int)Math.Floor(i), 0, points.Length-2);
+      float fac =  i-l;
+      return (points[l].normal*(1-fac) + points[l+1].normal*fac).SafeNormalize(1);
+    }
     (float,float)? bestMatchPoint(Vector2 p, float maxRange){
       var n = points.Length - (loop?1:0);
       float best = -1;
@@ -306,6 +204,22 @@ public class FancyWater:Water,ISimpleEnt{
       if(bestl > maxRange-4) return null;
       return (best+bf, bestl);
     }
+    IEnumerable<(int,float)> allMatchPoint(Vector2 p, float maxRange){
+      var n = points.Length - (loop?1:0);
+      for(int i=0; i<n; i++){
+        var d = (pointAt(i)-p).Length();
+        if(d>2*maxRange){
+          i += (int) Math.Floor((d-2*maxRange)/4);
+          continue;
+        }
+        if(d<=maxRange) yield return (i,d);
+      }
+    }
+    Vector2 inBasis(float i, Vector2 loc){
+      Vector2 inFrame = loc-pointAt(i);
+      var v = normalAt(i);
+      return new(Vector2.Dot(inFrame,v), Vector2.Dot(inFrame,new(-v.Y,v.X)));
+    }
     public void tryRipple(Vector2 p, float multiplier){
       if(bestMatchPoint(p, 12) is not {} pair) return;
       float dur = 3f;
@@ -327,6 +241,9 @@ public class FancyWater:Water,ISimpleEnt{
     if(leader is { } l) l.DoRipple(p,str);
     else for(int i=0; i<surfaces.Count; i++) surfaces[i].tryRipple(p-Position,str);
   }
+
+
+
   BentSurface ParseSurface(List<EdgeFinder.Segment> li, bool loop){
     List<Edgepoint> current = new();
     List<int> donot = new();
@@ -382,10 +299,6 @@ public class FancyWater:Water,ISimpleEnt{
     Edges.bottom=>Edges.left,
     _=>throw new Exception("non singular edge")
   };
-  
-
-
-
   static class EdgeFinder{
     static (List<float>, Dictionary<float,int>) Ordering(IEnumerable<float> items){
       Dictionary<float,int> found = new();
@@ -427,7 +340,6 @@ public class FancyWater:Water,ISimpleEnt{
       int[] c = new int[w];
       int[] d = new int[w];
       var ret = new List<EdgeInnerSegment>[rs];
-      // DebugConsole.Write($"get ({string.Join(" ", opening)}) ({string.Join(" ", closing)})");
 
       for(int r=reverse? rs-1:0; r<rs && r>=0; r+=reverse? -1:1){
         int loi = oi;
@@ -443,7 +355,7 @@ public class FancyWater:Water,ISimpleEnt{
           for(int i=descr.a; i<descr.b; i++) c[i]--;
           ci++;
         }
-        // DebugConsole.Write($"Line {r} ({string.Join(" ",d)}) -> ({string.Join(" ",c)})");
+
         List<EdgeInnerSegment> ne = new();
         EdgeInnerSegment oe = new(){a=0};
         EdgeInnerSegment ce = new(){a=0};
@@ -566,14 +478,12 @@ public class FancyWater:Water,ISimpleEnt{
           }
         }
       }
-      //foreach(var s in ret) DebugConsole.Write($"\n{string.Join(", ",s)}\n");
 
       (iToX, XToI) = Ordering(iToX.Concat(neg.Select(r=>r.x)).Concat(neg.Select(r=>r.x+r.w)));
       (iToY, YToI) = Ordering(iToY.Concat(neg.Select(r=>r.y)).Concat(neg.Select(r=>r.y+r.h)));
       var yirs = rects.Select(r=>IntRect.fromCorners(toi(r.tlc), toi(r.brc)));
       var nirs = neg.Select(r=>IntRect.fromCorners(toi(r.tlc), toi(r.brc)));
       var rs = dif(yirs.Concat(nirs).ToList(), irs.Count, iToX.Count, iToY.Count);
-      //foreach(var r in rs) DebugConsole.Write($"{r}");
 
       return (ret, rs.Map(r=>FloatRect.fromCorners(tofv(r.tlc),tofv(r.brc))));
     }

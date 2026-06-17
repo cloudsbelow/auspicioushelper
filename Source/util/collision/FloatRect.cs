@@ -64,6 +64,10 @@ public struct FloatRect{
   public FloatRect(Entity e){
     x=e.Left; y=e.Top; w=e.Width; h=e.Height;
   }
+  public FloatRect(Hitbox hb){
+    var p = hb.Entity.Position;
+    x=p.X+hb.Position.X; y=p.Y+hb.Position.Y; w=hb.Width; h=hb.Height;
+  }
   public static FloatRect RelativeTo(Entity e, Vector2 p)=>new(e.Left-p.X, e.Top-p.Y, e.Width, e.Height);
   public FloatRect(Rectangle r){
     x=r.X; y=r.Y; w=r.Width; h=r.Height;
