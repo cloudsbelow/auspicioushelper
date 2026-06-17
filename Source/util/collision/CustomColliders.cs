@@ -99,11 +99,29 @@ public sealed class MiptileCollider:Grid{
     return grid;
   }
   public override void Render(Camera camera, Color color) {
+    var tlc = this.tlc;
     Draw.HollowRect(tlc.X, tlc.Y, Width, Height, color);
-    var rbounds = new FloatRect(tlc.X,tlc.Y,Width,Height)._intersect(MaterialPipe.clipBounds);
-    for(int y=0; y<rbounds.h; y++) for(int x=0; x<rbounds.w; x++){
-      Vector2 point = rbounds.tlc+new Int2(x,y);
-      if(Collide(point))Draw.HollowRect(point,1,1,(Color.Yellow.ToVector4()/6).toColor());
+
+    float w = cellsize.X;
+    float h = cellsize.Y;
+    var vec = -tlc+MaterialPipe.clipBounds.tlc;
+    var rtlc = Int2.Max(Int2.Floor(vec/cellsize), 0);
+    var rbrc = Int2.Min(Int2.Ceil((vec+MaterialPipe.clipBounds.size)/cellsize), mg.size);
+    var l = mg.layers[0];
+    var fill = (Color.Yellow.ToVector4()/6).toColor();
+    for(int yy=rtlc.y; yy<rbrc.y; yy++){
+      int cur = -1;
+      for(int xx=rtlc.x; xx<rbrc.x; xx++){
+        if(l.collidePoint(new(xx,yy))){
+          if(cur==-1) cur=xx;
+        } else {
+          if(cur!=-1){
+            Draw.Rect(new FloatRect(tlc.X+cur*w, tlc.Y+yy*h, (xx-cur)*w, h).munane(), fill);
+          }
+          cur=-1;
+        }
+      }
+      if(cur!=-1) Draw.Rect(new FloatRect(tlc.X+cur*w, tlc.Y+yy*h, (rbrc.x-cur)*w, h).munane(), fill);
     }
   }
 }

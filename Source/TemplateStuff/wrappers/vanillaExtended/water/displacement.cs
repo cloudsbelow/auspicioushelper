@@ -149,22 +149,6 @@ public partial class FancyWater{
       handle.Free();
       if(me==this) me=null;
     }
-    // public override void Render() {
-    //   base.Render();
-    //   Draw.SpriteBatch.Draw(handle, (Scene as Level).Camera.position, Color.White);
-
-    //   // GameplayRenderer.End();
-      
-    //   // Start((Scene as Level).Camera.Matrix);
-    //   // foreach(FancyWater fw in Scene.Tracker.GetEntities<FancyWater>()) if(fw.leader == null){
-    //   //   Quads(fw.fills, Color.Red, fw.Position);
-    //   //   foreach(var s in fw.surfaces) QuadsFrom(s.mesh, Color.Blue, fw.Position, s.rayidx/6);
-    //   // }
-    //   // Flush();
-      
-
-    //   // GameplayRenderer.Begin();
-    // }
 
 
 

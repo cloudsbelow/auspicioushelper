@@ -14,7 +14,7 @@ using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
 
-[CustomEntity("auspicioushelper/water")]
+[CustomEntity("auspicioushelper/water","auspicioushelper/waterCopy")]
 [TrackedAs(typeof(Water))]
 [Tracked]
 public partial class FancyWater:Water,ISimpleEnt{
@@ -28,21 +28,41 @@ public partial class FancyWater:Water,ISimpleEnt{
   }
   Edges edges = Edges.none;
   Color fillColor, surfaceColor;
-  Color[] rayColors;
   List<FloatRect> fills;//VertexPositionColor[] inner;
+  bool jumpOut, verticalShrink,copy;
   public FancyWater(EntityData d, Vector2 o):base(d.Position+o,false,false,d.Width,d.Height){
-    if(d.Bool("hasTop",true))edges|=Edges.top;
-    if(d.Bool("hasBottom",false))edges|=Edges.bottom;
-    if(d.Bool("hasLeft",false))edges|=Edges.left;
-    if(d.Bool("hasRight",false))edges|=Edges.right;
-    fillColor = Util.hexToColor(d.Attr("fillColor","293E4B4D"));
-    surfaceColor = Util.hexToColor(d.Attr("surfaceColor","6CA5C8CC"));
+    drag = d.Float("tempalteDrag",1);
+    jumpOut = d.Bool("jumpOutSides",true);
     TopSurface = new FakeTopsurface(this);
     Collider = new Hitbox(d.Width,d.Height);
     Remove(Get<DisplacementRenderHook>());
     Depth = -8987; 
+    if(d.Bool("hasTop",true))edges|=Edges.top;
+    if(d.Bool("hasBottom",false))edges|=Edges.bottom;
+    if(d.Bool("hasLeft",false))edges|=Edges.left;
+    if(d.Bool("hasRight",false))edges|=Edges.right;
+    verticalShrink = d.Bool("verticalShrink",true);
+    if(d.Name == "auspicioushelper/waterCopy"){
+      copy=true;
+      return;
+    }
+
+    var colors = Util.listparseflat(d.Attr("colors","6CA4C8CC")).Map(Util.hexToColor);
+    if(colors.Count==0) colors.Add(Util.hexToColor("6CA4C8CC"));
+    if(colors.Count==1) colors.Add(colors[0]*0.375f);
+    if(colors.Count==2) colors.Add((colors[0].ToVector4()*0.6f+colors[1].ToVector4()*0.4f).toColor());
+    surfaceColor = colors[0];
+    fillColor = colors[1];
+    rayColors = colors.Skip(2).ToArray();
+    rayLengthRange = d.optionalRange("rayLength", new Vector2(16,64), Vector2.One*4, Vector2.One*128);
+    rayWidthRange = d.optionalRange("rayWidth", new Vector2(4,12), Vector2.One*2, Vector2.One*20);
+    maxRaySegs = (int)Math.Ceiling(rayWidthRange.Y/4+1);
+    doInvRays = d.Bool("backwardsRays",false);
+    rayDir = d.ChannelFloat("rayDirection", 60);
+    rayDensity = Util.Clamp(d.Float("rayDensity", 0.7f), 0, 2);
   }
   void ITemplateChild.relposTo(Vector2 loc, Vector2 ls){
+    if(Scene==null || !Collidable) return;
     Vector2 delta = (loc+toffset)-Position;
     foreach(Actor a in Scene.Tracker.GetEntities<Actor>()) if(a.CollideCheck(this)){
       a.MoveH(delta.X*drag);
@@ -53,7 +73,10 @@ public partial class FancyWater:Water,ISimpleEnt{
   }
   bool ITemplateChild.hasPlayerRider()=>UpdateHook.cachedPlayer?.CollideCheck(this)??false;
   public override void Update(){
-    if(leader!=null) return;
+    if(leader!=null || copy){
+      RemoveSelf();
+      return;
+    }
     foreach(var surface in surfaces) surface.Update(Engine.DeltaTime);
     foreach(WaterInteraction w in Scene.Tracker.GetComponents<WaterInteraction>()){
       bool f1 = contains.Contains(w);
@@ -81,7 +104,7 @@ public partial class FancyWater:Water,ISimpleEnt{
     }
   }
   public override void Render(){
-    if(leader!=null) return;
+    if(leader!=null || copy) return;
     // var cs = new List<Color>(){Color.White, Color.Yellow, Color.Green, Color.LightGray};
     // for(int i=0; i<s.Count; i++){
     //   var c = cs[i%cs.Count];
@@ -100,33 +123,49 @@ public partial class FancyWater:Water,ISimpleEnt{
   public override void Awake(Scene scene) {
     base.Awake(scene);
     Displacement.For(scene);
+    if(copy) RemoveSelf();
+    if(leader!=null || copy) return;
+    var allThings = Scene.Tracker.GetEntities<FancyWater>().MapAndFilter(o=>{
+      var ow = (FancyWater)o;
+      return((new IntRect(ow),ow),ow.parent==parent && ow!=this && ow.leader==null);
+    });
+    List<(IntRect,FancyWater)> things = new(){(new(this),this)};
+    int idx = 0;
+    while(idx<things.Count){
+      int nidx=things.Count;
+      allThings.RemoveAll(x=>{
+        for(int i=idx; i<nidx; i++) if(things[i].Item1.CollideIr(x.Item1)){
+          things.Add(x);
+          return true;
+        }
+        return false;
+      });
+      idx=nidx;
+    } 
+    Int2 min = things.ReduceMapI(a=>a.Item1.tlc,Int2.Min);
+    Int2 max = things.ReduceMapI(a=>a.Item1.brc,Int2.Max);
+    var l = MipGrid.Layer.fromAreasize(max.x-min.x, max.y-min.y);
 
-    if(leader!=null) return;
+
     List<FloatRect> bounds = new();
     List<Edges> edges = new();
-    foreach(FancyWater fw in scene.Tracker.GetEntities<FancyWater>()){
-      if(fw!=this) fw.leader=this;
-      bounds.Add(FloatRect.RelativeTo(fw,Position));
+    foreach(var (bound, fw) in things){
+      if(fw!=this){
+        fw.leader=this;
+        fw.RemoveSelf();
+        if(parent!=null) parent.children.Remove(fw);
+      }
+      l.SetRect(true, bound.tlc-min, bound.brc-min);
+      var rect = FloatRect.RelativeTo(fw,Position);
+      if(fw.verticalShrink && fw.edges.HasFlag(Edges.top)) rect.expandUp(-1);
+      if(fw.verticalShrink && fw.edges.HasFlag(Edges.bottom)) rect.expandDown(-1);
+      bounds.Add(rect);
       edges.Add(fw.edges);
     }
-    var thing = EdgeFinder.Find(bounds,edges);
-    fills = thing.Item2;
-  
-    foreach(var (s,l) in thing.Item1) surfaces.Add(ParseSurface(s,l));
+    var clipped = EdgeFinder.Find(bounds,edges);
+    fills = clipped.Item2;
+    foreach(var (seg,loop) in clipped.Item1) surfaces.Add(ParseSurface(seg,loop));
+
+    Collider = new MiptileCollider(new MipGrid(l), Vector2.One){Position=min-Position};
   }
-  
-
-
-
-
-  
-
-
-
-
-
-
-  
-
-  
 }

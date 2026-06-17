@@ -52,7 +52,7 @@ public class MipGrid{
       }
     }
     public static Layer fromAreasize(int width, int height){
-      return new Layer((width+blockw-1)/blockw, (height+blockh-1)/2);
+      return new Layer((width+blockw-1)/blockw, (height+blockh-1)/blockh);
     }
     public void SetBlock(ulong val, int x, int y){
       // DebugConsole.Write($"Set {x},{y}");

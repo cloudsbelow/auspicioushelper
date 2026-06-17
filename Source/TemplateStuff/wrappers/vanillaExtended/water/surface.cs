@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
@@ -12,6 +13,13 @@ namespace Celeste.Mod.auspicioushelper;
 
 public partial class FancyWater{
   const float SurfaceInset = 4;
+  int maxRaySegs = 4;
+  Color[] rayColors;
+  Vector2 rayLengthRange = new(8,64);
+  Vector2 rayWidthRange = new(4,12);
+  ChannelState.FloatCh rayDir;
+  float rayDensity;
+  bool doInvRays;
   class FakeTopsurface:Water.Surface{
     FancyWater fw;
     public FakeTopsurface(FancyWater w):base(Vector2.Zero,-Vector2.UnitY,0,0){
@@ -45,8 +53,25 @@ public partial class FancyWater{
     }
     List<Ripple> ripples = new();
     class Ray{
+      public float pos, percent, duration, width, length;
+      public Color c;
+      public Ray ResetFor(BentSurface s, float percent){
+        this.percent = percent;
+        var fw = s.parent;
+        float mw = fw.rayWidthRange.X/4;
+        width = s.points.Length > fw.maxRaySegs? 
+          Calc.Random.NextFloat()*(fw.rayWidthRange.Y/4-mw) + mw:
+          s.points.Length;
+        width = Math.Min(width, fw.maxRaySegs-1);
 
+        pos = Calc.Random.NextFloat()*(s.points.Length-(s.loop? 1:width+1));
+        duration = Calc.Random.Range(2f, 8f);
+        length = Calc.Random.Range(fw.rayLengthRange.X, fw.rayLengthRange.Y);
+        c = Calc.Random.Choose(fw.rayColors);
+        return this;
+      }
     }
+    List<Ray> rays = new();
     float timer=0, waviness=0.45f;
     FancyWater parent;
     public BentSurface(List<Edgepoint> arr, List<int> donot, bool loop, FancyWater parent){
@@ -55,10 +80,12 @@ public partial class FancyWater{
       points = arr.ToArray();
       heights = new float[points.Length];
       rayidx = (arr.Count-(loop?0:1))*2*3;
-      surfaceidx = rayidx+0;
+      int numrays = (int)Math.Round((points.Length-1)*parent.rayDensity);
+      for(int i=0; i<numrays; i++) rays.Add(new Ray().ResetFor(this, Calc.Random.NextFloat()));
+      surfaceidx = rayidx + numrays*parent.maxRaySegs*3;
 
-      mesh = new VertexPositionColor[surfaceidx*2];
-      for(int i=0; i<surfaceidx; i++){
+      mesh = new VertexPositionColor[rayidx+surfaceidx];
+      for(int i=0; i<rayidx; i++){
         mesh[i].Color = parent.fillColor;
         mesh[i+surfaceidx].Color = parent.surfaceColor;
       }
@@ -94,7 +121,7 @@ public partial class FancyWater{
     public void Update(float dt){
       if(dt==0) return;
       timer+=dt;
-      int n = points.Length-(loop?2:1);
+      int n = points.Length-1;
       for(int i=0; i<heights.Length; i++) heights[i]=SurfaceInset-1;
       ripples.RemoveAll(r=>{
         r.percent+=dt/r.duration;
@@ -164,15 +191,65 @@ public partial class FancyWater{
         p12 = p22;
         p13 = p23;
       }
+
+      var radian = parent.rayDir*MathF.PI/180;
+      Vector2 rayAngle = new(-MathF.Cos(radian), MathF.Sin(radian));
+      for(int i=0; i<rays.Count; i++){
+        var ray = rays[i];
+        ray.percent += dt / ray.duration;
+        if (ray.percent > 1f){
+          ray.ResetFor(this, ray.percent-MathF.Floor(ray.percent));
+        }
+        var rayCenter = (ray.pos+ray.width/2)%n;
+
+        var norm = normalAt(rayCenter);
+        var endCenter = pointAt(rayCenter)+rayAngle*ray.length;
+        float str = Math.Min(1, 5-10*Math.Abs(ray.percent-0.5f));
+        bool inv = Vector2.Dot(rayAngle, norm)>=0;
+        if(inv){
+          if(!parent.doInvRays) str=0;
+          else endCenter -= rayAngle*ray.length*2;
+        }
+
+        var o = rayidx + i*parent.maxRaySegs*3;
+        var lastPos = surfaceAt(ray.pos).Expand();
+        int low = (int) Math.Floor(ray.pos);
+        int j=1;
+        for(; j<ray.width+1; j++){
+          var oo = o+j*3;
+          var next = j<ray.width? surfaceAt((low+j)%n) : surfaceAt(ray.pos+ray.width);
+          mesh[oo+0].Position = lastPos;
+          mesh[oo+0].Color = ray.c*str;
+          mesh[oo+1].Position = lastPos = next.Expand();
+          mesh[oo+1].Color = ray.c*str;
+          mesh[oo+2].Position = endCenter.Expand();
+        }
+        for(; j<parent.maxRaySegs; j++){
+          var oo = o+j*3;
+          mesh[oo+0].Color = new(0,0,0,0);
+          mesh[oo+1].Color = new(0,0,0,0);
+        }
+      }
     }
+
+
     Vector2 pointAt(int i)=>points[i].point+points[i].normal*SurfaceInset;
     Vector2 pointAt(float i){
-      int l = loop? Util.SafeMod((int)Math.Floor(i),points.Length-1):Math.Clamp((int)Math.Floor(i), 0, points.Length-2);
+      if(loop) i = (i+points.Length-1)%(points.Length-1);
+      int l = loop? (int)Math.Floor(i):Math.Clamp((int)Math.Floor(i), 0, points.Length-2);
       float fac =  i-l;
       return pointAt(l)*(1-fac) + pointAt(l+1)*fac;
     }
+    Vector2 surfaceAt(int i)=>points[i].point+points[i].normal*heights[i];
+    Vector2 surfaceAt(float i){
+      if(loop) i = (i+points.Length-1)%(points.Length-1);
+      int l = loop? (int)Math.Floor(i):Math.Clamp((int)Math.Floor(i), 0, points.Length-2);
+      float fac =  i-l;
+      return surfaceAt(l)*(1-fac) + surfaceAt(l+1)*fac;
+    }
     Vector2 normalAt(float i){
-      int l = loop? Util.SafeMod((int)Math.Floor(i),points.Length-1):Math.Clamp((int)Math.Floor(i), 0, points.Length-2);
+      if(loop) i = (i+points.Length-1)%(points.Length-1);
+      int l = loop? (int)Math.Floor(i):Math.Clamp((int)Math.Floor(i), 0, points.Length-2);
       float fac =  i-l;
       return (points[l].normal*(1-fac) + points[l+1].normal*fac).SafeNormalize(1);
     }

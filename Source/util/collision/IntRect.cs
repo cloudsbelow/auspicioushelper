@@ -26,6 +26,7 @@ public struct IntRect{
   public Int2 brc=>new Int2(x+w,y+h);
   public Int2 trc=>new Int2(x+w,y);
   public Int2 blc=>new Int2(x,y+h);
+  public Int2 size=>new(w,h);
   static public IntRect empty=>new(10000000,10000000,-20000000,-20000000);
   public Vector2 center {
     get=>new Vector2(x+w/2,y+h/2);

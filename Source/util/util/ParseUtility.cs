@@ -60,6 +60,15 @@ public static partial class Util{
     str = d.Attr(key,"");
     return !string.IsNullOrWhiteSpace(str);
   }
+  public static Vector2 optionalRange(this EntityData d, string key, Vector2 def, Vector2? min=null, Vector2? max=null){
+    var ar = csparseflat(d.Attr(key,""));
+    Vector2 vec = ar.Length switch {
+      0=>def, 1=>new(ar[0],ar[0]), _=>new(ar[0],ar[1])
+    };
+    if(min is {} low) vec = Vector2.Max(vec,low);
+    if(max is {} high) vec = Vector2.Min(vec,high);
+    return vec;
+  }
   public static string StringOrNull(this EntityData d, string key){
     return d.tryGetStr(key, out var res)?res:null;
   }
