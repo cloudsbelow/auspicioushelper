@@ -120,15 +120,18 @@
         "p_name": "channel reflector"
     },
     "entities.auspicioushelper/ChannelSprite": {
-        "description": "Sprite that can display animations defined in Sprites.xml based on a channel. Check auspicioushelper's Sprites.xml for an example setup.",
+        "description": "Display sprites or images based on channel values.",
         "placements": {
-            "channel": "the channel to watch",
-            "attached": "Whether to attach the entity to solids",
-            "edge_type": "How to pick the case when the channel is less than zero or greater than cases-1",
-            "xml_spritename": "name of the XML sprite",
-            "cases": "number of cases defined in XML",
-            "depth": "it's what you would expect from this field",
-            "materialIdentifiers": "Currently unimplemented. Just use a applier smh"
+            "channel": "Which animation from those in animationnames should be played",
+            "xml_spritename": "name of the XML sprite to use",
+            "depth": "depth",
+            "materialIdentifiers": "Name of material layers to be put in. If any are present, will make the entitiy invisible unless 'normal' is also here",
+            "origin": "Origin of the image for rotation",
+            "scale": "CHANNELABLE. two values can be used for different x/y",
+            "rotation": "CHANNELABLE in degrees",
+            "image_path": "Path to the image to display, rooted in the gameplay atlas",
+            "tint": "multiplicative color tint",
+            "animationNames": "List of animation names to play. When channel has value x, the x'th animation (looping) will be played"
         },
         "p_name": "auspicioushelper_example1"
     },

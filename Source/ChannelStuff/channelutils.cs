@@ -427,6 +427,11 @@ public static class ChannelState{
     FloatCh y = th.Count>(yfirst?0:1)? new(th[th.Count>1? 1:0]) : new(yDefault.ToString());
     return new(x,y);
   }
+  internal static Vec2Ch ChannelVecOrScalar(this EntityData d, string attr, float def){
+    var th = Util.listparseflat(d.Attr(attr));
+    FloatCh x = th.Count>0? new(th[0]) : new(def.ToString());
+    return th.Count>1? new(x,new(th[1])) : new(x,x);
+  }
   internal class IntCh:ChannelReader{
     int val;
     public IntCh(string parse):base(

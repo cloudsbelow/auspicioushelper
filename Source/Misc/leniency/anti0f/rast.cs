@@ -68,6 +68,7 @@ public partial class Anti0fZone{
     int zh; public bool doholdables=>zh>0; public bool hh;
     int zs; public bool dosolids=>zs>0; public bool hs;
     int zwj; public bool dowalljumps=>zwj>0;
+    public int minSteps=0;
     bool wholeroom;
 
     void inire(Anti0fZone z, int adj){
@@ -76,6 +77,7 @@ public partial class Anti0fZone{
       zh+=z.cthrowables?adj:0;
       zs+=z.csolids?adj:0;
       zwj+=z.alwayswjc?adj:0;
+      minSteps = z.mindist;
     }
     Anti0fZone iniw(Anti0fZone z){
       if(z.wholeroom){

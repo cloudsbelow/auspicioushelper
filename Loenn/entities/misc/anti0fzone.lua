@@ -20,7 +20,7 @@ entity.placements = {
       solids = true,
       cover_whole_room=false,
       ForceGroundCollide = "None",
-      minImmediateSteps = "",
+      minImmediateSteps = 1,
     }
   }
 }

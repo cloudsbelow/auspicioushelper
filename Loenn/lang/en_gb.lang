@@ -110,14 +110,17 @@ entities.auspicioushelper/ChannelReflector.attributes.description.valueIfNull=If
 entities.auspicioushelper/ChannelReflector.attributes.description.access=List of fields to successively access. Attempts to cast the last to a double to set the channel
 
 # auspicioushelper/ChannelSprite
-entities.auspicioushelper/ChannelSprite.placements.description.auspicioushelper_example1=Sprite that can display animations defined in Sprites.xml based on a channel. Check auspicioushelper's Sprites.xml for an example setup.
-entities.auspicioushelper/ChannelSprite.attributes.description.channel=the channel to watch
-entities.auspicioushelper/ChannelSprite.attributes.description.attached=Whether to attach the entity to solids
-entities.auspicioushelper/ChannelSprite.attributes.description.edge_type=How to pick the case when the channel is less than zero or greater than cases-1
-entities.auspicioushelper/ChannelSprite.attributes.description.xml_spritename=name of the XML sprite
-entities.auspicioushelper/ChannelSprite.attributes.description.cases=number of cases defined in XML
-entities.auspicioushelper/ChannelSprite.attributes.description.depth=it's what you would expect from this field
-entities.auspicioushelper/ChannelSprite.attributes.description.materialIdentifiers=Currently unimplemented. Just use a applier smh
+entities.auspicioushelper/ChannelSprite.placements.description.auspicioushelper_example1=Display sprites or images based on channel values.
+entities.auspicioushelper/ChannelSprite.attributes.description.channel=Which animation from those in animationnames should be played
+entities.auspicioushelper/ChannelSprite.attributes.description.xml_spritename=name of the XML sprite to use
+entities.auspicioushelper/ChannelSprite.attributes.description.depth=depth
+entities.auspicioushelper/ChannelSprite.attributes.description.materialIdentifiers=Name of material layers to be put in. If any are present, will make the entitiy invisible unless 'normal' is also here
+entities.auspicioushelper/ChannelSprite.attributes.description.origin=Origin of the image for rotation
+entities.auspicioushelper/ChannelSprite.attributes.description.scale=CHANNELABLE. two values can be used for different x/y
+entities.auspicioushelper/ChannelSprite.attributes.description.rotation=CHANNELABLE in degrees
+entities.auspicioushelper/ChannelSprite.attributes.description.image_path=Path to the image to display, rooted in the gameplay atlas
+entities.auspicioushelper/ChannelSprite.attributes.description.tint=multiplicative color tint
+entities.auspicioushelper/ChannelSprite.attributes.description.animationNames=List of animation names to play. When channel has value x, the x'th animation (looping) will be played
 
 # auspicioushelper/ChannelSwitch
 entities.auspicioushelper/ChannelSwitch.placements.description.Channel Switch=Core switch that actually toggles channels
@@ -238,6 +241,23 @@ entities.auspicioushelper/spinner.attributes.description.border=Border color. Ca
 # auspicioushelper/JuckterField
 entities.auspicioushelper/JuckterField.placements.description.Juckter Field=Throw a holdable into it! pretty self explanatory. Works with template holdables.
 
+# auspicioushelper/waterCopy
+entities.auspicioushelper/waterCopy.placements.description.fancy water (copy settings)=Water (configurable)
+entities.auspicioushelper/waterCopy.attributes.description.tempalteDrag=The factor by which to drag submerged actors when moved by template
+entities.auspicioushelper/waterCopy.attributes.description.triggerRiding=Whether swiming should be counted as riding
+entities.auspicioushelper/waterCopy.attributes.description.jumpOutSides=If checked, the player can jump out of the sides of the water
+entities.auspicioushelper/waterCopy.attributes.description.hasBottom=whether this face should have a surface. Will connect around corners.
+entities.auspicioushelper/waterCopy.attributes.description.hasTop=whether this face should have a surface. Will connect around corners.
+entities.auspicioushelper/waterCopy.attributes.description.hasLeft=whether this face should have a surface. Will connect around corners.
+entities.auspicioushelper/waterCopy.attributes.description.hasRight=whether this face should have a surface. Will connect around corners.
+entities.auspicioushelper/waterCopy.attributes.description.colors=If multiple are given, first is surface, next is fill, then all following are used for rays. If less are given, the remaining are infered
+entities.auspicioushelper/waterCopy.attributes.description.rayLength=Minimum and maximum ray length
+entities.auspicioushelper/waterCopy.attributes.description.rayWidth=Minimum and maximum ray width
+entities.auspicioushelper/waterCopy.attributes.description.rayDirection=CHANNELABLE the angle rays cast at
+entities.auspicioushelper/waterCopy.attributes.description.backwardsRays=Whether rays should also come from the opposite of the main direction
+entities.auspicioushelper/waterCopy.attributes.description.verticalShrink=Whather to shrink the water's appearance vertically by 1px - vanilla does this
+entities.auspicioushelper/waterCopy.attributes.description.die=die
+
 
 ##############
 ###  misc  ###
@@ -254,6 +274,7 @@ entities.auspicioushelper/Anti0fZone.attributes.description.triggers=Hit trigger
 entities.auspicioushelper/Anti0fZone.attributes.description.solids=Perform walljumps/cornerjumps on first possible pixel (prevents missing cornerboost speed when buffering)
 entities.auspicioushelper/Anti0fZone.attributes.description.cover_whole_room=Makes this entity cover the whole room
 entities.auspicioushelper/Anti0fZone.attributes.description.ForceGroundCollide=Do ground collisions before touching ground (immediately gain ultra speed)
+entities.auspicioushelper/Anti0fZone.attributes.description.minImmediateSteps=Number of steps that must be taken if speed is changed on the first pixel of movement
 
 # auspicioushelper/ArbitraryDie
 entities.auspicioushelper/ArbitraryDie.placements.description.Arbitrary shape kill area=Kill area with the shape of a specified image
@@ -279,6 +300,7 @@ entities.auspicioushelper/ArbitrarySolid.attributes.description.rotation=Rotatio
 entities.auspicioushelper/ArbitrarySolid.attributes.description.depth=Depth (negative is more in front; player is 0, fgtiles are -10000)
 entities.auspicioushelper/ArbitrarySolid.attributes.description.alphaCutoff=Pixels whose alpha is higher than this value will be collidable
 entities.auspicioushelper/ArbitrarySolid.attributes.description.occludeLight=Whether this entitiy casts shadows (only the solid pixels). Relatively optimized; no need to worry about lag if there are not hundreds of these entities
+entities.auspicioushelper/ArbitrarySolid.attributes.description.enableSlopes=Enable pixel leniency with the reccomended settings for good slopes. Use pixel leniency trigger for more customizability.
 
 # auspicioushelper/BeamBlocker
 entities.auspicioushelper/BeamBlocker.placements.name.main=Beam Blocker
@@ -309,6 +331,8 @@ entities.auspicioushelper/SillySpikes.attributes.description.fixPickup=Stopping 
 entities.auspicioushelper/SillySpikes.attributes.description.fixDash=Stopping due to starting a dash while overlapping the spikes won't be deadly
 entities.auspicioushelper/SillySpikes.attributes.description.fixOnBlock=Standing still on a block moving through these spikes won't be deadly if the block is moving in the right direction
 entities.auspicioushelper/SillySpikes.attributes.description.canAttach=Whether this entity attaches to solids
+entities.auspicioushelper/SillySpikes.attributes.description.TriggerSpike=Whether this should act as a trigger spike
+entities.auspicioushelper/SillySpikes.attributes.description.triggerTimer=Timing for spike to trigger after being touched. A second number can be given for the reset timing.
 
 # auspicioushelper/DecalRecolor
 entities.auspicioushelper/DecalRecolor.placements.description.Decal recolor controller=Controller to recolor decals non-multiplicatively
@@ -335,6 +359,7 @@ entities.auspicioushelper/MaterialApplier.attributes.description.materialLayer=I
 entities.auspicioushelper/MaterialApplier.attributes.description.dontNormalRender=Turn off normal rendering for this entity while in operation
 entities.auspicioushelper/MaterialApplier.attributes.description.toggleChannel=Channel to toggle between modified/original rendering
 entities.auspicioushelper/MaterialApplier.attributes.description.priority=The priority of this layer. Used when putting this entity in multiple layers simultaneously to decide which it appears in. (don't normal render will stop this item from rendering in lower priority layers as well as in normal usage)
+entities.auspicioushelper/MaterialApplier.attributes.description.types=entitydata name. All entities of this type will be added to the specified layer.
 
 # auspicioushelper/MaterialController
 entities.auspicioushelper/MaterialController.placements.name.main=Material Controller
@@ -608,6 +633,7 @@ entities.auspicioushelper/TemplateDreamblockModifier.attributes.description.allo
 entities.auspicioushelper/TemplateDreamblockModifier.attributes.description.tryDashhit=Attempts to resolve dashhit events of children before entering the block. Certain entities will stop you from using the dreamblock.
 entities.auspicioushelper/TemplateDreamblockModifier.attributes.description.sendDashhit=Send a dashhit event to parent templates when entering this block.
 entities.auspicioushelper/TemplateDreamblockModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
+entities.auspicioushelper/TemplateDreamblockModifier.attributes.description.bounce=Bounce inside
 
 # auspicioushelper/TemplateEntityModifier
 entities.auspicioushelper/TemplateEntityModifier.placements.description.Template Entity Modifier=Modify the visibility/collidability/activity of contained entities
@@ -679,6 +705,7 @@ entities.auspicioushelper/TemplateIceblock.attributes.description.ridingTriggers
 entities.auspicioushelper/TemplateIceblock.attributes.description.disconnect=Whether to disconnect this template's movement from its parent when it starts sinking
 entities.auspicioushelper/TemplateIceblock.attributes.description.quiet=Various options to mute certain sounds. Can have value from 0-7 with each number muting a different variety of sounds. 7 mutes all.
 entities.auspicioushelper/TemplateIceblock.attributes.name._loenn_display_template=[LÖNN] Display Template
+entities.auspicioushelper/TemplateIceblock.attributes.description.followGravity=Sink the other way when gravity helper has flipped the player
 
 # auspicioushelper/TemplateKevin
 entities.auspicioushelper/TemplateKevin.placements.description.Template Kevin=A kevin block that can be made with a template
@@ -708,6 +735,8 @@ entities.auspicioushelper/TemplateCloud.attributes.description.respawnTime=CHANN
 entities.auspicioushelper/TemplateCloud.attributes.description.cloudDir=CHANNELABLE. Cloud movement factor. A second number can be given to specify x/y
 entities.auspicioushelper/TemplateCloud.attributes.description.fromRiding=Whether riding this cloud triggers it
 entities.auspicioushelper/TemplateCloud.attributes.description.noDoubleBoost=Disables double cloudboosts (jumping in coyote after the cloud has shattered) only important for clouds with horizontal direction.
+entities.auspicioushelper/TemplateCloud.attributes.description.followGravity=Sink the other way when gravity helper has flipped the player
+entities.auspicioushelper/TemplateCloud.attributes.description.sideCoyote=Whether to get coyote frames off of the sides like core blocks
 
 # auspicioushelper/TemplateMoonblock
 entities.auspicioushelper/TemplateMoonblock.placements.name.main=Template Moonblock
@@ -721,6 +750,7 @@ entities.auspicioushelper/TemplateMoonblock.attributes.description.sink_speed=CH
 entities.auspicioushelper/TemplateMoonblock.attributes.description.dash_influence=CHANNELABLE. How far a dash will push this block
 entities.auspicioushelper/TemplateMoonblock.attributes.description.startphase=The floating phase this template should start on, in radians
 entities.auspicioushelper/TemplateMoonblock.attributes.description.useCustomStartphase=If this template should start its floating on some certain phase. Check this if "Start Phase" is specified
+entities.auspicioushelper/TemplateMoonblock.attributes.description.followGravity=Sink the other way when gravity helper has flipped the player
 
 # auspicioushelper/TemplateMoveblock
 entities.auspicioushelper/TemplateMoveblock.placements.name.main=Template Moveblock
@@ -844,6 +874,8 @@ entities.auspicioushelper/TemplateDisplacer.placements.description.Template Disp
 entities.auspicioushelper/TemplateDisplacer.attributes.description.template=The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.
 entities.auspicioushelper/TemplateDisplacer.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
 entities.auspicioushelper/TemplateDisplacer.attributes.name._loenn_display_template=[LÖNN] Display Template
+entities.auspicioushelper/TemplateDisplacer.attributes.description.displaceInto=Whether this will displace into other templates as a child. Uncheck for positional displace only
+entities.auspicioushelper/TemplateDisplacer.attributes.description.alwaysForcepos=Whether to always place exactly at node position (only works for first item in chain)
 
 # auspicioushelper/TemplateResetter
 entities.auspicioushelper/TemplateResetter.placements.description.Template Resetter=Template that can be destroyed and created at will
@@ -866,6 +898,7 @@ entities.auspicioushelper/TemplateCollisionModifier.attributes.description.types
 entities.auspicioushelper/TemplateCollisionModifier.attributes.description.combinationMode=How to combine path and type results. OR means that either a matching type or path will collide. TypeMinusPath will collide matching types if they dont match the path. etc.
 entities.auspicioushelper/TemplateCollisionModifier.attributes.description.log=Print intersecting types to the current auspicious debug log
 entities.auspicioushelper/TemplateCollisionModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
+entities.auspicioushelper/TemplateCollisionModifier.attributes.description.tangible=If checked, solids in this template will be collidable to the uncollidable solids in moving templates.
 
 
 ##################

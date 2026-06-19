@@ -41,11 +41,22 @@ public partial class FancyWater{
       Depth = -13000;
     }
     void Rasterize(){
+      var cam = (Scene as Level).Camera;
+      Int2 camsize = ExtendedCameraIop.cameraSize();
+      FloatRect camRect = new(cam.position.X, cam.position.Y, camsize.x, camsize.y);
+
       Dictionary<int,List<FancyWater>> byDepth = new();
       foreach(FancyWater f in Scene.Tracker.GetEntities<FancyWater>()) if(f.leader==null){
+        var coarse = f.renderBounds._expand(f.rayLengthRange.Y,f.rayLengthRange.Y);
+        coarse.shift(f.Position);
+        if(!(f.inView = camRect.CollideFr(coarse))) continue;
+
         if(!byDepth.TryGetValue(-f.Depth, out var li)) li = byDepth[-f.Depth] = new();
         li.Add(f); 
+        if(f.storedTime>0) foreach(var s in f.surfaces) s.Update(f.storedTime);
+        f.storedTime=0;
       }
+
       int[] keys = byDepth.Keys.ToArray();
       Array.Sort(keys);
       List<List<Solid>> buckets = new();
@@ -86,9 +97,7 @@ public partial class FancyWater{
       var gd = Engine.Instance.GraphicsDevice;
       gd.SetRenderTarget(handle);
       gd.Clear(Color.Transparent);
-      var cam = (Scene as Level).Camera;
       Start(cam.Matrix);
-      Int2 camsize = ExtendedCameraIop.cameraSize();
 
       for(int i=0; i<keys.Length; i++){
         foreach(var fw in byDepth[keys[i]]){

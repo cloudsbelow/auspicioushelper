@@ -283,7 +283,8 @@
             "sendDashhit": "Send a dashhit event to parent templates when entering this block.",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
-            ]
+            ],
+            "bounce": "Bounce inside"
         },
         "p_name": "Template Dreamblock Modifier"
     },
@@ -418,7 +419,8 @@
             "cloudDir": "CHANNELABLE. Cloud movement factor. A second number can be given to specify x/y",
             "fromRiding": "Whether riding this cloud triggers it",
             "noDoubleBoost": "Disables double cloudboosts (jumping in coyote after the cloud has shattered) only important for clouds with horizontal direction.",
-            "followGravity": "Sink the other way when gravity helper has flipped the player"
+            "followGravity": "Sink the other way when gravity helper has flipped the player",
+            "sideCoyote": "Whether to get coyote frames off of the sides like core blocks"
         },
         "p_name": "Template Cloud"
     },
@@ -630,7 +632,8 @@
             "log": "Print intersecting types to the current auspicious debug log",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
-            ]
+            ],
+            "tangible": "If checked, solids in this template will be collidable to the uncollidable solids in moving templates."
         }
     }
 }

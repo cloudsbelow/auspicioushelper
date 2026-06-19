@@ -13,7 +13,7 @@ entity.placements = {
     data = {
       width = 8,
       height=8,
-      tempalteDrag=1,
+      templateDrag=1,
       triggerRiding = true,
       jumpOutSides = true,
       hasBottom = true,
@@ -26,6 +26,7 @@ entity.placements = {
       rayDirection = "60",
       backwardsRays = false,
       verticalShrink = true,
+      die = false,
     }
   }
 }

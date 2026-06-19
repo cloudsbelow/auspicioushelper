@@ -64,5 +64,25 @@
         "p_name": "Juckter Field",
         "description": "Throw a holdable into it! pretty self explanatory. Works with template holdables.",
         "placements": {}
+    },
+    "entities.auspicioushelper/waterCopy": {
+        "p_name": "fancy water (copy settings)",
+        "description": "Water (configurable)",
+        "placements": {
+            "tempalteDrag": "The factor by which to drag submerged actors when moved by template",
+            "triggerRiding": "Whether swiming should be counted as riding",
+            "jumpOutSides": "If checked, the player can jump out of the sides of the water",
+            "hasBottom": "whether this face should have a surface. Will connect around corners.",
+            "hasTop": "whether this face should have a surface. Will connect around corners.",
+            "hasLeft": "whether this face should have a surface. Will connect around corners.",
+            "hasRight": "whether this face should have a surface. Will connect around corners.",
+            "colors": "If multiple are given, first is surface, next is fill, then all following are used for rays. If less are given, the remaining are infered",
+            "rayLength": "Minimum and maximum ray length",
+            "rayWidth": "Minimum and maximum ray width",
+            "rayDirection": "CHANNELABLE the angle rays cast at",
+            "backwardsRays": "Whether rays should also come from the opposite of the main direction",
+            "verticalShrink": "Whather to shrink the water's appearance vertically by 1px - vanilla does this",
+            "die": "die"
+        }
     }
 }

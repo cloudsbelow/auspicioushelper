@@ -111,7 +111,7 @@ public class CustomSpikes : Entity{
       Add(image);
       images.Add(image);
     }
-    if(triggerSpike) lb.Blocking=false;
+    if(triggerSpike && lb!=null) lb.Blocking=false;
   }
   public override void Render(){
     if (MaterialPipe.clipBounds.CollideExRect(Position.X,Position.Y,Width,Height)){

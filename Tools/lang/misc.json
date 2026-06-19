@@ -12,7 +12,8 @@
             "triggers": "Hit triggers on the first possible pixel",
             "solids": "Perform walljumps/cornerjumps on first possible pixel (prevents missing cornerboost speed when buffering)",
             "cover_whole_room": "Makes this entity cover the whole room",
-            "ForceGroundCollide": "Do ground collisions before touching ground (immediately gain ultra speed)"
+            "ForceGroundCollide": "Do ground collisions before touching ground (immediately gain ultra speed)",
+            "minImmediateSteps": "Number of steps that must be taken if speed is changed on the first pixel of movement"
         }
     },
     "entities.auspicioushelper/ArbitraryDie": {
@@ -125,7 +126,8 @@
             ],
             "dontNormalRender": "Turn off normal rendering for this entity while in operation",
             "toggleChannel": "Channel to toggle between modified/original rendering",
-            "priority": "The priority of this layer. Used when putting this entity in multiple layers simultaneously to decide which it appears in. (don't normal render will stop this item from rendering in lower priority layers as well as in normal usage)"
+            "priority": "The priority of this layer. Used when putting this entity in multiple layers simultaneously to decide which it appears in. (don't normal render will stop this item from rendering in lower priority layers as well as in normal usage)",
+            "types": "entitydata name. All entities of this type will be added to the specified layer."
         },
         "p_name": "Material Applier"
     },

@@ -301,6 +301,8 @@ anyways i want to praise it more it is wonderful
       DebugConsole.Write($"Entity marking flag with ID {e.ID} created inside template with path {currentParent.fullpath}");
       return null;
     },true);
+    clarify("water",Types.unwrapped,static (l,ld,o,e)=>new FancyWater(e,o));
+    clarify("auspicioushelper/DieWater",Types.unwrapped,static (l,ld,o,e)=>new FancyWater(e,o), true);
   }
   public const string TemplateEmptyName = "auspicioushelper/templateEmpty";
   public static Level.EntityLoader getLoader(string name){

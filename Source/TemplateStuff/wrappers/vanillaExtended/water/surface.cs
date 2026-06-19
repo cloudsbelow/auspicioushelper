@@ -21,15 +21,15 @@ public partial class FancyWater{
   float rayDensity;
   bool doInvRays;
   class FakeTopsurface:Water.Surface{
-    FancyWater fw;
+    public FancyWater fw;
     public FakeTopsurface(FancyWater w):base(Vector2.Zero,-Vector2.UnitY,0,0){
       fw=w;
     }
-    [OnLoad.OnHook(typeof(Water.Surface),nameof(Water.Surface.DoRipple))]
-    static void Hook(On.Celeste.Water.Surface.orig_DoRipple o, Water.Surface s, Vector2 p, float str){
-      if(s is FakeTopsurface fts) fts.fw.DoRipple(p,str);
-      else o(s,p,str);
-    }
+  }
+  [ResetEvents.OnHook(typeof(Water.Surface),nameof(Water.Surface.DoRipple))]
+  static void Hook(On.Celeste.Water.Surface.orig_DoRipple o, Water.Surface s, Vector2 p, float str){
+    if(s is FakeTopsurface fts) fts.fw.DoRipple(p,str);
+    else o(s,p,str);
   }
 
   struct Edgepoint{
@@ -163,9 +163,10 @@ public partial class FancyWater{
 
         foreach(var (loc, dist) in allMatchPoint(pos,32)){
           Vector2 basis = inBasis(loc, pos);
+          if(basis.X>6) continue;
           float d = Util.CRemap(Math.Abs(basis.Y), 0,16, 1,0);
           float nscore = Calc.ClampedMap(Vector2.Dot(points[loc].normal, down), -0.6f, 0.4f);
-          heights[loc]+= Util.CubeOut(d) * Calc.ClampedMap(basis.X, -4,4) * 3 * nscore;
+          heights[loc]+= Util.CubeOut(d) * Calc.ClampedMap(basis.X, -4,4) * 4f * nscore;
         }
       }
       if(loop)heights[^1]=heights[0];
@@ -314,7 +315,7 @@ public partial class FancyWater{
       });
     }
   }
-  void DoRipple(Vector2 p, float str){
+  public void DoRipple(Vector2 p, float str){
     if(leader is { } l) l.DoRipple(p,str);
     else for(int i=0; i<surfaces.Count; i++) surfaces[i].tryRipple(p-Position,str);
   }

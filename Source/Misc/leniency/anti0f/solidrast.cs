@@ -98,6 +98,7 @@ public partial class Anti0fZone{
             }
           }
           return false;
+
         case Player.StDash: case Player.StRedDash:
           //DebugConsole.Write($"dash reinterpolation {p.Speed}");
           if(!Input.Jump.Pressed || !p.CanUnDuck || Input.Jump.bufferCounter==0) return false;
@@ -126,6 +127,33 @@ public partial class Anti0fZone{
           }
           p.StateMachine.State = 0;
           return true;
+        
+        case Player.StSwim:
+          var fws = p.CollideAll<FancyWater>();
+          if(fws.Count>0){
+            var og = p.Collider;
+            var nh = Math.Max(og.Height-8,3);
+            p.Collider = new Hitbox(1,nh, og.Left, og.Top);
+            bool leftFlag = fws.Any(p.CollideCheck);
+            p.Collider = new Hitbox(1,nh, og.Left+og.Width-1, og.Top);
+            bool rightFlag = fws.Any(p.CollideCheck);
+            p.Collider = og;
+
+            if(!(leftFlag && rightFlag) && Input.Jump.Pressed && fws.Any(fw=>((FancyWater)fw).jumpOut)){
+              bool can = p.CanUnDuck;
+              if((leftFlag || rightFlag) && can){
+                int dir = leftFlag? 1:-1;
+                if((int)p.Facing*dir<0 && Input.GrabCheck && !SaveData.Instance.Assists.NoGrabbing && p.Stamina>0 && p.Holding==null){
+                  p.ClimbJump();
+                } else p.WallJump(dir);
+                var ripplePos = p.Center + Vector2.UnitX*p.Width/2;
+                foreach(FancyWater fw in fws) fw.DoRipple(ripplePos,1);
+                p.StateMachine.State = Player.StNormal;
+                return true;
+              }
+            }
+          }
+          return false;
       }
       return grounded;
     }

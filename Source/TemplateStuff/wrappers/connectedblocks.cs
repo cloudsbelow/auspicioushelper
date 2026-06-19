@@ -16,6 +16,9 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/ConnectedBlocks", "auspicioushelper/ConnectedBlocksBg", "auspicioushelper/ConnectedContainer")]
 [Tracked]
 public class ConnectedBlocks:Entity{
+  public interface ICustomCheckCollider{
+    Collider Get {get;}
+  }
   bool used;
   char tid;
   Vector2 levelOffset;
@@ -133,10 +136,18 @@ public class ConnectedBlocks:Entity{
 
       Util.OrderedSet<Entity> all = new();
       foreach(Entity e in scene){
+        Collider old=null;
+        bool flag=false;
+        if(e is ICustomCheckCollider ccc){
+          flag = true;
+          old = e.Collider;
+          e.Collider = ccc.Get;
+        }
         foreach(var t in qcl.Test(new(e))) if(t.permits(e)){
           addAllSms(e,all);
           break;
         } 
+        if(flag) e.Collider=old;
       }
       if(s!=null){
         s.Position=min-Int2.One*8*padding;

@@ -7,9 +7,11 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
+using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Monocle;
+using MonoMod.Cil;
 using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -17,7 +19,8 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/water","auspicioushelper/waterCopy")]
 [TrackedAs(typeof(Water))]
 [Tracked]
-public partial class FancyWater:Water,ISimpleEnt{
+public partial class FancyWater:Water,ISimpleEnt,ConnectedBlocks.ICustomCheckCollider{
+  Collider ConnectedBlocks.ICustomCheckCollider.Get => mtc??Collider;
   public Vector2 toffset {get;set;}
   public Template parent {get;set;}
   Template.Propagation ITemplateChild.prop=>Template.Propagation.Riding | Template.Propagation.Shake;
@@ -28,11 +31,17 @@ public partial class FancyWater:Water,ISimpleEnt{
   }
   Edges edges = Edges.none;
   Color fillColor, surfaceColor;
-  List<FloatRect> fills;//VertexPositionColor[] inner;
-  bool jumpOut, verticalShrink,copy;
+  List<FloatRect> fills;
+  FloatRect renderBounds;
+  float storedTime;
+  bool verticalShrink,copy,die,inView=true;
+  public bool jumpOut;
+  MiptileCollider mtc;
   public FancyWater(EntityData d, Vector2 o):base(d.Position+o,false,false,d.Width,d.Height){
-    drag = d.Float("tempalteDrag",1);
-    jumpOut = d.Bool("jumpOutSides",true);
+    ResetEvents.Hooks<FancyWater>.enable();
+    drag = d.Float("templateDrag",1);
+    jumpOut = d.Bool("jumpOutSides",false);
+    die = d.Bool("die",false) || d.Name=="auspicioushelper/DieWater";
     TopSurface = new FakeTopsurface(this);
     Collider = new Hitbox(d.Width,d.Height);
     Remove(Get<DisplacementRenderHook>());
@@ -77,7 +86,10 @@ public partial class FancyWater:Water,ISimpleEnt{
       RemoveSelf();
       return;
     }
-    foreach(var surface in surfaces) surface.Update(Engine.DeltaTime);
+    storedTime+=Engine.DeltaTime;
+    if(!inView) return;
+    foreach(var surface in surfaces) surface.Update(storedTime);
+    storedTime=0;
     foreach(WaterInteraction w in Scene.Tracker.GetComponents<WaterInteraction>()){
       bool f1 = contains.Contains(w);
       var old = Collider;
@@ -104,7 +116,7 @@ public partial class FancyWater:Water,ISimpleEnt{
     }
   }
   public override void Render(){
-    if(leader!=null || copy) return;
+    if(!inView || leader!=null || copy) return;
     // var cs = new List<Color>(){Color.White, Color.Yellow, Color.Green, Color.LightGray};
     // for(int i=0; i<s.Count; i++){
     //   var c = cs[i%cs.Count];
@@ -149,13 +161,14 @@ public partial class FancyWater:Water,ISimpleEnt{
 
     List<FloatRect> bounds = new();
     List<Edges> edges = new();
+    Int2 dieFac = die? new(1,3):new(0,0);
     foreach(var (bound, fw) in things){
       if(fw!=this){
         fw.leader=this;
         fw.RemoveSelf();
         if(parent!=null) parent.children.Remove(fw);
       }
-      l.SetRect(true, bound.tlc-min, bound.brc-min);
+      l.SetRect(true, bound.tlc-min+dieFac, bound.brc-min-dieFac);
       var rect = FloatRect.RelativeTo(fw,Position);
       if(fw.verticalShrink && fw.edges.HasFlag(Edges.top)) rect.expandUp(-1);
       if(fw.verticalShrink && fw.edges.HasFlag(Edges.bottom)) rect.expandDown(-1);
@@ -165,7 +178,69 @@ public partial class FancyWater:Water,ISimpleEnt{
     var clipped = EdgeFinder.Find(bounds,edges);
     fills = clipped.Item2;
     foreach(var (seg,loop) in clipped.Item1) surfaces.Add(ParseSurface(seg,loop));
+    
+    mtc = new MiptileCollider(new MipGrid(l), Vector2.One){Position=min-Position};
+    Collider = die? null:mtc;
+    if(die) Add(new PlayerCollider(p=>p.Die(Vector2.Zero),mtc));
+    foreach(var s in surfaces) s.Update(0.01f);
+    Anti0fZone.SolidAnti0fComp.AddReason(Scene.Tracker.GetEntity<Player>(), "fancyWater", ()=>UpdateHook.cachedPlayer.CollideCheck<FancyWater>());
 
-    Collider = new MiptileCollider(new MipGrid(l), Vector2.One){Position=min-Position};
+    renderBounds = FloatRect.fromCorners(min-Position, max-Position);
   }
+
+  static bool checkFancy(Player p)=>p.CollideFirst<FancyWater>()!=null;
+  [ResetEvents.ILHook(typeof(Player),nameof(Player.orig_Update))]
+  static void TpHook(ILContext ctx){
+    ILCursor c = new(ctx);
+    c.GotoNext(itr=>itr.MatchCall<Player>(nameof(Player._IsOverWater)));
+    if(c.TryGotoNextBestFit(MoveType.After,
+      itr=>itr.MatchLdcI4(1),
+      itr=>itr.MatchLdnull(), itr=>itr.MatchLdnull(),
+      itr=>itr.MatchCall<Actor>(nameof(Actor.MoveVExact))
+    )){
+      c.EmitLdarg0();
+      c.EmitDelegate(checkFancy);
+      c.EmitOr();
+    } else DebugConsole.WriteFailure("Could not add water teleport prevention hook");
+  }
+
+  [ResetEvents.OnHook(typeof(Player),nameof(Player.SwimUpdate))]
+  static int swimHook(On.Celeste.Player.orig_SwimUpdate orig, Player p){
+    var fws = p.CollideAll<FancyWater>();
+    if(fws.Count>0){
+      var og = p.Collider;
+      var nh = Math.Max(og.Height-8,3);
+      p.Collider = new Hitbox(1,nh, og.Left, og.Top);
+      bool leftFlag = fws.Any(p.CollideCheck);
+      p.Collider = new Hitbox(1,nh, og.Left+og.Width-1, og.Top);
+      bool rightFlag = fws.Any(p.CollideCheck);
+      p.Collider = og;
+
+      if(!(leftFlag && rightFlag) && Input.Jump.Pressed && fws.Any(fw=>((FancyWater)fw).jumpOut)){
+        bool can = p.CanUnDuck;
+        if((leftFlag || rightFlag) && can){
+          int dir = leftFlag? 1:-1;
+          if((int)p.Facing*dir<0 && Input.GrabCheck && !SaveData.Instance.Assists.NoGrabbing && p.Stamina>0 && p.Holding==null){
+            p.ClimbJump();
+          } else p.WallJump(dir);
+          var ripplePos = p.Center + Vector2.UnitX*p.Width/2;
+          foreach(FancyWater fw in fws) fw.DoRipple(ripplePos,1);
+          return Player.StNormal;
+        }
+      }
+    }
+    return orig(p);
+  }
+
+  [ResetEvents.OnHook(typeof(Player),nameof(Player.SwimCheck))]
+  static bool swimCheck(On.Celeste.Player.orig_SwimCheck orig, Player p){
+    bool flag = orig(p);
+    if(flag && !p.Ducking && p.CollideCheck<FancyWater>()){
+      var og = p.Collider;
+      p.Collider = new Hitbox(og.Width,og.Height-8, og.Left, og.Top);
+      flag &= p.CollideCheck<Water>();
+      p.Collider = og;
+    }
+    return flag;
+  } 
 }

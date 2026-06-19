@@ -25,6 +25,7 @@ public partial class Anti0fZone:Entity{
     List<(string,Func<bool>)> reasons = new();
     public static void AddReason(Player p, string reason, Func<bool> fn){
       ResetEvents.Hooks<Anti0fZone>.enable();
+      if(p==null) return;
       if(p.Get<SolidAnti0fComp>() is not {} c) p.Add(c=new());
       if(!c.used.Contains(reason)) c.reasons.Add((reason,fn));
     }
@@ -40,6 +41,7 @@ public partial class Anti0fZone:Entity{
     None, OnJump, Always 
   }
   HitGroundMode groundMode;
+  int mindist;
   public Anti0fZone(EntityData d, Vector2 offset):base(d.Position+offset){
     ResetEvents.Hooks<Anti0fZone>.enable();
     bool ci = d.Bool("completely_inside",false);
@@ -52,6 +54,7 @@ public partial class Anti0fZone:Entity{
     wholeroom = d.Bool("cover_whole_room",false);
     Collider = ci?new Hitbox(d.Width-16,d.Height-12,8,6):new Hitbox(d.Width,d.Height);
     groundMode = d.Enum("ForceGroundCollide",HitGroundMode.None);
+    mindist = d.Int("minImmediateSteps",1);
   }
   
   static HoldableRaster hrast = new();
@@ -68,12 +71,13 @@ public partial class Anti0fZone:Entity{
     Vector2 _ispeed = p.Speed;
     int _idashes = p.Dashes;
     if(_st==9 || _st == 22 || skipNormal.OrShortcircuit(p)) return false;
+    float ifreeze = Celeste.FreezeTimer;
 
     var dist = _ispeed*Engine.DeltaTime;
     if(dist.LInf()<=1) return false;
-    bool exit()=>
-      p.StateMachine.state!=_st || p.Dashes!=_idashes ||  (p.Speed!=_ispeed && hasMovedAny) || 
-      p.Dead || Engine.FreezeTimer!=0 || exitNormal.OrShortcircuit(p);
+    bool exit(bool speedExit = true)=>
+      p.StateMachine.state!=_st || p.Dashes!=_idashes ||  (p.Speed!=_ispeed && speedExit) || 
+      p.Dead || Engine.FreezeTimer!=ifreeze || exitNormal.OrShortcircuit(p);
     float frac;
 
     using TrackerOverride tover = new(p.Scene.Tracker);
@@ -90,8 +94,21 @@ public partial class Anti0fZone:Entity{
         frac = current/length;
         bool rp = rast.prog(p,current);
         if(rp || exit()){
-          //if(!hasMovedAny && !exit()) goto reconsile;
-          DebugConsole.Write($"Explicit exit: {rp} {p.StateMachine.state} {_st}");
+          if(!hasMovedAny && !rp && rast.minSteps>0 && !exit(false)){
+            tover.restore();
+            ClearRasters();
+            var move = p.Speed*Engine.DeltaTime;
+            var l = move.Length();
+            if(l>rast.minSteps) move = move*rast.minSteps/l;
+            var actual =Math.Min(l,rast.minSteps);
+            p.MoveH(move.X, p.onCollideH);
+            p.MoveV(move.Y, p.onCollideV);
+            frac = actual/l;
+            _ispeed = p.Speed;
+            DebugConsole.Write("Did minimum move", actual, l);
+            goto reconsile;
+          }
+          DebugConsole.Write($"Anti0f exit: {rp} {_st}->{p.StateMachine.state}");
           goto exit;
         }
 

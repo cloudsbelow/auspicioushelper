@@ -10,6 +10,7 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/ChannelPlayerTrigger")]
+[Tracked]
 public class ChannelPlayerTrigger:Trigger{
   string channel {get; set;}
   public enum Op{
@@ -19,11 +20,8 @@ public class ChannelPlayerTrigger:Trigger{
   }
   public Op op;
   public double value;
-  bool activateOnEnter=false;
-  bool activateOnleave=false;
-  bool activateOnStay=false;
-  bool restore=false;
-  bool onlyOnce, everywhere; 
+  bool activateOnEnter=false, activateOnleave=false,  activateOnStay=false;
+  bool onlyOnce, everywhere, restore=false; 
   ChannelState.AdvancedSetter adv=null;
   ChannelState.BoolCh onlywhen;
 
@@ -93,14 +91,36 @@ public class ChannelPlayerTrigger:Trigger{
     adv?.Apply();
     if(onlyOnce) RemoveSelf();
   }
+  bool isLike(ChannelPlayerTrigger other)=> other.restore && other.channel==channel && other.op==op && other.value==value;
   public override void OnEnter(Player player){
     base.OnEnter(player);
+    if(restore){
+      foreach(ChannelPlayerTrigger t in Scene.Tracker.GetEntities<ChannelPlayerTrigger>()){
+        if(t!=this && t.Triggered && this.isLike(t)){
+          restoreTo = t.restoreTo;
+          return;
+        }
+      }
+    }
     if(activateOnEnter) activate();
   }
   public override void OnLeave(Player player){
     base.OnLeave(player);
     if(activateOnleave) activate();
-    if(restore && restoreTo is {} oldval)ChannelState.SetChannel(channel,oldval);
+    if(restore && restoreTo is {} oldval){
+      bool flag=false;
+      foreach(ChannelPlayerTrigger t in Scene.Tracker.GetEntities<ChannelPlayerTrigger>()){
+        if(t!=this && this.isLike(t) && player.CollideCheck(t)){
+          flag = true;
+          if(!t.Triggered){
+            t.Triggered = true;
+            player.triggersInside.Add(t);
+            t.restoreTo = oldval;
+          }
+        }
+      }
+      if(!flag) ChannelState.SetChannel(channel,oldval);
+    }
     restoreTo = null;
   }
   public override void Removed(Scene scene) {

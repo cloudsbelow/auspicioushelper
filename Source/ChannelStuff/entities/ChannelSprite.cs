@@ -6,25 +6,30 @@ using Microsoft.Xna.Framework;
 using Celeste.Mod.auspicioushelper;
 using System;
 using Celeste.Mod.Entities;
+using System.Collections.Generic;
 
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/ChannelSprite")]
 public class ChannelSprite:Entity{
-  public int num;
   public Sprite sprite;
-  public Image image;
-  public enum edgeTypes{
-    loop, clamp, hide,
-  }
-  edgeTypes ty; 
-  string channel;
-  ChannelState.FloatCh scaleX, scaleY, rotation;
+  List<string> anims;
+  List<string> layers;
+  Image image;
+  string channel = null;
+  ChannelState.FloatCh rotation;
+  ChannelState.Vec2Ch scale, origin;
   public ChannelSprite(EntityData d, Vector2 offset):base(d.Position+offset){
-    channel=d.Attr("channel","");
     if(d.String("image_path") is {} istr) Add(image=new(GFX.Game[istr]));
     image?.CenterOrigin();
-    if(d.String("xml_spritename") is {} sstr) Add(sprite=GFX.SpriteBank.Create(sstr));
+    if(d.String("xml_spritename") is {} sstr){
+      Add(sprite=GFX.SpriteBank.Create(sstr));
+      channel=d.Attr("channel","");
+      anims = Util.listparseflat(d.Attr("animationNames",""));
+    } 
+    var tint = Util.hexToColor(d.String("tint","fff"));
+    image?.SetColor(tint);
+    sprite?.SetColor(tint);
 
     if(d.Bool("attached",false) || d.Nodes?.Length>0){
       Vector2 pos = d.Nodes?.Length>0? d.Nodes[0]:Position; 
@@ -32,45 +37,50 @@ public class ChannelSprite:Entity{
         SolidChecker = solid=>solid.CollidePoint(pos)
       });
     }
-    num = d.Int("cases",1);
-    ty=d.Attr("edge_type","") switch {
-      "loop"=>edgeTypes.loop,
-      "clamp"=>edgeTypes.clamp,
-      _=>edgeTypes.hide,
-    };
     Depth=d.Int("depth",2);
 
-    scaleX = d.ChannelFloat("scaleX",1);
-    scaleY = d.ChannelFloat("scaleY",1);
+    scale = d.ChannelVecOrScalar("scale",1);
+    origin = d.ChannelVec2("origin", 0,0,true);
     rotation = d.ChannelFloat("rotation",0);
-  }
-  public void setChVal(double got){
-    int val = (int) Math.Floor(got);
-    if(val<0 || val>=num){
-      switch(ty){
-        case edgeTypes.loop: val=(val%num+num)%num; break;
-        case edgeTypes.clamp: val=Math.Clamp(val,0,num-1);break;
-        default:
-          sprite?.Visible=false;
-          return;
-      }
-    }
-    sprite.Visible=true;
-    sprite.Play("case"+val.ToString());
+    layers = Util.listparseflat(d.Attr("materialIdentifiers",""));
   }
   public override void Added(Scene scene){
     base.Added(scene);
-    if(!string.IsNullOrEmpty(channel))Add(new ChannelTracker(channel, setChVal, true));
+    if(sprite!=null){
+      if(anims.Count==0) throw new Exception("No animations given");
+      Add(new ChannelTracker(channel, n=>{
+        int val = (int) Math.Floor(n);
+        sprite.Play(anims[Util.SafeMod(val,anims.Count)]);
+      }, true));
+    }
+    if(layers.Count>0){
+      var blockedByLayer=true;
+      var comp = OverrideVisualComponent.Get(this);
+      for(int i=0; i<layers.Count; i++){
+        var l = layers[i];
+        if(l=="normal") blockedByLayer=false;
+        else{
+          bool steal = blockedByLayer && i==layers.Count-1;
+          var m = MaterialController.getLayer(l) as IOverrideVisuals;
+          if(m!=null) comp.AddToOverride(new(m,0,steal,true)); 
+          else DebugConsole.Write($"Could not find layer {l} in {this}");
+        }
+      }
+    }
   }
   public override void Update() {
     base.Update();
     if(sprite!=null){
-      sprite.Rotation = rotation*MathF.PI/360;
-      sprite.Scale = new(scaleX,scaleY);
+      sprite.Rotation = rotation*MathF.PI/180;
+      sprite.Scale = scale;
+      var t = sprite.Texture;
+      var j = sprite.Justify ?? Vector2.Zero;
+      sprite.Origin = new Vector2(t.Width*j.X + origin.X, t.Height*j.Y + origin.Y);
     }
     if(image!=null){
-      image.Rotation = rotation*MathF.PI/360;
-      image.Scale = new(scaleX,scaleY);
+      image.Rotation = rotation*MathF.PI/180;
+      image.Scale = scale;
+      image.Origin = new Vector2(image.Width,image.Height)/2f + origin;
     }
   }
 }

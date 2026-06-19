@@ -8,36 +8,57 @@ entity.depth = 2000
 entity.nodeLimits = {0,1}
 entity.nodeLineRenderType = "line"
 
-local edge_types = {"loop","clamp","hide"}
 entity.placements = {
+  {
+    name = "Channel Image",
+    data = {
+      depth=2,
+      origin = "0,0",
+      scale = "1,1",
+      rotation="0",
+      image_path = "decals/3-resort/chair_c",
+      tint = "fff",
+      materialIdentifiers="",
+    }
+  },
   {
     name = "Channel Sprite",
     data = {
-      channel = "",
-      edge_type = "loop",
-      xml_spritename = "auspicioushelper_example1",
-      cases=3,
       depth=2,
-      materialIdentifiers="",
-      scaleX="1",
-      scaleY="1",
+      origin = "0,0",
+      scale = "1,1",
       rotation="0",
-      image_path = "",
+      channel = "",
+      animationNames = "case0, case1, case2",
+      xml_spritename = "auspicioushelper_example1",
+      tint = "fff",
+      materialIdentifiers="",
     }
   }
 }
-entity.fieldInformation = {
-  edge_type = {
-    options = edge_types,
-    editable=false
-  },
-  cases = {
-    fieldType="integer"
-  },
-  depth = {
-    fieldType="integer"
+entity.fieldInformation = function (entity)
+  local ret = {
+    materialIdentifiers = {fieldType="list",elementDefault = ""},
+    depth = {fieldType="integer"}
   }
-}
-entity.texture = "loenn/auspicioushelper/controllers/sprite"
+  if entity.xml_spritename == nil then else
+    ret.animationNames = {fieldType="list",elementDefault = ""}
+  end
+  return ret
+end
+entity.fieldOrder = function (entity)
+  if entity.xml_spritename == nil then
+    return {"x","y","depth","origin","scale","rotation","image_path","tint","materialIdentifiers"} 
+  else 
+    return {"x","y","depth","origin","scale","rotation","channel","animationNames","xml_spritename","tint","materialIdentifiers"}
+  end
+end
 
+entity.texture = function(room,entity)
+  if entity.xml_spritename == nil then
+    return entity.image_path
+  else
+    return "loenn/auspicioushelper/controllers/sprite"
+  end
+end
 return entity
