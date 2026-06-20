@@ -299,12 +299,13 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                 local tile = data[2].tilesFg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
                 if tile ~= "0" then
                     local quads, sprites
-                    pcall(function()
+                    local succeeded, message = pcall(function()
                         quads, sprites = autotiler.getQuads(tx+math.floor(data[1].x/8), math.floor(ty+data[1].y/8), data[2].tilesFg.matrix,
                             (meta.version < changeVer ? celesteRender.tilesMetaFg : celesteRender.tilesMetaFg[tile]),
                             "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
                         -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
                     end)
+                    --aelperLib.log("fg", succeeded, message)
 
                     if quads == nil or settings.auspicioushelper_simpletiledtemplates then
                         table.insert(toDraw, {
@@ -346,7 +347,7 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                             "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
                         -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
                     end)
-                    aelperLib.log(succeeded, message)
+                    --aelperLib.log(succeeded, message)
                     
                     if quads == nil or settings.auspicioushelper_simpletiledtemplates then
                         table.insert(toDraw, {
