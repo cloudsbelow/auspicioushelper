@@ -13,8 +13,12 @@ local autotiler = require("autotiler")
 local atlases = require("atlases")
 local loadedState = require("loaded_state")
 local colors = require("consts.colors")
+local meta = require("meta")
 
 --#####--
+
+local v = require("utils.version_parser")
+local oldBehavior = meta.version < v("1.0.6")
 
 local templates = {}
 
@@ -22,6 +26,7 @@ local settings = require("mods").getModSettings("auspicioushelper")
 local menubar = require("ui.menubar").menubar
 local viewMenu = $(menubar):find(menu -> menu[1] == "view")[2]
 local editMenu = $(menubar):find(menu -> menu[1] == "edit")[2]
+
 if not $(viewMenu):find(item -> item[1] == "auspicioushelper_legacyicons") then
     table.insert(viewMenu,{
         "auspicioushelper_legacyicons",
@@ -46,6 +51,15 @@ if not $(viewMenu):find(item -> item[1] == "auspicioushelper_showtemplates_globa
         function() return settings.auspicioushelper_showtemplates_global or false end
     })
 end
+if not $(viewMenu):find(item -> item[1] == "auspicioushelper_simpletiledtemplates") then
+    table.insert(viewMenu,{
+        "auspicioushelper_simpletiledtemplates",
+        function() settings.auspicioushelper_simpletiledtemplates = not settings.auspicioushelper_simpletiledtemplates end,
+        "checkbox",
+        function() return settings.auspicioushelper_simpletiledtemplates or false end
+    })
+end
+
 if false and not $(editMenu):find(item -> item[1] == "auspicioushelper_cleartemplatecache") then
     table.insert(editMenu,{
         "auspicioushelper_cleartemplatecache",
@@ -57,8 +71,12 @@ if false and not $(editMenu):find(item -> item[1] == "auspicioushelper_cleartemp
         function() return false end
     })
 end
-if settings.auspicioushelper_showtemplates_global == nil then 
+
+if settings.auspicioushelper_showtemplates_global == nil then
     settings.auspicioushelper_showtemplates_global = true
+end
+if settings.auspicioushelper_showtemplates_global == nil then
+    settings.auspicioushelper_showtemplates_global = false
 end
 
 --#####--
@@ -278,16 +296,19 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
     for tx = 1, data[1].width/8 do
         for ty = 1, data[1].height/8 do
             if (tx+data[1].x/8<1 or ty+data[1].y/8<1 or tx+data[1].x/8>data[2].width/8 or ty+data[1].y/8>data[2].height/8) == false then
-                local tile = data[2].tilesFg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
+                local tile =   data[2].tilesFg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
+                local bgtile = data[2].tilesBg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
+
                 if tile ~= "0" then
                     local quads, sprites
                     pcall(function()
                         quads, sprites = autotiler.getQuads(tx+math.floor(data[1].x/8), math.floor(ty+data[1].y/8), data[2].tilesFg.matrix,
-                            celesteRender.tilesMetaFg, "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
+                            (oldBehavior ? celesteRender.tilesMetaFg : celesteRender.tilesMetaFg[tile]),
+                            "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
                         -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
                     end)
-                    
-                    if quads == nil then
+
+                    if quads == nil or settings.auspicioushelper_simpletiledtemplates then
                         table.insert(toDraw, {
                             func=drawableRectangle.fromRectangle("bordered", 
                                 math.floor(tx-1+offset[1]/8)*8+x+0.5, math.floor(ty-1+offset[2]/8)*8+y+0.5, 
@@ -298,11 +319,9 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                         local quadCount = #quads
     
                         if quadCount > 0 then
-                            --cloudsbelow loenn journey. no idea wtf i am doing here but I think the issue is something is null! 
-                            --SO we just OR the two versions that worked at one point! union of coverage! right? that's how it works?
                             local randQuad = quads[math.floor(celesteRender.getRoomRandomMatrix(data[2], "tilesFg")
-                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * quadCount)+1] or 
-                                quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesFg")
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * quadCount)+1] or
+                            quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesBg")
                                 :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)), quadCount)]
 
                             local texture = celesteRender.tilesMetaFg[tile].path or " "
@@ -321,30 +340,29 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                         end
                     end
                 end
-                
-                local bgtile = data[2].tilesBg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
                 if bgtile ~= "0" then
                     local quads, sprites
                     pcall(function()
                         quads, sprites = autotiler.getQuads(tx+math.floor(data[1].x/8), math.floor(ty+data[1].y/8), data[2].tilesBg.matrix,
-                            celesteRender.tilesMetaBg, "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
+                            (oldBehavior ? celesteRender.tilesMetaBg : celesteRender.tilesMetaBg[bgtile]),
+                            "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
                         -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
                     end)
                     
-                    if quads == nil then
+                    if quads == nil or settings.auspicioushelper_simpletiledtemplates then
                         table.insert(toDraw, {
                             func=drawableRectangle.fromRectangle("bordered", 
                                 math.floor(tx-1+offset[1]/8)*8+x+0.5, math.floor(ty-1+offset[2]/8)*8+y+0.5, 
                                 7,7,
-                                {0.8,0.8,0.8},{1,1,1}),
+                                {0.7,0.7,0.7},{0.5,0.5,0.5}),
                             depth=depths.bgTerrain})
                     else
                         local quadCount = #quads
     
                         if quadCount > 0 then
                             local randQuad = quads[math.floor(celesteRender.getRoomRandomMatrix(data[2], "tilesBg")
-                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * quadCount)+1] or 
-                                quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesBg")
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * (quadCount-1))+1] or
+                            quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesBg")
                                 :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)), quadCount)]
 
                             local texture = celesteRender.tilesMetaBg[bgtile].path or " "

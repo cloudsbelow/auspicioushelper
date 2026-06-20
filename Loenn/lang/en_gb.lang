@@ -12,8 +12,8 @@ mods.auspicioushelper.name=auspicioushelper
 ui.menubar.auspicioushelper_legacyicons=Use Legacy Template Icons [Auspicious Helper]
 ui.menubar.auspicioushelper_frutigericons=Use ??? Template Icons [Auspicious Helper]
 ui.menubar.auspicioushelper_showtemplates_global=Draw Templates [Auspicious Helper]
-ui.menubar.auspicioushelper_cleartemplatecache=Clear Template Cache [Auspicious Helper]'
-
+ui.menubar.auspicioushelper_cleartemplatecache=Clear Template Cache [Auspicious Helper]
+ui.menubar.auspicioushelper_simpletiledtemplates=Draw Simple Template Tiles [Auspicious Helper]
 
 
 
