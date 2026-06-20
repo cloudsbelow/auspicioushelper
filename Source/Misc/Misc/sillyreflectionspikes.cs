@@ -74,7 +74,8 @@ public class CustomSpikes : Entity{
     Add(pc=new PlayerCollider(OnCollide));
     if(EntityParser.currentParent is {} te){
       parent = te;
-    } else if(data.Bool("canAttach")) Add(sm = new LiftspeedSm{
+    } 
+    if(data.Bool("canAttach")) Add(sm = new LiftspeedSm{
       OnShake = (Vector2 amount)=>imageOffset+=amount,
       SolidChecker = IsRiding,
       JumpThruChecker = IsRiding,
