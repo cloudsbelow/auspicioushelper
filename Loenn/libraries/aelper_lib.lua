@@ -344,7 +344,7 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                     local quads, sprites
                     pcall(function()
                         quads, sprites = autotiler.getQuads(tx+math.floor(data[1].x/8), math.floor(ty+data[1].y/8), data[2].tilesBg.matrix,
-                            (oldBehavior ? celesteRender.tilesMetaBg : celesteRender.tilesMetaBg[bgTile]),
+                            (oldBehavior ? celesteRender.tilesMetaBg : celesteRender.tilesMetaBg[bgtile]),
                             "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
                         -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
                     end)
