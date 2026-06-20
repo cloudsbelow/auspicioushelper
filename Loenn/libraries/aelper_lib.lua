@@ -18,7 +18,7 @@ local meta = require("meta")
 --#####--
 
 local v = require("utils.version_parser")
-local changeVer = v("1.0.6")
+local oldBehavior = meta.version < v("1.0.6")
 
 local templates = {}
 
@@ -296,12 +296,15 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
     for tx = 1, data[1].width/8 do
         for ty = 1, data[1].height/8 do
             if (tx+data[1].x/8<1 or ty+data[1].y/8<1 or tx+data[1].x/8>data[2].width/8 or ty+data[1].y/8>data[2].height/8) == false then
-                local tile = data[2].tilesFg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
+                local tile =   data[2].tilesFg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
+                local bgtile = data[2].tilesBg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
+                aelperLib.log(tostring(tile), tostring(bgTile))
+
                 if tile ~= "0" then
                     local quads, sprites
                     local succeeded, message = pcall(function()
                         quads, sprites = autotiler.getQuads(tx+math.floor(data[1].x/8), math.floor(ty+data[1].y/8), data[2].tilesFg.matrix,
-                            (meta.version < changeVer ? celesteRender.tilesMetaFg : celesteRender.tilesMetaFg[tile]),
+                            (oldBehavior ? celesteRender.tilesMetaFg : celesteRender.tilesMetaFg[tile]),
                             "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
                         -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
                     end)
@@ -337,13 +340,11 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                         end
                     end
                 end
-                
-                local bgtile = data[2].tilesBg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
                 if bgtile ~= "0" then
                     local quads, sprites
                     local succeeded, message = pcall(function()
                         quads, sprites = autotiler.getQuads(tx+math.floor(data[1].x/8), math.floor(ty+data[1].y/8), data[2].tilesBg.matrix,
-                            (meta.version < changeVer ? celesteRender.tilesMetaBg : celesteRender.tilesMetaBg[bgTile]),
+                            (oldBehavior ? celesteRender.tilesMetaBg : celesteRender.tilesMetaBg[bgTile]),
                             "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
                         -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
                     end)
