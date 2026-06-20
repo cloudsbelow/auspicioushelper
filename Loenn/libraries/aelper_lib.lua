@@ -298,17 +298,15 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
             if (tx+data[1].x/8<1 or ty+data[1].y/8<1 or tx+data[1].x/8>data[2].width/8 or ty+data[1].y/8>data[2].height/8) == false then
                 local tile =   data[2].tilesFg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
                 local bgtile = data[2].tilesBg.matrix:getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8))
-                aelperLib.log(tostring(tile), tostring(bgTile))
 
                 if tile ~= "0" then
                     local quads, sprites
-                    local succeeded, message = pcall(function()
+                    pcall(function()
                         quads, sprites = autotiler.getQuads(tx+math.floor(data[1].x/8), math.floor(ty+data[1].y/8), data[2].tilesFg.matrix,
                             (oldBehavior ? celesteRender.tilesMetaFg : celesteRender.tilesMetaFg[tile]),
                             "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
                         -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
                     end)
-                    --aelperLib.log("fg", succeeded, message)
 
                     if quads == nil or settings.auspicioushelper_simpletiledtemplates then
                         table.insert(toDraw, {
@@ -322,7 +320,9 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
     
                         if quadCount > 0 then
                             local randQuad = quads[math.floor(celesteRender.getRoomRandomMatrix(data[2], "tilesFg")
-                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * quadCount)+1]
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * quadCount)+1] or
+                            quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesBg")
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)), quadCount)]
 
                             local texture = celesteRender.tilesMetaFg[tile].path or " "
                             
@@ -342,13 +342,12 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
                 end
                 if bgtile ~= "0" then
                     local quads, sprites
-                    local succeeded, message = pcall(function()
+                    pcall(function()
                         quads, sprites = autotiler.getQuads(tx+math.floor(data[1].x/8), math.floor(ty+data[1].y/8), data[2].tilesBg.matrix,
                             (oldBehavior ? celesteRender.tilesMetaBg : celesteRender.tilesMetaBg[bgTile]),
                             "0", " ", "*", {{0,0}}, "", autotiler.checkTile)
                         -- "0" is air tile, " " is emptyTile, "*" is wildcard, {{0,0}} is defaultQuad, "" is defaultSprite, 
                     end)
-                    --aelperLib.log(succeeded, message)
                     
                     if quads == nil or settings.auspicioushelper_simpletiledtemplates then
                         table.insert(toDraw, {
@@ -362,7 +361,9 @@ aelperLib.draw_template_sprites = function(name, x, y, room, selected, alreadyDr
     
                         if quadCount > 0 then
                             local randQuad = quads[math.floor(celesteRender.getRoomRandomMatrix(data[2], "tilesBg")
-                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * quadCount)+1]
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)) * (quadCount-1))+1] or
+                            quads[utils.mod1(celesteRender.getRoomRandomMatrix(data[2], "tilesBg")
+                                :getInbounds(tx+math.floor(data[1].x/8), ty+math.floor(data[1].y/8)), quadCount)]
 
                             local texture = celesteRender.tilesMetaBg[bgtile].path or " "
                             
