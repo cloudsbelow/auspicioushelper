@@ -136,6 +136,11 @@ anyways i want to praise it more it is wonderful
   public static Template currentParent {get; private set;} = null;
   public static Entity create(EntityData d, Level l, LevelData ld, Vector2 simoffset, Template t, string path){
     ld=ld??DefaultLD;
+    bool isTrigger = false;
+    if(d is TriggerWrapping wrap){
+      isTrigger = true;
+      d=wrap.d;
+    }
     EntityID eid = new(ld.Name,d.ID);
     if(l?.Session?.DoNotLoad.Contains(eid)??false) return null;
     if(!parseMap.TryGetValue(d.Name,out var etype)){
@@ -159,7 +164,9 @@ anyways i want to praise it more it is wonderful
     currentParent = t;
     EntityData data = TemplateTemplate.withReplace(d);
     Entity e = null; 
-    Finder.StartLoad(data, t.fullpath);
+    if(isTrigger) Finder.StartLoadTrigger(data, t.fullpath);
+    else Finder.StartLoad(data, t.fullpath);
+
     using (new Template.ChainLock()) e = loader(l,ld,simoffset,data);
     if(e==null) goto done;
     e.SourceData = data;
@@ -488,5 +495,9 @@ anyways i want to praise it more it is wonderful
       if(e.Bool("lavender")) e.Name = "VortexHelper/LavenderBooster";
       return Level.EntityLoaders.GetValueOrDefault(e.Name)?.Invoke(l,ld,o,e);
     });
+  }
+
+  public class TriggerWrapping(EntityData data):EntityData{
+    public EntityData d=>data;
   }
 }

@@ -88,7 +88,7 @@ public static partial class Finder{
     waiting.Add((path,ident));
     watch(path,e=>FoundEntity.addIdent(e,path));
   }
-  public static void StartLoad(EntityData d, string prefix = ""){
+  public static void StartLoad(EntityData d, string prefix){
     last = null; finding = null;
     if(flagged.TryGetValue(prefix+d.ID.ToString(), out var ident)){
       finding = ident;
@@ -102,10 +102,16 @@ public static partial class Finder{
   }
   static void StartingLoadTrigger(EntityData d){
     last = null; finding = null;
-    string matchstr;
     if(
-      flagged.TryGetValue(matchstr="t"+d.ID.ToString(), out var ident) ||
-      flagged.TryGetValue(matchstr="trigger"+d.ID.ToString(), out ident)
+      flagged.TryGetValue("t"+d.ID.ToString(), out var ident) ||
+      flagged.TryGetValue("trigger"+d.ID.ToString(), out ident)
+    )finding = ident;
+  }
+  public static void StartLoadTrigger(EntityData d, string prefix){
+    last = null; finding = null;
+    if(
+      flagged.TryGetValue(prefix+"t"+d.ID.ToString(), out var ident) ||
+      flagged.TryGetValue(prefix+"trigger"+d.ID.ToString(), out ident)
     )finding = ident;
   }
   public static Level addingLevel;

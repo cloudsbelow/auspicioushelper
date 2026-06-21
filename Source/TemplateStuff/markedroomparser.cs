@@ -214,12 +214,13 @@ internal static class MarkedRoomParser{
     }
     foreach(EntityData d in l.Triggers){ 
       bool flag=false;
+      var tw = new EntityParser.TriggerWrapping(d);
       foreach(var t in GetPermitted(cbs,new(d,0),d.Name,false,false,true)){
-        t.data.ChildEntities.Add(d);
+        t.data.ChildEntities.Add(tw);
         flag = true;
       }
       if(!flag) foreach(var (b,t) in fillerBounds) {
-        if(b.CollidePointCompact(d.Position)) t.data.ChildEntities.Add(d);
+        if(b.CollidePointCompact(d.Position)) t.data.ChildEntities.Add(tw);
       } 
     } 
     foreach(DecalData d in l.FgDecals){

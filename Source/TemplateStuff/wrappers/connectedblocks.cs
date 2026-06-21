@@ -267,6 +267,7 @@ public class ConnectedBlocks:Entity{
       if(e is Decal d){
         f.data.decals.Add(d.Get<DecalMarker>().withDepth());
       } else if(e.SourceData is EntityData dat){
+        if(e is Trigger) dat = new EntityParser.TriggerWrapping(dat);
         f.data.ChildEntities.Add(dat);
       }
     }

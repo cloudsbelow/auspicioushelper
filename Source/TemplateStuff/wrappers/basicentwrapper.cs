@@ -110,7 +110,7 @@ public class BasicMultient:ITemplateChild{
   }
   [OnLoad.OnHook(typeof(StaticMover), nameof(StaticMover.TriggerPlatform))]
   static void Hook(On.Celeste.StaticMover.orig_TriggerPlatform orig, StaticMover sm){
-    if(sm.Platform==null && sm.Entity.Get<ChildMarker>() is {} cm){
+    if(sm.Platform==null && sm.Entity?.Get<ChildMarker>() is {} cm){
       cm.parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(new TriggerInfo.SmInfo(sm.Entity));
     }
     orig(sm);
