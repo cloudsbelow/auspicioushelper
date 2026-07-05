@@ -97,6 +97,7 @@ public static class ResetEvents{
         foreach(var (m,a) in list){
           if(a.apply(m) is {} thing) onDispose.Add(thing);
         }
+        times = LazyLoadDuration.Get(typeof(T));
       } else times = childTimes;
 
       if(childTimes>times){
@@ -104,7 +105,7 @@ public static class ResetEvents{
         times |= childTimes;
       }
       ScheduledAction s = new(disable, $"disable lazy hooks on {typeof(T)}");
-      foreach(var r in getLists(times=LazyLoadDuration.Get(typeof(T)))) r.enroll(s);
+      foreach(var r in getLists(times)) r.enroll(s);
 
       return times;
     }

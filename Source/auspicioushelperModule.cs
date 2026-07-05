@@ -132,6 +132,7 @@ public class auspicioushelperModule : EverestModule {
   [OnLoad.EverestEvent(typeof(Everest.Events.AssetReload), nameof(Everest.Events.AssetReload.OnAfterReload))]
   static void OnReload(bool silent){
     CACHENUM++;
+    //DebugConsole.Write("Reload",Engine.Scene);
     MapHider.handleReload(); 
     try {
       ChannelState.ClearAll();
@@ -148,6 +149,8 @@ public class auspicioushelperModule : EverestModule {
       } else if(Engine.Instance.scene is MapEditor editor){
         ResetEvents.OnNewAssets.run();
         resetInDebug = true;
+      } else if(Engine.Instance.scene is LevelEnter enter){
+        if(Settings.shouldPostcard() && enter.session is {} s) LevelEnter.Go(s,true); 
       }
     } catch (Exception ex){
       if(ex is DebugConsole.PassingException p) throw p;

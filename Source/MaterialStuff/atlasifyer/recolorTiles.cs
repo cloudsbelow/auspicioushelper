@@ -33,13 +33,16 @@ public static class RecolorTiles{
     if(elem.HasAttr("debris")) debrisTexs = GFX.Game.GetAtlasSubtextures("debris/" + elem.Attr("debris")).ToArray();
     else debrisTexs = [GFX.Game.Has("debris/"+c)? GFX.Game["debris/" + c] : GFX.Game["debris/1"]];
     debris[c] = debrisTexs.Map(remap.RemapTex);
-    return remap.RemapTex(tex);
+
+    var outtex =  remap.RemapTex(tex);
+    outtex.AtlasPath = (tex.AtlasPath??"")+"###"+remap.ident;
+    return outtex;
   }
   static void clearEx(){
     copyRemap.Clear();
     debris.Clear();
   }
-  [OnLoad.OnHook(typeof(Debris),nameof(Debris.Init))]
+  [OnLoad.OnHook(typeof(Debris),nameof(Debris.Init),Util.HookTarget.Normal,[typeof(Vector2), typeof(char), typeof(bool)])]
   static Debris Hook(On.Celeste.Debris.orig_Init_Vector2_char_bool orig, Debris self, Vector2 pos, char ts, bool b){
     var d = orig(self,pos,ts,b);
     if(debris.TryGetValue(ts, out var texs)){

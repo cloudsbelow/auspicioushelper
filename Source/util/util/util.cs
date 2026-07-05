@@ -326,8 +326,8 @@ public static partial class Util{
     public IEnumerator<T> GetEnumerator()=>usingSet?set.GetEnumerator():list.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     public IReadOnlyList<T> GetList(){
-      if(usingSet) return list;
-      return set.ToArray();
+      if(usingSet) return set.ToArray();
+      return list;
     }
   }
   public class OrderedSet<T>:IEnumerable<T>{
