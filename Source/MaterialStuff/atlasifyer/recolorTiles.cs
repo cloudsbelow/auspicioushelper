@@ -39,6 +39,14 @@ public static class RecolorTiles{
     copyRemap.Clear();
     debris.Clear();
   }
+  [OnLoad.OnHook(typeof(Debris),nameof(Debris.Init))]
+  static Debris Hook(On.Celeste.Debris.orig_Init_Vector2_char_bool orig, Debris self, Vector2 pos, char ts, bool b){
+    var d = orig(self,pos,ts,b);
+    if(debris.TryGetValue(ts, out var texs)){
+      d.image.Texture = texs.Length==1? texs[0] : Calc.Random.Choose(texs); 
+    }
+    return d;
+  }
   [OnLoad.ILHook(typeof(Autotiler),"",spec:[typeof(string)])]
   static void CtorHook(ILContext ctx){
     ILCursor c = new(ctx);

@@ -10,6 +10,16 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 public class TemplateDisappearer:Template{
+  public class BlockCol:IColliderWrapper.SimpleWrapperclass{
+    public BlockCol(Collider c):base(c){}
+    public override bool Collide(Vector2 point)=>false;
+    public override bool Collide(Circle c)=>false;
+    public override bool Collide(Rectangle r)=>false;
+    public override bool Collide(Hitbox h)=>false;
+    public override bool Collide(ColliderList l)=>false;
+    public override bool Collide(Grid g)=>false;
+    public override bool Collide(Vector2 a, Vector2 b)=>false;
+  }
   bool selfVis = true;
   bool selfCol = true;
   bool selfAct = true;

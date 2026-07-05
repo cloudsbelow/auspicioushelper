@@ -23,9 +23,10 @@ Tint the input by the provided parameters<br>
  - **sat** How much of the original hues to keep
 For example, setting low to black, high to white, and saturation to 0 will make a black and white image. Changing high to red will make the image 'black and red' instead.
 
-**ausp/static**<br>
+**ausp/static and ausp/slowStatic**<br>
 Turn the input into static
  - **low/high** the darkest and brightest colors of the static respectively
+ - **speed/scale** additional options in slowStatic that control the speed and scale of the static noise
 
 **ausp/innerBorder, ausp/outerBorder**<br>
 Give a border to the inputs. The 'inner' variety replaces the outermost pixels and the 'outer' variety expands from the input when making the border.

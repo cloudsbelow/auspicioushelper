@@ -185,11 +185,12 @@ public partial class Anti0fZone:Entity{
       ClearRasters();
   }
   static bool DreamExit(Player p){
-    if(p.dreamDashCanEndTimer>0) return false;
     if(p.StateMachine.State == Player.StDreamDash){
       if(TemplateDreamblockModifier.tryBounce(p)) return true;
+      if(p.dreamDashCanEndTimer>0) return false;
       return TemplateDreamblockModifier.DreamMarkerComponent.CheckContinue(p.CollideFirst<DreamBlock>(), p)==null;
     } else if(CommunalHelperIop.InTunnel(p)){
+      if(p.dreamDashCanEndTimer>0) return false;
       return !p.CollideCheck<Solid,DreamBlock>();
     }
     return false;
