@@ -72,6 +72,8 @@ public class auspicioushelperModule : EverestModule {
 
   [ResetEvents.NullOn(ResetEvents.Times.LvlCleanup)]
   public static bool InFolderMod;
+  [ResetEvents.NullOn(ResetEvents.Times.LvlCleanup)]
+  public static string MapName;
   static void SetFoldermod(Session s){
     try{
       InFolderMod = s?.MapData?.Filename!=null && 
@@ -81,6 +83,17 @@ public class auspicioushelperModule : EverestModule {
     }catch(Exception){
       DebugConsole.Write($"Entering nonexistent area");
     }
+  }
+  [OnLoad.OnHook(typeof(LevelLoader), nameof(LevelLoader.LoadingThread))]
+  static void LoadingthreadFallback(On.Celeste.LevelLoader.orig_LoadingThread orig, LevelLoader self){
+    var session = self.session;
+    if(AreaData.Get(session).SID != MapName){
+      MapenterEv.Run(session.MapData);
+      MarkedRoomParser.parseMapdata(session.MapData);
+      MapName = AreaData.Get(session).SID;
+      DebugConsole.Write($"Entering {MapName} weirdly");
+    }
+    orig(self);
   }
   static void OnEnter(Session session){
     ResetEvents.OnLvlCleanup.run();
@@ -94,7 +107,8 @@ public class auspicioushelperModule : EverestModule {
       if(session?.MapData!=null){
         MapenterEv.Run(session.MapData);
         MarkedRoomParser.parseMapdata(session.MapData);
-        DebugConsole.Write("Entered Level");
+        MapName = AreaData.Get(session).SID;
+        DebugConsole.Write("Entered Level", MapName);
       } else {
         DebugConsole.Write("Session or mapdata null");
       }

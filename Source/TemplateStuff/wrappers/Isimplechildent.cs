@@ -167,8 +167,8 @@ internal class BasicPlatform:ITemplateChild{
     if(vis!=0)p.Visible = vis>0;
     if(col!=0)p.Collidable = col>0;
     if(act!=0)p.Active = act>0;
-    if(col>0) p.EnableStaticMovers();
-    else if(col<0) p.DisableStaticMovers();
+    if(col>0) p.EnableSms(vis);
+    else if(col<0) p.DisableSms(vis);
   }
   public void destroy(bool particles){
     p.RemoveSelf();

@@ -65,7 +65,7 @@ public class DashSwitchW:DashSwitch, ISimpleEnt{
     if(vis!=0)Visible = vis>0;
     if(col!=0)Collidable = col>0&&!pressed;
     if(act!=0)Active = act>0;
-    if(col>0) EnableStaticMovers();
-    else if(col<0) DisableStaticMovers();
+    if(col>0) this.EnableSms(vis);
+    else if(col<0) this.DisableSms(vis);
   }
 }
