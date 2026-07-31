@@ -123,13 +123,32 @@ public struct FloatRect{
     return min<max && min<1 && max>0;
   }
   public FRCollision ICollideRay(Vector2 p, Vector2 dir){
-    Vector2 t1 = (tlc-p)/dir;
-    Vector2 t2 = (brc-p)/dir;
-    Vector2 maxs = Vector2.Max(t1,t2);
-    Vector2 mins = Vector2.Min(t1,t2);
-    float min = Math.Max(mins.X,mins.Y);
-    float max = Math.Min(maxs.X,maxs.Y);
-    return new FRCollision(min,max);
+    // Vector2 t1 = (tlc-p)/dir;
+    // Vector2 t2 = (brc-p)/dir;
+    // Vector2 maxs = Vector2.Max(t1,t2);
+    // Vector2 mins = Vector2.Min(t1,t2);
+    // float min = Math.Max(mins.X,mins.Y);
+    // float max = Math.Min(maxs.X,maxs.Y);
+    // return new FRCollision(min,max);
+    float min = float.NegativeInfinity;
+    float max = float.PositiveInfinity;
+    if(dir.X==0){
+      if(p.X<x || p.X>x+w) return new();
+    } else {
+      float t1 = (x-p.X)/dir.X;
+      float t2 = (x+w-p.X)/dir.X;
+      min = MathF.Min(t1,t2);
+      max = MathF.Max(t1,t2);
+    }
+    if(dir.Y==0){
+      if(p.Y<y || p.Y>y+h) return new();
+    } else {
+      float t1 = (y-p.Y)/dir.Y;
+      float t2 = (y+h-p.Y)/dir.Y;
+      min = MathF.Max(min, MathF.Min(t1,t2));
+      max = MathF.Min(max, MathF.Max(t1,t2));
+    }
+    return new(min,max);
   }
   public bool CollideLine(Vector2 a, Vector2 b){
     Vector2 dir = b-a;

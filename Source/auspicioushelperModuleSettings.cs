@@ -6,6 +6,8 @@ using Celeste.Mod.UI;
 using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Cil;
+using Celeste.Mod.Helpers;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -96,6 +98,14 @@ public class auspicioushelperModuleSettings : EverestModuleSettings {
   public class ExtraUtilsMenu{
     [SettingSubText("Clear sessiondonotload on reloads from loenn. Ugh.")]
     public bool KillSessiondonotload {get;set;}
+    [SettingSubText("Reloading from loenn with a postcard error immediately enters the map")]
+    public bool ReloadFromPostcard {get;set;}
+  }
+  internal static bool doNextPostcard = false;
+  public bool shouldPostcard(){
+    bool flag = doNextPostcard;
+    doNextPostcard = false;
+    return ExtraMappingUtils.ReloadFromPostcard || flag;
   }
   [SettingSubText("Toggles for extra mapping QOL options")]
   public ExtraUtilsMenu ExtraMappingUtils {get;set;} = new();

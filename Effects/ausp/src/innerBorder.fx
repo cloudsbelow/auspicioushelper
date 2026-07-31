@@ -4,6 +4,7 @@ sampler2D TextureSampler : register(s0);
 
 uniform float2 pscale;
 uniform float4 color = float4(1,1,1,1);
+uniform bool corners = false;
 
 float4 orig(float2 pos, float offsetx, float offsety){
     return tex2D(TextureSampler,pos+float2(offsetx,offsety)*pscale);
@@ -16,6 +17,9 @@ float4 main(float4 inTint : COLOR0, float2 pos : TEXCOORD0) : SV_Target {
     return o;
   }
   if(min(min(min(orig(pos,1,0).a,orig(pos,-1,0).a),orig(pos,0,1).a),orig(pos,0,-1).a)<0.5){
+    return color;
+  }
+  if(corners && min(min(min(orig(pos,1,1).a,orig(pos,-1,1).a),orig(pos,1,-1).a),orig(pos,-1,-1).a)<0.5){
     return color;
   }
   return o;

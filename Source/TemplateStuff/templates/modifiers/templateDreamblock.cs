@@ -72,7 +72,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisualsEasy, Template.
   }
   SentinalDb fake;
   string channel, customVisualGroup;
-  bool priority, tryDashhit, sendDashhit, triggerOnEnter, triggerOnLeave;
+  bool priority, tryDashhit, killChDash, sendDashhit, triggerOnEnter, triggerOnLeave;
   bool reverse, conserve, bounce, useVisuals, allowTransition;
   public TemplateDreamblockModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
   public TemplateDreamblockModifier(EntityData d, Vector2 offset, int depthoffset)
@@ -95,6 +95,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisualsEasy, Template.
       };
     }
     sendDashhit = d.Bool("sendDashhit",false);
+    killChDash = !d.Bool("allowChDash", false);
   }
   public override void addTo(Scene scene) {
     fake = Util.GetUninitializedEntWithComp<SentinalDb>();
@@ -136,9 +137,12 @@ public class TemplateDreamblockModifier:Template,IOverrideVisualsEasy, Template.
         if(c is PlayerCollider pc){
           var orig = pc.OnCollide;
           pc.OnCollide = (Player p)=>{
-            if(!dreaming || !Eligible(p)){
-              orig(p);
+            if(dreaming){
+              int s = p.StateMachine.state;
+              if(s==Player.StDash || s==Player.StRedDash || s==Player.StDreamDash || s==Player.StStarFly || p.dashAttackTimer>0) return;
+              if(!killChDash && CommunalHelperIop.InTunnel(p)) return;
             }
+            orig(p);
           };
         }
       }
@@ -202,8 +206,8 @@ public class TemplateDreamblockModifier:Template,IOverrideVisualsEasy, Template.
   }
   bool DreamCheckStart(Player p, Vector2 dir, Entity from, bool fromCollision=false){
     bool dc = (dir == Vector2.Zero&&p.DashDir!=Vector2.Zero) || Vector2.Dot(dir, p.DashDir)>0;
-    if(dc && (CommunalHelperIop.DreamTunnelDashAttacking()||CommunalHelperIop.InTunnel(p))){
-      p.Die(p.Speed);
+    if(dc && killChDash && (CommunalHelperIop.DreamTunnelDashAttacking()||CommunalHelperIop.InTunnel(p))){
+      p.Die(Vector2.Zero);
       return false;
     }
     bool flag = dreaming && p.Inventory.DreamDash && p.DashAttacking && dc && (!fromCollision || !tryDashhit);
@@ -212,8 +216,8 @@ public class TemplateDreamblockModifier:Template,IOverrideVisualsEasy, Template.
         dir = Vector2.UnitY*Math.Sign(p.Speed.Y);
         if(Math.Abs(p.Speed.X)>=Math.Abs(p.Speed.Y)) dir = Vector2.UnitX*Math.Sign(p.Speed.X);
       }
-      if(CommunalHelperIop.DreamTunnelDashAttacking()){
-        p.Die(p.Speed);
+      if(killChDash && CommunalHelperIop.DreamTunnelDashAttacking()){
+        p.Die(Vector2.Zero);
         return false;
       }
       speedSetter = this;
@@ -263,10 +267,6 @@ public class TemplateDreamblockModifier:Template,IOverrideVisualsEasy, Template.
     return mult!=Vector2.One;
   }
   bool dreaming=true;
-  static bool Eligible(Player p){
-    int s = p.StateMachine.state;
-    return s==Player.StDash || s==Player.StRedDash || s==Player.StDreamDash || s==Player.StStarFly || p.dashAttackTimer>0;
-  }
   static bool DDsh(Player p)=>p.StateMachine.state == Player.StDreamDash;
   public override void destroy(bool particles) {
     base.destroy(particles);

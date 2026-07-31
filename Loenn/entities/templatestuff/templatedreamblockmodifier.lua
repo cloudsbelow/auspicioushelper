@@ -24,13 +24,14 @@ entity.placements = {
       tryDashhit=true,
       sendDashhit=false,
       bounce=false,
+      allowChDash=false,
       
       _loenn_display_template = true,
     }
   }
 }
 entity.fieldOrder = {
-  "x","y", "template","depthoffset", "normalChannel","customVisualGroup","reverse","conserve","bounce","allowTransition","triggerOnEnter","triggerOnLeave"
+  "x","y", "template","depthoffset", "normalChannel","customVisualGroup","reverse","conserve","bounce","allowTransition","triggerOnEnter","triggerOnLeave","tryDashhit","sendDashhit"
 }
 entity.fieldInformation = function(entity)
     return {

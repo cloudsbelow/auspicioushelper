@@ -72,5 +72,9 @@ public interface IColliderWrapper{
     public override bool Collide(Grid g)=>wrapped.Collide(g);
     public override bool Collide(Vector2 a, Vector2 b)=>wrapped.Collide(a,b);
     public SimpleWrapperclass(Collider c)=>wrapped=c;
+
+    public override void Render(Camera camera, Color color) {
+      wrapped?.Render(camera, color*0.8f);
+    }
   }
 }

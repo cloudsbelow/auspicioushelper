@@ -164,9 +164,10 @@ public class ConnectedBlocks:Entity{
         if(checker.collideFr(FloatRect.fromRadius(k+levelOffset,Vector2.One))){
           if(hit == null) hit = v;
           else if(auspicioushelperModule.InFolderMod){
+            DebugConsole.Write("Erroring!");
             string erroring = "Connected tiles covered with more than one template entity. Cannot decide which to use! " +
-              "For multiple behaviors, use chains.";
-            foreach(var pair in holds) erroring+=$"{{n}}({pair.Key.X}, {pair.Key.Y}): {pair.Value.Name.RemovePrefix("auspicioushelper/")}";
+              "For multiple behaviors, use chains. Save in loenn to reenter map.";
+            auspicioushelperModuleSettings.doNextPostcard = true;
             DebugConsole.MakePostcard(erroring);
           }
         }

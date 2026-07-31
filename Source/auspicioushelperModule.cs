@@ -72,6 +72,8 @@ public class auspicioushelperModule : EverestModule {
 
   [ResetEvents.NullOn(ResetEvents.Times.LvlCleanup)]
   public static bool InFolderMod;
+  [ResetEvents.NullOn(ResetEvents.Times.LvlCleanup)]
+  public static string MapName;
   static void SetFoldermod(Session s){
     try{
       InFolderMod = s?.MapData?.Filename!=null && 
@@ -81,6 +83,17 @@ public class auspicioushelperModule : EverestModule {
     }catch(Exception){
       DebugConsole.Write($"Entering nonexistent area");
     }
+  }
+  [OnLoad.OnHook(typeof(LevelLoader), nameof(LevelLoader.LoadingThread))]
+  static void LoadingthreadFallback(On.Celeste.LevelLoader.orig_LoadingThread orig, LevelLoader self){
+    var session = self.session;
+    if(AreaData.Get(session).SID != MapName){
+      MapenterEv.Run(session.MapData);
+      MarkedRoomParser.parseMapdata(session.MapData);
+      MapName = AreaData.Get(session).SID;
+      DebugConsole.Write($"Entering {MapName} weirdly");
+    }
+    orig(self);
   }
   static void OnEnter(Session session){
     ResetEvents.OnLvlCleanup.run();
@@ -94,7 +107,8 @@ public class auspicioushelperModule : EverestModule {
       if(session?.MapData!=null){
         MapenterEv.Run(session.MapData);
         MarkedRoomParser.parseMapdata(session.MapData);
-        DebugConsole.Write("Entered Level");
+        MapName = AreaData.Get(session).SID;
+        DebugConsole.Write("Entered Level", MapName);
       } else {
         DebugConsole.Write("Session or mapdata null");
       }
@@ -132,6 +146,7 @@ public class auspicioushelperModule : EverestModule {
   [OnLoad.EverestEvent(typeof(Everest.Events.AssetReload), nameof(Everest.Events.AssetReload.OnAfterReload))]
   static void OnReload(bool silent){
     CACHENUM++;
+    //DebugConsole.Write("Reload",Engine.Scene);
     MapHider.handleReload(); 
     try {
       ChannelState.ClearAll();
@@ -148,6 +163,8 @@ public class auspicioushelperModule : EverestModule {
       } else if(Engine.Instance.scene is MapEditor editor){
         ResetEvents.OnNewAssets.run();
         resetInDebug = true;
+      } else if(Engine.Instance.scene is LevelEnter enter){
+        if(Settings.shouldPostcard() && enter.session is {} s) LevelEnter.Go(s,true); 
       }
     } catch (Exception ex){
       if(ex is DebugConsole.PassingException p) throw p;

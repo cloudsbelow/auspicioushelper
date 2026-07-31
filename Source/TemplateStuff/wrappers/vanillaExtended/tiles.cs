@@ -201,8 +201,8 @@ internal class FgTiles:SolidTiles, ISimpleEnt, IBoundsHaver, IChildShaker{
     if(vis!=0)Visible = vis>0;
     if(col!=0)Collidable = col>0;
     if(act!=0)Active = act>0;
-    if(col>0) EnableStaticMovers();
-    else if(col<0) DisableStaticMovers();
+    if(col>0) this.EnableSms(vis);
+    else if(col<0) this.DisableSms(vis);
   }
   public Vector2 lastShake {get;set;} = Vector2.Zero;
 }

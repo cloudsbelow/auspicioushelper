@@ -22,8 +22,8 @@ public interface IBlockChild: ITemplateChild{
     if(col!=0)p.Collidable = col>0;
     if(act!=0)p.Active = act>0;
     if(p.Scene==null) return;
-    if(col>0) p.EnableStaticMovers();
-    else if(col<0) p.DisableStaticMovers();
+    if(col>0) p.EnableSms(vis);
+    else if(col<0) p.DisableSms(vis);
   }
   bool ITemplateChild.hasInside(Actor a)=>self.Collider.Collide(a.Collider);
   void ITemplateChild.destroy(bool particles)=>self.RemoveSelf();

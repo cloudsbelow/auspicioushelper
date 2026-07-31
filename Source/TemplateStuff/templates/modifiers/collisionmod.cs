@@ -35,6 +35,7 @@ public class TemplateCollisionModifier:Template, Template.IRegisterEnts{
       can=null;
     }
     public bool ShouldHit(Entity e){
+      if(can==null) return false;
       if(!can.TryGetValue(e,out var b)){
         EKey.Get(e).Add(this);
         can.Add(e,b=top.ShouldCollideWith(e));
@@ -117,13 +118,11 @@ public class TemplateCollisionModifier:Template, Template.IRegisterEnts{
   public class TangibleMarker():Component(false,false){}
   public override void RegisterEnts(List<Entity> l) {
     base.RegisterEnts(l);
-    if(comp!=null) foreach(var i in l){
+    if(comp!=null) foreach(var i in l) if(i.Collider != null){
       var cur = i.Get<ChildMarker>()?.parent.GetFromTree<TemplateCollisionModifier>();
       if(cur==null) continue;
       while(cur.comp == null) cur = cur.parent.GetFromTree<TemplateCollisionModifier>();
       if(cur==this){
-        DebugConsole.Write("\nHERE\n");
-        DebugConsole.LogFullStackTrace();
         i.Collider = new FilterCollider(comp,i.Collider);
       }
     }
