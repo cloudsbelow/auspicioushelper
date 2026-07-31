@@ -6,8 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using Microsoft.VisualBasic.FileIO;
 using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
@@ -295,5 +295,76 @@ public static partial class Util{
       MethodInfo minf=> canInvoke?minf.Invoke(c,[]):null,
       _ => null
     };
+  }
+
+  static ModuleBuilder dynamicCastModule=null;
+  static Dictionary<(Type,Type), Type> idk = new();
+
+  [AttributeUsage(AttributeTargets.Method|AttributeTargets.Property, AllowMultiple=false)]
+  public class ReflectionTarget(string customName=null, bool alwaysReq=false):Attribute{
+    public string targetName(string fallback)=>customName??fallback;
+    public bool mandatory(MethodInfo m)=>m.IsAbstract || alwaysReq;
+  }
+  public static T CursedCast<T>(object inst){
+    var a = typeof(T);
+    var o = inst.GetType();
+    if(!idk.TryGetValue((a,o), out var bf)){
+      if(dynamicCastModule == null){
+        var name = new AssemblyName("auspGenerated");
+        var builder = AssemblyBuilder.DefineDynamicAssembly(name,AssemblyBuilderAccess.Run);
+        dynamicCastModule = builder.DefineDynamicModule("main");
+      }
+      var b = dynamicCastModule.DefineType($"{a.Name}{idk.Count}",TypeAttributes.Public, a);
+      var f = b.DefineField("w",o,FieldAttributes.Public);
+
+      List<(MethodInfo,MethodInfo,Type[])> stitch=new();
+      foreach(var ma in a.GetMethods(BindingFlags.Instance)){
+        var rt = ma.GetCustomAttribute<ReflectionTarget>();
+        if(rt==null) continue;
+        var callingTypes = ma.GetParameters().Map(x=>x.ParameterType);
+        var mo = o.GetMethod(rt.targetName(ma.Name), callingTypes);
+        if(mo==null && !rt.mandatory(ma)) continue;
+        if(mo==null) throw new Exception($"Method {ma} doesnt exist on {o}");
+        stitch.Add((ma,mo,callingTypes));
+      }
+      foreach(var pa in a.GetProperties(BindingFlags.Instance)){
+        var rt = pa.GetCustomAttribute<ReflectionTarget>();
+        if(rt==null) continue;
+        var po = o.GetProperty(rt.targetName(pa.Name));
+        if(pa.GetGetMethod() is {} pag && (pag.IsVirtual||pag.IsAbstract)){
+          var pog = po?.GetGetMethod();
+          if(pog==null && !rt.mandatory(pag)) continue;
+          if(pog==null) throw new Exception($"Prop(get) {pa} doesnt exist on {o}");
+          stitch.Add((pag,pog,[]));
+        }
+        if(pa.GetSetMethod() is {} pas && (pas.IsVirtual||pas.IsAbstract)){
+          var pos = po?.GetSetMethod();
+          if(pos==null && !rt.mandatory(pas)) continue;
+          if(pos==null) throw new Exception($"Prop(set) {pa} doesnt exist on {o}");
+          stitch.Add((pas,pos,[]));
+        }
+      }
+
+      foreach(var (ma,mo, callingTypes) in stitch){
+        var mb = b.DefineMethod(ma.Name,ma.Attributes,ma.ReturnType,callingTypes);
+        var il = mb.GetILGenerator();
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldfld, f);
+        for(int i=0; i<callingTypes.Length; i++) il.Emit(OpCodes.Ldarg,i);
+        il.Emit(OpCodes.Callvirt, mo);
+        il.Emit(OpCodes.Ret);
+        b.DefineMethodOverride(mb,ma);
+      }
+
+      var ctor = b.DefineConstructor(MethodAttributes.Public,CallingConventions.Standard,[o]);
+      var ilc = ctor.GetILGenerator();
+      ilc.Emit(OpCodes.Ldarg_0);
+      ilc.Emit(OpCodes.Call, a.GetConstructor(Type.EmptyTypes));
+      ilc.Emit(OpCodes.Ldarg_0);
+      ilc.Emit(OpCodes.Ldarg_1);
+      ilc.Emit(OpCodes.Stfld, f);
+      idk.Add((a,o),bf=b.CreateType());
+    }
+    return (T)Activator.CreateInstance(bf,o);
   }
 }
