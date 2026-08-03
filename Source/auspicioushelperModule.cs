@@ -54,7 +54,6 @@ public class auspicioushelperModule : EverestModule {
     if(origPoint!=s.RespawnPoint)Session.save();
   }
 
-  static string LastLvl;
   [OnLoad.OnHook(typeof(Level),nameof(Level.LoadLevel))]
   static void LoadLevlHook(On.Celeste.Level.orig_LoadLevel orig, Level l, Player.IntroTypes playerIntro, bool isFromLoader = false){
     DebugConsole.Write($"{playerIntro}");
@@ -66,7 +65,6 @@ public class auspicioushelperModule : EverestModule {
 
       ResetEvents.OnLvlReset.run();
     }
-    LastLvl = l.Session.LevelData.Name;
     orig(l,playerIntro,isFromLoader);
   }
 
@@ -214,6 +212,7 @@ public class auspicioushelperModule : EverestModule {
     typeof(TemplateIopExp).ModInterop();
     typeof(ChannelIopExp).ModInterop();
     typeof(ChannelIopExp2).ModInterop();
+    typeof(MaterialIopExp).ModInterop();
     typeof(TemplateIop).ModInterop(); //for examples;
     
     TemplateIop.customClarify("auspicioushelper/ChannelMover",(l,d,o,e)=>{

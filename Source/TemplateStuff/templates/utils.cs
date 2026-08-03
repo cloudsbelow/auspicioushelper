@@ -22,7 +22,7 @@ public static class TemplateHelpers{
     else {
       foreach(var sm in plat.staticMovers){
         bool orig = sm.Entity.Visible;
-        sm.Enable();
+        sm.Disable();
         if(vis==1) sm.Entity.Visible = true;
         else if (vis == 0) sm.Entity.Visible = orig;
       }

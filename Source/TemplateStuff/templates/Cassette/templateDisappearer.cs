@@ -9,17 +9,22 @@ using Monocle;
 
 namespace Celeste.Mod.auspicioushelper;
 
-public class TemplateDisappearer:Template{
-  public class BlockCol:IColliderWrapper.SimpleWrapperclass{
-    public BlockCol(Collider c):base(c){}
-    public override bool Collide(Vector2 point)=>false;
-    public override bool Collide(Circle c)=>false;
-    public override bool Collide(Rectangle r)=>false;
-    public override bool Collide(Hitbox h)=>false;
-    public override bool Collide(ColliderList l)=>false;
-    public override bool Collide(Grid g)=>false;
-    public override bool Collide(Vector2 a, Vector2 b)=>false;
+public class BlockingCollider:IColliderWrapper.SimpleWrapperclass, IColliderWrapper{
+  public const int Prio = -1;
+  int IColliderWrapper.priority=>Prio;
+  Collider IColliderWrapper.interceptReplace(Collider o) {
+    return new BlockingCollider(o);
   }
+  public BlockingCollider(Collider c):base(c){}
+  public override bool Collide(Vector2 point)=>false;
+  public override bool Collide(Circle c)=>false;
+  public override bool Collide(Rectangle r)=>false;
+  public override bool Collide(Hitbox h)=>false;
+  public override bool Collide(ColliderList l)=>false;
+  public override bool Collide(Grid g)=>false;
+  public override bool Collide(Vector2 a, Vector2 b)=>false;
+}
+public class TemplateDisappearer:Template{
   bool selfVis = true;
   bool selfCol = true;
   bool selfAct = true;
@@ -44,8 +49,8 @@ public class TemplateDisappearer:Template{
     public override string ToString()=>$"VCA:{{vis:{Visible},col:{Collidable},act:{Active}}}";
   }
   public TemplateDisappearer(EntityData data, Vector2 pos, int depthoffset):base(data,pos,depthoffset){
+    ResetEvents.Hooks<IColliderWrapper>.enable();
   }
-  public TemplateDisappearer(Vector2 pos, int depthoffset=0):base(pos,depthoffset){}
   public override void Added(Scene scene){
     base.Added(scene);
     if(children.Count>0)UpdateHook.AddAfterUpdate(enforce,false,true);

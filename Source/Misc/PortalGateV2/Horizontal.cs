@@ -85,7 +85,7 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
   public Vector2 getSpeed()=>sm?.getLiftspeed()??Vector2.Zero;
 
   static bool SetPortalOnHorizontal(Entity s, int m){
-    if(m==0) return s.Collider is not PColliderH;
+    if(m==0) return !IColliderWrapper.TryGet<PColliderH>(s, out var _);
     var portals = s.Scene.Tracker.GetEntities<PortalFaceH>();
     if(portals.Count==0) return true;
     int dir = Math.Sign(m);
@@ -113,7 +113,7 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
   }
   [ResetEvents.OnHook(typeof(Actor),nameof(Actor.MoveHExact))]
   static bool Hook(On.Celeste.Actor.orig_MoveHExact orig, Actor s, int m, Collision col, Solid pusher){ 
-    if(pusher != null && s.Collider is PColliderH pch_ && !pch_.fixing &&
+    if(pusher != null && IColliderWrapper.TryGet<PColliderH>(s, out var pch_) && !pch_.fixing &&
       pch_.GetPrimaryRect(out var prim, out var alw) && (alw||!pusher.Collider.Collide(prim.munane()))
     ){
       if(pusher.Collider is Hitbox){
@@ -125,10 +125,10 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
     }
     if(SetPortalOnHorizontal(s,m)) return orig(s,m,col,pusher);
 
-    if(s.Collider is PColliderH pch){
+    if(IColliderWrapper.TryGet<PColliderH>(s, out var pch)){
       bool res = orig(s,m,col,pusher);
       if(s.Collider == pch) pch.Done();
-      else if(s.Collider is PColliderH pcho) pcho.Done();
+      else if(IColliderWrapper.TryGet<PColliderH>(s, out var pcho)) pcho.Done();
       return res;
     }
     return orig(s,m,col,pusher);
@@ -136,10 +136,10 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
   [ResetEvents.OnHook(typeof(Platform),nameof(Platform.MoveHExactCollideSolids))]
   static bool Hook(On.Celeste.Platform.orig_MoveHExactCollideSolids orig, Platform s, int m, bool thruDashBlocks, Action<Vector2, Vector2, Platform> onCollide){
     if(SetPortalOnHorizontal(s,m)) return orig(s,m,thruDashBlocks,onCollide);
-    if(s.Collider is PColliderH pch) using(Util.WithRestore(ref inSolidCollideMove, true)){
+    if(IColliderWrapper.TryGet<PColliderH>(s, out var pch)) using(Util.WithRestore(ref inSolidCollideMove, true)){
       bool res = orig(s,m,thruDashBlocks,onCollide);
       if(s.Collider == pch) pch.Done();
-      else if(s.Collider is PColliderH pcho) pcho.Done();
+      else if(IColliderWrapper.TryGet<PColliderH>(s, out var pcho)) pcho.Done();
       return res;
     }
     return orig(s,m,thruDashBlocks,onCollide);
@@ -166,25 +166,25 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
   }
   [ResetEvents.OnHook(typeof(Actor),nameof(Actor.MoveVExact))]
   static bool Hook(On.Celeste.Actor.orig_MoveVExact orig, Actor s, int m, Collision c, Solid pusher){
-    if(s.Collider is PColliderH pch){
+    if(IColliderWrapper.TryGet<PColliderH>(s, out var pch)){
       bool res;
       if(m<0 && pch.distToTop<-m) using(new BlockPoint(pch.f1.Position)) res=orig(s,m,c,pusher);
       else if(m>0 && pch.distToBottom<m) using(new BlockPoint(pch.f1.Position+pch.f1.height*Vector2.UnitY)) res=orig(s,m,c,pusher);
       else return orig(s,m,c,pusher);
       if(s.Collider == pch) pch.Done();
-      else if(s.Collider is PColliderH pcho) pcho.Done();
+      else if(IColliderWrapper.TryGet<PColliderH>(s, out var pcho)) pcho.Done();
       return res;
     } else return orig(s,m,c,pusher);
   }
   [ResetEvents.OnHook(typeof(Platform),nameof(Platform.MoveVExactCollideSolids))]
   static bool Hook(On.Celeste.Platform.orig_MoveVExactCollideSolids orig, Platform s, int m, bool thru, Action<Vector2, Vector2, Platform> onCollide){
-    if(s.Collider is PColliderH pch) using(Util.WithRestore(ref inSolidCollideMove, true)){
+    if(IColliderWrapper.TryGet<PColliderH>(s, out var pch)) using(Util.WithRestore(ref inSolidCollideMove, true)){
       bool res;
       if(m<0 && pch.distToTop<-m) using(new BlockPoint(pch.f1.Position)) res=orig(s,m,thru,onCollide);
       else if(m>0 && pch.distToBottom<m) using(new BlockPoint(pch.f1.Position+pch.f1.height*Vector2.UnitY)) res=orig(s,m,thru,onCollide);
       else return orig(s,m,thru,onCollide);
       if(s.Collider == pch) pch.Done();
-      else if(s.Collider is PColliderH pcho) pcho.Done();
+      else if(IColliderWrapper.TryGet<PColliderH>(s, out var pcho)) pcho.Done();
       return res;
     } else return orig(s,m,thru,onCollide);
   }
@@ -201,7 +201,7 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
     if(facingRight != amt>0){
       Position.X+=amt;
       foreach(Actor a in Scene.Tracker.GetEntities<Actor>()){
-        if(a.Collider is not PColliderH pch || (pch.f1 != this && pch.f2 != this)) continue;
+        if(!IColliderWrapper.TryGet<PColliderH>(a, out var pch) || (pch.f1 != this && pch.f2 != this)) continue;
         pch.Done();
         if(deadly && a.CollideFirst<Solid>() is Solid s) a.SquishCallback(new(){
           Hit=s, Direction=Vector2.UnitX*amt, Moved=Vector2.UnitX*amt, TargetPosition=a.Position, Pusher=null
@@ -218,7 +218,7 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
           if(dist>=Math.Abs(amt)+PColliderH.margin || dist*2+h.width<=0) continue;
           act.Collider = new PColliderH(act, this, other);
         }
-        if(act.Collider is PColliderH pch && (pch.f1 == this || pch.f2 == this)){
+        if(IColliderWrapper.TryGet<PColliderH>(act, out var pch) && (pch.f1 == this || pch.f2 == this)){
           Position.X = orig;
           for(int i=0; i!=amt; i+=dir){
             Position.X = orig+i+dir;
@@ -252,7 +252,7 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
     float orig = Position.Y;
     List<Entity> toClean = new();
     foreach(Actor act in Scene.Tracker.GetEntities<Actor>()){
-      if(act.Collider is not PColliderH pch || !(pch.f1==this || pch.f2==this))continue;
+      if(!IColliderWrapper.TryGet<PColliderH>(act, out var pch) || !(pch.f1==this || pch.f2==this))continue;
       toClean.Add(act);
       Position.Y=orig;
       for(int i=0; i!=amt; i+=dir){
@@ -281,16 +281,16 @@ public class PortalFaceH:Entity, ConnectedBlocks.IShouldntInduct{
       }
     }
     Position.Y = orig+amt;
-    foreach(var e in toClean) if(e.Collider is PColliderH pch_) pch_.Done(); 
+    foreach(var e in toClean) if(IColliderWrapper.TryGet<PColliderH>(e, out var pch_)) pch_.Done(); 
     if(oldCollidable is {} val) sm.Platform.Collidable=val; 
   }
 
 
   [ResetEvents.OnHook(typeof(Holdable),nameof(Holdable.Update))]
   static void adjust(On.Celeste.Holdable.orig_Update orig, Holdable h){
-    if(h.IsHeld && h.Holder.Collider is PColliderH pch){
+    if(h.IsHeld && IColliderWrapper.TryGet<PColliderH>(h.Holder, out var pch)){
       if(h.Entity.Collider is Hitbox hb) h.Entity.Collider = new PColliderH(h.Entity,pch.f1,pch.f2);
-      if(h.Entity.Collider is PColliderH pch_){
+      if(IColliderWrapper.TryGet<PColliderH>(h.Entity, out var pch_)){
         pch_.f1=pch.f1;
         pch_.f2=pch.f2;
       }

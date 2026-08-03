@@ -13,6 +13,8 @@ using MonoMod.Utils;
 namespace Celeste.Mod.auspicioushelper;
 
 public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollision,IColliderWrapper{
+  const int PortalPrio = 10001;
+  int IColliderWrapper.priority => PortalPrio;
   public PortalFaceH f1;
   public PortalFaceH f2;
   public bool flipV;
@@ -28,7 +30,6 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     //   null or PColliderH=> o,
     //   Hitbox h=> new PColliderH(this,h),
     // }
-    if(o is PColliderH or null) return o;
     if(o is Hitbox h) return new PColliderH(this,h);
     return new TempNonhb(this,o);
   }
@@ -54,7 +55,7 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     orig.Removed();
   }
   void End(){
-    using(new IColliderWrapper.CollideDetourLock()) Entity.Collider = orig;
+    using(new IColliderWrapper.CollideDetourLock(PortalPrio)) Entity.Collider = orig;
   }
   public Vector2 calcspeed(Vector2 speed, bool fromOtherside=false){
     Vector2 rel = speed-(fromOtherside?f2:f1).getSpeed();
@@ -112,7 +113,7 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
     }
 
     if(Entity is Actor a && flipV && GelperIop.SetActorGravity!=null){
-      using(new IColliderWrapper.CollideDetourLock()) Entity.Collider = orig;
+      using(new IColliderWrapper.CollideDetourLock(PortalPrio)) Entity.Collider = orig;
       GelperIop.SetActorGravity(a,2,1);
       orig = a.Collider as Hitbox;
       if(orig == null) throw new Exception("hum");
@@ -128,9 +129,9 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
   [OnLoad.OnHook(typeof(Level),nameof(Level.EnforceBounds))]
   static void Hook(On.Celeste.Level.orig_EnforceBounds orig, Level l, Player p){
     if(dontEnforce) return;
-    if(p.Collider is PColliderH pch && pch.GetPrimaryRect(out var r, out bool w)){
+    if(IColliderWrapper.TryGet<PColliderH>(p, out var pch) && pch.GetPrimaryRect(out var r, out bool w)){
       if(w) return;
-      using(new IColliderWrapper.CollideDetourLock()){ 
+      using(new IColliderWrapper.CollideDetourLock(PortalPrio)){ 
         p.Collider = new Hitbox(r.w, r.h, r.x-p.Position.X, r.y-p.Position.Y);
       }
       orig(l,p);
@@ -239,7 +240,7 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
       }
     }
     public override void Render() {
-      if(e.Collider is not PColliderH pch) {
+      if(!IColliderWrapper.TryGet<PColliderH>(e, out var pch)) {
         RemoveSelf();
         return;
       }
@@ -296,6 +297,7 @@ public class PColliderH:ColliderList,DelegatingPointcollider.CustomPointCollisio
   public override string ToString()=>"PortalCollider."+RuntimeHelpers.GetHashCode(this);
 
   public class TempNonhb:IColliderWrapper.SimpleWrapperclass,IColliderWrapper{
+    int IColliderWrapper.priority => PortalPrio;
     PColliderH source;
     Collider IColliderWrapper.interceptReplace(Collider o) {
       return o switch {

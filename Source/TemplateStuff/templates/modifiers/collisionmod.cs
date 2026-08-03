@@ -10,6 +10,7 @@ namespace Celeste.Mod.auspicioushelper;
 [MapenterEv(nameof(Search))]
 [Tracked]
 public class TemplateCollisionModifier:Template, Template.IRegisterEnts{
+  const int FilterPrio=1;
   public static void Search(EntityData d){
     foreach(var p in Util.listparseflat(d.Attr("paths",""))) if(!p.Contains('*')) Finder.enqueueIdent(p);
   }
@@ -44,8 +45,8 @@ public class TemplateCollisionModifier:Template, Template.IRegisterEnts{
     }
   }
   class FilterCollider(HittableComp f, Collider col):IColliderWrapper.SimpleWrapperclass(col), IColliderWrapper{
-    Collider IColliderWrapper.interceptReplace(Collider o) {
-      if(o is FilterCollider) return o;
+    int IColliderWrapper.priority => FilterPrio;
+    Collider IColliderWrapper.interceptReplace(Collider o){
       return new FilterCollider(f,o);
     }
     bool Try(Collider c)=>c.Entity==null || f.ShouldHit(c.Entity);
@@ -114,6 +115,7 @@ public class TemplateCollisionModifier:Template, Template.IRegisterEnts{
     mode = d.Enum("combinationMode",CombinationMode.or);
     log = d.Bool("log",false);
     tangible = d.Bool("tangible",false);
+    ResetEvents.Hooks<IColliderWrapper>.enable();
   }
   public class TangibleMarker():Component(false,false){}
   public override void RegisterEnts(List<Entity> l) {

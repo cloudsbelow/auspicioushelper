@@ -23,6 +23,9 @@ entity.placements = {
       refillOptions="0",
       alwaysPropegate=true,
       entanglementId="",
+      noJumpBuffer=true,
+      forceState=false,
+      audioNeedsTrigger=true,
       sfx = "event:/game/06_reflection/crushblock_activate",
       
       _loenn_display_template = true,

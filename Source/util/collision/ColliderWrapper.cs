@@ -10,20 +10,69 @@ using Microsoft.Xna.Framework;
 namespace Celeste.Mod.auspicioushelper;
 
 public interface IColliderWrapper{
+  //Lower priority colliders go on the outside
+  int priority=> throw new NotImplementedException();
   Collider wrapped=>null;
   Collider interceptReplace(Collider o);
   ref struct CollideDetourLock:IDisposable{
     [ResetEvents.NullOn(ResetEvents.Times.LvlReset)]
     static int active=0;
-    public CollideDetourLock(){active++;}
-    void IDisposable.Dispose()=>active--;
+    static int currentPrio;
+    int lastPrio;
+    bool initialized;
+    public CollideDetourLock(int prio){
+      active++;
+      lastPrio = currentPrio;
+      currentPrio = prio;
+      initialized = true;
+    }
+    void IDisposable.Dispose(){
+      active--;
+      currentPrio = lastPrio;
+      if(!initialized) throw new Exception("Throw a rock at me");
+    }
     public static bool IsLocked=>active!=0;
+    public static int Prio=> active!=0?currentPrio:int.MaxValue;
   }
   [ResetEvents.OnHook(typeof(Entity),nameof(Entity.Collider),Util.HookTarget.PropSet)]
   static void SetColliderDetour(Action<Entity, Collider> orig, Entity e, Collider c){
-    if(!CollideDetourLock.IsLocked && e.Collider is IColliderWrapper cw){
-      using(new CollideDetourLock())e.Collider = cw.interceptReplace(c);
+    if(e.Collider is IColliderWrapper cw){
+      int num = CollideDetourLock.Prio;
+      if(c is IColliderWrapper ocw) num = Math.Min(num, ocw.priority);
+      orig(e, progress(cw,c,num));
     } else orig(e,c);
+  }
+  static Collider progress(IColliderWrapper o, Collider c, int prio){
+    if(o.priority>=prio) return c;
+    else{
+      Collider next=c;
+      if(o.wrapped is IColliderWrapper oChild) next=progress(oChild, c, prio);
+      return o.interceptReplace(next);
+    } 
+  }
+  static T Get<T>(Entity e) where T:IColliderWrapper{
+    if(e.Collider is IColliderWrapper cw){
+      do{
+        if(cw is T found) return found;
+        if(cw.wrapped is not IColliderWrapper blah) break;
+        cw=blah;
+      } while(true);
+    }
+    return default;
+  }
+  static bool TryGet<T>(Entity e, out T item) where T:IColliderWrapper{
+    if(e.Collider is IColliderWrapper cw){
+      do{
+        if(cw is T found){
+          item=found;
+          return true;
+        }
+        if(cw.wrapped is not IColliderWrapper blah) break;
+        cw=blah;
+      } while(true);
+    }
+    item = default;
+    return false;
   }
   static Collider fixCollider(Collider toFix){
     while(toFix is IColliderWrapper c) toFix = c.wrapped;

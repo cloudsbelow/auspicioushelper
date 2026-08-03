@@ -15,8 +15,10 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/JuckterField")]
 public class JuckterField:Entity{
+  const int JuckterPrio = 10000;
 
   public class JuckterBase:IColliderWrapper.SimpleWrapperclass,IColliderWrapper{
+    int IColliderWrapper.priority=> JuckterPrio;
     public JuckterField f;
     public int index;
     public Vector2 expandTlc;
@@ -28,8 +30,6 @@ public class JuckterField:Entity{
       expandBrc = f.bounds.brc-f.locs[idx];
     }
     Collider IColliderWrapper.interceptReplace(Monocle.Collider o){
-      //DebugConsole.Write("Intercept Replace",o,this);
-      if(o is JuckterBase or null) return o;
       if(o is Hitbox h) return new JuckterColliderHb(h,f,index);
       else return new JuckterColliderCompat(o,f,index);
     }
@@ -123,15 +123,15 @@ public class JuckterField:Entity{
     public JuckterFake(Entity copy){
       Other = copy;
       Depth = Other.Depth;
-      with = copy.Collider as JuckterBase;
+      with = IColliderWrapper.Get<JuckterBase>(copy);
     }
     public override void Update() {
-      if(Other.Scene==null || Other.Collider is not JuckterBase f || !with.SameCtx(f)) RemoveSelf();
+      if(Other.Scene==null || !IColliderWrapper.TryGet<JuckterBase>(Other, out var f) || !with.SameCtx(f)) RemoveSelf();
       Depth = Other.Depth;
       OverrideVisualComponent.EnsureParity(Other,this);
     }
     public override void Render(){
-      if(Other.Scene==null || Other.Collider is not JuckterBase f || !with.SameCtx(f)) return;
+      if(Other.Scene==null || !IColliderWrapper.TryGet<JuckterBase>(Other, out var f) || !with.SameCtx(f)) return;
       using(Util.WithRestore(ref Other.Position)){
         var li = with.f.locs;
         Vector2 offset = Other.Position-li[with.index];
@@ -156,7 +156,7 @@ public class JuckterField:Entity{
   }
   void AddEnt(Entity e, int i){
     JuckterBase.Set(e,this,i);
-    if(e.Collider is not JuckterBase) throw new Exception($"Compat bad. {e} is not giving up old {e.Collider}");
+    if(!IColliderWrapper.TryGet<JuckterBase>(e, out var _)) throw new Exception($"Compat bad. {e} is not giving up old {e.Collider}");
     Scene.Add(new JuckterFake(e));
   }
   void Enter(Holdable h, int i){
@@ -192,7 +192,7 @@ public class JuckterField:Entity{
   };
   void Release(Holdable h){
     var e = h.Entity;
-    if(e.Collider is not JuckterBase b) throw new Exception("idk");
+    if(!IColliderWrapper.TryGet<JuckterBase>(e, out var b)) throw new Exception("idk");
     for(int i=0; i<b.f.locs.Length; i++) if(i!=b.index){
       var c = b.GetCenter(i);
       float aoff = Calc.Random.Range(0,MathF.PI*2/6);
@@ -211,17 +211,17 @@ public class JuckterField:Entity{
       }
     }
     if(e is TemplateHoldable the) the.juckterChildren=null;
-    using(new IColliderWrapper.CollideDetourLock()){
+    using(new IColliderWrapper.CollideDetourLock(JuckterPrio)){
       e.Collider = b.wrapped;
       if(e is TemplateHoldable t) foreach(var x in t.Te.GetChildren<Entity>()){
-        if(x.Collider is JuckterBase be) x.Collider=be.wrapped;
+        if(IColliderWrapper.TryGet<JuckterBase>(x, out var be)) x.Collider=be.wrapped;
       }
     }
   }
   static void Pickup(Holdable h){
-    if(h.Entity.Collider is JuckterBase og) {
+    if(IColliderWrapper.TryGet<JuckterBase>(h.Entity, out var og)) {
       if(h.PickupCollider != null) h.Entity.Collider=h.PickupCollider;
-      JuckterBase b = h.Entity.Collider as JuckterBase;
+      JuckterBase b = IColliderWrapper.Get<JuckterBase>(h.Entity);
       int idx = b.CollideWhich(h.Holder.Collider);
       if(idx==-1) throw new Exception("idk");
       h.Entity.Position += b.f.locs[idx]-b.f.locs[b.index];
@@ -234,7 +234,7 @@ public class JuckterField:Entity{
   bool inArea(Entity e, int i){
     if(!Collidable) return false;
     Rectangle m = new FloatRect(locs[i].x,locs[i].y,size.x,size.y).munane();
-    if(e.Collider is JuckterBase b) return b.wrapped.Collide(m);
+    if(IColliderWrapper.TryGet<JuckterBase>(e, out var b)) return b.wrapped.Collide(m);
     return e.Collider.Collide(m);
   }
   public override void Update() {
@@ -248,11 +248,11 @@ public class JuckterField:Entity{
         Release(pair.Item1);
         return true;
       }
-      else if(e.Collider is not JuckterBase) throw new Exception("Collider escaped on "+e.ToString());
+      else if(!IColliderWrapper.TryGet<JuckterBase>(e, out var b)) throw new Exception("Collider escaped on "+e.ToString());
       return false;
     });
     if(!Collidable) return;
-    foreach(Holdable h in Scene.Tracker.GetComponents<Holdable>()) if(h.Holder == null && h.Entity.Collider is not JuckterBase){
+    foreach(Holdable h in Scene.Tracker.GetComponents<Holdable>()) if(h.Holder == null && !IColliderWrapper.TryGet<JuckterBase>(h.Entity, out var b)){
       var col = h.Entity.Collider;
       if(h.Entity?.Scene==null || !h.Entity.Collidable) continue;
       for(int i=0; i<locs.Length; i++) if(col.Collide(new Rectangle(locs[i].x,locs[i].y,size.x,size.y))){

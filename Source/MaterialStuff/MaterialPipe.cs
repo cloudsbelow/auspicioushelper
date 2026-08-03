@@ -18,6 +18,7 @@ namespace Celeste.Mod.auspicioushelper;
 public static class MaterialPipe {
   [Import.SpeedrunToolIop.Static]
   static List<IMaterialLayer> layers = new List<IMaterialLayer>();
+  public static bool hasLayer=> layers.Count>0;
   static public bool check(IMaterialLayer l)=>layers.Contains(l);
   [ResetEvents.RunOn(ResetEvents.Times.LvlCleanup)]
   static void Clear(){

@@ -19,7 +19,8 @@
                             ..\Effects\**\*.cso;
                             ..\Rysy\**\*.*;"
                     Exclude="..\Loenn\**\private\**\*.*;
-                            ..\Rysy\**\Debug\**\*.*;" />
+                            ..\Rysy\**\Debug\**\*.*;
+                            ..\Rysy\**\obj\**\*.*;" />
     </ItemGroup>
     <!--Disable "Copy Local" for all references-->
     <ItemDefinitionGroup>

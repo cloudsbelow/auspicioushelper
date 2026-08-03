@@ -3,9 +3,14 @@
 
 using System;
 using System.Text.RegularExpressions;
+using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
+using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -34,8 +39,8 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
   }
   Result[] res = new Result[4];
   int refillDashesOnTrigger = 0;
-  bool alwaysRefill = false;
-  bool refillStamina = false;
+  bool alwaysRefill=false, refillStamina=false;
+  bool forceState=false, noJumpBuffer=false, onlyTriggerAudio=true;
   public void OnTrigger(TriggerInfo s) {
     //DebugConsole.Write("dashed", s, s?.entity, refillDashesOnTrigger);
     if(!TriggerInfo.TestPass(s,this)) return;
@@ -86,8 +91,9 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
           foreach(PlayerCollider c in p.Scene.Tracker.GetComponents<PlayerCollider>()) if(c.Check(p) && p.Dead) break;
           p.Collider=old;
           if(alwaysLetThrough) (this as ITemplateChild).propagateDashhit(p,dir);
+          if(forceState && !d.HasFlag(Result.Ignore)) p.StateMachine.State=0;
         }
-        Audio.Play(sfx, p.Position);
+        if(!onlyTriggerAudio || d.HasFlag(Result.Trigger)) Audio.Play(sfx, p.Position);
         if(d.HasFlag(Result.Bumper)) {
           p.ExplodeLaunch(p.Center+dir*6,false,false);
           return DashCollisionResults.Ignore;
@@ -114,9 +120,53 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
     alwaysRefill = dstr.Contains('p');
     var match = Regex.Match(dstr, @"\d+");
     if (match.Success) int.TryParse(match.Value,out refillDashesOnTrigger);
+
     alwaysLetThrough = d.Bool("alwaysPropegate",false);
     echannel = d.Attr("entanglementId","");
     if(echannel.StartsWith('@')) Add(etracker = new(echannel.Substring(1)));
     sfx = d.Attr("sfx","event:/game/06_reflection/crushblock_activate");
+    if(noJumpBuffer = d.Bool("noJumpBuffer",false)) ResetEvents.Hooks<TemplateDashhitModifier>.enable();
+    forceState = d.Bool("forceState", false);
+    onlyTriggerAudio = d.Bool("audioNeedsTrigger", false);
+  }
+
+  static bool wjCheckDelegate(bool orig, Player p, Vector2 check, int dir){
+    if(!orig || p.DashAttacking==false) return orig;
+    if(dir!=Math.Sign(p.DashDir.X)) return orig;
+    using(Util.WithRestore(ref p.Position, check)){
+      foreach(var s in p.Scene.Tracker.GetEntities<Solid>()) if(p.CollideCheck(s)){
+        if(s.Get<ChildMarker>() is {} cm){
+          var cur = cm.parent.GetFromTree<TemplateDashhitModifier>();
+          while(cur!=null){
+            if(cur.noJumpBuffer && !cur.skip) break;
+            cur = cur.parent?.GetFromTree<TemplateDashhitModifier>();
+          }
+          if(cur==null) return orig;
+        } else return orig;
+      }
+      DebugConsole.Write("blocked",(int)p.Facing,p.DashDir);
+      return false;
+    }
+  }
+  [ResetEvents.ILHook(typeof(Player),nameof(Player.WallJumpCheck))]
+  static void cjhook(ILContext ctx){
+    ILCursor c = new(ctx);
+    VariableDefinition v = new(ctx.Import(typeof(Vector2)));
+    c.Body.Variables.Add(v);
+    if(c.TryGotoNextBestFit(MoveType.Before,
+      itr=>itr.MatchCall<Entity>(nameof(CollideCheck)) &&
+        itr.Operand is GenericInstanceMethod g && 
+        g.GenericArguments.Count==1 && 
+        g.GenericArguments[0].FullName==typeof(Solid).FullName,
+      itr=>itr.MatchRet()
+    )){
+      c.EmitDup();
+      c.EmitStloc(v);
+      c.Index++;
+      c.EmitLdarg0();
+      c.EmitLdloc(v);
+      c.EmitLdarg1();
+      c.EmitDelegate(wjCheckDelegate);
+    } else DebugConsole.WriteFailure("Failed to add hook",true);
   }
 }
