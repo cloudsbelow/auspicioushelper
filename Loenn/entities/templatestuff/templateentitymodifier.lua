@@ -20,6 +20,7 @@ entity.placements = {
       allowCustomSpeed=false,
       log = false,
       only = "",
+      triggerShakeTime=0,
       
       _loenn_display_template = true,
     }

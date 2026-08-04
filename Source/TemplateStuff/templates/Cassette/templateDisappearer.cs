@@ -10,7 +10,8 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 public class BlockingCollider:IColliderWrapper.SimpleWrapperclass, IColliderWrapper{
-  public const int Prio = -1;
+  public readonly static BlockingCollider instance = new(null); 
+  public const int Prio = -10000;
   int IColliderWrapper.priority=>Prio;
   Collider IColliderWrapper.interceptReplace(Collider o) {
     return new BlockingCollider(o);
@@ -23,6 +24,11 @@ public class BlockingCollider:IColliderWrapper.SimpleWrapperclass, IColliderWrap
   public override bool Collide(ColliderList l)=>false;
   public override bool Collide(Grid g)=>false;
   public override bool Collide(Vector2 a, Vector2 b)=>false;
+  public static void SetCol(Entity e, bool col){
+    if(col) IColliderWrapper.RemoveAtPrio(e, Prio);
+    else IColliderWrapper.AddClass(e, instance);
+  }
+  public static Collider WihtoutBlock(Entity e)=> e.Collider is BlockingCollider bc? bc.wrapped:e.Collider;
 }
 public class TemplateDisappearer:Template{
   bool selfVis = true;
@@ -126,17 +132,14 @@ public class TemplateDisappearer:Template{
 }
 
 [CustomEntity("auspicioushelper/TemplateEntityModifier")]
-public class TemplateEntityModifier:TemplateDisappearer, Template.IRegisterEnts{
+public class TemplateEntityModifier:TemplateDisappearer, Template.IRegisterEnts, ITemplateTriggerable{
   public TemplateEntityModifier(EntityData d, Vector2 offset):this(d,offset,d.Int("depthoffset",0)){}
-  string actCh;
-  string colCh;
-  string visCh;
-  string shakeCh;
-  bool customSpeed;
+  string actCh, colCh, visCh, shakeCh;
+  bool customSpeed, log;
   ChannelTracker speedTracker;
   HashSet<string> only;
   GroupTracker.TrackedGroupComp ents;
-  bool log;
+  float shakeTime=0;
   public TemplateEntityModifier(EntityData d, Vector2 offset, int depthoffset)
   :base(d,d.Position+offset,depthoffset){
     actCh = d.Attr("activeChannel");
@@ -148,6 +151,7 @@ public class TemplateEntityModifier:TemplateDisappearer, Template.IRegisterEnts{
     if(d.tryGetStr("only", out string lis)){
       only = new(Util.listparseflat(lis,false,true));
     }
+    shakeTime = d.Float("triggerShakeTime", 0);
   }
   public override void RegisterEnts(List<Entity> l) {
     if(only!=null || log || customSpeed) foreach(Entity e in l){
@@ -197,5 +201,9 @@ public class TemplateEntityModifier:TemplateDisappearer, Template.IRegisterEnts{
       foreach(var ent in ents) ent.Update();
       Engine.DeltaTime = old;
     }
+  }
+  void ITemplateTriggerable.OnTrigger(TriggerInfo s) {
+    if(shakeTime>0 && TriggerInfo.Test(s)) shake(shakeTime);
+    TriggerInfo.Pass(s,this);
   }
 }

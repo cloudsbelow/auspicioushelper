@@ -74,10 +74,8 @@ public class BasicMultient:ITemplateChild{
       if(ent.detatched) continue;
       if(vis!=0) ent.e.Visible = vis>0; 
       if(col!=0){
-        ent.e.Collidable = col>0; 
-        foreach(Component c in ent.e.Components){
-          if(c is PlayerCollider cl) cl.Active=col>0;
-        }
+        if(col<0) IColliderWrapper.AddClass(ent.e, BlockingCollider.instance);
+        else IColliderWrapper.RemoveAtPrio(ent.e, BlockingCollider.Prio);
       }
       if(act!=0) ent.e.Active = act>0;
     }

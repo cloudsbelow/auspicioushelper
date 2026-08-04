@@ -34,13 +34,28 @@ public interface IColliderWrapper{
     public static bool IsLocked=>active!=0;
     public static int Prio=> active!=0?currentPrio:int.MaxValue;
   }
-  [ResetEvents.OnHook(typeof(Entity),nameof(Entity.Collider),Util.HookTarget.PropSet)]
-  static void SetColliderDetour(Action<Entity, Collider> orig, Entity e, Collider c){
-    if(e.Collider is IColliderWrapper cw){
-      int num = CollideDetourLock.Prio;
-      if(c is IColliderWrapper ocw) num = Math.Min(num, ocw.priority);
-      orig(e, progress(cw,c,num));
-    } else orig(e,c);
+  static Collider Swap(IColliderWrapper oldCollider, Collider newCollider){
+    int num = CollideDetourLock.Prio;
+    if(newCollider is IColliderWrapper ocw) num = Math.Min(num, ocw.priority);
+    return progress(oldCollider, newCollider, num);
+  }
+  [ResetEvents.ILHook(typeof(Entity),nameof(Entity.Collider),Util.HookTarget.PropSet)]
+  static void SetColliderDetourIL(ILContext ctx){
+    ILCursor c = new(ctx);
+    ILLabel normal = c.DefineLabel();
+    ILLabel end = c.DefineLabel();
+    c.EmitLdarg0();
+    c.EmitLdfld(typeof(Entity).GetField("collider", Util.GoodBindingFlags));
+    c.EmitIsinst(typeof(IColliderWrapper));
+    c.EmitDup();
+    c.EmitBrfalse(normal);
+    c.EmitLdarg1();
+    c.EmitDelegate(Swap);
+    c.EmitStarg(1);
+    c.EmitBr(end);
+    c.MarkLabel(normal);
+    c.EmitPop();
+    c.MarkLabel(end);
   }
   static Collider progress(IColliderWrapper o, Collider c, int prio){
     if(o.priority>=prio) return c;
@@ -73,6 +88,19 @@ public interface IColliderWrapper{
     }
     item = default;
     return false;
+  }
+  public static Collider getPastPrio(Entity e, int prio){
+    Collider cur = e.Collider;
+    while(cur is IColliderWrapper cw && cw.priority<=prio) cur=cw.wrapped;
+    return cur;
+  }
+  public static void AddClass(Entity e, IColliderWrapper c){
+    Collider inside = getPastPrio(e, c.priority);
+    e.Collider = c.interceptReplace(inside);
+  }
+  public static void RemoveAtPrio(Entity e, int prio){
+    var c = getPastPrio(e, prio);
+    using(new CollideDetourLock(prio)) e.Collider = c;
   }
   static Collider fixCollider(Collider toFix){
     while(toFix is IColliderWrapper c) toFix = c.wrapped;

@@ -139,8 +139,9 @@ public class OverrideVisualComponent:OnAnyRemoveComp{
     }
     setNvis(!hasBeenStolen);
   }
-  public static void EnsureParity(Entity fromEnt, Entity toEnt){
-    if(TryGet(fromEnt) is not {} src){
+  public static void EnsureParity(Entity fromEnt, Entity toEnt)=>EnsureParity(TryGet(fromEnt), toEnt);
+  public static void EnsureParity(OverrideVisualComponent src, Entity toEnt){
+    if(src==null){
       if(TryGet(toEnt) is not {} r) return;
       toEnt.Remove(r);
       return;
@@ -209,6 +210,11 @@ public interface ICustomMatRender{
 }
 
 public interface IOverrideVisuals{
+  public class Blocking:IOverrideVisuals{
+    void IOverrideVisuals.AddC(OverrideVisualComponent c){}
+    void IOverrideVisuals.RemoveC(OverrideVisualComponent c){}
+  }
+  public static readonly Blocking blocker = new(); 
   void AddC(OverrideVisualComponent c);
   void RemoveC(OverrideVisualComponent c);
 }

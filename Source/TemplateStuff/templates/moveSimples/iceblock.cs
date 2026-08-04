@@ -76,10 +76,10 @@ public class TemplateIceblock:TemplateDisappearer,ITemplateTriggerable{
   }
   void ITemplateTriggerable.OnTrigger(TriggerInfo info) {
     if(!triggerable){
-      info.Pass(this);
+      TriggerInfo.Pass(info, this);
       return;
     }
-    if(!info.TestPass(this)) return;
+    if(!TriggerInfo.TestPass(info, this)) return;
     trigger();
   }
   bool reforming = false;

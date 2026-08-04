@@ -133,40 +133,48 @@ public class TemplateDashhitModifier:Template, ITemplateTriggerable{
   static bool wjCheckDelegate(bool orig, Player p, Vector2 check, int dir){
     if(!orig || p.DashAttacking==false) return orig;
     if(dir!=Math.Sign(p.DashDir.X)) return orig;
+    bool flag=true;
     using(Util.WithRestore(ref p.Position, check)){
       foreach(var s in p.Scene.Tracker.GetEntities<Solid>()) if(p.CollideCheck(s)){
         if(s.Get<ChildMarker>() is {} cm){
           var cur = cm.parent.GetFromTree<TemplateDashhitModifier>();
           while(cur!=null){
-            if(cur.noJumpBuffer && !cur.skip) break;
+            if(cur.noJumpBuffer && !cur.skip){
+              flag = false;
+              break;
+            }
             cur = cur.parent?.GetFromTree<TemplateDashhitModifier>();
           }
           if(cur==null) return orig;
         } else return orig;
       }
-      DebugConsole.Write("blocked",(int)p.Facing,p.DashDir);
-      return false;
+      if(!flag)DebugConsole.Write("blocked",(int)p.Facing,p.DashDir);
+      return orig && flag;
     }
   }
-  [ResetEvents.ILHook(typeof(Player),nameof(Player.WallJumpCheck))]
-  static void cjhook(ILContext ctx){
-    ILCursor c = new(ctx);
-    VariableDefinition v = new(ctx.Import(typeof(Vector2)));
-    c.Body.Variables.Add(v);
-    if(c.TryGotoNextBestFit(MoveType.Before,
-      itr=>itr.MatchCall<Entity>(nameof(CollideCheck)) &&
-        itr.Operand is GenericInstanceMethod g && 
-        g.GenericArguments.Count==1 && 
-        g.GenericArguments[0].FullName==typeof(Solid).FullName,
-      itr=>itr.MatchRet()
-    )){
-      c.EmitDup();
-      c.EmitStloc(v);
-      c.Index++;
-      c.EmitLdarg0();
-      c.EmitLdloc(v);
-      c.EmitLdarg1();
-      c.EmitDelegate(wjCheckDelegate);
-    } else DebugConsole.WriteFailure("Failed to add hook",true);
+  // [ResetEvents.ILHook(typeof(Player),nameof(Player.WallJumpCheck))]
+  // static void cjhook(ILContext ctx){
+  //   ILCursor c = new(ctx);
+  //   VariableDefinition v = new(ctx.Import(typeof(Vector2)));
+  //   c.Body.Variables.Add(v);
+  //   if(c.TryGotoNextBestFit(MoveType.Before,
+  //     itr=>itr.MatchCall<Entity>(nameof(CollideCheck)) &&
+  //       itr.Operand is GenericInstanceMethod g && 
+  //       g.GenericArguments.Count==1 && 
+  //       g.GenericArguments[0].FullName==typeof(Solid).FullName,
+  //     itr=>itr.MatchRet()
+  //   )){
+  //     c.EmitDup();
+  //     c.EmitStloc(v);
+  //     c.Index++;
+  //     c.EmitLdarg0();
+  //     c.EmitLdloc(v);
+  //     c.EmitLdarg1();
+  //     c.EmitDelegate(wjCheckDelegate);
+  //   } else DebugConsole.WriteFailure("Failed to add hook",true);
+  // }
+  [ResetEvents.OnHook(typeof(Player),nameof(Player.WallJumpCheck))]
+  static bool Hook(On.Celeste.Player.orig_WallJumpCheck orig, Player p, int dir){
+    return wjCheckDelegate(orig(p,dir), p, p.Position+Vector2.UnitX*dir*3, dir);
   }
 }

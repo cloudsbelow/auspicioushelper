@@ -409,7 +409,7 @@ public class Template:Entity, ITemplateChild{
   
   public Vector2 ownShakeVec;
   public Vector2 gatheredShakeVec=>(parent==null||(Propagation.Shake&prop)==0)?ownShakeVec:ownShakeVec+parent.gatheredShakeVec;
-  public float shakeTimer;
+  float shakeTimer;
   public static Dictionary<Entity, Vector2> prevpos = new();
   static void restorePos(){
     foreach(var pair in prevpos){

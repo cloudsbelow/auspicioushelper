@@ -24,15 +24,14 @@ public static class EntityParser{
   public enum Types{
     unable, platformbasic, unwrapped, template,
     basic,
-    iopClarified, initiallyerrors
+    iopClarified, initerr
   }
   public static LevelData DefaultLD;
-  static Dictionary<string, Types> parseMap = new Dictionary<string, Types>();
-  static Dictionary<string, Level.EntityLoader> loaders = new Dictionary<string, Level.EntityLoader>();
+  static Dictionary<string, (Types, Level.EntityLoader)> parsed = new();
+
   internal static void clarify(string name, Types t, Level.EntityLoader loader, bool trusted=false){
     if(name.StartsWith("auspicioushelper") && !trusted) return; //no trolling
-    parseMap[name] = t;
-    loaders[name] = loader;
+    parsed[name] = new(t,loader);
   }
   internal static void clarify(List<string> names, Types t, Level.EntityLoader loader, bool trusted = false){
     foreach(var name in names) clarify(name, t, loader, trusted);
@@ -41,9 +40,8 @@ public static class EntityParser{
   static HashSet<string> permittedExamples = ["auspicioushelper/ChannelMover"];
   public static void clarifyComp(string name, Func<Level,LevelData,Vector2,EntityData,Component> comploader){
     if(name.StartsWith("auspicioushelper") && !permittedExamples.Contains(name)) return;
-    parseMap[name] = Types.iopClarified;
+    parsed[name] = new(Types.iopClarified, createComp);
     cloaders[name] = comploader;
-    loaders[name] = createComp;
   }
   public static Entity createComp(Level l, LevelData ld, Vector2 o, EntityData e){
     Component c = cloaders[e.Name](l,ld,o,e);
@@ -52,87 +50,65 @@ public static class EntityParser{
     }
     return null;
   }
-  /**
-omg im trying to profess my love to a certain function (RuntimeHelpers.GetUninitializedObject) but everyone else in code modding doesn't seem to approve of our love
-i love love love love love love love this function
-but they're like 'the whole point of managed languages is to not worry about uninitialized things' and 'i don't like mods that do shady stuff'
-i just want them to see the joy in our relationship
-i'm even willign to share; i'd be happy if more people worshiped GetUninitializedObject as well
-but
-they 'can't find usecases'
-idk maybe my love is one sided but I don't think so
-every time I need to use this function, I can feel the care and gentleness it holds for me
-I would be lost if not for this function...
-it is truely always in my thoughts and at the front of my head all day. I walk home with the anticipation of seeing it again and daydream about it whenever i'm out
-anyways i want to praise it more it is wonderful
-/qhhhqhqhqj (like not even joking probably)
 
-  -cloudsbelow, 8/24/25 at 3:00am, while not doing anything productive at all, in TelephoneCollab::malicious-off-topic (they had stuff to do)
-  */
-  //I thought it was important that these statements of appreciation be put here
-  //because RuntimeHelpers.GetUninitializedObject does so much for me...
-  //This is one of the few things I can do in return
-  //because I love love love this function and I want to help it as much as it helps me
-  //so even if I can't take all it's problems I at least want to give it courage and confidence
-  //because that's what it deserves, right? right?
-  //I love it so so much
-  //honestly it's detestable that I even dallied with the possibility of the above being a quarter half half half quarter ... joke
-  //It's not fair for it
-  //Runtimehelpers is so kind always...
-  //and instead of being able to just compliment, I had to disgustingly raise the possibility that my love was fake
-  //It could never be fake because this function is the brightest thing in the world
-  //I could stare at it all day.
-  //It's really handsome and suave and clever too
-  //Really, if you think about it, constructors are alot like bandits or vagrants by the roadside
-  //look at RuntimeHelpers.GetUninitializedObject dodging around their clumsy, ill-concieved strikes to get to me
-  //all because I needed it's help 
+
+
   static Level dummyLevel = (Level)RuntimeHelpers.GetUninitializedObject(typeof(Level));
   static LevelData dummyLd = (LevelData)RuntimeHelpers.GetUninitializedObject(typeof(LevelData));
-  static Types generateLoader_(EntityData d, LevelData ld, Level l){
-    if(!parseMap.TryGetValue(d.Name, out var etype) || (l!=null && etype == Types.initiallyerrors)) using(new FakeLock()){
-      Level.EntityLoader loader = Level.EntityLoaders.GetValueOrDefault(d.Name)??skitzoGuess(d.Name);
-      if(loader == null){
-        parseMap[d.Name] = Types.unable;
-        DebugConsole.Write($"No loader found for {d.Name}");
-        return Types.unable;
-      }
-      using(new Template.ChainLock())try{
-        Entity t = t=loader(l??dummyLevel,ld??dummyLd,Vector2.Zero,d);
-        if(t is Template){
-          etype = parseMap[d.Name] = Types.template;
-        }else if(t is Platform){
-          etype = parseMap[d.Name] = Types.platformbasic;
-        }else if(t is Actor || t is ITemplateChild){
-          if(t is Puffer) loaders[d.Name] = (l,ld,o,e)=>{
-            currentParent.addEnt(new PufferW(l,(Puffer) loader(l,ld,o,e))); 
-            return null;
-          };
-          if(t.Get<Holdable>() is {}) loaders[d.Name] = (l,ld,o,e)=>{
-            Actor a = (Actor) loader(l,ld,o,e);
-            var item = new HoldableW(a, a.Get<Holdable>(), e.Bool("ausp_keepHoldingAlways",false));
-            currentParent.addEnt(item);
-            a.Add(item);
-            return null;
-          };
-          etype = parseMap[d.Name] = Types.unwrapped;
-        }else{
-          etype = parseMap[d.Name] = Types.basic;
-        }
-        loaders.TryAdd(d.Name,loader);
-        //DebugConsole.Write($"{d.Name} auto-classified as {etype}");
-      } catch(Exception ex){
-        DebugConsole.Write($"Entityloader generation for {d.Name} failed: \n{ex}");
-        etype = parseMap[d.Name] = l!=null?Types.unable:Types.initiallyerrors;
-        if(ex is DebugConsole.PassingException p) throw p;
-      }
+  struct LoadInfo{
+    public Level level; public EntityData data; public Vector2 offset; 
+  }
+  delegate ITemplateChild Wrapper(Entity e, LoadInfo d);
+  static (Types, Level.EntityLoader) directWrapper(Level.EntityLoader loader, Wrapper wrapper){
+    return new(Types.unwrapped, (l,ld,o,e)=>{
+      var ent = loader(l,ld,o,e);
+      var w = wrapper(ent,new(){level=l, data=e, offset=o});
+      currentParent.addEnt(w);
+      if(w is Component comp) ent.Add(comp);
+      ChildMarker.Get(ent,currentParent);
+      return null;
+    });
+  }
+  internal static (Types, Level.EntityLoader) generateLoader_(EntityData d, LevelData ld, Level l){
+    if(parsed.TryGetValue(d.Name, out var parse) && (l==null || parse.Item1!=Types.initerr)) return parse;
+    
+    using var fakeLock = new FakeLock();
+    using var chainLock = new Template.ChainLock();
+    var loader = Level.EntityLoaders.GetValueOrDefault(d.Name)?? skitzoGuess(d.Name);
+    if(loader==null){
+      DebugConsole.Write($"No loader found for {d.Name}");
+      return parsed[d.Name] = new (Types.unable, null);
     }
-    return etype;
+
+    Entity entity;
+    try{
+      entity = loader(l??dummyLevel,ld??dummyLd,Vector2.Zero,d);
+    } catch(Exception ex){
+      DebugConsole.Write($"Entityloader generation for {d.Name} failed: \n{ex}");
+      if(ex is DebugConsole.PassingException p) throw p;
+      return parsed[d.Name] = new(l!=null? Types.unable:Types.initerr, null);
+    }
+
+    if(entity is Template) return parsed[d.Name] = new(Types.template, loader);
+    if(entity is ITemplateChild) return parsed[d.Name] = new(Types.unwrapped, loader);
+    
+    if(entity is Actor){
+      if(entity is Puffer) return directWrapper(loader, (e,d)=>new PufferW(e as Puffer));
+      if(entity.Get<Holdable>() is {}) return directWrapper(loader, (e,d)=>{
+        return new HoldableW(e as Actor, e.Get<Holdable>(), d.data.Bool("ausp_keepHoldingAlways",false));
+      });
+      return parsed[d.Name] = new(Types.unwrapped, loader);
+    }
+
+    if(entity is Platform){
+      if(entity is MoveBlock) return directWrapper(loader, (e,d)=>new MoveBlockW(e as MoveBlock));
+      return parsed[d.Name] = new(Types.platformbasic, loader);
+    }
+
+    return parsed[d.Name] = new(Types.basic, loader);
   }
-  public static bool generateLoader(EntityData d, LevelData ld, Level l=null)=>generateLoader_(d,ld,l)!=Types.unable;
-  public static bool generateLoader(EntityData d, LevelData ld, Level l, out Types typ){
-    typ=generateLoader_(d,ld,l);
-    return typ!=Types.unable;
-  }
+
+
   public static Template currentParent {get; private set;} = null;
   public static Entity create(EntityData d, Level l, LevelData ld, Vector2 simoffset, Template t, string path){
     ld=ld??DefaultLD;
@@ -143,21 +119,15 @@ anyways i want to praise it more it is wonderful
     }
     EntityID eid = new(ld.Name,d.ID);
     if(l?.Session?.DoNotLoad.Contains(eid)??false) return null;
-    if(!parseMap.TryGetValue(d.Name,out var etype)){
-      parseMap[d.Name] = etype = Types.initiallyerrors;
-    }
-    if(etype == Types.unable) return null;
-    if(etype == Types.initiallyerrors){
-      if(!generateLoader(d,ld,l)) return null;
-      etype = parseMap[d.Name];
-      if(etype == Types.unable || etype==Types.initiallyerrors) return null;
-    }
-    var loader = getLoader(d.Name);
+    if(!parsed.TryGetValue(d.Name,out var parse) || parse.Item1==Types.initerr) parse=generateLoader_(d,ld,l);
+    if(parse.Item1==Types.unable || parse.Item1==Types.initerr) return null;
+
+    var loader = parse.Item2;
     if(loader == null) return null;
-    if(etype == Types.template){
+    if(parse.Item1 == Types.template){
       if(string.IsNullOrWhiteSpace(d.Attr("template")) && t.t.chain==null && d is not TemplateDisplacer.DisplacerData){
         DebugConsole.WriteFailure($"Empty template did not get culled from template room");
-        goto done2;
+        return null;
       }
     }
     
@@ -166,12 +136,13 @@ anyways i want to praise it more it is wonderful
     Entity e = null; 
     if(isTrigger) Finder.StartLoadTrigger(data, t.fullpath);
     else Finder.StartLoad(data, t.fullpath);
-
     using (new Template.ChainLock()) e = loader(l,ld,simoffset,data);
     if(e==null) goto done;
     e.SourceData = data;
     ChildMarker.Get(e,t);
-    switch(etype){
+    Finder.EndingLoad(data,l);
+
+    switch(parse.Item1){
       case Types.platformbasic:
         if(e is Platform p){
           t.addEnt(new Wrappers.BasicPlatform(p,t,simoffset+d.Position-t.roundLoc));
@@ -183,6 +154,7 @@ anyways i want to praise it more it is wonderful
       case Types.unwrapped: case Types.template:
         currentParent = null;
         return e;
+      
       case Types.basic:
         foreach(Component c in e.Components) if(c is StaticMover sm){
           if(c is LiftspeedSm lsm) lsm.parent = currentParent;
@@ -205,8 +177,6 @@ anyways i want to praise it more it is wonderful
         goto done;
     }
     done:
-      Finder.EndingLoad(data,l);
-    done2:
       currentParent = null;
       return null;
   }
@@ -214,9 +184,7 @@ anyways i want to praise it more it is wonderful
     DefaultLD = (LevelData)RuntimeHelpers.GetUninitializedObject(typeof(LevelData));
     DefaultLD.Name = "ohmygoodnessiwanttodie";
 
-    clarify("dreamBlock",     Types.platformbasic, static (l,ld,offset,e) => new DreamBlock(e, offset));
     clarify("jumpThru",       Types.platformbasic, static (l,ld,offset,e) => new JumpThruW(e, offset));
-    clarify("seekerBarrier",  Types.platformbasic, static (l,ld,offset,e) => new SeekerBarrier(e, offset));
     clarify("auspicioushelper/PortalGateH", Types.unwrapped, static (l,ld,o,e)=>{
       PortalFaceH.Pair.Load(l,ld,o,e);
       return null;
@@ -240,15 +208,15 @@ anyways i want to praise it more it is wonderful
     clarify("lamp",Types.basic,static (l,ld,offset,e)=>new Lamp(offset + e.Position, e.Bool("broken")));
     clarify("hangingLamp",Types.basic,static (l,ld,offset,e)=>new HangingLamp(e,offset+e.Position));
     clarify("seeker",Types.basic,static (l,ld,o,e)=>new Seeker(e, o));
-    clarify("dashSwitchH",Types.unwrapped,static (l,ld,o,e)=>new Wrappers.DashSwitchW(e,o,new EntityID(ld.Name,e.ID)));
-    clarify("dashSwitchV",Types.unwrapped,static (l,ld,o,e)=>new Wrappers.DashSwitchW(e,o,new EntityID(ld.Name,e.ID)));
+    clarify("dashSwitchH",Types.unwrapped,static (l,ld,o,e)=>new DashSwitchW(e,o,new EntityID(ld.Name,e.ID)));
+    clarify("dashSwitchV",Types.unwrapped,static (l,ld,o,e)=>new DashSwitchW(e,o,new EntityID(ld.Name,e.ID)));
     clarify("lightning", Types.basic, static (l,ld,o,e)=>{
       if(!e.Bool("perLevel") && l.Session.GetFlag("disable_lightning")) return null;
       LightningRenderer lr = l.Tracker.GetEntity<LightningRenderer>();
       if(lr!=null) lr.StartAmbience();
       return new Lightning(e,o);
     });
-    clarify("bigSpinner", Types.unwrapped, static (l,ld,o,e)=>new Wrappers.Bumperw(e,o));
+    clarify("bigSpinner", Types.unwrapped, static (l,ld,o,e)=>new Bumperw(e,o));
 
     clarify("refill",Types.unwrapped,static (l,ld,offset,e)=>(Entity) new RefillW2(e,offset));
     clarify("infiniteStar", Types.unwrapped, static (l,ld,o,e)=>new FeatherW(e,o));
@@ -312,14 +280,6 @@ anyways i want to praise it more it is wonderful
     clarify("auspicioushelper/DieWater",Types.unwrapped,static (l,ld,o,e)=>new FancyWater(e,o), true);
   }
   public const string TemplateEmptyName = "auspicioushelper/templateEmpty";
-  public static Level.EntityLoader getLoader(string name){
-    if(!loaders.TryGetValue(name, out var loader)){
-      if(!Level.EntityLoaders.TryGetValue(name,out loader)){
-        loader = skitzoGuess(name);
-      }
-    }
-    return loader;
-  }
   public static Level.EntityLoader origLoader(string name){
     if(Level.EntityLoaders.TryGetValue(name,out var loader)) return loader;
     return skitzoGuess(name);

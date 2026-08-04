@@ -55,59 +55,54 @@ public class Bumperw : Bumper, ISimpleEnt {
   }
 }
 
-public class PufferW:Component, ISimpleWrapper{
+public class PufferW: Component, ISimpleWrapper{
   public Entity wrapped=>e;
   Puffer e;
   public Vector2 toffset {get;set;}
   public Template parent {get;set;}
-  TemplateDisappearer.vcaTracker vca = new();
-  bool ownCollidable;
   Vector2 origin;
-  public PufferW(Level l, EntityData d, Vector2 o):this(l,new Puffer(d,o)){}
-  public PufferW(Level l, Puffer p):base(false,false){
-    DebugConsole.Write("Here Puffer");
-    l.Add(e = p);
-    e.Add(this);
+  bool disconnected=false;
+  public PufferW(Puffer p):base(true,false){
+    OverrideVisualComponent.Get(e=p).AddToOverride(new(IOverrideVisuals.blocker, -29999, false, true));
     ResetEvents.Hooks<PufferW>.enable();
-    origin = e.anchorPosition;
+    origin = e.startPosition = e.anchorPosition;
+  }
+  public override void Update() {
+    if(e.hitSpeed!=Vector2.Zero || e.state==Puffer.States.Hit) disconnected=true;
+    if(e.state==Puffer.States.Gone) disconnected=false;
   }
   void ITemplateChild.setOffset(Vector2 ppos)=>toffset = origin-ppos;
   void ITemplateChild.relposTo(Vector2 ploc, Vector2 ls){
     Vector2 npos = ploc+toffset;
     e.returnCurve.End = e.startPosition = npos;
     Vector2 del = npos-origin;
-    DebugConsole.Write("grr",e.anchorPosition,origin);
-    if(del!=Vector2.Zero && e.state != Puffer.States.Hit && (e.anchorPosition-origin).LengthSquared()<=36){
-      if(!(e.MoveH(del.X)||e.MoveV(del.Y))){
-        e.anchorPosition+=del;
-        e.returnCurve.Begin+=del;
-        e.returnCurve.Control+=del;
+    origin = npos;
+    if(!disconnected){
+      switch(e.state){
+        case Puffer.States.Hit:
+          disconnected=true;
+          return;
+        
+        case Puffer.States.Gone:
+          e.returnCurve.End = origin;
+          e.returnCurve.Control += del/2;
+          //e.returnCurve.Begin += del;
+          break;
+
+        case Puffer.States.Idle: default:
+          Vector2 sine = e.idleSine!=null? new Vector2(e.idleSine.Value * 3f, e.idleSine.ValueOverTwo * 2f):Vector2.Zero;
+          Vector2 pdel = origin+sine - e.ExactPosition;
+          disconnected |= e.MoveH(pdel.X);
+          disconnected |= e.MoveV(pdel.Y);
+          break;
       }
     }
-    origin = npos;
   }
-  void ITemplateChild.parentChangeStat(int v, int c, int a){
-    vca.Align(v,c,a);
-    e.Visible=vca.Visible;
-    e.Collidable = ownCollidable && vca.Collidable;
-    e.Active = vca.Active;
-  }
-  [ResetEvents.OnHook(typeof(Puffer), nameof(Puffer.GotoIdle))]
-  static void Hook(On.Celeste.Puffer.orig_GotoIdle orig, Puffer p){
-    orig(p);
-    if(p.Get<PufferW>() is {} w){
-      w.ownCollidable = true;
-      p.Visible = w.ownCollidable && w.vca.Visible;
-      p.Collidable = w.ownCollidable && w.vca.Collidable;
+  void ITemplateChild.parentChangeStat(int vis, int col, int act){
+    if(act!=0) e.Active=act>0;
+    if(col!=0) BlockingCollider.SetCol(e, col>0);
+    if(vis!=0){
+      OverrideVisualComponent.Get(e).SetStealUse(IOverrideVisuals.blocker, vis<0, true);
     }
-  }
-  [ResetEvents.OnHook(typeof(Puffer), nameof(Puffer.GotoGone))]
-  static void Hook(On.Celeste.Puffer.orig_GotoGone orig, Puffer p){
-    orig(p);
-    if(p.Get<PufferW>() is {} w) w.ownCollidable = false;
-  }
-  [ResetEvents.OnHook(typeof(Puffer),nameof(Puffer.ProximityExplodeCheck))]
-  static bool Hook(On.Celeste.Puffer.orig_ProximityExplodeCheck orig, Puffer p){
-    return (p.Get<PufferW>() is not {} w || w.vca.Collidable) && orig(p);
   }
 }

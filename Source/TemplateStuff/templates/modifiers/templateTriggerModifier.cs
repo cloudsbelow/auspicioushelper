@@ -45,14 +45,14 @@ public abstract class TriggerInfo{
     return use;
   }
   public static bool Test(TriggerInfo info)=>info == null || info.shouldTrigger;
+  public static void Pass(TriggerInfo info, Template t){
+    t.parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(info);
+  }
   public void Pass(ITemplateChild t){
     t.parent?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(this);
   }
   public void PassTo(Template t){
     t?.GetFromTree<ITemplateTriggerable>()?.OnTrigger(this);
-  }
-  public bool TestPass(Template t){
-    return TestPass(this,t);
   }
   public abstract string category {get;}
 }

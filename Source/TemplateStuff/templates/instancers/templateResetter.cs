@@ -28,10 +28,10 @@ public sealed class TemplateResetter:TemplateDisappearer,ITemplateTriggerable{
   }
   void ITemplateTriggerable.OnTrigger(TriggerInfo s) {
     if(!triggerable){
-      s.Pass(this);
+      TriggerInfo.Pass(s,this);
       return;
     }
-    if(!s.TestPass(this)) return;
+    if(!TriggerInfo.TestPass(s,this)) return;
     Reset();
   }
   enum SetTo{

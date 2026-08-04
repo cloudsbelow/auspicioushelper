@@ -78,7 +78,7 @@ internal static class MarkedRoomParser{
     List<(IntRect,EntityData, int)> allThings=new();
     foreach(EntityData d in l.Entities){
       if(d.Name == "auspicioushelper/templateFiller" || d.Name == "auspicioushelper/TemplateFillerSwitcher") continue;
-      bool w=EntityParser.generateLoader(d, l, null, out var typ);
+      EntityParser.Types typ=EntityParser.generateLoader_(d, l, null).Item1;
       if(typ==EntityParser.Types.template || d.Name == "auspicioushelper/TemplateBehaviorChain"){  
         if(string.IsNullOrWhiteSpace(d.Attr("template"))){
           room.addEmpty(d);
@@ -87,8 +87,7 @@ internal static class MarkedRoomParser{
       }
       if(d.Name.StartsWith("auspicioushelper/Connected") && ConnectedBlocks.allNames.Contains(d.Name)){
         allThings.Add(new(new((int)d.Position.X,(int)d.Position.Y,d.Width,d.Height),d,allThings.Count));
-      } else if(w) filtered.Add(d);
-      if(!w) continue;
+      } else if(typ!=EntityParser.Types.unable) filtered.Add(d);
     }
 
     List<(QuickCollider<ConnectedBlocks>,templateFiller,MiptileCollider)> cbs = new();
