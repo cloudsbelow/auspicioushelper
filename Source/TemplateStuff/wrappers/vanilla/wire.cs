@@ -10,6 +10,7 @@ public class CWire:Wire, ISimpleEnt{
   public Vector2 toffset {get;set;}
   Vector2 fromOffset;
   Vector2 toOffset;
+  Template.Propagation ITemplateChild.prop=> Template.Propagation.None;
   public CWire(EntityData d, Vector2 o):base(d,o){
   }
   public void setOffset(Vector2 ppos){
@@ -29,6 +30,7 @@ public class CFlagline:CliffFlags, ISimpleEnt{
   Vector2 fromOffset;
   Vector2 toOffset;
   Flagline flagline;
+  Template.Propagation ITemplateChild.prop=> Template.Propagation.None;
   public CFlagline(EntityData d, Vector2 o):base(d,o){
     flagline = Get<Flagline>();
   }
@@ -49,6 +51,7 @@ public class CClothsline:Clothesline, ISimpleEnt{
   Vector2 fromOffset;
   Vector2 toOffset;
   Flagline flagline;
+  Template.Propagation ITemplateChild.prop=> Template.Propagation.None;
   public CClothsline(EntityData d, Vector2 o):base(d,o){
     flagline = Get<Flagline>();
   }

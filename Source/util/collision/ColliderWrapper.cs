@@ -128,11 +128,11 @@ public interface IColliderWrapper{
     Collider IColliderWrapper.interceptReplace(Collider c)=>null;
     public override void Added(Entity entity) {
       base.Added(entity);
-      wrapped.Added(entity);
+      wrapped?.Added(entity);
     }
     public override void Removed() {
       base.Removed();
-      wrapped.Removed();
+      wrapped?.Removed();
     }
     public override float Top=>wrapped.Top;
     public override float Left=>wrapped.Top;

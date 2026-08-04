@@ -85,6 +85,7 @@ public struct FloatRect{
   public void shift(Vector2 shift){
     x+=shift.X; y+=shift.Y;
   }
+  public FloatRect shift_(Vector2 shift)=>new(x+shift.X, y+shift.Y, w, h);
   public void expandXto(float loc){
     if(loc<x){
       w+=x-loc;

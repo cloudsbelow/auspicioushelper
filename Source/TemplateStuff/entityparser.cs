@@ -71,13 +71,16 @@ public static class EntityParser{
   }
   internal static (Types, Level.EntityLoader) generateLoader_(EntityData d, LevelData ld, Level l){
     if(parsed.TryGetValue(d.Name, out var parse) && (l==null || parse.Item1!=Types.initerr)) return parse;
-    
+    return parsed[d.Name] = buildLoader(d,ld,l);
+  }
+  static (Types, Level.EntityLoader) buildLoader(EntityData d, LevelData ld, Level l){
+    //DebugConsole.Write("built loader for", d.Name);
     using var fakeLock = new FakeLock();
     using var chainLock = new Template.ChainLock();
     var loader = Level.EntityLoaders.GetValueOrDefault(d.Name)?? skitzoGuess(d.Name);
     if(loader==null){
       DebugConsole.Write($"No loader found for {d.Name}");
-      return parsed[d.Name] = new (Types.unable, null);
+      return new (Types.unable, null);
     }
 
     Entity entity;
@@ -86,27 +89,32 @@ public static class EntityParser{
     } catch(Exception ex){
       DebugConsole.Write($"Entityloader generation for {d.Name} failed: \n{ex}");
       if(ex is DebugConsole.PassingException p) throw p;
-      return parsed[d.Name] = new(l!=null? Types.unable:Types.initerr, null);
+      return new(l!=null? Types.unable:Types.initerr, null);
     }
 
-    if(entity is Template) return parsed[d.Name] = new(Types.template, loader);
-    if(entity is ITemplateChild) return parsed[d.Name] = new(Types.unwrapped, loader);
+    if(entity is Template) return new(Types.template, loader);
+    if(entity is ITemplateChild) return new(Types.unwrapped, loader);
     
     if(entity is Actor){
       if(entity is Puffer) return directWrapper(loader, (e,d)=>new PufferW(e as Puffer));
       if(entity.Get<Holdable>() is {}) return directWrapper(loader, (e,d)=>{
         return new HoldableW(e as Actor, e.Get<Holdable>(), d.data.Bool("ausp_keepHoldingAlways",false));
       });
-      return parsed[d.Name] = new(Types.unwrapped, loader);
+      return new(Types.unwrapped, loader);
     }
 
     if(entity is Platform){
       if(entity is MoveBlock) return directWrapper(loader, (e,d)=>new MoveBlockW(e as MoveBlock));
-      return parsed[d.Name] = new(Types.platformbasic, loader);
+      return new(Types.platformbasic, loader);
     }
 
-    return parsed[d.Name] = new(Types.basic, loader);
+    if(entity is BadelineBoost) return directWrapper(loader, (e,d)=>new BoostW(e as BadelineBoost));
+    if(entity is Booster) return directWrapper(loader, (e,d)=>new BoosterW(e as Booster));
+
+    return new(Types.basic, loader);
   }
+  static Dictionary<Type, Func<Level.EntityLoader, (Types,Level.EntityLoader)>> loaderBuilders = new(){
+  };
 
 
   public static Template currentParent {get; private set;} = null;
@@ -212,15 +220,22 @@ public static class EntityParser{
     clarify("dashSwitchV",Types.unwrapped,static (l,ld,o,e)=>new DashSwitchW(e,o,new EntityID(ld.Name,e.ID)));
     clarify("lightning", Types.basic, static (l,ld,o,e)=>{
       if(!e.Bool("perLevel") && l.Session.GetFlag("disable_lightning")) return null;
-      LightningRenderer lr = l.Tracker.GetEntity<LightningRenderer>();
+      /*LightningRenderer lr = l.Tracker.GetEntity<LightningRenderer>();
       if(lr!=null) lr.StartAmbience();
-      return new Lightning(e,o);
+      return new Lightning(e,o);*/
+      Entity ent = null;
+      if(currentParent.Get<LightningW.LightningComp>() is not {} comp){
+        currentParent.Add(comp = new());
+        comp.firstpos = e.Position+o;
+        ent = new LightningW(comp);
+        l.Add(ent);
+      }
+      comp.items.Add(new FloatRect(e.Position+o - comp.firstpos, new(e.Width, e.Height)));
+      return ent;
     });
     clarify("bigSpinner", Types.unwrapped, static (l,ld,o,e)=>new Bumperw(e,o));
 
     clarify("refill",Types.unwrapped,static (l,ld,offset,e)=>(Entity) new RefillW2(e,offset));
-    clarify("infiniteStar", Types.unwrapped, static (l,ld,o,e)=>new FeatherW(e,o));
-    clarify("booster",Types.unwrapped,static (l,ld,o,e)=>new BoosterW(e,o)); 
     clarify("cameraTargetTrigger", Types.basic, static (l,ld,o,e)=>{
       string text2 = e.Attr("deleteFlag");
       if(string.IsNullOrEmpty(text2) || !l.Session.GetFlag(text2)){
@@ -313,7 +328,7 @@ public static class EntityParser{
       case "theoCrystal": return static (l,ld,o,e)=>new TheoCrystal(e, o);
       case "glider": return static (l,ld,o,e)=>new Glider(e, o);
       case "theoCrystalPedestal": return static (l,ld,o,e)=>new TheoCrystalPedestal(e, o);
-      case "badelineBoost": return static (l,ld,o,e)=>new BadelineBoostW(e, o);
+      case "badelineBoost": return static (l,ld,o,e)=>new BadelineBoost(e, o);
       case "wallBooster": return static (l,ld,o,e)=>new WallBooster(e, o);
       case "bounceBlock": return static (l,ld,o,e)=>new BounceBlock(e, o);
       case "coreModeToggle": return static (l,ld,o,e)=>new CoreModeToggle(e, o);

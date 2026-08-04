@@ -67,6 +67,11 @@ public interface ISimpleWrapper:ITemplateChild{
     if(col!=0) wrapped.Collidable = col>0;
     if(act!=0) wrapped.Active = col>0;
   }
+  public static void changeStatSafe(Entity wrapped, int vis, int col, int act) {
+    if(vis!=0) wrapped.Visible = vis>0;
+    if(col!=0) BlockingCollider.SetCol(wrapped, col>0);
+    if(act!=0) wrapped.Active = col>0;
+  }
   void ITemplateChild.setOffset(Vector2 ppos) {
     toffset = wrapped.Position-ppos;
   }
@@ -172,6 +177,22 @@ internal class BasicPlatform:ITemplateChild{
   }
   public void destroy(bool particles){
     p.RemoveSelf();
+  }
+}
+public class JumpThruW:JumpthruPlatform{
+  public JumpThruW(EntityData d, Vector2 offset):base(d,offset){
+  }
+  public override void MoveHExact(int move) {
+    if (!Collidable) goto end;
+    foreach (Actor entity in base.Scene.Tracker.GetEntities<Actor>()){
+      if(!entity.IsRiding(this)) continue;
+      if(entity.TreatNaive) entity.NaiveMove(Vector2.UnitX*move);
+      else entity.MoveHExact(move);
+      entity.LiftSpeed=LiftSpeed;
+    }
+    end:
+    base.X += move;
+    MoveStaticMovers(Vector2.UnitX * move);
   }
 }
 

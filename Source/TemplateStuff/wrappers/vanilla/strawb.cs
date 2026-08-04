@@ -1,52 +1,50 @@
 
 
 
-using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.auspicioushelper.Wrappers;
 public class StrawbW:Strawberry, ISimpleEnt{
   public Template parent {get;set;}
   public Vector2 toffset {get;set;}
   bool sd=false;
+  Template.Propagation ITemplateChild.prop=> Template.Propagation.None;
   public bool detatched {get{
     return sd=sd||Follower.HasLeader;
   }}
   public StrawbW(EntityData d, Vector2 o, EntityID id):base(d,o,id){
   }
 }
-public class FeatherW:FlyFeather, ISimpleEnt{
-  TemplateDisappearer.vcaTracker vca = new();
-  bool ownCollidable=true;
+
+public class BoosterW(Booster b):ISimpleWrapper{
   public Template parent {get;set;}
   public Vector2 toffset {get;set;}
-  public FeatherW(EntityData d, Vector2 o):base(d,o){
-    ResetEvents.Hooks<FeatherW>.enable();
-  } 
-  [ResetEvents.OnHook(typeof(FlyFeather),nameof(FlyFeather.Respawn))]
-  static void Hook(On.Celeste.FlyFeather.orig_Respawn orig, FlyFeather s){
-    orig(s);
-    if(s is FeatherW f){
-      f.ownCollidable = true;
-      f.Collidable = f.ownCollidable && f.vca.Collidable;
-    }
-  }
-  [ResetEvents.OnHook(typeof(FlyFeather),nameof(FlyFeather.OnPlayer))]
-  static void Hook(On.Celeste.FlyFeather.orig_OnPlayer orig, FlyFeather s,Player p){
-    orig(s,p);
-    if(s is FeatherW f && !f.Collidable) f.ownCollidable = false;
-  }
-  void ITemplateChild.parentChangeStat(int vis, int col, int act){
-    vca.Align(vis,col,act);
-    vca.Apply(this, ocol:ownCollidable);
+  Monocle.Entity ISimpleWrapper.wrapped => b;
+  void ITemplateChild.relposTo(Vector2 loc, Vector2 ls){
+    b.Position = loc+toffset;
+    if(b.outline!=null) b.outline.Position = b.Position;
   }
 }
-public class BoosterW:Booster, ISimpleEnt{
+
+public class BoostW(BadelineBoost boost): ISimpleWrapper{
+  Template.Propagation ITemplateChild.prop=> Template.Propagation.Riding;
   public Template parent {get;set;}
   public Vector2 toffset {get;set;}
-  public BoosterW(EntityData d, Vector2 o):base(d,o){}
-  void ITemplateChild.relposTo(Vector2 loc, Vector2 ls){
-    Position = loc+toffset;
-    if(outline!=null)outline.Position = Position;
+  public Entity wrapped=>boost;
+  bool ITemplateChild.hasPlayerRider()=> boost.holding!=null;
+  void ITemplateChild.parentChangeStat(int v, int c, int a)=> ISimpleWrapper.changeStatSafe(boost, v,c,a);
+}
+
+
+public class ChaserW:BadelineOldsite, ISimpleEnt{
+  public Vector2 toffset {get;set;}
+  public Template parent {get;set;}
+  Template.Propagation ITemplateChild.prop=> Template.Propagation.None;
+  void ITemplateChild.relposTo(Vector2 _, Vector2 __){}
+  static int TemplateCount(Template t){
+    while(t.parent!=null) t=t.parent;
+    return t.GetChildren<ChaserW>().Count;
   }
+  public ChaserW(EntityData d,Vector2 o):base(d.Position+o,TemplateCount(EntityParser.currentParent)){}
 }
