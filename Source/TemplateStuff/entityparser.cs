@@ -218,19 +218,23 @@ public static class EntityParser{
     clarify("seeker",Types.basic,static (l,ld,o,e)=>new Seeker(e, o));
     clarify("dashSwitchH",Types.unwrapped,static (l,ld,o,e)=>new DashSwitchW(e,o,new EntityID(ld.Name,e.ID)));
     clarify("dashSwitchV",Types.unwrapped,static (l,ld,o,e)=>new DashSwitchW(e,o,new EntityID(ld.Name,e.ID)));
-    clarify("lightning", Types.basic, static (l,ld,o,e)=>{
+    clarify("lightning", Types.unwrapped, static (l,ld,o,e)=>{
       if(!e.Bool("perLevel") && l.Session.GetFlag("disable_lightning")) return null;
-      /*LightningRenderer lr = l.Tracker.GetEntity<LightningRenderer>();
-      if(lr!=null) lr.StartAmbience();
-      return new Lightning(e,o);*/
-      Entity ent = null;
+      LightningW ent = null;
+      //data.Position + levelOffset, data.Width, data.Height, data.FirstNodeNullable(levelOffset), 
       if(currentParent.Get<LightningW.LightningComp>() is not {} comp){
         currentParent.Add(comp = new());
-        comp.firstpos = e.Position+o;
-        ent = new LightningW(comp);
-        l.Add(ent);
+        l.Tracker.GetEntity<LightningRenderer>()?.StartAmbience();
       }
-      comp.items.Add(new FloatRect(e.Position+o - comp.firstpos, new(e.Width, e.Height)));
+      
+      Vector2? node = e.FirstNodeNullable() is Vector2 v? v-e.Position:null;
+      float movetime = e.Float("moveTime");
+      //this is a really cursed way of doing this
+      if(!comp.all.TryGetValue((node,movetime), out var group) || group.Item2.Count==0){
+        comp.all[(node,movetime)] = group = new(e.Position+o, new());
+        ent = new LightningW(e.Position+o, group.Item2, node, movetime);
+      }
+      group.Item2.Add(new FloatRect(e.Position+o - group.Item1, new(e.Width, e.Height)));
       return ent;
     });
     clarify("bigSpinner", Types.unwrapped, static (l,ld,o,e)=>new Bumperw(e,o));

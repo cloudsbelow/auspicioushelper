@@ -3,8 +3,10 @@
 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -14,23 +16,44 @@ using MonoMod.Cil;
 namespace Celeste.Mod.auspicioushelper;
 
 [Tracked]
-public class LightningW:Lightning{
+public class LightningW:Lightning, ISimpleEnt{
+  public Vector2 toffset {get;set;}
+  public Template parent {get;set;}
+  Template.Propagation ITemplateChild.prop=> Template.Propagation.None;
   public class LightningComp():Component(false,false){ 
-    public Vector2 firstpos;
-    public List<FloatRect> items=new();
+    public Dictionary<(Vector2?, float),(Vector2,List<FloatRect>)> all = new();
   }
-  LightningComp comp;
+  List<FloatRect> items;
   List<FloatRect> rects;
   List<(Vector2,Vector2)> edges;
-  public LightningW(LightningComp comp):base(comp.firstpos, 0,0,null,1){
-    this.comp=comp;
+  Vector2 moveDir = Vector2.UnitY*32;
+  public LightningW(Vector2 firstpos, List<FloatRect> itemsRef, Vector2? move, float moveTime):base(firstpos, 0,0,null,1){
+    items = itemsRef;
+    if(move.HasValue){
+      moveDir=move.Value;
+      Add(new Coroutine(MoveRoutine(moveTime)));
+    }
     ResetEvents.Hooks<LightningW>.enable();
   }
   public override void Awake(Scene scene) {
     base.Awake(scene);
-    (edges,rects) = EdgeFinder.Find(comp.items);
-    Collider = new ColliderList(comp.items.Map(x=>new Hitbox(x.w-2,x.h-2,x.x+1,x.y+1)).ToArray());
+    (edges,rects) = EdgeFinder.Find(items);
+    Collider = new CachedColliderlist(items.Map(x=>new Hitbox(x.w-2,x.h-2,x.x+1,x.y+1)).ToArray());
+    items.Clear();
+    items=null;
   }
+  public IEnumerator MoveRoutine(float moveTime){
+    float timer = 0;
+    Vector2 origOffset = toffset;
+    while(true){
+      timer += Engine.DeltaTime/moveTime;
+      toffset = origOffset + (-MathF.Cos(timer*MathF.PI)/2+0.5f)*moveDir;
+      Position = parent.roundLoc+toffset;
+      timer = timer%2;
+      yield return null;
+    }
+  }
+  
   public static void RenderInsides(LightningRenderer self){
     foreach(LightningW l in self.Scene.Tracker.GetEntities<LightningW>()){
       foreach(var r in l.rects) Draw.SpriteBatch.Draw(
@@ -39,7 +62,17 @@ public class LightningW:Lightning{
       );
     }
   }
-
+  [ResetEvents.ILHook(typeof(LightningRenderer), nameof(LightningRenderer.Render))]
+  static void RenderHook(ILContext ctx){
+    ILCursor c = new(ctx);
+    if(c.TryGotoNextBestFit(MoveType.Before,
+      itr=>itr.MatchLdfld(typeof(LightningRenderer).GetField(nameof(LightningRenderer.edges),Util.GoodBindingFlags)),
+      itr=>itr.MatchCallvirt<List<LightningRenderer.Edge>>("get_Count")
+    )){
+      c.EmitDelegate(RenderInsides);
+      c.EmitLdarg0();
+    } else DebugConsole.WriteFailure("couldn't add lightning render hook", true);
+  }
   [ResetEvents.OnHook(typeof(LightningRenderer),nameof(LightningRenderer.Track))]
   [ResetEvents.OnHook(typeof(LightningRenderer),nameof(LightningRenderer.Untrack))]
   static void Hook(Action<LightningRenderer, Lightning> orig, LightningRenderer self, Lightning block){
@@ -55,17 +88,6 @@ public class LightningW:Lightning{
     foreach(LightningW l in self.Scene.Tracker.GetEntities<LightningW>()){
       foreach(var e in l.edges) self.edges.Add(new(l,e.Item1,e.Item2));
     }
-  }
-  [ResetEvents.ILHook(typeof(LightningRenderer), nameof(LightningRenderer.Render))]
-  static void RenderHook(ILContext ctx){
-    ILCursor c = new(ctx);
-    if(c.TryGotoNextBestFit(MoveType.Before,
-      itr=>itr.MatchLdfld(typeof(LightningRenderer).GetField(nameof(LightningRenderer.edges),Util.GoodBindingFlags)),
-      itr=>itr.MatchCallvirt<List<LightningRenderer.Edge>>("get_Count")
-    )){
-      c.EmitDelegate(RenderInsides);
-      c.EmitLdarg0();
-    } else DebugConsole.WriteFailure("couldn't add lightning render hook", true);
   }
 
   static class EdgeFinder{
@@ -156,21 +178,15 @@ public class LightningW:Lightning{
       done);
 
       List<(Vector2, Vector2)> ret = new();
-      for(int i=0; i<hseg.Length; i++) foreach(var e in hseg[i]){
+      for(int i=0; i<hseg.Length; i++) if(hseg[i]!=null) foreach(var e in hseg[i]){
         bool reverse = e.facing<0;
         ret.Add(new(tof(reverse? e.a:e.b,i),tof(reverse? e.b:e.a,i)));
       }
-      for(int i=0; i<vseg.Length; i++) foreach(var e in vseg[i]){
+      for(int i=0; i<vseg.Length; i++) if(vseg[i]!=null) foreach(var e in vseg[i]){
         bool reverse = e.facing<0;
         ret.Add(new(tof(i, reverse? e.a:e.b),tof(i, reverse? e.b:e.a)));
       }
       return (ret, done.Map(r=>FloatRect.fromCorners(tofv(r.tlc),tofv(r.brc))));
-    }
-    [OnLoad]
-    static void blah(){
-      var ret = Find(new(){new(0,0,10,5),new(5,5,10,5)});
-      foreach(var r in ret.Item2) DebugConsole.Write("rect", r);
-      foreach(var e in ret.Item1) DebugConsole.Write("edge", e.Item1,e.Item2);
     }
   }
 }

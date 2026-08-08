@@ -169,3 +169,29 @@ public class DelegatingPointcollider:ColliderList{
   public override bool Collide(Vector2 point)=>false;
   public override bool Collide(ColliderList list)=>list is CustomPointCollision pch? pch.Collide(this):false;
 }
+
+public class CachedColliderlist:ColliderList{
+  public CachedColliderlist(params Collider[] colliders):base(colliders){
+    broad = new(base.Left, base.Top, base.Right-base.Left, base.Bottom-base.Top);
+  }
+  Vector2 pos=> Entity==null? Vector2.Zero:Entity.Position;
+
+  FloatRect broad;
+  public override float Top=>broad.y;
+  public override float Left=>broad.x;
+  public override float Width=>broad.w;
+  public override float Height=>broad.h;
+  public override float Right=>broad.right;
+  public override float Bottom=>broad.bottom;
+  public override bool Collide(Circle circle)=> broad.CollideCircle(circle.AbsolutePosition-pos, circle.Radius) && base.Collide(circle);
+  //public override bool Collide(Grid grid)=> base.Collide(gr);
+  public override bool Collide(Hitbox hitbox)=> hitbox.Collide(broad.shift_(pos).munane()) && base.Collide(hitbox);
+  public override bool Collide(Rectangle rect)=> broad.shift_(pos).CollideExRect(rect.X, rect.Y, rect.Width, rect.Height) && base.Collide(rect);
+  public override bool Collide(Vector2 from, Vector2 to)=> broad.shift_(pos).CollideLine(from,to) && base.Collide(from, to);
+  public override bool Collide(Vector2 point)=> broad.shift_(pos).CollidePoint(point) && base.Collide(point);
+  public override bool Collide(ColliderList list)=> list.Collide(broad.shift_(pos).munane()) && base.Collide(list);
+  public override void Render(Camera camera, Color color) {
+    Draw.HollowRect(pos.X+broad.x, pos.Y+broad.y, broad.w, broad.h, color*0.33f);
+    base.Render(camera, color);
+  }
+}

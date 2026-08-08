@@ -402,6 +402,7 @@ class DecalMarker:Component{
     d.Add(new DecalMarker(dat, false));
   }
   public DecalData withDepth(){
+    if(d.Depth.HasValue) return d;
     DecalData n = Util.shallowCopy(d);
     n.Depth = fg?-10500:8000;
     return n;
