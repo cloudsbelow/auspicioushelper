@@ -15,6 +15,7 @@ public abstract class ITexture{
   public class UserLayerWrapper:ITexture{
     IMaterialLayer l = null;
     string i;
+    public IMaterialLayer current=> l??MaterialController.getLayer(i);
     public override Texture2D tex{get{
       if(l == null){
         if(!string.IsNullOrWhiteSpace(i)) l = MaterialController.getLayer(i);

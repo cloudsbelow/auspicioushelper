@@ -12,6 +12,12 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettableDepth, CachedUserMaterial{
+  public class BackdropLayer(string texstring, string paramstring, VirtualShaderList l, LayerFormat f):
+    UserLayer(texstring,paramstring,l,f), IMaterialLayer{
+    bool IMaterialLayer.useMarkingEntity=>!noOrder;
+    bool IMaterialLayer.autoManageRemoval=>false;
+    internal bool noOrder=false;
+  }
   List<MaterialResource> resources = new();
   public string identifier {get;set;}
   public float depth {set{
@@ -82,10 +88,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
     };
     return new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l);
   }  
-  bool IMaterialLayer.useMarkingEntity=>!backdropLayer||!noOrder;
-  bool noOrder=false;
-  public bool DeferLayerDraw=>noOrder;
-  internal static UserLayer make(BinaryPacker.Element d, string ident){
+  internal static BackdropLayer make(BinaryPacker.Element d, string ident){
     string order = d.Attr("renderOrder");
     LayerFormat l = new LayerFormat{
       depth = int.TryParse(order, out int orderNum)?orderNum:-1,
@@ -93,19 +96,15 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       alwaysRender = d.AttrBool("alwaysRender"),
       drawInScene = false,
     };
-    var u = new UserLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l, true){
-      identifier = ident
+    return new BackdropLayer(d.Attr("textures"),d.Attr("params",""),getEffects(d.Attr("passes")),l){
+      identifier = ident,
+      noOrder = string.IsNullOrWhiteSpace(order)||!int.TryParse(order, out int _)
     };
-    u.noOrder = string.IsNullOrWhiteSpace(order)||!int.TryParse(order, out int _);
-    return u;
   }
   public IFadingLayer.FadeTypes fadeTypeIn {get;set;} = IFadingLayer.FadeTypes.Linear;
   public IFadingLayer.FadeTypes fadeTypeOut {get;set;} = IFadingLayer.FadeTypes.Linear;
   int swapch=0;
-  bool backdropLayer=false;
-  bool IMaterialLayer.autoManageRemoval => !backdropLayer;
-  public UserLayer(string texstring, string paramstring, VirtualShaderList l, LayerFormat f, bool isBackdrop=false):base(l,f){
-    backdropLayer=isBackdrop;
+  public UserLayer(string texstring, string paramstring, VirtualShaderList l, LayerFormat f):base(l,f){
     SetupTextures(texstring);
     for(int i=0; i<swapch; i++) handles.Add(new RenderTargetPool.RenderTargetHandle(false));
     try{
@@ -130,7 +129,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
       else switch(p.Value.ToLower()){
         case "lv": case "level":
           info.independent = layerformat.independent=false;
-          textures.Add(new(idx,texture = backdropLayer?ITexture.lvWrapper:ITexture.bgWrapper));
+          textures.Add(new(idx,texture = this is BackdropLayer? ITexture.lvWrapper:ITexture.bgWrapper));
           break;
         case "bg": case "background":
           info.usesbg = layerformat.useBg=true;
@@ -150,7 +149,9 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
               textures.Add(new(idx,texture = new ITexture.ImageWrapper(p.Value.Substring(1))));
               break;
             case '$': //child layer
-              textures.Add(new(idx,texture = new ITexture.UserLayerWrapper(p.Value.Substring(1))));
+              var ChildLayer = new ITexture.UserLayerWrapper(p.Value.Substring(1));
+              // if(ChildLayer.current is BackdropLayer l) resources.Add();
+              textures.Add(new(idx,texture = ChildLayer));
               break;
             case '%': //backdrop
               var backdrop = BackdropCapturer.Get(p.Value.Substring(1).Trim());
@@ -168,7 +169,7 @@ public class UserLayer:BasicMaterialLayer, IMaterialLayer, IFadingLayer, ISettab
         overrideFirstResource = texture;
       }
     }
-    if(backdropLayer && overrideFirstResource==null){
+    if(this is BackdropLayer && overrideFirstResource==null){
       overrideFirstResource = ITexture.lvWrapper;
       info.independent = layerformat.independent=false;
     }

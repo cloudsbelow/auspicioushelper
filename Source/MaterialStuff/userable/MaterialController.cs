@@ -120,14 +120,14 @@ internal class MaterialController:Entity{
   public static void fixmat(CachedUserMaterial c){
     loadedMats[c.identifier] = c;
   }
-  public override void Added(Scene scene){
-    base.Added(scene);
-  }
   [CustomBackdrop("auspicioushelper/MaterialEffect")]
   public class MaterialBackdrop:Backdrop{
+    internal static void fixFromSrt(Level l){
+      foreach(Backdrop b in l.Background.Backdrops) if(b is MaterialBackdrop c) fixmat(c.u);
+      foreach(Backdrop b in l.Foreground.Backdrops) if(b is MaterialBackdrop c) fixmat(c.u);
+    }
     string identifier;
-    CachedUserMaterial u;
-    bool deferred=false; //automatically set
+    UserLayer.BackdropLayer u;
     BlendState blend = BlendState.AlphaBlend;
     bool dontPaste = false;
     public void Readd(){
@@ -139,6 +139,7 @@ internal class MaterialController:Entity{
     float extraTime;
     float alpha=1;
     public MaterialBackdrop(BinaryPacker.Element e){
+      UseSpritebatch=false;
       identifier=e.Attr("identifier");
       bool noIdent=false;
       if(string.IsNullOrWhiteSpace(identifier)){
@@ -152,11 +153,8 @@ internal class MaterialController:Entity{
       }
       DebugConsole.Write($"Loading material backdrop from {e.Attr("passes","")} as {identifier}");
 
-      UserLayer layer = UserLayer.make(e,identifier);
+      var layer = u = UserLayer.make(e,identifier);
       if(!noIdent) loadedMats[identifier]=layer;
-      u=layer;
-      deferred = u is UserLayer{DeferLayerDraw:true};
-      UseSpritebatch=false;
       blend = e.Attr("blendMode","") switch {
         "Auto"=>null,
         "AlphaBlend"=>BlendState.AlphaBlend,
@@ -200,24 +198,23 @@ internal class MaterialController:Entity{
         alpha=1;
       }
       if(u==null) return;
-      if(Visible && !u.enabled){
+      if(Visible && !u.info.enabled){
         MaterialPipe.addLayer(u);
       }
-      if(!Visible && u.enabled){
+      if(!Visible && u.info.enabled){
         MaterialPipe.removeLayer(u);
       }
     }
     public override void Render(Scene scene) {
       if(u==null) return;
-      if(Visible && !u.enabled){
-        DebugConsole.Write($"Backdrop {u.identifier} not enabled! Enabling next frame.", MaterialPipe.renderingLevel);
+      if(Visible && !u.info.enabled){
         if(MaterialPipe.renderingLevel == null)Update(scene);
         else MaterialPipe.addAfterAction(()=>Update(scene));
         return;
       }
-      if(deferred){
-        u.render();
-        MaterialPipe.gd.SetRenderTarget(GameplayBuffers.Level);
+      if(u.noOrder){
+          ((IMaterialLayer)u).render();
+          MaterialPipe.gd.SetRenderTarget(GameplayBuffers.Level.Target);
       }
       if(!dontPaste){
         BackdropCapturer.currentRenderer.StartSpritebatch(blend??BackdropCapturer.currentBlendstate);

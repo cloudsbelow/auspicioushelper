@@ -51,7 +51,7 @@ public static class RenderTargetPool{
       index = available.Pop();
       instate = state;
       if(index>=Pool.Count){
-        Pool.Add(new RenderTarget2D(Engine.Instance.GraphicsDevice,currentWidth,currentHeight));
+        Pool.Add(new RenderTarget2D(Engine.Instance.GraphicsDevice,currentWidth,currentHeight,false,SurfaceFormat.Color,DepthFormat.None,0,RenderTargetUsage.PreserveContents));
       } 
     }
   }

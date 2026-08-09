@@ -186,8 +186,9 @@ public static class MaterialPipe {
     foreach(IMaterialLayer l in leaving) removeLayer(l);
     leaving.Clear();
   }
-  public static void fixFromSrt(){
+  public static void fixFromSrt(Level level){
     foreach(var l in layers) if(l is CachedUserMaterial c)  MaterialController.fixmat(c);
+    MaterialController.MaterialBackdrop.fixFromSrt(level);
   }
 
   public static bool backdropReorderDetour(){

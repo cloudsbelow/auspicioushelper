@@ -73,7 +73,7 @@ public class BasicMultient:ITemplateChild{
     foreach(EntEnt ent in ents){
       if(ent.detatched) continue;
       if(vis!=0) ent.e.Visible = vis>0; 
-      if(col!=0){
+      if(col!=0 && ent.e is not Decal){
         if(col<0) IColliderWrapper.AddClass(ent.e, BlockingCollider.instance);
         else IColliderWrapper.RemoveAtPrio(ent.e, BlockingCollider.Prio);
       }

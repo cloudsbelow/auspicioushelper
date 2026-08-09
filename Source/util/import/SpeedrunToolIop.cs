@@ -14,7 +14,7 @@ internal static class SpeedrunToolIop{
   internal static List<object> toDeregister = new List<object>();
   static void loadState(Dictionary<Type, Dictionary<string, object>> values, Level level){
     try{
-      MaterialPipe.fixFromSrt();
+      MaterialPipe.fixFromSrt(level);
       BackdropCapturer.CapturedBackdrops.FixFromSrt(level);
       foreach(var e in level.Entities){
         if(e is ResetEvents.IReloadHooks irh) irh.Apply();
