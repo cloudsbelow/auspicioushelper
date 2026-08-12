@@ -80,11 +80,18 @@ public class MaterialAdder:Entity, IOverrideVisualsEasy{
   public override void Update() {
     Try();
   }
-  public override void Removed(Scene scene) {
-    base.Removed(scene);
+  public void OnRemove(){
     foreach(var comp in comps.ToList()){
       comp.RemoveFromOverride(l);
       comp.RemoveFromOverride(this);
     }
+  }
+  public override void Removed(Scene scene) {
+    base.Removed(scene);
+    OnRemove();
+  }
+  public override void SceneEnd(Scene scene) {
+    base.SceneEnd(scene);
+    OnRemove();
   }
 }

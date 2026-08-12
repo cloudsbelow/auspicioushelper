@@ -9,6 +9,7 @@ using MonoMod.Cil;
 using Microsoft.Xna.Framework.Graphics;
 using System.Runtime.CompilerServices;
 using System.Linq;
+using MonoMod.Utils;
 
 namespace Celeste.Mod.auspicioushelper.Wrappers;
 
@@ -44,9 +45,11 @@ internal class BgTiles:BackgroundTiles, ISimpleEnt, IBoundsHaver{
   public Template parent {get;set;}
   public Vector2 toffset {get;set;}
   public FloatRect bounds {get;set;}
+  public VirtualMap<char> tiles;
   public BgTiles(templateFiller t, Vector2 posoffset, int depthoffset):base(posoffset+t.data.offset, t.tiledata.bgt){
     toffset = t.data.offset;
     Depth+=depthoffset;
+    tiles=t.tiledata.bgt;
     ResetEvents.Hooks<BgTiles>.enable();
     RemoveTag(Tags.Global);
   }
@@ -572,7 +575,7 @@ public class TilegridSelector(TileGrid tg, AnimatedTiles at, VirtualMap<char> da
           AnimatedTiles.Tile tile = list[k];
           AnimatedTilesBank.Animation animation = atl.Bank.Animations[tile.AnimationID];
           var frame = animation.Frames[(int)tile.Frame % animation.Frames.Length];
-          frame.Draw(atpos+animation.Offset + new Vector2(i*8+4, i*8+4), animation.Origin, atc, tile.Scale);
+          frame.Draw(atpos+animation.Offset + new Vector2(i*8+4, j*8+4), animation.Origin, atc, tile.Scale);
         }
       }
     }
@@ -583,9 +586,17 @@ public class TilegridSelector(TileGrid tg, AnimatedTiles at, VirtualMap<char> da
       var st = e as SolidTiles;
       return new TilegridSelector(st.Tiles, st.AnimatedTiles, st.tileTypes);
     });
-    // custom.Add(typeof(BackgroundTiles), e=>{
-    //   var bt = e as BackgroundTiles; 
-    //   return new TilegridSelector(bt.Tiles, bt.AnimatedTiles, bt.tile);
-    // });
+    custom.Add(typeof(BackgroundTiles), e=>{
+      var bt = e as BackgroundTiles; 
+      VirtualMap<char> tiles;
+      if(bt is BgTiles bg_) tiles = bg_.tiles;
+      else tiles = new DynamicData(bt).Get<VirtualMap<char>>("ausp_tiledata");
+      return new TilegridSelector(bt.Tiles, bt.AnimatedTiles, tiles);
+    });
+  }
+  [OnLoad.OnHook(typeof(BackgroundTiles), "")]
+  static void Hook(On.Celeste.BackgroundTiles.orig_ctor orig, BackgroundTiles self, Vector2 position, VirtualMap<char> data){
+    orig(self,position,data);
+    if(self is not BgTiles) new DynamicData(self).Set("ausp_tiledata", data);
   }
 }
