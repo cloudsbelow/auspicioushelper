@@ -123,6 +123,12 @@ public interface IColliderWrapper{
     if(n!=2) DebugConsole.WriteFailure("The slothful ILHook design failed. Tell clouds to be more rigorous if you encounter this",true);
   }
 
+  public static bool CheckEq(Collider a, Collider b){
+    while(a is IColliderWrapper ac) a=ac.wrapped;
+    while(b is IColliderWrapper bc) a=bc.wrapped;
+    return a==b;
+  }
+
   public abstract class SimpleWrapperclass:ColliderList,IColliderWrapper{
     public Collider wrapped {get;set;}
     Collider IColliderWrapper.interceptReplace(Collider c)=>null;

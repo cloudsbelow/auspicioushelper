@@ -31,24 +31,33 @@ public static partial class Finder{
         Depth = Math.Max(on.Depth+1,2);
       }
       public override void Render() {
-        if(from != null && !on.Collider.Equals(from.replace)) return;
+        Collider check = on.Collider;
+        if(from==null){
+          foreach(var c in on.Components) if(c is CMod f && IColliderWrapper.CheckEq(check, f.replace)) return;
+        } else if(!IColliderWrapper.CheckEq(check, from.replace)) return;
+
         IntRect r = new FloatRect(on).munane();
         if(!on.Collidable){
           if(colors.Length<3 || !MaterialPipe.clipBounds.CollideIr(r)) return;
           Color c = colors[2];
           for(int i=0; i<r.w-1; i+=2){
-            Draw.Rect(new IntRect(r.x+i,r.y,1,1),c);
-            Draw.Rect(new IntRect(r.x+i+1,r.y+r.h-1,1,1),c);
+            Draw.Rect(new Rectangle(r.x+i,r.y,1,1),c);
+            Draw.Rect(new Rectangle(r.x+i+1,r.y+r.h-1,1,1),c);
           }
           for(int i=0; i<r.h-1; i+=2){
-            Draw.Rect(new IntRect(r.x,r.y+i+1,1,1),c);
-            Draw.Rect(new IntRect(r.x+r.w-1,r.y+i,1,1),c);
+            Draw.Rect(new Rectangle(r.x,r.y+i+1,1,1),c);
+            Draw.Rect(new Rectangle(r.x+r.w-1,r.y+i,1,1),c);
           }
           return;
         }
         base.Render();
         if(colors.Length==1 || colors[1].A==255) Draw.Rect(r,colors[0]);
-        else Draw.HollowRect(r,colors[0]);
+        else {
+          Draw.Rect(new Rectangle(r.x ,r.y, r.w, 1), colors[0]);
+          Draw.Rect(new Rectangle(r.x, r.y+r.h-1, r.w,1), colors[0]);
+          Draw.Rect(new Rectangle(r.x, r.y+1, 1, r.h-2), colors[0]);
+          Draw.Rect(new Rectangle(r.x+r.w-1, r.y+1, 1, r.h-2), colors[0]);
+        }
         if(colors.Length==1) return;
         Draw.Rect(r.expandAll_(-1),colors[1]);
       }
@@ -67,7 +76,7 @@ public static partial class Finder{
       }
       void OnChange(double nval){
         if(nval!=0) e.Collider = replace;
-        else if(restorable && e.Collider.Equals(replace)) e.Collider = orig; 
+        else if(restorable && IColliderWrapper.CheckEq(e.Collider, replace)) e.Collider = orig; 
       }
     }
     static void Search(EntityData d){
@@ -82,7 +91,7 @@ public static partial class Finder{
       });
     }
 
-    static Regex pattern = new Regex(@"(\w+):(.+)",RegexOptions.Compiled);
+    static Regex pattern = new Regex(@"(\w+)(?::(.+))?",RegexOptions.Compiled);
     static Collider buildCollider(EntityData d){
       List<string> things = Util.listparseflat(d.String("collider","rect:[-8,-8,16,16]"));
       var c = things.Map(Collider (s)=>{
@@ -99,6 +108,8 @@ public static partial class Finder{
           case "rectangle": case "rect": case "r":
             vals = Util.csparseflat(u,0,0,8,8);
             return new Hitbox(vals[2],vals[3],vals[0],vals[1]);
+          case "null": case "none": case "false": case "uncollidable":
+            return null;
         }
         throw new Exception("Failed to parse collider "+s);
       });

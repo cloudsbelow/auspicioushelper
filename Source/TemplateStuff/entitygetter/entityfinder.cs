@@ -117,17 +117,19 @@ public static partial class Finder{
   public static Level addingLevel;
   public static void EndingLoad(EntityData d, Level l){
     if(finding!=null){
+      var fi = finding;
+      finding = null;
       if(last==null){
         DebugConsole.WriteFailure($"Failed to find the entity {d.Name} with id {d.ID} - (maybe this entity adds itself non-standardly?)");
         if(auspicioushelperModule.InFolderMod) DebugConsole.MakePostcard($"Failed to find the entity {d.Name} with id {d.ID}. This entity may not be compatible or there may be mod conflicts.");
       } else {
         addingLevel = l;
-        foreach(var a in finding) a(last);
+        Entity ent = last;
+        last = null;
+        foreach(var a in fi) a(ent);
         addingLevel = null;
       }
     } 
-    finding = null;
-    last = null;
   }
 
   [OnLoad.OnHook(typeof(EntityList),nameof(EntityList.Add),Util.HookTarget.Normal,[typeof(Entity)])]

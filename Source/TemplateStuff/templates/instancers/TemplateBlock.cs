@@ -6,8 +6,12 @@ using System.Collections;
 using System.Collections.Generic;
 using Celeste.Mod.auspicioushelper.Wrappers;
 using Celeste.Mod.Entities;
+using Celeste.Mod.Helpers;
 using Microsoft.Xna.Framework;
+using Mono.Cecil;
+using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -43,7 +47,7 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
     triggerable=d.Bool("triggerable",false);
     triggerOnBreak=d.Bool("triggerOnBreak",false);
     isExitBlock = d.Bool("exitBlockBehavior",false);
-    breakableByBlocks = d.Bool("breakableByBlocks",false);
+    if(breakableByBlocks = d.Bool("breakableByBlocks",false)) ResetEvents.Hooks<TemplateBlock>.enable();
     triggerTouching = d.Bool("triggerTouching",false);
   }
   bool broken=false;
@@ -120,5 +124,45 @@ class TemplateBlock:TemplateDisappearer, ITemplateTriggerable{
       OverrideVisualComponent.Get(e).RemoveFromOverride(f);
     }
     MaterialPipe.removeLayer(f);
+  }
+
+  static Solid refineSolid(Solid orig, Platform self, Vector2 loc){
+    if(orig==null) return null;
+    var cur = orig;
+    var idx=0;
+    var ls = self.Scene.Tracker.GetEntities<Solid>();
+    using var restore = Util.WithRestore(ref self.Position, loc);
+    check:
+      if(cur.Get<ChildMarker>() is not {} cm) return cur;
+      Template block = cm.parent;
+      while(block!=null && (block is not TemplateBlock blk || !blk.breakableByBlocks)) block=block.parent;
+      if(block==null) return cur;
+      (block as TemplateBlock).breakBlock();
+    
+      for(; idx<ls.Count; idx++) if(Collide.Check(self, ls[idx])){
+        cur = ls[idx++] as Solid;
+        goto check;
+      }
+      return null;
+  }
+  [ResetEvents.ILHook(typeof(Platform),nameof(Platform.MoveHExactCollideSolids))]
+  [ResetEvents.ILHook(typeof(Platform),nameof(Platform.MoveVExactCollideSolids))]
+  static void SolidMoverHook(ILContext ctx){
+    ILCursor c = new(ctx);
+    VariableDefinition v = new(c.Context.Import(typeof(Vector2)));
+    c.Body.Variables.Add(v);
+    if(c.TryGotoNextBestFit(MoveType.Before,
+      itr=> itr.MatchCall<Entity>(nameof(CollideFirst)) && 
+        itr.Operand is GenericInstanceMethod g && 
+        g.GenericArguments.Count==1 && 
+        g.GenericArguments[0].FullName==typeof(Solid).FullName
+    )){
+      c.EmitDup();
+      c.EmitStloc(v);
+      c.Index++;
+      c.EmitLdarg0();
+      c.EmitLdloc(v);
+      c.EmitDelegate(refineSolid);
+    } else DebugConsole.Write("Could not add moveCollideSolids hook");
   }
 }

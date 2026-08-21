@@ -36,7 +36,6 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
   int bdepth;
   public RefillW2(Vector2 position, bool twoDashes, bool oneUse):base(position){
     base.Collider = new Hitbox(16f, 16f, -8f, -8f);
-    Add(new PlayerCollider(OnPlayer));
     this.twoDashes = twoDashes;
     this.oneUse = oneUse;
     string text;
@@ -86,6 +85,7 @@ public class RefillW2 : Entity, ISimpleEnt, TemplateHoldable.IPickupChild{
   MTexture[] texs;
 
   public RefillW2(EntityData d, Vector2 o):this(d.Position + o, d.Bool("twoDash"), d.Bool("oneUse")){
+    if(d.Bool("useOnPlayer",true)) Add(new PlayerCollider(OnPlayer));
     respawn = new(d.ChannelFloat("respawnTimer",2.5f));
     triggering = d.Bool("triggering",false);
     useOnPickup = d.Bool("useOnPickup",false);

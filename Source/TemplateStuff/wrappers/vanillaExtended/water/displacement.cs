@@ -46,7 +46,13 @@ public partial class FancyWater{
       FloatRect camRect = new(cam.position.X, cam.position.Y, camsize.x, camsize.y);
 
       Dictionary<int,List<FancyWater>> byDepth = new();
-      foreach(FancyWater f in Scene.Tracker.GetEntities<FancyWater>()) if(f.leader==null){
+      var waters = Scene.Tracker.GetEntities<FancyWater>();
+      if(waters.Count==0){
+        if(me==this) me=null;
+        RemoveSelf();
+      }
+
+      foreach(FancyWater f in waters) if(f.leader==null){
         var coarse = f.renderBounds._expand(f.rayLengthRange.Y,f.rayLengthRange.Y);
         coarse.shift(f.Position);
         if(!(f.inView = camRect.CollideFr(coarse))) continue;
@@ -61,11 +67,7 @@ public partial class FancyWater{
       Array.Sort(keys);
       List<List<Solid>> buckets = new();
       for(int i=0; i<keys.Length; i++) buckets.Add(new());
-      if(keys.Length==0){
-        me = null;
-        RemoveSelf();
-        return;
-      }
+      if(keys.Length==0) return;
 
       if(keys.Length<=4){
         foreach(Solid s in Scene.Tracker.GetEntities<Solid>()){

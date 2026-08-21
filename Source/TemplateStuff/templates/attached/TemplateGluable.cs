@@ -25,7 +25,7 @@ public class TemplateGluable:Template, IRelocateTemplates.IDontRelocate{
   string setProgressChannel;
   public override void relposTo(Vector2 loc, Vector2 parentLiftspeed) {
     if(constraint!=Constraint.None){
-      DealWithMovement(false);
+      if(gluedto!=null) DealWithMovement(false);
       base.relposTo(loc, parentLiftspeed);
     }
   }

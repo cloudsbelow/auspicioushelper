@@ -214,7 +214,8 @@ public interface IOverrideVisuals{
     void IOverrideVisuals.AddC(OverrideVisualComponent c){}
     void IOverrideVisuals.RemoveC(OverrideVisualComponent c){}
   }
-  public static readonly Blocking blocker = new(); 
+  [Import.SpeedrunToolIop.Static]
+  public static Blocking blocker = new(); 
   void AddC(OverrideVisualComponent c);
   void RemoveC(OverrideVisualComponent c);
 }

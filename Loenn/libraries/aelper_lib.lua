@@ -1,4 +1,4 @@
----@diagnostic disable:miss-symbol, miss-end, undefined-global, unknown-symbol, miss-exp, exp-in-action
+---@diagnostic disable:miss-symbol, miss-end, undefined-global, unknown-symbol, miss-exp, exp-in-action, err-assign-as-eq
 
 local drawableSprite = require("structs.drawable_sprite")
 local drawableRectangle = require("structs.drawable_rectangle")

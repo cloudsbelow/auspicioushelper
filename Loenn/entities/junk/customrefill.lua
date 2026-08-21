@@ -21,6 +21,7 @@ entity.placements = {
       useOnRelease = true,
       numRefresh = -1,
       depth = -100,
+      useOnPlayer = true,
     }
   }
 }

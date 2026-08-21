@@ -188,7 +188,10 @@ public partial class FancyWater:Water,ISimpleEnt,ConnectedBlocks.ICustomCheckCol
     renderBounds = FloatRect.fromCorners(min-Position, max-Position);
   }
 
-  static bool checkFancy(Player p)=>p.CollideFirst<FancyWater>()!=null;
+  static bool checkFancy(Player p){
+    DebugConsole.Write("In check", p.StateMachine.state,p.CollideFirst<FancyWater>()!=null);
+    return p.CollideFirst<FancyWater>()!=null;
+  }
   [ResetEvents.ILHook(typeof(Player),nameof(Player.orig_Update))]
   static void TpHook(ILContext ctx){
     ILCursor c = new(ctx);
@@ -201,7 +204,17 @@ public partial class FancyWater:Water,ISimpleEnt,ConnectedBlocks.ICustomCheckCol
       c.EmitLdarg0();
       c.EmitDelegate(checkFancy);
       c.EmitOr();
-    } else DebugConsole.WriteFailure("Could not add water teleport prevention hook");
+    } else DebugConsole.WriteFailure("Could not add water teleport prevention hook (swim)", true);
+
+    if(c.TryGotoNextBestFit(MoveType.After,
+      itr=>itr.MatchLdcI4(-1),
+      itr=>itr.MatchLdnull(), itr=>itr.MatchLdnull(),
+      itr=>itr.MatchCall<Actor>(nameof(Actor.MoveVExact))
+    )){
+      c.EmitLdarg0();
+      c.EmitDelegate(checkFancy);
+      c.EmitOr();
+    } else DebugConsole.WriteFailure("Could not add water teleport prevention hook (climb)", true);
   }
 
   [ResetEvents.OnHook(typeof(Player),nameof(Player.SwimUpdate))]
