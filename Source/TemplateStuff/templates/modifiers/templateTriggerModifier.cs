@@ -65,14 +65,14 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     foreach(var id in Util.listparseflat(d.Attr("collideWith","")))Finder.enqueueIdent(id);
   }
   bool triggerOnTouch;
-  Util.Trie<bool> advtouch = new(true);
+  Util.FastTrie<bool> advtouch = new(true);
   bool passTrigger;
   bool hideTrigger;
   bool blockTrigger;
   string channel;
   float delay;
   bool log;
-  Util.Trie blockManager;
+  Util.FastTrie<bool> blockManager;
   ChannelState.AdvancedSetter adv = null;
   ChannelState.BoolCh skip;
   bool neverTriggerOnAwake = false;
@@ -120,7 +120,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
         blockTrigger = true; continue;
       }
       if(blockManager == null) blockManager = new();
-      blockManager.Add(s);
+      blockManager.Add(s,true);
     }
     if(!string.IsNullOrWhiteSpace(d.Attr("setChannel",""))) adv = new(d.Attr("setChannel",""));
     OnDashCollide = handleDash;
@@ -167,7 +167,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
       bool has = advtouch.GetOrDefault(sm.category);
       if(has!=triggerOnTouch && (!triggerOnTouch || sm is TouchInfo)) tinfo.asUsable();
     }
-    if(blockTrigger!=(blockManager?.Test(sm?.category)??false)) goto end;
+    if(blockTrigger!=(blockManager?.GetOrDefault(sm?.category)??false)) goto end;
     if(triggerParent == null) goto end;
     if(hideTrigger){
       modifierParent?.OnTrigger(sm);

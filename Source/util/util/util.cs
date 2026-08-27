@@ -85,110 +85,217 @@ public static partial class Util{
     public static implicit operator Func<T1, bool>(FunctionList<T1> fl) => fl.Invoke;
   }
 
-  public class Trie{
-    class TrieNode{
-      Dictionary<char, TrieNode> n;
-      public bool isEnding {get; private set;}=false;
-      public bool isSuperEnding=false;
-      public bool Test(char c, ref TrieNode next)=>(!isSuperEnding)&&(n?.TryGetValue(c,out next)??false);
-      public void Add(string s, int idx){
-        if(idx<s.Length){
-          if(n==null) n=new();
-          if(s[idx]=='*')isSuperEnding=true;
-          if(!n.TryGetValue(s[idx], out var next)){
-            n.Add(s[idx],next = new TrieNode());
-          }
-          next.Add(s,idx+1);
-        } else isEnding = true;
-      }
+  public class FastTrie<T>(bool alwaysClean=false){
+    struct TrieLine{
+      public T end, starend;
+      public int edgeIndex;
+      public short numStarEdge, numEdge;
+      public bool hasEnd, hasStarend;
     }
-    TrieNode root = new TrieNode();
-    public void Add(string s)=>root.Add(s,0);
-    public bool Test(string s){
-      if(s == null) return false;
-      TrieNode cur = root;
-      int idx = 0;
-      do{
-        if(idx==s.Length) return cur.isEnding;
-        if(s[idx]=='*') return true;
-      } while(cur.Test(s[idx++],ref cur));
-      return cur?.isSuperEnding??false;
-    }
-  }
-  public class Trie<T>{
-    class TrieNode{
-      Dictionary<char, TrieNode> n;
-      List<(Regex, T, string)> res;
-      public T containedItem;
-      public bool hasItem = false;
-      public bool Get(string s, int idx, out T item){
-        if(idx==s.Length){
-          item=hasItem?containedItem:default;
-          if(res!=null)foreach(var (r,i,orig) in res) if(r.Match("").Success){
-            item=i;
-            return true;
-          }
-          return hasItem;
+    TrieLine[] items;
+    (char,ushort)[] edges;
+    Dictionary<string, T> record = new();
+    Dictionary<(ushort, char), ushort> overflow = new();
+    bool dirty=false;
+
+    //Gets best match
+    public bool TryGet(string s, out T res){
+      if(alwaysClean) s=s.AsClean();
+      if(dirty) Build();
+      List<ushort> activeA = new(0);
+      List<ushort> intoA = new();
+      List<(char,ushort)> stars = new();
+      HashSet<ushort> includedStars = new();
+      res = default;
+      bool foundAny = false;
+      foreach(var c in s){
+        foreach(var (o, idx) in stars){
+          if(c==o) intoA.Add(idx);
         }
-        if(n?.TryGetValue(s[idx], out var a)??false) if(a.Get(s,idx+1,out item)) return true;
-        if(res!=null){
-          string trunc = s.Substring(idx);
-          foreach(var (r,i,orig) in res) if(r.Match(trunc).Success){
-            item = i;
-            return true;
+        foreach(var idx in activeA){
+          var a = items[idx];
+          if(a.hasStarend){
+            res = a.starend;
+            foundAny = true;
           }
-        } 
-        item = default;
-        return false;
-      }
-      public void Add(string s, int idx, T item, bool alwaysOverride){
-        if(idx<s.Length){
-          if(s[idx] == '*'){
-            if(res==null) res=new();
-            for(int i=0; i<res.Count; i++) if(res[i].Item3==s){
-              if(alwaysOverride){
-                res[i] = new(res[i].Item1,item,s);
-              } else throw new Exception("Key already present in trie");
+          int tindex = a.edgeIndex;
+          for(int i=0; i<a.numStarEdge; i++){
+            var j = edges[tindex++];
+            if(includedStars.Contains(j.Item2)) continue;
+            stars.Add(j);
+            includedStars.Add(j.Item2);
+          }
+
+          if(a.numEdge<0){
+            if(overflow.TryGetValue(new(idx, c), out var nidx)) intoA.Add(nidx);
+          } else for(int i=0; i<a.numEdge; i++){
+            var j = edges[tindex++];
+            if(c==j.Item1){
+              intoA.Add(j.Item2);
+              break;
             }
-            string re = "^";
-            for(int i=idx; i<s.Length; i++){
-              char c=s[i];
-              if(char.IsAsciiLetterOrDigit(c)||c=='-'||c=='_'||c=='\\'||c==' '||c=='\n')re+=c;
-              else if(c=='/')re+=@"\/";
-              else if(c=='*')re+=".*";
-              else throw new Exception("unhandled character in sequence");
-            }
-            re+="$";
-            res.Add(new(new(re,RegexOptions.Compiled),item,s));
-            return;
           }
-          if(n==null) n=new();
-          if(!n.TryGetValue(s[idx], out var next)){
-            n.Add(s[idx],next = new TrieNode());
-          }
-          next.Add(s,idx+1,item, alwaysOverride);
-        } else if(hasItem==false || alwaysOverride){
-          hasItem=true;
-          containedItem=item;
-        } else throw new Exception("Key already present in trie");
+        }
+        var temp = activeA;
+        temp.Clear();
+        activeA = intoA;
+        intoA = temp;
       }
-      public bool HasStuff=>n!=null || res!=null;
+
+      foreach(var idx in activeA){
+        var a = items[idx];
+        if(a.hasStarend){
+          res = a.starend;
+          foundAny = true;
+        }
+        if(a.hasEnd){
+          res = a.end;
+          foundAny = true;
+        }
+      }
+      return foundAny;
     }
-    TrieNode root = new TrieNode();
-    bool alwaysClean;
-    public Trie(bool asClean=false){
-      alwaysClean=asClean;
+    public IEnumerator<T> getAll(string s){
+      if(alwaysClean) s=s.AsClean();
+      if(dirty) Build();
+      List<ushort> activeA = new(0);
+      List<ushort> intoA = new();
+      List<(char,ushort)> stars = new();
+      HashSet<ushort> includedStars = new();
+      foreach(var c in s){
+        foreach(var (o, idx) in stars){
+          if(c==o) intoA.Add(idx);
+        }
+        foreach(var idx in activeA){
+          var a = items[idx];
+          if(a.hasStarend) yield return a.starend;
+          int tindex = a.edgeIndex;
+          for(int i=0; i<a.numStarEdge; i++){
+            var j = edges[tindex++];
+            if(includedStars.Contains(j.Item2)) continue;
+            stars.Add(j);
+            includedStars.Add(j.Item2);
+          }
+          
+          if(a.numEdge<0){
+            if(overflow.TryGetValue(new(idx, c), out var nidx)) intoA.Add(nidx);
+          } else for(int i=0; i<a.numEdge; i++){
+            var j = edges[tindex++];
+            if(c==j.Item1){
+              intoA.Add(j.Item2);
+              break;
+            }
+          }
+        }
+        var temp = activeA;
+        activeA.Clear();
+        activeA = intoA;
+        intoA = temp;
+      }
+
+      foreach(var idx in activeA){
+        var a = items[idx];
+        if(a.hasStarend) yield return a.starend;
+        if(a.hasEnd) yield return a.end;
+      }
     }
-    public void Add(string s, T value)=>   root.Add(alwaysClean?s.AsClean():s, 0, value,false);
-    public void Set(string s, T value)=>   root.Add(alwaysClean?s.AsClean():s, 0, value,true);
+    public void Add(string s, T val){
+      if(alwaysClean) s=s.AsClean();
+      record.Add(s,val);
+      dirty=true;
+    }
     public void SetAll(IEnumerable<string> strings, T value){
-      foreach(var s in strings) root.Add(alwaysClean?s.AsClean():s, 0, value, true);
+      foreach(var s in strings) record[alwaysClean?s.AsClean():s] = value;
+      dirty=true;
     }
-    public T GetOrDefault(string s) =>     root.Get(alwaysClean?s.AsClean():s, 0, out var item)? item:default;
-    public bool TryGet(string s, out T o)=>root.Get(alwaysClean?s.AsClean():s, 0, out o);
-    public void Clear()=>root=new();
-    public bool hasStuff=>root.HasStuff;
+    public T GetOrDefault(string s)=>TryGet(alwaysClean? s.AsClean():s, out var r)? r:default;
+    public void Clear(){
+      record.Clear();
+      dirty=true;
+    }
+    public bool hasStuff=>record.Count>0;
+
+    class BuildNode{
+      public ushort idx;
+      public short numedge, numstaredge;
+      public bool hasEnd, hasStarend;
+      public T end, starEnd;
+
+    }
+    struct BuildEdge{
+      public char c;
+      public BuildNode from,to;
+      public bool star;
+    }
+    const int MaxListEdge=7;
+    void Build(){
+      dirty=false;
+      ushort count=1;
+      Dictionary<string,BuildNode> map = new(){{"",new()}};
+      if(record.TryGetValue("", out var emptyVal)) map[""]=new(){hasEnd=true, end=emptyVal};
+
+      foreach(var (s,val) in record){
+        for(int i=1; i<=s.Length; i++){
+          bool last = i==s.Length;
+          var sub = s.Substring(0,i);
+          if(sub[^1]=='*'){
+            if(sub.Length>=2 && sub[^2]=='*' && auspicioushelperModule.InFolderMod){
+              throw new Exception($"consecutive asterisks illegal: {s}");
+            }
+            if(last){
+              var fidx = map.GetValueOrDefault(s.Substring(0,i-1));
+              fidx.hasStarend = true;
+              fidx.starEnd = val;
+            }
+            continue;
+          }
+          if(!map.ContainsKey(sub)){
+            map.Add(sub, new(){idx=count++, hasEnd=last, end=last?val:default});
+            if(count==0) throw new Exception("too many");
+          }
+        }
+      }
+      List<BuildEdge> build = new();
+      foreach(var (s,idx) in map){
+        if(s.Length==0) continue;
+        bool staredge = s.Length>-2 && s[^2]=='*';
+        var fidx = map.GetValueOrDefault(s.Substring(0, s.Length-(staredge?2:1)));
+        if(staredge) fidx.numstaredge++;
+        else fidx.numedge++;
+        build.Add(new(){c=s[^1], from=fidx, to=idx, star=staredge});
+      }
+
+      int edgesLen=0;
+      items = new TrieLine[count];
+      foreach(var (s,idx) in map){
+        var shouldoverflow = idx.numedge>MaxListEdge;
+        items[idx.idx] = new(){
+          hasEnd=idx.hasEnd, end=idx.end,
+          hasStarend=idx.hasStarend, starend=idx.starEnd,
+          edgeIndex=edgesLen, numStarEdge=idx.numstaredge,
+          numEdge=shouldoverflow? (short)-1:idx.numedge
+        };
+        edgesLen+=idx.numstaredge;
+        if(!shouldoverflow) edgesLen+=idx.numedge;
+      }
+
+      edges = new (char,ushort)[edgesLen];
+      overflow.Clear();
+      foreach(var edge in build){
+        var fidx = edge.from;
+        var from = items[fidx.idx];
+        if(from.numEdge<0 && !edge.star) overflow.Add(new(fidx.idx, edge.c), edge.to.idx);
+        else{
+          var idx=from.edgeIndex;
+          if(edge.star) idx += from.numStarEdge - (fidx.numstaredge--);
+          else idx += from.numStarEdge + from.numEdge - (fidx.numedge--);
+          edges[idx] = new(edge.c, edge.to.idx);
+        }
+      }
+    }
   }
+
+
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static CollisionDirection getCollisionDir(Vector2 move){
     CollisionDirection dir = CollisionDirection.yes;

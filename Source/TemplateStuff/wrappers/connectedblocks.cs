@@ -22,12 +22,8 @@ public class ConnectedBlocks:Entity{
   bool used;
   char tid;
   Vector2 levelOffset;
-  Util.Trie<bool> permittedEnts = null;
-  Util.Trie<bool> permittedDecals = null;
-  bool allEnts;
-  bool allDecals;
-  bool excludeSolids;
-  bool excludeTriggers;
+  Util.FastTrie<bool> permittedEnts = null, permittedDecals = null;
+  bool allEnts, allDecals, excludeSolids, excludeTriggers;
   bool permits(Entity e){
     if(e is ConnectedBlocks or TemplateHoldable || e is Template t && !t.hasDeclaredTemplate) return false;
     if(e is Decal d){

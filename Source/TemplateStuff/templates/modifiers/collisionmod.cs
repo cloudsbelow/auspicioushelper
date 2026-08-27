@@ -55,9 +55,9 @@ public class TemplateCollisionModifier:Template, Template.IRegisterEnts{
     public override bool Collide(ColliderList l)=>l.Collide(wrapped) && Try(l);
     public override bool Collide(Grid g)=>wrapped.Collide(g) && Try(g);
   }
-  Util.Trie<bool> types = new(true);
+  Util.FastTrie<bool> types = new(true);
   bool invTypes = false;
-  Util.Trie<bool> paths = new(true);
+  Util.FastTrie<bool> paths = new(true);
   bool invPaths = false;
   bool ShouldCollideWith(Entity e){
     string typename = e.SourceData?.Name;
