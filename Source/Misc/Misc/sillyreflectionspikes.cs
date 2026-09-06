@@ -180,9 +180,9 @@ public class CustomSpikes : Entity{
           p.Collider = p.hurtbox;
           bool flag = p.CollideCheck(this) && shouldKill(p);
           p.Collider = orig;
-          if(!flag) break;
-          yield return null;
+          if(flag) continue;
         }
+        break;
       }
       countdown = 0.05f;
     }

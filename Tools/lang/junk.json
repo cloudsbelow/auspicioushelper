@@ -35,7 +35,8 @@
             "useOnPickup": "Whether to always use this refill if it is in a template that gets picked up",
             "useOnRelease": "Whether to always use this refill when in a template that is thrown",
             "numRefresh": "Number of times this refill will respawn. Leave blank or negative for unlimited use.",
-            "depth": ""
+            "depth": "",
+            "useOnPlayer": ""
         },
         "p_name": "(Another) custom refill"
     },
@@ -82,7 +83,8 @@
             "rayDirection": "CHANNELABLE the angle rays cast at",
             "backwardsRays": "Whether rays should also come from the opposite of the main direction",
             "verticalShrink": "Whather to shrink the water's appearance vertically by 1px - vanilla does this",
-            "die": "die"
+            "die": "die",
+            "templateDrag": ""
         }
     }
 }

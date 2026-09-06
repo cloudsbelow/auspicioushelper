@@ -221,4 +221,5 @@ public class ChildMarker:Component{
     return true;
   }
   public void Trigger(TriggerInfo t)=>parent.GetFromTree<ITemplateTriggerable>()?.OnTrigger(t);
+  public void TriggerTouch(TemplateTriggerModifier.TouchInfo t)=>parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(t);
 }

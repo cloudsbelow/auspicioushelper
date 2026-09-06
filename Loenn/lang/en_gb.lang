@@ -617,6 +617,9 @@ entities.auspicioushelper/TemplateDashhitModifier.attributes.description.alwaysP
 entities.auspicioushelper/TemplateDashhitModifier.attributes.description.entanglementId=Dashhit entanglement. It's scary.
 entities.auspicioushelper/TemplateDashhitModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
 entities.auspicioushelper/TemplateDashhitModifier.attributes.description.sfx=The sound to play on non-normal dash collisions.
+entities.auspicioushelper/TemplateDashhitModifier.attributes.description.noJumpBuffer=Prevent jumps and climbjumps from being buffered out of dash state against this template
+entities.auspicioushelper/TemplateDashhitModifier.attributes.description.forceState=Force a return to stnormal on hit
+entities.auspicioushelper/TemplateDashhitModifier.attributes.description.audioNeedsTrigger=Only play audio when hitting a 'trigger' side
 
 # auspicioushelper/TemplateDreamblockModifier
 entities.auspicioushelper/TemplateDreamblockModifier.placements.description.Template Dreamblock Modifier=Turn contained entities into dreamblocks that can be dreamed through.
@@ -634,6 +637,7 @@ entities.auspicioushelper/TemplateDreamblockModifier.attributes.description.tryD
 entities.auspicioushelper/TemplateDreamblockModifier.attributes.description.sendDashhit=Send a dashhit event to parent templates when entering this block.
 entities.auspicioushelper/TemplateDreamblockModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
 entities.auspicioushelper/TemplateDreamblockModifier.attributes.description.bounce=Bounce inside
+entities.auspicioushelper/TemplateDreamblockModifier.attributes.description.allowChDash=Whether to allow communal helper dream tunnel dash to enter
 
 # auspicioushelper/TemplateEntityModifier
 entities.auspicioushelper/TemplateEntityModifier.placements.description.Template Entity Modifier=Modify the visibility/collidability/activity of contained entities
@@ -647,6 +651,7 @@ entities.auspicioushelper/TemplateEntityModifier.attributes.description.allowCus
 entities.auspicioushelper/TemplateEntityModifier.attributes.description.log=Log the entity types contained
 entities.auspicioushelper/TemplateEntityModifier.attributes.description.only=Only affects entities of the given type (found in the top bar of loenn entity menu, i.e. [modname]/[entityname])
 entities.auspicioushelper/TemplateEntityModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
+entities.auspicioushelper/TemplateEntityModifier.attributes.description.triggerShakeTime=How long to shake when triggered
 
 # auspicioushelper/TemplateFakewall
 entities.auspicioushelper/TemplateFakewall.placements.name.main=Template Fake Wall
@@ -692,6 +697,7 @@ entities.auspicioushelper/TemplateGluable.attributes.description.maxSpeed=CHANNE
 entities.auspicioushelper/TemplateGluable.attributes.description.constraint=Constrain the entity's movement. For spline options, you must add nodes. Will get as close as possible to the entity without violating its constraint (i.e. changing X in an onlyY constraint or leaving the spline in a spline constraint)
 entities.auspicioushelper/TemplateGluable.attributes.description.setProgressChannel=Set channel to current progress. Varies by constraint mode.
 entities.auspicioushelper/TemplateGluable.attributes.name._loenn_display_template=[LÖNN] Display Template
+entities.auspicioushelper/TemplateGluable.attributes.description.toCenter=Use glue target's center as the target
 
 # auspicioushelper/TemplateIceblock
 entities.auspicioushelper/TemplateIceblock.placements.description.Template Iceblock=Core ice block-esque template
@@ -900,6 +906,22 @@ entities.auspicioushelper/TemplateCollisionModifier.attributes.description.log=P
 entities.auspicioushelper/TemplateCollisionModifier.attributes.name._loenn_display_template=[LÖNN] Display Template
 entities.auspicioushelper/TemplateCollisionModifier.attributes.description.tangible=If checked, solids in this template will be collidable to the uncollidable solids in moving templates.
 
+# auspicioushelper/TemplateRotator
+entities.auspicioushelper/TemplateRotator.placements.description.Template Rotator=It rotates
+entities.auspicioushelper/TemplateRotator.attributes.description.template=The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.
+entities.auspicioushelper/TemplateRotator.attributes.description.depthoffset=How much to offset the depth of contained entities. Accumulates from parent to child.
+entities.auspicioushelper/TemplateRotator.attributes.description.moveTimes=CHANNELABLE (list). How long each segment takes to traverse. If left blank, moveDegrees will act as a speed option.
+entities.auspicioushelper/TemplateRotator.attributes.description.moveDegrees=CHANNELABLE (list). The angles moved at each step. If moveTimes, is left blank, the first item here will be used as speed instead
+entities.auspicioushelper/TemplateRotator.attributes.description.pauseAmounts=CHANNELABLE (list). How long to pause after each step
+entities.auspicioushelper/TemplateRotator.attributes.description.initialDelay=The pause amount on entity spawn
+entities.auspicioushelper/TemplateRotator.attributes.description.radius=CHANNELABLE. Radius of the rotator
+entities.auspicioushelper/TemplateRotator.attributes.description.manual=WIP, do not put stuff here
+entities.auspicioushelper/TemplateRotator.attributes.description.easing=The easing to use over steps.
+entities.auspicioushelper/TemplateRotator.attributes.description.shakeTimes=how long to shake after completing each segment
+entities.auspicioushelper/TemplateRotator.attributes.description.count=the number of instances to spawn
+entities.auspicioushelper/TemplateRotator.attributes.description.offsets=offset
+entities.auspicioushelper/TemplateRotator.attributes.name._loenn_display_template=[LÖNN] Display Template
+
 
 ##################
 ###  triggers  ###
@@ -987,4 +1009,13 @@ triggers.auspicioushelper/triggerparenttrigger.attributes.description.onLeave=wh
 # auspicioushelper/Downtrans
 triggers.auspicioushelper/Downtrans.placements.description.Down transition overrider=Override the room's 'disable down transition' metadata setting while inside
 triggers.auspicioushelper/Downtrans.attributes.description.disabled=Whether down transitions are disabled in this trigger.
+
+# auspicioushelper/ChannelPosition
+triggers.auspicioushelper/ChannelPosition.placements.description.channel position=Get the position of a specified entity as a channel, lerping from 0 to 1
+triggers.auspicioushelper/ChannelPosition.attributes.description.xChannel=Store entity X position
+triggers.auspicioushelper/ChannelPosition.attributes.description.yChannel=Store entity Y position
+triggers.auspicioushelper/ChannelPosition.attributes.description.activeChannel=Only act when this channel is set
+triggers.auspicioushelper/ChannelPosition.attributes.description.onlyInside=Only do this when inside
+triggers.auspicioushelper/ChannelPosition.attributes.description.path=Path to entity
+triggers.auspicioushelper/ChannelPosition.attributes.description.Depth=for update ordering
 

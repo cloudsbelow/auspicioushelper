@@ -396,8 +396,10 @@ public static class ChannelState{
     public string ch;
     protected ChannelVal cache = null;
     public ChannelReader(string channel){
-      ch=channel?.RemovePrefix("@");
-      if(ch!=null) cache=new(double.NaN);
+      if(channel!=null){
+        ch = Util.removeWhitespace(channel.RemovePrefix("@"));
+        cache=new(double.NaN);
+      }
     }
   }
   internal class FloatCh:ChannelReader{
@@ -413,6 +415,7 @@ public static class ChannelState{
     }
   }
   internal static FloatCh ChannelFloat(this EntityData d, string attr, float def=default)=>new(d.String(attr,def.ToString()));
+  internal static FloatCh[] ChannelFloatList(this EntityData d, string attr)=>Util.listparseflat(d.Attr(attr,"")).ToArray().Map(x=>new FloatCh(x));
   internal class Vec2Ch{
     public FloatCh X {get; private set;}
     public FloatCh Y {get; private set;}

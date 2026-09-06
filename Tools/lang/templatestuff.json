@@ -262,7 +262,10 @@
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ],
-            "sfx": "The sound to play on non-normal dash collisions."
+            "sfx": "The sound to play on non-normal dash collisions.",
+            "noJumpBuffer": "Prevent jumps and climbjumps from being buffered out of dash state against this template",
+            "forceState": "Force a return to stnormal on hit",
+            "audioNeedsTrigger": "Only play audio when hitting a 'trigger' side"
         },
         "p_name": "Template Dashhit Modifier"
     },
@@ -284,7 +287,8 @@
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
             ],
-            "bounce": "Bounce inside"
+            "bounce": "Bounce inside",
+            "allowChDash": "Whether to allow communal helper dream tunnel dash to enter"
         },
         "p_name": "Template Dreamblock Modifier"
     },
@@ -302,7 +306,8 @@
             "only": "Only affects entities of the given type (found in the top bar of loenn entity menu, i.e. [modname]/[entityname])",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
-            ]
+            ],
+            "triggerShakeTime": "How long to shake when triggered"
         },
         "p_name": "Template Entity Modifier"
     },
@@ -348,7 +353,8 @@
             "triggerOnImpact": "Send a trigger event to parents when impacting the ground",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
-            ]
+            ],
+            "uncollidable_blocks": ""
         }
     },
     "entities.auspicioushelper/TemplateGluable": {
@@ -362,7 +368,8 @@
             "setProgressChannel": "Set channel to current progress. Varies by constraint mode.",
             "_loenn_display_template": [
                 "[LÖNN] Display Template"
-            ]
+            ],
+            "toCenter": "Use glue target's center as the target"
         },
         "p_name": "Template Gluable"
     },
@@ -634,6 +641,27 @@
                 "[LÖNN] Display Template"
             ],
             "tangible": "If checked, solids in this template will be collidable to the uncollidable solids in moving templates."
+        }
+    },
+    "entities.auspicioushelper/TemplateRotator": {
+        "p_name": "Template Rotator",
+        "description": "It rotates",
+        "placements": {
+            "template": "The name of the template to use. (<room>/<name>). If left empty, can be used in behavior chains and in connected tiles.",
+            "depthoffset": "How much to offset the depth of contained entities. Accumulates from parent to child.",
+            "moveTimes": "CHANNELABLE (list). How long each segment takes to traverse. If left blank, moveDegrees will act as a speed option.",
+            "moveDegrees": "CHANNELABLE (list). The angles moved at each step. If moveTimes, is left blank, the first item here will be used as speed instead",
+            "pauseAmounts": "CHANNELABLE (list). How long to pause after each step",
+            "initialDelay": "The pause amount on entity spawn",
+            "radius": "CHANNELABLE. Radius of the rotator",
+            "manual": "WIP, do not put stuff here",
+            "easing": "The easing to use over steps.",
+            "shakeTimes": "how long to shake after completing each segment",
+            "count": "the number of instances to spawn",
+            "offsets": "offset",
+            "_loenn_display_template": [
+                "[LÖNN] Display Template"
+            ]
         }
     }
 }

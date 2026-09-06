@@ -115,5 +115,17 @@
             "disabled": "Whether down transitions are disabled in this trigger."
         },
         "p_name": "Down transition overrider"
+    },
+    "triggers.auspicioushelper/ChannelPosition": {
+        "p_name": "channel position",
+        "description": "Get the position of a specified entity as a channel, lerping from 0 to 1",
+        "placements": {
+            "xChannel": "Store entity X position",
+            "yChannel": "Store entity Y position",
+            "activeChannel": "Only act when this channel is set",
+            "onlyInside": "Only do this when inside",
+            "path": "Path to entity",
+            "Depth": "for update ordering"
+        }
     }
 }

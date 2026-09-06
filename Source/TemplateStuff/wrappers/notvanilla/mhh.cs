@@ -54,8 +54,10 @@ public class MaddiesStuff{
   }
   public static void setup(){
     EntityParser.clarify(["MaxHelpingHand/SidewaysJumpThru","MaxHelpingHand/AttachedSidewaysJumpThru"], EntityParser.Types.unwrapped, (l,d,o,e)=>{
-      if(Level.EntityLoaders.TryGetValue("MaxHelpingHand/SidewaysJumpThru",out var orig)) 
-        EntityParser.currentParent.addEnt(new SidewaysJt(orig(l,d,o,e),EntityParser.currentParent));
+      if(Level.EntityLoaders.TryGetValue("MaxHelpingHand/SidewaysJumpThru",out var orig)){
+        var ent = new SidewaysJt(orig(l,d,o,e),EntityParser.currentParent);
+        EntityParser.currentParent.addEnt(ent);
+      }
       return null;
     });
   }

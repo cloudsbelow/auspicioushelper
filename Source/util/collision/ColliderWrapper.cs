@@ -140,12 +140,12 @@ public interface IColliderWrapper{
       base.Removed();
       wrapped?.Removed();
     }
-    public override float Top=>wrapped.Top;
-    public override float Left=>wrapped.Top;
-    public override float Width=>wrapped.Width;
-    public override float Height=>wrapped.Height;
-    public override float Right=>wrapped.Right;
-    public override float Bottom=>wrapped.Bottom;
+    public override float Top=>wrapped?.Top??0;
+    public override float Left=>wrapped?.Top??0;
+    public override float Width=>wrapped?.Width??0;
+    public override float Height=>wrapped?.Height??0;
+    public override float Right=>wrapped?.Right??0;
+    public override float Bottom=>wrapped?.Bottom??0;
 
     public override bool Collide(Vector2 point)=>wrapped.Collide(point);
     public override bool Collide(Circle c)=>wrapped.Collide(c);

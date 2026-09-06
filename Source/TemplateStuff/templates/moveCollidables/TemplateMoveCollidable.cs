@@ -172,94 +172,97 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
     return res;
   }
   public QueryIn getQself()=>getQself(this,useOwnUncollidable);
-  public static Vector2 TestMove(QueryBounds q, QueryIn s, int amount, Vector2 dirvec){
+  static Vector2 MoveAmount(Query qs, int amount, Vector2 dirvec){
     int dir = Math.Sign(amount);
     int i = 0;
     while(i!=amount){
-      if(q.Collide(s,dirvec*(i+dir))) return dirvec*i;
+      if(qs.q.Collide(qs.s,dirvec*(i+dir))) return dirvec*i;
       i+=dir;
     }
     return dirvec*amount;
   }
-  public static bool TestMove(Query qs, int amount, Vector2 dirvec)=>amount==0||TestMove(qs.q,qs.s,amount,dirvec)!=Vector2.Zero;
-  public static Vector2 TestLeniency(QueryBounds q, QueryIn s, Vector2 ioffset, int maxLeniency, Vector2 leniencyVec){
+  public static bool TestMove(Query qs, int amount, Vector2 dirvec)=>amount==0||MoveAmount(qs,amount,dirvec)!=Vector2.Zero;
+  public static Vector2 TestLeniency(Query qs, Vector2 ioffset, int maxLeniency, Vector2 leniencyVec, int cannotGo=0){
     for(int i=1; i<=maxLeniency; i++){
       for(int j=-1; j<=1; j+=2){
-        if(!q.Collide(s,i*j*leniencyVec+ioffset)) return i*j*leniencyVec+ioffset;
+        if(j==cannotGo) continue;
+        if(!qs.q.Collide(qs.s,i*j*leniencyVec+ioffset)) return i*j*leniencyVec+ioffset;
       }
     }
     return Vector2.Zero;
   }
-  public static bool TestMoveLeniency(QueryBounds q, QueryIn s, int amount, Vector2 dirvec, int maxLeniency, Vector2 leniencyVec, out Vector2 loc){
+  public static bool TestMoveLeniency(Query qs, int amount, Vector2 dirvec, int maxLeniency, Vector2 leniencyVec, out Vector2 loc, int cannotGo=0){
     if(amount == 0){
-      if(q.Collide(s,Vector2.Zero)){
-        loc = TestLeniency(q,s,Vector2.Zero,maxLeniency,leniencyVec);
+      if(qs.q.Collide(qs.s,Vector2.Zero)){
+        loc = TestLeniency(qs,Vector2.Zero,maxLeniency,leniencyVec, cannotGo);
         return loc==Vector2.Zero;
       }
       loc = Vector2.Zero;
       return false;
     }
-    var tryMove = TestMove(q,s,amount,dirvec);
+    var tryMove = MoveAmount(qs,amount,dirvec);
     if(tryMove != Vector2.Zero){
       loc = tryMove;
       return true;
     } else {
-      loc = TestLeniency(q,s,dirvec*Math.Sign(amount),maxLeniency,leniencyVec);
+      loc = TestLeniency(qs,dirvec*Math.Sign(amount),maxLeniency,leniencyVec, cannotGo);
       return loc==Vector2.Zero;
     }
   }
-  public static Vector2 TestMoveLeniency(QueryBounds q, QueryIn s, int amount, Vector2 dirvec, int maxLeniency, Vector2 leniencyVec){
-    bool res = TestMoveLeniency(q,s,amount,dirvec,maxLeniency,leniencyVec, out var v);
+  public static Vector2 TestMoveLeniency(Query qs, int amount, Vector2 dirvec, int maxLeniency, Vector2 leniencyVec, int cannotGo=0){
+    bool res = TestMoveLeniency(qs,amount,dirvec,maxLeniency,leniencyVec, out var v, cannotGo);
     return v;
   }
-  public bool MoveHCollideExact(QueryBounds q, QueryIn s, int amount, int leniency){
-    Vector2 v = leniency==0? TestMove(q,s,amount,new Vector2(1,0)) : TestMoveLeniency(q,s,amount,new Vector2(1,0),leniency,new Vector2(0,1));
+  public bool MoveHCollideExact(Query qs, int amount, int leniency, int cannotGo=0){
+    Vector2 v = leniency==0? MoveAmount(qs,amount,new Vector2(1,0)) : 
+      TestMoveLeniency(qs,amount,new Vector2(1,0),leniency,new Vector2(0,1), cannotGo);
+
     if(v!=Vector2.Zero){
       Position+=v;
       childRelposSafe();
-      if(q.breakable!=null) s.BreakStuff(q.breakable,Util.getCollisionDir(v));
+      qs.Break(Util.getCollisionDir(v));
       return false;
     }
     return true;
   }
-  public bool MoveHCollideExact(Query qs, int amount, int leniency)=>MoveHCollideExact(qs.q,qs.s,amount,leniency);
-  public bool MoveVCollideExact(QueryBounds q, QueryIn s, int amount, int leniency){
-    Vector2 v = leniency==0? TestMove(q,s,amount,new Vector2(0,1)) : TestMoveLeniency(q,s,amount,new Vector2(0,1),leniency,new Vector2(1,0));
+  public bool MoveVCollideExact(Query qs, int amount, int leniency, int cannotGo=0){
+    Vector2 v = leniency==0? MoveAmount(qs,amount,new Vector2(0,1)) : 
+      TestMoveLeniency(qs,amount,new Vector2(0,1),leniency,new Vector2(1,0), cannotGo);
+      
     if(v!=Vector2.Zero){
       Position+=v;
       childRelposSafe();
-      if(q.breakable!=null) s.BreakStuff(q.breakable,Util.getCollisionDir(v));
+      qs.Break(Util.getCollisionDir(v));
       return false;
     }
-    
     return true;
   }
-  public bool MoveVCollideExact(Query qs, int amount, int leniency)=>MoveVCollideExact(qs.q,qs.s,amount,leniency);
-  public bool MoveHCollide(QueryBounds q, QueryIn s, float amount, int leniency){
+  public bool MoveHCollide(Query qs, float amount, int leniency, int cannotGo=0){
     if(Math.Sign(movementCounter.X)!=Math.Sign(amount)) movementCounter.X = (float)Math.Clamp(movementCounter.X,-0.49,0.49);
     movementCounter.X+=amount;
     int dif = (int)Math.Round(movementCounter.X);
-    bool fail = dif!=0 && MoveHCollideExact(q,s,dif,leniency);
+    bool fail = dif!=0 && MoveHCollideExact(qs,dif,leniency, cannotGo);
     if(!fail) movementCounter.X-=dif;
     else movementCounter.X = (float)Math.Clamp(movementCounter.X, -0.501,0.501);
     return fail;
   }
-  public bool MoveHCollide(Query qs, float amount, int leniency)=>MoveHCollide(qs.q,qs.s,amount,leniency);
-  public bool MoveVCollide(QueryBounds q, QueryIn s, float amount, int leniency){
+  public bool MoveVCollide(Query qs, float amount, int leniency, int cannotGo=0){
     if(Math.Sign(movementCounter.Y)!=Math.Sign(amount)) movementCounter.Y = (float)Math.Clamp(movementCounter.Y,-0.49,0.49);
     movementCounter.Y+=amount;
     int dif = (int)Math.Round(movementCounter.Y);
-    bool fail = dif!=0 && MoveVCollideExact(q,s,dif,leniency);
+    bool fail = dif!=0 && MoveVCollideExact(qs,dif,leniency, cannotGo);
     if(!fail) movementCounter.Y-=dif;
     else movementCounter.Y = (float)Math.Clamp(movementCounter.Y, -0.501,0.501);
     return fail;
   }
-  public bool MoveVCollide(Query qs, float amount, int leniency)=>MoveVCollide(qs.q,qs.s,amount,leniency);
-  public class Query{
+  public struct Query{
     public QueryBounds q;
     public QueryIn s;
     public Query(QueryBounds q, QueryIn s){
       this.q=q; this.s=s;
+    }
+    public void Break(CollisionDirection d){
+      if(q.breakable!=null) s.BreakStuff(q.breakable,d);
     }
   }
   public struct BreakableRect{
@@ -310,7 +313,7 @@ public class TemplateMoveCollidable:TemplateDisappearer, ITemplateTriggerable{
         fbs.Add(new(f));
       }
       foreach(TemplateBlock b in self.Scene.Tracker.GetEntities<TemplateBlock>()){
-        if(!b.breakableByBlocks || self.PropagateEither(b,Propagation.Shake)) continue;
+        if(!b.breakableByBlocks || self.PropagateEither(b, Propagation.None)) continue;
         foreach(Platform p in b.GetChildren<Platform>()){
           if(p is Solid && qbounds.CollideFr(new(p))) fbs.Add(new(p));
           else if(useJts && p is JumpThru jt && qbounds.CollideFr(new(jt))) fbs.Add(new(jt));

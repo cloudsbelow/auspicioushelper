@@ -106,7 +106,7 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
         ownLiftspeed = movevec*speed;
         collideflag = MoveHCollide(qs,speed*movevec.X*Engine.DeltaTime,maxleniency);
         if(collideflag) ownLiftspeed.X=0;
-        if(MoveVCollide(qs,speed*movevec.Y*Engine.DeltaTime,0)) ownLiftspeed.Y=0;
+        if(MoveVCollide(qs,speed*movevec.Y*Engine.DeltaTime,0, -Math.Sign(movedir.X))) ownLiftspeed.Y=0;
       } else {
         if(cansteer && p != null && p.StateMachine.state == 1 && Input.MoveX.Value!=0 && hasPlayerRider()){
           if(steerdelay>0){
@@ -122,7 +122,7 @@ public class TemplateMoveBlock:TemplateMoveCollidable{
         ownLiftspeed = movevec*speed;
         collideflag = MoveVCollide(qs,speed*movevec.Y*Engine.DeltaTime,maxleniency);
         if(collideflag) ownLiftspeed.Y=0;
-        if(MoveHCollide(qs,speed*movevec.X*Engine.DeltaTime,0)) ownLiftspeed.X=0;
+        if(MoveHCollide(qs,speed*movevec.X*Engine.DeltaTime,0, -Math.Sign(movedir.Y))) ownLiftspeed.X=0;
       }
       if(collideflag){
         movesfx.Param("arrow_stop", 1f);

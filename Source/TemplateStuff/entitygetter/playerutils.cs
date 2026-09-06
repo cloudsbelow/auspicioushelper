@@ -58,9 +58,10 @@ public static class PlayerHelper{
     CustomSpikes.spikeCheck(p);
     if(TemplateDreamblockModifier.CollideHandler(p,d)) goto end;
     orig(p,d);
-    d.Hit?.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(
-      new TouchInfo(p,TouchInfo.Type.collideH)
-    );
+    if(MaddiesIop.fakesound is {} fst && (d.Hit?.GetType().IsAssignableTo(fst)??false)){
+      Entity jt = p.CollideFirstSidewaysJt(p.Position+d.Direction, d.Direction.X>0);
+      jt?.Get<ChildMarker>()?.TriggerTouch(new (p, TouchInfo.Type.collideH));
+    } else d.Hit?.Get<ChildMarker>()?.TriggerTouch(new TouchInfo(p,TouchInfo.Type.collideH));
     end:;
   }
   [OnLoad.OnHook(typeof(Player),nameof(Player.OnCollideV))]

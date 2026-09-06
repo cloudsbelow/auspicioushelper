@@ -14,11 +14,14 @@ namespace Celeste.Mod.auspicioushelper.Wrappers;
 public class BasicMultient:ITemplateChild{
   public Template parent{get;set;}
   public Template.Propagation prop {get;} = Template.Propagation.Shake;
+  public enum Flags{
+    None=0, Detatched=1, DonotRemove=2, Emancipated=3
+  }
   public class EntEnt{ //entity entry, say it faster
     public Vector2 offset;
     public Vector2 lpos;
     public Entity e;
-    public bool detatched = false;
+    public Flags detatched = Flags.None;
     public EntEnt(Entity e, Vector2 o){
       offset=o; this.e=e;
       if(e is Decal) offset = o.Round();
@@ -50,7 +53,7 @@ public class BasicMultient:ITemplateChild{
       if(en.e is Decal){
         en.e.Position=nloc+en.offset;
       }else {
-        if(en.detatched) continue;
+        if((en.detatched&Flags.Detatched) != 0) continue;
         if(en.e.Position != en.lpos){
           en.offset = en.e.Position-lloc;
         }
@@ -67,11 +70,11 @@ public class BasicMultient:ITemplateChild{
     }
   }
   public void AddAllChildren(List<Entity> l){
-    foreach(EntEnt ent in ents) if(!ent.detatched) l.Add(ent.e);
+    foreach(EntEnt ent in ents) if((ent.detatched&Flags.Detatched) != 0) l.Add(ent.e);
   }
   public void parentChangeStat(int vis, int col, int act){
     foreach(EntEnt ent in ents){
-      if(ent.detatched) continue;
+      if((ent.detatched&Flags.Detatched) != 0) continue;
       if(vis!=0) ent.e.Visible = vis>0; 
       if(col!=0 && ent.e is not Decal){
         if(col<0) IColliderWrapper.AddClass(ent.e, BlockingCollider.instance);
@@ -82,7 +85,7 @@ public class BasicMultient:ITemplateChild{
   }
   public void destroy(bool particles){
     foreach(EntEnt ent in ents){
-      if(ent.detatched) continue;
+      if((ent.detatched&Flags.DonotRemove) != 0) continue;
       ent.e.RemoveSelf();
     }
     ents.Clear();
@@ -99,12 +102,12 @@ public class BasicMultient:ITemplateChild{
   [OnLoad.OnHook(typeof(Follower),nameof(Follower.OnGainLeaderUtil))]
   static void Hook(On.Celeste.Follower.orig_OnGainLeaderUtil orig, Follower f, Leader l){
     orig(f,l);
-    if(f.Entity?.Get<ChildMarker>()?.data is EntEnt ent) ent.detatched = true;
+    if(f.Entity?.Get<ChildMarker>()?.data is EntEnt ent) ent.detatched |= Flags.Emancipated;
   }
   [OnLoad.OnHook(typeof(Follower),nameof(Follower.OnLoseLeaderUtil))]
   static void Hook(On.Celeste.Follower.orig_OnLoseLeaderUtil orig, Follower f){
     orig(f);
-    if(f.Entity?.Get<ChildMarker>()?.data is EntEnt ent) ent.detatched = false;
+    if(f.Entity?.Get<ChildMarker>()?.data is EntEnt ent) ent.detatched &= ~Flags.Emancipated;
   }
   [OnLoad.OnHook(typeof(StaticMover), nameof(StaticMover.TriggerPlatform))]
   static void Hook(On.Celeste.StaticMover.orig_TriggerPlatform orig, StaticMover sm){

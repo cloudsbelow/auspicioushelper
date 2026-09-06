@@ -257,8 +257,14 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   static void triggerFromArr(List<Entity> l, TouchInfo t){
     foreach(Entity p in l) if(p.Scene!=null){
       p.Get<ChildMarker>()?.parent.GetFromTree<TemplateTriggerModifier>()?.OnTrigger(t);
-    } 
+    }
   }
+  static void triggerJt(Player p, TouchInfo t, int dir){
+    DebugConsole.Write("",dir);
+    foreach(var jt in p.CollideAllSidewaysJt(p.Position-Vector2.UnitX*dir, dir<0)){
+      jt.Get<ChildMarker>()?.TriggerTouch(t);
+    }
+  } 
   static void Hook(On.Celeste.Player.orig_Jump orig, Player p, bool a, bool b){
     bool useCoyote = p.jumpGraceTimer>0 && p.jumpGraceTimer<0.1;
     orig(p,a,b);
@@ -275,14 +281,17 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
   static void Hook(On.Celeste.Player.orig_SuperWallJump orig, Player p, int direction){
     orig(p,direction);
     triggerFromArr(p.temp, new TouchInfo(p, TouchInfo.Type.wallbounce));
+    triggerJt(p, new TouchInfo(p, TouchInfo.Type.wallbounce), direction*5);
   }
   static void Hook(On.Celeste.Player.orig_WallJump orig, Player p, int direction){
     orig(p,direction);
     triggerFromArr(p.temp, new TouchInfo(p, TouchInfo.Type.walljump));
+    triggerJt(p, new TouchInfo(p, TouchInfo.Type.walljump), direction*3);
   }
   static void Hook(On.Celeste.Player.orig_ClimbJump orig, Player p){
     orig(p);
     triggerFromArr(p.CollideAll<Platform>(p.Position+Vector2.UnitX*(float)p.Facing*4f),new TouchInfo(p,TouchInfo.Type.climbjump));
+    triggerJt(p, new TouchInfo(p, TouchInfo.Type.climbjump), -3*(int)p.Facing);
   }
   static void Hook(On.Celeste.Player.orig_Update orig, Player p){
     orig(p);
@@ -291,6 +300,7 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     }
     if(p.StateMachine.State == Player.StClimb){
       triggerFromArr(p.CollideAll<Platform>(p.Position + Vector2.UnitX*(float)p.Facing), new TouchInfo(p, TouchInfo.Type.climbing));
+      triggerJt(p, new TouchInfo(p, TouchInfo.Type.climbing), -(int)p.Facing);
     }
     var m = PlatCache.Get(p);
     if(CommunalHelperIop.InTunnel(p)){

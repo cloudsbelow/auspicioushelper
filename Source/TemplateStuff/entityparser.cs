@@ -175,7 +175,7 @@ public static class EntityParser{
           Action<Platform> old = sm.OnAttach;
           sm.OnAttach = p=>{
             //deliberately no null check because otherwise this is a Bad Situation
-            (sm.Entity.Get<ChildMarker>().data as BasicMultient.EntEnt).detatched=true;
+            (sm.Entity.Get<ChildMarker>().data as BasicMultient.EntEnt).detatched |= BasicMultient.Flags.Detatched;
             if(old!=null) old(p);
           };
         }

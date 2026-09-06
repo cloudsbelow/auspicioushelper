@@ -22,6 +22,7 @@ public class TemplateGluable:Template, IRelocateTemplates.IDontRelocate{
   Vector2 offset = Vector2.Zero;
   protected override Vector2 virtLoc=>Position+offset;
   float usedSpd=0;
+  bool tocenter = false;
   string setProgressChannel;
   public override void relposTo(Vector2 loc, Vector2 parentLiftspeed) {
     if(constraint!=Constraint.None){
@@ -45,6 +46,7 @@ public class TemplateGluable:Template, IRelocateTemplates.IDontRelocate{
     setProgressChannel = d.String("setProgressChannel");
     maxspeed = d.ChannelFloat("maxSpeed",float.PositiveInfinity);
     this.d=d;
+    tocenter = d.Bool("toCenter",false);
   }
   static Regex matchReg = new(@"^\s*\d+\s*(?:[\/,]\s*\d+\s*)*$",RegexOptions.Compiled);
   static void Search(EntityData d){
@@ -87,9 +89,10 @@ public class TemplateGluable:Template, IRelocateTemplates.IDontRelocate{
     float dt = Engine.DeltaTime;
     float safedt = dt==0?0.001f:dt;
     float delta;
+    Vector2 target = tocenter? gluedto.Center : gluedto.Position;
     switch(constraint){
       case Constraint.spline:
-        Vector2 targ = gluedto.Position-Position;
+        Vector2 targ = target-Position;
         float sign = Vector2.Dot(targ-spos.pos,spos.tangent);
         if(Math.Abs(sign)/spos.tangent.Length()<0.5f) break;
         float allow = sign>0?maxspeed-usedSpd:maxspeed+usedSpd;
@@ -104,7 +107,7 @@ public class TemplateGluable:Template, IRelocateTemplates.IDontRelocate{
           goto relpos;
         }
       break; case Constraint.OnlyX:
-        delta = clampBudget(gluedto.Position.X-virtLoc.X,dt);
+        delta = clampBudget(target.X-virtLoc.X,dt);
         if(delta!=0){
           ls.AddSpeed(Vector2.UnitX*delta/safedt);
           offset.X += delta;
@@ -112,7 +115,7 @@ public class TemplateGluable:Template, IRelocateTemplates.IDontRelocate{
           goto relpos;
         }
       break; case Constraint.OnlyY:
-        delta = clampBudget(gluedto.Position.Y-virtLoc.Y,dt);
+        delta = clampBudget(target.Y-virtLoc.Y,dt);
         if(delta!=0){
           ls.AddSpeed(Vector2.UnitY*delta/safedt);
           offset.Y += delta;
@@ -120,12 +123,12 @@ public class TemplateGluable:Template, IRelocateTemplates.IDontRelocate{
           goto relpos;
         }
       break; default:
-        delta = clampBudget((gluedto.Position-Position).Length(),dt);
+        delta = clampBudget((target-Position).Length(),dt);
         if(delta!=0){
-          Vector2 move = (gluedto.Position-Position).SafeNormalize(delta);
+          Vector2 move = (target-Position).SafeNormalize(delta);
           ls.AddSpeed(move/safedt);
           Position+=move;
-          setProgress((gluedto.Position-Position).Length());
+          setProgress((target-Position).Length());
           goto relpos;
         }
       break;

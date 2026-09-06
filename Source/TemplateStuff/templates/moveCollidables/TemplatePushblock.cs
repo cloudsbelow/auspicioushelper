@@ -71,8 +71,8 @@ public class TemplatePushblock:TemplateMoveCollidable{
   public override void Update() {
     base.Update();
     if(detatched){
-      var q = getq((speed*Engine.DeltaTime).Abs()+Vector2.UnitY);
-      grounded = speed.Y==0 && TestMoveLeniency(q.q,q.s, 1, Vector2.UnitY, 0, Vector2.UnitX)==Vector2.Zero;
+      var qs = getq((speed*Engine.DeltaTime).Abs()+Vector2.UnitY);
+      grounded = speed.Y==0 && TestMoveLeniency(qs, 1, Vector2.UnitY, 0, Vector2.UnitX)==Vector2.Zero;
       if(grounded && speed==Vector2.Zero) nophysicstime = giveNoPhysicsStill;
       if(!grounded || speed.Y>terminalVelocity){
         if(nophysicstime<=0)speed.Y = Calc.Approach(speed.Y,terminalVelocity,gravity*Engine.DeltaTime);
@@ -81,10 +81,10 @@ public class TemplatePushblock:TemplateMoveCollidable{
       if(nophysicstime>0) nophysicstime-=Engine.DeltaTime;
       ownLiftspeed = speed;
       if(speed!=Vector2.Zero){
-        if(MoveHCollide(q, speed.X*Engine.DeltaTime, leniency)){
+        if(MoveHCollide(qs, speed.X*Engine.DeltaTime, leniency)){
           speed.X = -speed.X*reflectX;
         }
-        if(MoveVCollide(q, speed.Y*Engine.DeltaTime, leniency)){
+        if(MoveVCollide(qs, speed.Y*Engine.DeltaTime, leniency, -Math.Sign(speed.X))){
           speed.Y=0;
           Audio.Play(ImpactSfx,Position);
         }

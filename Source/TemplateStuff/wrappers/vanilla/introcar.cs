@@ -51,6 +51,10 @@ public class IntroCarW:IntroCar, ISimpleEnt{
     base.Added(scene);
     parent.AddNewEnts([wheels]);
   }
+  public override void Removed(Scene scene) {
+    scene.Remove(wheels);
+    base.Removed(scene);
+  }
   bool ITemplateChild.hasPlayerRider(){
     return UpdateHook.cachedPlayer?.IsRiding(this)??false;
   }

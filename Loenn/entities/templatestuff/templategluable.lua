@@ -29,6 +29,7 @@ entity.placements = {
       maxSpeed = "",
       constraint = "None",
       setProgressChannel="",
+      toCenter=true,
       
       _loenn_display_template = true,
     }

@@ -253,4 +253,23 @@ public static partial class Util{
   public static float CRemap(float val, float min, float max, float newMin = 0f, float newMax = 1f){
     return Util.Clamp((val - min) / (max - min), 0f, 1f) * (newMax - newMin) + newMin;
   }
+
+  internal class DerivativeThing{
+    ChannelState.FloatCh flt;
+    float llvalue, lvalue, ldt = 1f/60f, deriv;
+    public float Derivative=>deriv;
+    public float Value=>lvalue;
+    internal DerivativeThing(ChannelState.FloatCh flt){
+      this.flt = flt;
+      lvalue = flt;
+    }
+    public float prog(float dt){
+      if(dt!=0){
+        ldt = dt;
+        llvalue = lvalue;
+      }
+      lvalue = flt;
+      return deriv = (lvalue-llvalue)/ldt;
+    }
+  }
 }

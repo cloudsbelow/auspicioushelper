@@ -77,14 +77,7 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
       while(belt.Count>0 && belt.Peek().extent>=spline.segments-1){
         var child = belt.Dequeue();
         if(!child.active){
-          List<Template> toEmancipate = new();
-          foreach(var te in child.te.children) if(te is Template tem) toEmancipate.Add(tem);
-          foreach(var te in toEmancipate){
-            te.emancipate();
-            children.Add(te);
-            te.parent = this;
-          }
-          child.te.destroy(false);
+          children.Add(child.te);
         } else {
           child.te.destroy(false);
         }
@@ -121,6 +114,7 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
     foreach(var desc in belt) if(desc.te == f){
       desc.active=false;
       desc.removedChild = c;
+      desc.te.ownLiftspeed = Vector2.Zero;
       return;
     }
   }
@@ -131,9 +125,6 @@ public class ConveyerTemplate:TemplateInstanceable, IRemovableContainer{
   }
   public bool RestoreChild(ITemplateChild c){
     foreach(var desc in belt) if(desc.removedChild==c){
-      if(c is Template te) te.emancipate();
-      c.parent = desc.te;
-      desc.te.children.Add(c);
       desc.active = true;
       desc.sp.setSidedFromDir(desc.extent,1);
       desc.te.ownLiftspeed = desc.sp.tangent*speed;
