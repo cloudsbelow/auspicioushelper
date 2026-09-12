@@ -10,6 +10,7 @@ using Celeste.Mod.Helpers;
 using FMOD.Studio;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
@@ -179,6 +180,9 @@ public class BackdropCapturer{
   static void SkipHook(ILContext ctx){
     ILCursor c = new(ctx);
     ILLabel target = null;
+    VariableDefinition last = new(ctx.Import(typeof(BackdropRenderer)));
+    ctx.Body.Variables.Add(last);
+
     if(c.TryGotoNextBestFit(MoveType.After,
       itr=>itr.MatchStloc2(),
       itr=>itr.MatchLdloc2(),
@@ -190,9 +194,12 @@ public class BackdropCapturer{
       c.EmitBrfalse(target);
     } else DebugConsole.WriteFailure("Failed to add skip hook", true);
 
+    var finfo = typeof(BackdropCapturer).GetField(nameof(currentRenderer),Util.GoodBindingFlags);
     c = new(ctx);
+    c.EmitLdsfld(finfo);
+    c.EmitStloc(last);
     c.EmitLdarg0();
-    c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentRenderer),Util.GoodBindingFlags));
+    c.EmitStsfld(finfo);
     // c.EmitLdsfld(typeof(MaterialPipe).GetField(nameof(MaterialPipe.gd),Util.GoodBindingFlags));
     // c.EmitCallvirt(typeof(GraphicsDevice).GetMethod(nameof(GraphicsDevice.GetRenderTargets)));
     // c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentTarget),Util.GoodBindingFlags));
@@ -203,7 +210,7 @@ public class BackdropCapturer{
     }
     c = new(ctx);
     while(c.TryGotoNext(MoveType.Before,itr=>itr.MatchRet())){
-      c.EmitLdnull();
+      c.EmitLdloc(last);
       c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentRenderer),Util.GoodBindingFlags));
       // c.EmitLdnull();
       // c.EmitStsfld(typeof(BackdropCapturer).GetField(nameof(currentTarget),Util.GoodBindingFlags));

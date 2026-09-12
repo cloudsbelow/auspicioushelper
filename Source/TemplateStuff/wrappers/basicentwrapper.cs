@@ -70,7 +70,7 @@ public class BasicMultient:ITemplateChild{
     }
   }
   public void AddAllChildren(List<Entity> l){
-    foreach(EntEnt ent in ents) if((ent.detatched&Flags.Detatched) != 0) l.Add(ent.e);
+    foreach(EntEnt ent in ents) if((ent.detatched&Flags.DonotRemove) == 0) l.Add(ent.e);
   }
   public void parentChangeStat(int vis, int col, int act){
     foreach(EntEnt ent in ents){

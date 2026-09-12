@@ -34,7 +34,7 @@ public partial class FancyWater:Water,ISimpleEnt,ConnectedBlocks.ICustomCheckCol
   List<FloatRect> fills;
   FloatRect renderBounds;
   float storedTime;
-  bool verticalShrink,copy,die,inView=true;
+  bool verticalShrink,copy,die,inView=true,isDone;
   public bool jumpOut;
   MiptileCollider mtc;
   public FancyWater(EntityData d, Vector2 o):base(d.Position+o,false,false,d.Width,d.Height){
@@ -139,7 +139,7 @@ public partial class FancyWater:Water,ISimpleEnt,ConnectedBlocks.ICustomCheckCol
     if(leader!=null || copy) return;
     var allThings = Scene.Tracker.GetEntities<FancyWater>().MapAndFilter(o=>{
       var ow = (FancyWater)o;
-      return((new IntRect(ow),ow),ow.parent==parent && ow!=this && ow.leader==null);
+      return((new IntRect(ow),ow),ow.parent==parent && ow!=this && ow.leader==null && !ow.isDone);
     });
     List<(IntRect,FancyWater)> things = new(){(new(this),this)};
     int idx = 0;
@@ -186,10 +186,10 @@ public partial class FancyWater:Water,ISimpleEnt,ConnectedBlocks.ICustomCheckCol
     Anti0fZone.SolidAnti0fComp.AddReason(Scene.Tracker.GetEntity<Player>(), "fancyWater", ()=>UpdateHook.cachedPlayer.CollideCheck<FancyWater>());
 
     renderBounds = FloatRect.fromCorners(min-Position, max-Position);
+    isDone = true;
   }
 
   static bool checkFancy(Player p){
-    DebugConsole.Write("In check", p.StateMachine.state,p.CollideFirst<FancyWater>()!=null);
     return p.CollideFirst<FancyWater>()!=null;
   }
   [ResetEvents.ILHook(typeof(Player),nameof(Player.orig_Update))]

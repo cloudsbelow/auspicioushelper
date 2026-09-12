@@ -11,19 +11,20 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/MaterialApplier")]
 [MapenterEv(nameof(Search))]
-public class MaterialAdder:Entity, IOverrideVisualsEasy{
+public class MaterialAdder:Entity{
   static void Search(EntityData d){
     if(d.Bool("can_be_ID_path",true)) foreach(var i in Util.listparseflat(d.Attr("identifier"))){
       Finder.enqueueIdent(i.Split(':')[0].TrimEnd());
     }
   }
-  public HashSet<OverrideVisualComponent> comps{get;} = new();
+  VisualManager vm;
   ChannelTracker ct=null;
   EntityData dat;
   IOverrideVisuals l;
   List<(string,string)> needs;
   List<(string,string)> types;
   bool dnr;
+  short priority;
 
   public MaterialAdder(EntityData d, Vector2 o):base(d.Position+o){
     dat = d;
@@ -37,6 +38,8 @@ public class MaterialAdder:Entity, IOverrideVisualsEasy{
     });
     dnr = dat.Bool("dontNormalRender",true);
     Visible = false;
+    priority = (short)dat.Int("priority",-1);
+    Add(vm=new());
   }
   void AddEntity(Entity e)=>AddEntity(e,null);
   void AddEntity(Entity e, string options){
@@ -47,8 +50,14 @@ public class MaterialAdder:Entity, IOverrideVisualsEasy{
       var comp = OverrideVisualComponent.Get(e);
       if(options != null) comp=comp.withOptions(options);
       bool active = ct==null?true:ct.value!=0;
-      comp.AddToOverride(new(l, (short)dat.Int("priority",-1), dnr && active, active));
-      comp.AddToOverride(new(this, -30000, false, true));
+      comp.AddToOverride(new(l, priority, dnr && active, active));
+      if(comp.managers!=null) foreach(var m in comp.managers){
+        if(m.Entity is MaterialAdder other && other.l==l){
+          other.vm.unmanage(comp);
+          break;
+        }
+      }
+      vm.manage(comp);
     }
   }
   void Try(){
@@ -61,7 +70,7 @@ public class MaterialAdder:Entity, IOverrideVisualsEasy{
   }
   public override void Awake(Scene scene) {
     if(dat.tryGetStr("toggleChannel", out var ch)) ct = new(ch,(nval)=>{
-      foreach(var comp in comps){
+      foreach(var comp in vm){
         if(nval!=0) comp.SetStealUse(l, dnr, true);
         else comp.SetStealUse(l,false,false);
       }
@@ -81,17 +90,16 @@ public class MaterialAdder:Entity, IOverrideVisualsEasy{
     Try();
   }
   public void OnRemove(){
-    foreach(var comp in comps.ToList()){
+    foreach(var comp in vm.ToList()){
       comp.RemoveFromOverride(l);
-      comp.RemoveFromOverride(this);
     }
   }
   public override void Removed(Scene scene) {
-    base.Removed(scene);
     OnRemove();
+    base.Removed(scene);
   }
   public override void SceneEnd(Scene scene) {
-    base.SceneEnd(scene);
     OnRemove();
+    base.SceneEnd(scene);
   }
 }

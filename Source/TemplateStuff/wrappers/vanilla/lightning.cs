@@ -17,6 +17,8 @@ namespace Celeste.Mod.auspicioushelper;
 
 [Tracked]
 public class LightningW:Lightning, ISimpleEnt{
+  [ResetEvents.NullOn(ResetEvents.Times.LvlReset)]
+  static bool addingFake;
   public Vector2 toffset {get;set;}
   public Template parent {get;set;}
   Template.Propagation ITemplateChild.prop=> Template.Propagation.None;
@@ -41,6 +43,13 @@ public class LightningW:Lightning, ISimpleEnt{
     Collider = new CachedColliderlist(items.Map(x=>new Hitbox(x.w-2,x.h-2,x.x+1,x.y+1)).ToArray());
     items.Clear();
     items=null;
+
+    if(scene.Tracker.GetEntity<LightningRenderer>() is not {} rend) throw new Exception("Lightning renderer does not exist");
+    if(rend.list.Count==0 && !addingFake){
+      addingFake = true;
+      scene.Add(new Lightning(Vector2.One*1000000, 0, 0, null, 1){Collidable=false, Visible=false});
+      UpdateHook.AddAfterUpdate(()=>addingFake=false, false, true);
+    }
   }
   public IEnumerator MoveRoutine(float moveTime){
     float timer = 0;

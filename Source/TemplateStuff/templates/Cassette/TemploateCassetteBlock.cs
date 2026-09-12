@@ -13,8 +13,8 @@ namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateCassetteBlock")]
 [Tracked(true)]
-public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITemplateChild, Template.IRegisterEnts{
-  
+public class TemplateCassetteBlock:TemplateDisappearer, ITemplateChild, Template.IRegisterEnts{
+  VisualManager vm;
   public string channel{get;set;}
   enum State {
     gone, trying, there, popManifest
@@ -36,6 +36,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
     prop = prop&~Propagation.Inside;
     doBoost = d.Bool("do_boost",false);
     paranoid = d.Bool("refreshEntsAlways",false);
+    Add(vm=new());
   }
   public override void addTo(Scene scene) {
     bool gone = new ChannelTracker(channel, setChVal).AddTo(this).value == 0;
@@ -111,7 +112,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
       if(!flag) return; 
     }
     if(layer!=null){
-      foreach(var c in comps) c.SetStealUse(layer,false,false);
+      foreach(var c in vm) c.SetStealUse(layer,false,false);
       foreach(var c in GetChildren<Solid>(Propagation.Inside)) if(c.Get<TileOccluder>() is {} to)to.selfVis=true;
     }
     there = State.there;
@@ -132,7 +133,7 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
           hoffset = 2;
           childRelposSafe();
         }
-        if(layer!=null) foreach(var c in comps){
+        if(layer!=null) foreach(var c in vm){
           c.SetStealUse(layer,true,true);
           if(c.Entity is Solid s && s.Get<TileOccluder>() is {} to) to.selfVis=false;
         }
@@ -164,13 +165,10 @@ public class TemplateCassetteBlock:TemplateDisappearer, IOverrideVisuals, ITempl
     if(layer!=null) foreach(Entity e in l){
       //DebugConsole.Write("Adding entity to cassette", e);
       var c = OverrideVisualComponent.Get(e);
-      c.AddToOverride(new(this, -30000, false, true));
+      vm.manage(c);
       c.AddToOverride(new(layer, -10000+tdepth, ghost,ghost));
       if(layer.fg!=null) c.AddToOverride(new(layer.fg,1000-tdepth, true,true));
     }
     base.RegisterEnts(l);
   }
-  public HashSet<OverrideVisualComponent> comps = new();
-  public void AddC(OverrideVisualComponent c)=>comps.Add(c);
-  public void RemoveC(OverrideVisualComponent c)=>comps.Remove(c);
 }

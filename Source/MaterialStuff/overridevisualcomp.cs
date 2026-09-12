@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -25,6 +26,8 @@ public class OverrideVisualComponent:OnAnyRemoveComp{
   public bool nvis=true;
   public bool overriden;
   public List<VisualOverrideDescr> parents = new();
+  public List<VisualManager> managers;
+  
   public static OverrideVisualComponent Get(Entity e){
     if(e.Get<OverrideVisualComponent>() is {} o) return o;
     OverrideVisualComponent comp;
@@ -137,6 +140,7 @@ public class OverrideVisualComponent:OnAnyRemoveComp{
       if(p.use && !hasBeenStolen) p.o.AddC(this);
       if(p.steal) hasBeenStolen=true;
     }
+    if(c.managers!=null) foreach(var m in c.managers) m.manage(this);
     setNvis(!hasBeenStolen);
   }
   public static void EnsureParity(Entity fromEnt, Entity toEnt)=>EnsureParity(TryGet(fromEnt), toEnt);
@@ -155,13 +159,26 @@ public class OverrideVisualComponent:OnAnyRemoveComp{
         goto align;
       }
     }
+    var srcm = src.managers;
+    var dstm = dst.managers;
+    if((srcm==null) != (dstm==null)) goto align;
+    if(srcm!=null){
+      if(srcm.Count != dstm.Count) goto align;
+      for(int i=0; i<srcm.Count; i++){
+        if(srcm[i]!=dstm[i]) goto align;
+      }
+    }
     return;
     align:
       dst.CopyOther(src);
   }
   public override void OnRemove() {
-    foreach(var p in parents)p.o.RemoveC(this);
+    foreach(var p in parents) p.o.RemoveC(this);
     parents.Clear();
+    if(managers!=null) foreach(var m in managers){
+      m.CompRemoved(this);
+    }
+    managers=null;
     nvis=true;
     overriden=false;
   }
@@ -226,4 +243,27 @@ public interface IOverrideVisualsEasy:IOverrideVisuals{
   public class Class:IOverrideVisualsEasy{
     public HashSet<OverrideVisualComponent> comps {get;}=new();
   }
+}
+public class VisualManager():OnAnyRemoveComp(false,false), IEnumerable<OverrideVisualComponent>{
+  HashSet<OverrideVisualComponent> comps = new();
+  public override void OnRemove(){
+    foreach(var comp in comps){
+      comp.managers.Remove(this);
+      if(comp.managers.Count==0) comp.managers=null;
+    }
+  }
+  public void CompRemoved(OverrideVisualComponent comp)=>comps.Remove(comp);
+  public void manage(OverrideVisualComponent comp){
+    if(comps.Contains(comp)) return;
+    comps.Add(comp);
+    if(comp.managers==null) comp.managers=new();
+    comp.managers.Add(this);
+  }
+  public void unmanage(OverrideVisualComponent comp){
+    comp.managers.Remove(this);
+    comps.Remove(comp);
+    if(comp.managers.Count==0) comp.managers=null;
+  }
+  public IEnumerator<OverrideVisualComponent> GetEnumerator()=>comps.GetEnumerator();
+  IEnumerator IEnumerable.GetEnumerator()=>comps.GetEnumerator();
 }

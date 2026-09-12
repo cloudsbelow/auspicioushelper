@@ -23,7 +23,8 @@ trigger.placements = {
       only_once = false,
       advanced = "",
       everywhere = false,
-      OnlyWhenChannel = ""
+      OnlyWhenChannel = "",
+      triggerParent=false,
     }
 }
 trigger.fieldOrder = {

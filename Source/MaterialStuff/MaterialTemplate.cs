@@ -7,8 +7,8 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/MaterialTemplate")]
-public class MaterialTemplate:TemplateDisappearer, IOverrideVisualsEasy, Template.IRegisterEnts{
-  public HashSet<OverrideVisualComponent> comps {get;} = new();
+public class MaterialTemplate:TemplateDisappearer, Template.IRegisterEnts{
+  VisualManager vm;
   bool invis;
   bool collidable = true;
   string channel;
@@ -20,6 +20,7 @@ public class MaterialTemplate:TemplateDisappearer, IOverrideVisualsEasy, Templat
     if(string.IsNullOrWhiteSpace(lident)) DebugConsole.Write("No layer specified for material template");
     collidable = d.Bool("collidable",true);
     channel = d.Attr("channel","");
+    Add(vm=new());
   }
   string lident;
   IOverrideVisuals layer;
@@ -29,7 +30,7 @@ public class MaterialTemplate:TemplateDisappearer, IOverrideVisualsEasy, Templat
       Add(new ChannelTracker(channel, (double nval)=>{
         if(active!=(nval!=0)){
           active = nval!=0;
-          if(layer!=null) foreach(var c in comps) c.SetStealUse(layer,active && invis, active);
+          if(layer!=null) foreach(var c in vm) c.SetStealUse(layer,active && invis, active);
         }
       },true));
     }
@@ -44,7 +45,7 @@ public class MaterialTemplate:TemplateDisappearer, IOverrideVisualsEasy, Templat
     int tdepth = -TemplateDepth(); 
     foreach(var e in l) if(!(e is Template)){
       var comp = OverrideVisualComponent.Get(e);
-      comp.AddToOverride(new(this,-30000,false,true));
+      vm.manage(comp);
       comp.AddToOverride(new(layer,tdepth,invis&&active, active));
     }
     base.RegisterEnts(l);

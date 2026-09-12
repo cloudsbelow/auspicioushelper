@@ -6,6 +6,7 @@ using Celeste.Mod.Entities;
 using Celeste.Mod.auspicioushelper;
 using Microsoft.Xna.Framework;
 using Monocle;
+using Celeste.Mod.auspicioushelper.Wrappers;
 
 namespace Celeste.Mod.auspicioushelper;
 
@@ -21,7 +22,7 @@ public class ChannelPlayerTrigger:Trigger{
   public Op op;
   public double value;
   bool activateOnEnter=false, activateOnleave=false,  activateOnStay=false;
-  bool onlyOnce, everywhere, restore=false; 
+  bool onlyOnce, everywhere, restore=false, triggerParent; 
   ChannelState.AdvancedSetter adv=null;
   ChannelState.BoolCh onlywhen;
 
@@ -30,6 +31,7 @@ public class ChannelPlayerTrigger:Trigger{
     onlywhen = data.ChannelBool("OnlyWhenChannel",true);
     channel = data.Attr("channel","");
     value = data.Float("value",1);
+    triggerParent = data.Bool("triggerParent",false);
     if(!string.IsNullOrWhiteSpace(data.Attr("advanced"))){
       adv = new(data.Attr("advanced"));
     }
@@ -77,7 +79,8 @@ public class ChannelPlayerTrigger:Trigger{
     if(!onlywhen) return;
     double oldval = ChannelState.readChannel(channel);
     if(restoreTo == null) restoreTo = oldval;
-    //DebugConsole.Write(op.ToString());
+    if(triggerParent) Get<ChildMarker>()?.Trigger(null);
+
     ChannelState.SetChannel(channel, op switch {
       Op.set => value,
       Op.xor => (int)oldval ^ (int)value,

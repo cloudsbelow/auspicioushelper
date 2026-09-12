@@ -21,8 +21,8 @@ using MonoMod.Utils;
 namespace Celeste.Mod.auspicioushelper;
 
 [CustomEntity("auspicioushelper/TemplateDreamblockModifier")]
-public class TemplateDreamblockModifier:Template,IOverrideVisualsEasy, Template.IRegisterEnts{
-  public HashSet<OverrideVisualComponent> comps  {get;set;}= new();
+public class TemplateDreamblockModifier:Template, Template.IRegisterEnts{
+  VisualManager vm;
   static Dictionary<Type, Collider> colTypes = new();
   public class DreamInfo(bool exiting, bool trigger, Vector2 dir):TriggerInfo{
     public override bool shouldTrigger => trigger;
@@ -96,6 +96,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisualsEasy, Template.
     }
     sendDashhit = d.Bool("sendDashhit",false);
     killChDash = !d.Bool("allowChDash", false);
+    Add(vm=new());
   }
   public override void addTo(Scene scene) {
     fake = Util.GetUninitializedEntWithComp<SentinalDb>();
@@ -117,7 +118,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisualsEasy, Template.
         bool orig = dreaming;
         dreaming = val==0;
         if(dreaming==orig) return;
-        if(useVisuals) foreach(var c in comps) { 
+        if(useVisuals) foreach(var c in vm) { 
           c.SetStealUse(renderer,dreaming,dreaming);
         }
         if(orig && !dreaming && UpdateHook.cachedPlayer is Player p && p.StateMachine.State==Player.StDreamDash){
@@ -164,7 +165,7 @@ public class TemplateDreamblockModifier:Template,IOverrideVisualsEasy, Template.
       e.Add(new DreamMarkerComponent(this,colTypes.GetValueOrDefault(e.GetType())));
       if(useVisuals && !(e is Template)){
         var comp = OverrideVisualComponent.Get(e);
-        comp.AddToOverride(new(this,-30000,false,true));
+        vm.manage(comp);
         comp.AddToOverride(new(renderer,-999,dreaming,dreaming));
       }
     }

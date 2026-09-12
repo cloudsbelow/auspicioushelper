@@ -50,7 +50,8 @@ public class StaticmoverLock:MovementLock,IDisposable{
 }
 
 [CustomEntity("auspicioushelper/TemplateStaticmover")]
-public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOverrideVisuals, Template.IRegisterEnts, IRelocateTemplates.IDontRelocate{
+public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, Template.IRegisterEnts, IRelocateTemplates.IDontRelocate{
+  VisualManager vm;
   public override Vector2 gatheredLiftspeed=>ownLiftspeed;
   public override void relposTo(Vector2 loc, Vector2 liftspeed) {
     if(sm?.Platform==null) base.relposTo(loc,liftspeed);
@@ -92,6 +93,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     }));
     shakeHooks.enable();
     if(d.Nodes?.Length>=1) smoffset = d.Nodes[0]-d.Position;
+    Add(vm=new());
   }
   internal LiftspeedSm sm;
   HashSet<Platform> doNot = new();
@@ -120,7 +122,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
       OnEnable=()=>{
         childRelposTo(virtLoc,Vector2.Zero);
         setVisCol(true,true);
-        if(layer!=null)foreach(var c in comps)c.SetStealUse(layer,false,false);
+        if(layer!=null)foreach(var c in vm)c.SetStealUse(layer,false,false);
         if(string.IsNullOrWhiteSpace(channel))remake();
         this.ownShakeVec = Vector2.Zero;
         cachedCol = true;
@@ -129,7 +131,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
         setVisCol(layer!=null,false);
         cachedCol =false;
         if(string.IsNullOrWhiteSpace(channel)) destroyChildren(true);
-        else if(layer!=null)foreach(var c in comps)c.SetStealUse(layer,true,true);
+        else if(layer!=null)foreach(var c in vm)c.SetStealUse(layer,true,true);
       },
       OnAttach=(Platform p)=>{
         if(!enableUnrooted) UpdateHook.AddAfterUpdate(()=>make(Scene));
@@ -140,7 +142,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
         if(!s.Collidable){
           setVisCol(layer!=null,false);
           cachedCol =false;
-          if(layer!=null)foreach(var c in comps)c.SetStealUse(layer,true,true);
+          if(layer!=null)foreach(var c in vm)c.SetStealUse(layer,true,true);
         }
         return true;
       },
@@ -152,7 +154,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
         if(!j.Collidable){
           setVisCol(layer!=null,false);
           cachedCol =false;
-          if(layer!=null)foreach(var c in comps)c.SetStealUse(layer,true,true);
+          if(layer!=null)foreach(var c in vm)c.SetStealUse(layer,true,true);
         }
         return true;
       }:null,
@@ -220,9 +222,6 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
       hasTrigger = 2;
     }
   }
-  public HashSet<OverrideVisualComponent> comps = new();
-  public void AddC(OverrideVisualComponent c)=>comps.Add(c);
-  public void RemoveC(OverrideVisualComponent c)=>comps.Remove(c);
   public override void RegisterEnts(List<Entity> l) {
     foreach(var e in l)if(e is Platform p)doNot.Add(p);
     bool ghost = !getSelfCol();
@@ -230,7 +229,7 @@ public class TemplateStaticmover:TemplateDisappearer, ITemplateTriggerable, IOve
     if(layer!=null){
       foreach(var e in l){
         var c = OverrideVisualComponent.Get(e);
-        c.AddToOverride(new(this, -30000, false,true));
+        vm.manage(c);
         c.AddToOverride(new(layer, -10000+tdepth, ghost, ghost));
         if(layer.fg!=null)c.AddToOverride(new(layer.fg, 1000-tdepth,true,true));
       }
