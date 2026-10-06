@@ -223,6 +223,7 @@ entities.auspicioushelper/CustomRefill.attributes.description.triggering=Whether
 entities.auspicioushelper/CustomRefill.attributes.description.useOnPickup=Whether to always use this refill if it is in a template that gets picked up
 entities.auspicioushelper/CustomRefill.attributes.description.useOnRelease=Whether to always use this refill when in a template that is thrown
 entities.auspicioushelper/CustomRefill.attributes.description.numRefresh=Number of times this refill will respawn. Leave blank or negative for unlimited use.
+entities.auspicioushelper/CustomRefill.attributes.description.useOnPlayer=If chosen, will only be used via useOnPickup or Release in template holdable
 
 # auspicioushelper/spinner
 entities.auspicioushelper/spinner.placements.name.main=Recolorable Spinner
@@ -948,13 +949,14 @@ triggers.auspicioushelper/ChannelMathTrigger.attributes.description.run_when_awa
 triggers.auspicioushelper/ChannelPlayerTrigger.placements.name.main=Channel Player Trigger
 triggers.auspicioushelper/ChannelPlayerTrigger.placements.description.main=Modifies a given channel when a player interacts with this trigger
 triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.channel=The channel to modify
-triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.value=The value to use when modifying the channel
+triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.value=CHANNELABLE. The value to use when modifying the channel
 triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.op=The operation to use when modifying the channel
 triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.action=What player action will trigger this
 triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.only_once=If this should only trigger once
-triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.advanced=Set channels in a more advanced way. Given a list of channels to set/expression for value pairs such as  'a:3,b:@c[*2]' which sets channel a to 3 and channel b to twice the value of channel c. If using a channel in an expression, it must be prepended with @. If using a number, no prefix is needed.
+triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.advanced=Set channels in a more advanced way. Given a list of channels to set/expression for value pairs such as  'a:3,b:@c[*2]' which sets channel a to 3 and\n channel b to twice the value of channel c. If using a channel in an expression, it must be prepended with @. If using a number, no prefix is needed.
 triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.everywhere=Make the trigger cover the whole room
 triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.OnlyWhenChannel=Make the trigger only work when this channel is nonzero
+triggers.auspicioushelper/ChannelPlayerTrigger.attributes.description.triggerParent=Trigger the template this lies in when activated
 
 # auspicioushelper/ConditionalStrawbCollectTrigger
 triggers.auspicioushelper/ConditionalStrawbCollectTrigger.placements.name.main=Conditional Strawberry Collection Trigger

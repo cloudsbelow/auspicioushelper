@@ -27,13 +27,14 @@
         "description": "Modifies a given channel when a player interacts with this trigger",
         "placements": {
             "channel": "The channel to modify",
-            "value": "The value to use when modifying the channel",
+            "value": "CHANNELABLE. The value to use when modifying the channel",
             "op": "The operation to use when modifying the channel",
             "action": "What player action will trigger this",
             "only_once": "If this should only trigger once",
-            "advanced": "Set channels in a more advanced way. Given a list of channels to set/expression for value pairs such as  'a:3,b:@c[*2]' which sets channel a to 3 and channel b to twice the value of channel c. If using a channel in an expression, it must be prepended with @. If using a number, no prefix is needed.",
+            "advanced": "Set channels in a more advanced way. Given a list of channels to set/expression for value pairs such as  'a:3,b:@c[*2]' which sets channel a to 3 and\\n channel b to twice the value of channel c. If using a channel in an expression, it must be prepended with @. If using a number, no prefix is needed.",
             "everywhere": "Make the trigger cover the whole room",
-            "OnlyWhenChannel": "Make the trigger only work when this channel is nonzero"
+            "OnlyWhenChannel": "Make the trigger only work when this channel is nonzero",
+            "triggerParent": "Trigger the template this lies in when activated"
         }
     },
     "triggers.auspicioushelper/ConditionalStrawbCollectTrigger": {

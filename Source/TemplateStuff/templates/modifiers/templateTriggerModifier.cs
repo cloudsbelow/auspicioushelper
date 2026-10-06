@@ -260,7 +260,6 @@ public class TemplateTriggerModifier:Template, ITemplateTriggerable{
     }
   }
   static void triggerJt(Player p, TouchInfo t, int dir){
-    DebugConsole.Write("",dir);
     foreach(var jt in p.CollideAllSidewaysJt(p.Position-Vector2.UnitX*dir, dir<0)){
       jt.Get<ChildMarker>()?.TriggerTouch(t);
     }

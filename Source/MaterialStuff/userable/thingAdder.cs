@@ -12,7 +12,7 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/MaterialApplier")]
 [MapenterEv(nameof(Search))]
 public class MaterialAdder:Entity{
-  static void Search(EntityData d){
+  static void Search(EntityData d, LevelData ld){
     if(d.Bool("can_be_ID_path",true)) foreach(var i in Util.listparseflat(d.Attr("identifier"))){
       Finder.enqueueIdent(i.Split(':')[0].TrimEnd());
     }
@@ -25,6 +25,7 @@ public class MaterialAdder:Entity{
   List<(string,string)> types;
   bool dnr;
   short priority;
+  bool removing = false;
 
   public MaterialAdder(EntityData d, Vector2 o):base(d.Position+o){
     dat = d;
@@ -43,6 +44,7 @@ public class MaterialAdder:Entity{
   }
   void AddEntity(Entity e)=>AddEntity(e,null);
   void AddEntity(Entity e, string options){
+    if(removing) return;
     l = MaterialController.getLayer(dat.Attr("materialLayer")) as IOverrideVisuals;
     if(l==null){
       DebugConsole.WriteFailure($"Looking for non-added layer \"{dat.Attr("materialLayer")}\" in material adder!");
@@ -85,11 +87,15 @@ public class MaterialAdder:Entity{
       }
       thing.Retroactive(scene as Level);
     }
+    Add(new TransitionListener(){
+      OnOutBegin = ()=> removing=true
+    });
   }
   public override void Update() {
     Try();
   }
   public void OnRemove(){
+    //DebugConsole.Write("Removing from",l, "as", );
     foreach(var comp in vm.ToList()){
       comp.RemoveFromOverride(l);
     }

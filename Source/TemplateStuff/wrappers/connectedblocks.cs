@@ -21,7 +21,6 @@ public class ConnectedBlocks:Entity{
   }
   bool used;
   char tid;
-  Vector2 levelOffset;
   Util.Trie<bool> permittedEnts = null;
   Util.Trie<bool> permittedDecals = null;
   bool allEnts;
@@ -63,7 +62,6 @@ public class ConnectedBlocks:Entity{
       excludeSolids = d.Bool("excludeSolids",false);
       excludeTriggers = d.Bool("excludeTriggers",false);
     }
-    levelOffset = offset;
     Depth = -10000000; //low depth type entity
     leveloffset=offset;
   }
@@ -259,8 +257,22 @@ public class ConnectedBlocks:Entity{
   };
   static void RemChildren(Util.OrderedSet<Entity> all, templateFiller f, HashSet<Entity> remove){
     HashSet<Entity> donot = new();
-    foreach(var e in all) if(e is Template t) foreach(Entity en in t.GetChildren<Entity>()){
-      if(en!=t || t.parent!=null)donot.Add(en);
+    foreach(var e in all) if(e is Template t){
+      foreach(Entity en in t.GetChildren<Entity>()){
+        if(en!=t || t.parent!=null) donot.Add(en);
+      }
+      //these handle chains since the inserted template does not have chain's ed
+      if(t.parent==null){
+        bool flag = false;
+        if(t.t?.chain is {} chain && chain.isFromRoom) flag=true;
+        else if(!string.IsNullOrWhiteSpace(t.t?.name) && t.t.room!=null) flag=true;
+        if(flag){
+          donot.Add(t);
+          f.data.ChildEntities.Add(e.SourceData.cloneWithValues(("template",t.t)));
+          remove.Add(t);
+          DebugConsole.Write("Add",t,t.t.GetType());
+        }
+      }
     }
     foreach(var e in all){
       remove.Add(e);

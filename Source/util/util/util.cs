@@ -496,4 +496,53 @@ public static partial class Util{
       public bool MoveNext() => nonempty && li.MoveNext();
     }
   }
+  public class TwoQueue<T>: IEnumerable<T>{
+    T[] data;
+    uint head=0, tail, mask;
+    public TwoQueue(uint capacity=16){
+      capacity = (uint)HigherPow2((int)capacity);
+      data = new T[capacity];
+      tail = mask = (uint)data.Length-1;
+    }
+    public T Front()=>data[head];
+    public T Back()=>data[tail];
+    public uint Count=>(tail+1-head)&mask;
+    void resize(){
+      var oldData = data;
+      var oldHead = head;
+      data = new T[data.Length*2];
+      for(uint i=0; i<oldData.Length; i++) data[i]=oldData[(i+oldHead)&mask];
+      head = 0;
+      tail = mask;
+      mask = mask*2+1;
+    }
+    public void PushFront(T val){
+      head = (head-1)&mask;
+      data[head] = val;
+      if(((tail+1)&mask)==head) resize();
+    }
+    public T PopFront(){
+      if(((tail+1)&mask)==head) throw new IndexOutOfRangeException();
+      T ret = data[head];
+      head=(head+1)&mask;
+      return ret;
+    }
+    public void PushBack(T val){
+      tail = (tail+1)&mask;
+      data[tail]=val;
+      if(((tail+1)&mask)==head) resize();
+    }
+    public T PopBack(){
+      if(((tail+1)&mask)==head) throw new IndexOutOfRangeException();
+      T ret = data[tail];
+      tail = (tail-1)&mask;
+      return ret;
+    }
+    public IEnumerator<T> GetEnumerator(){
+      uint c = Count;
+      uint h = head;
+      for(uint i=0; i<c; i++) yield return data[(i+h)&mask];
+    }
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+  }
 }

@@ -15,7 +15,7 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/ChannelReflector")]
 [MapenterEv(nameof(Search))]
 public class ChannelReflecter:Entity{
-  static void Search(EntityData d){
+  static void Search(EntityData d, LevelData ld){
     var ident = d.Attr("path");
     Finder.enqueueIdent(ident);
   }

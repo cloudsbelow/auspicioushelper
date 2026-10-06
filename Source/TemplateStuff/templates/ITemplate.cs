@@ -87,7 +87,7 @@ public class Template:Entity, ITemplateChild{
   public Vector2 toffset = Vector2.Zero;
   public Wrappers.BasicMultient basicents = null;
   public DashCollision OnDashCollide = null;
-  string templateStr;
+  string templateStr="";
   public ref struct ChainLock:IDisposable{
     static int ctr = 0;
     public static bool locked=>ctr>0; 
@@ -105,7 +105,10 @@ public class Template:Entity, ITemplateChild{
   /// <param name="pos">THE POSITION OF THE ENTITIY</param>
   /// <param name="depthoffset"></param>
   public Template(EntityData data, Vector2 pos, int depthoffset):base(pos){
-    templateStr = data.Attr("template","");
+    if(data.Values is {} v && v.TryGetValue("template", out var fill)){
+      if(fill is templateFiller filler) t = filler;
+      else templateStr = fill.ToString();
+    }
     this.depthoffset = depthoffset;
     this.Visible = false;
     Depth = 10000+depthoffset;

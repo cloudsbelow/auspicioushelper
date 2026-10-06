@@ -65,6 +65,15 @@ public static partial class Finder{
     }
   }
 
+  const string delim = "®";
+  public static string appendRoom(string orig, EntityData d, LevelData ld){
+    if(d.Bool("sameRoom", false)) return orig + delim + ld.Name;
+    return orig;
+  }
+  public static string roomAttr(this EntityData d, string attr, LevelData ld){
+    if(d.Bool("sameRoom", false)) return d.Attr(attr) + delim + ld.Name;
+    return d.Attr(attr);
+  }
   public static void watch(string path, Action<Entity> thing){
     foreach(var sig in path.Split(',')) try{
       if(string.IsNullOrWhiteSpace(sig)) continue;

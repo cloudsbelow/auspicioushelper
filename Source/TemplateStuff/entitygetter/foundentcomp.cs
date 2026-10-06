@@ -100,7 +100,7 @@ public class FoundEntity:OnAnyRemoveComp{
   [MapenterEv(nameof(Search))]
   //[CustomloadEntity]
   public class MarkingFlag:Entity{
-    static void Search(EntityData d){
+    static void Search(EntityData d, LevelData ld){
       if(string.IsNullOrWhiteSpace(d.Attr("path"))) return;
       Finder.enqueueIdent(d.Attr("path"),d.Attr("identifier"));
     }

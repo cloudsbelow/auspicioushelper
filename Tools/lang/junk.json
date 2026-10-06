@@ -36,7 +36,7 @@
             "useOnRelease": "Whether to always use this refill when in a template that is thrown",
             "numRefresh": "Number of times this refill will respawn. Leave blank or negative for unlimited use.",
             "depth": "",
-            "useOnPlayer": ""
+            "useOnPlayer": "If chosen, will only be used via useOnPickup or Release in template holdable"
         },
         "p_name": "(Another) custom refill"
     },

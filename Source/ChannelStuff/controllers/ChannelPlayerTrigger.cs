@@ -20,7 +20,8 @@ public class ChannelPlayerTrigger:Trigger{
     add,
   }
   public Op op;
-  public double value;
+  ChannelState.FloatCh value;
+  string valuestr;
   bool activateOnEnter=false, activateOnleave=false,  activateOnStay=false;
   bool onlyOnce, everywhere, restore=false, triggerParent; 
   ChannelState.AdvancedSetter adv=null;
@@ -30,7 +31,8 @@ public class ChannelPlayerTrigger:Trigger{
     onlyOnce = data.Bool("only_once",false);
     onlywhen = data.ChannelBool("OnlyWhenChannel",true);
     channel = data.Attr("channel","");
-    value = data.Float("value",1);
+    value = data.ChannelFloat("value",1);
+    valuestr = data.Attr("value","");
     triggerParent = data.Bool("triggerParent",false);
     if(!string.IsNullOrWhiteSpace(data.Attr("advanced"))){
       adv = new(data.Attr("advanced"));
@@ -55,6 +57,10 @@ public class ChannelPlayerTrigger:Trigger{
         activateOnStay=true; break;
       case "enter (reset on leave)":
         activateOnEnter=true;
+        restore=true;
+        break;
+      case "stay (reset on leave)":
+        activateOnStay=true;
         restore=true;
         break;
 
@@ -94,7 +100,7 @@ public class ChannelPlayerTrigger:Trigger{
     adv?.Apply();
     if(onlyOnce) RemoveSelf();
   }
-  bool isLike(ChannelPlayerTrigger other)=> other.restore && other.channel==channel && other.op==op && other.value==value;
+  bool isLike(ChannelPlayerTrigger other)=> other.restore && other.channel==channel && other.op==op && other.valuestr==valuestr;
   public override void OnEnter(Player player){
     base.OnEnter(player);
     if(restore){

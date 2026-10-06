@@ -50,8 +50,11 @@ public static class Parser{
     {new(1,"round"), typeof(Math).GetMethod(nameof(Math.Round),withNum(1))},
     {new(1,"exp"), typeof(Math).GetMethod(nameof(Math.Exp),withNum(1))},
     {new(1,"ln"), typeof(Math).GetMethod(nameof(Math.Log),withNum(1))},
+    {new(1,"sin"), typeof(Math).GetMethod(nameof(Math.Sin),withNum(1))},
+    {new(1,"cos"), typeof(Math).GetMethod(nameof(Math.Cos),withNum(1))},
     {new(1,"log"), typeof(Math).GetMethod(nameof(Math.Log2),withNum(1))},
     {new(1,"sqrt"), typeof(Math).GetMethod(nameof(Math.Sqrt),withNum(1))},
+    {new(1,"abs"), typeof(Math).GetMethod(nameof(Math.Abs),withNum(1))},
     {new(1,"saturate"), typeof(Parser).GetMethod(nameof(Saturate),bf)},
     {new(2,"max"), typeof(Math).GetMethod(nameof(Math.Max),withNum(2))},
     {new(2,"min"), typeof(Math).GetMethod(nameof(Math.Min),withNum(2))},
@@ -74,7 +77,9 @@ public static class Parser{
     }), 
     new Descr($"(?:[a-zA-Z_][\\w]*)?\\(({TOK}(?:,{TOK})*)?\\)",(s,l)=>{
       int num = l.Count/2;
-      string name = l[0].Item1.Substring(0,l[0].Item1.Length-1).ToLower();
+      // When there are 0 expressions inside the parens both () will be at the end of the first term.
+      // Otherwise only the opening ( will be present in the first term.
+      string name = l[0].Item1.Substring(0, l[0].Item1.Length - (num==0?2:1)).ToLower();
       if(num==1 && name=="") return s[l[1].Item2];
       if(parenOps.TryGetValue(new(num,name),out var method)){
         var par = new Expression[num];

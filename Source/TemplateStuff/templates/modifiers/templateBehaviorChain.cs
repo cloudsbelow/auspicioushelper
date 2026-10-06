@@ -18,24 +18,29 @@ public class TemplateBehaviorChain:Entity{
   [OnLoad]
   public static void setup(){
     EntityParser.clarify("auspicioushelper/TemplateBehaviorChain",EntityParser.Types.unwrapped,(l,d,o,e)=>{
-      string templateStr = e.Attr("template","");
-      if(!MarkedRoomParser.getTemplate(templateStr, EntityParser.currentParent?.t?.room, l, out var t)){
-        DebugConsole.Write($"No template found with identifier \"{templateStr}\" in {d.Name} at {d.Position}");
-        return null;
-      } else return startChain(t,e,e.Position+o,l,EntityParser.currentParent);
+      templateFiller t;
+      if(e.Values is {} v && v.TryGetValue("template", out var fill)){
+        if(fill is templateFiller filler) t=filler;
+        else if(!MarkedRoomParser.getTemplate(fill.ToString(), EntityParser.currentParent?.t?.room, l, out t)){
+          DebugConsole.Write($"No template found with identifier \"{fill}\" in {d.Name} at {d.Position}");
+          return null;
+        } 
+        return startChain(t,e,e.Position+o,l,EntityParser.currentParent);
+      }
+      return null;
     },true);
   }
   public static void AddEmptyTemplate(EntityData d){
     if(!EntityParser.FakeLock.fake)mainRoom[d.Position] = d;
   }
   public static IEnumerator GetChainEnumerator(Vector2[] nodes, Template source){
-    var contents = source?.t.room.emptyTemplates??mainRoom;
-    if(nodes!=null)foreach(var n in nodes){
+    var contents = source?.t.room?.emptyTemplates??mainRoom;
+    if(nodes!=null) foreach(var n in nodes){
       if(contents.TryGetValue(n, out var e)){
         if(e.Name == "auspicioushelper/TemplateBehaviorChain") yield return GetChainEnumerator(e.Nodes,source);
         else yield return e;
       } else {
-        if(source!=null)DebugConsole.Write($"Did not find empty template at {n} in {source} with path {source.fullpath}");
+        if(source!=null) DebugConsole.Write($"Did not find empty template at {n} in {source} with path {source.fullpath}");
         else DebugConsole.Write($"Did not find empty template at {n}");
       }
     }
@@ -53,6 +58,7 @@ public class TemplateBehaviorChain:Entity{
     int idx;
     templateFiller final;
     Vector2? forcePos = null;
+    public bool isFromRoom=> final.room!=null;
     public Chain(templateFiller finalFiller, Vector2[] nodes, Template source, Vector2? forcepos = null){
       sequence = new Util.EnumeratorStack<EntityData>(GetChainEnumerator(nodes,source)).toList();
       idx = 0;
@@ -100,7 +106,7 @@ public class TemplateBehaviorChain:Entity{
     var chain = new Chain(final,dat.Nodes,scope,fp);
     var first = chain.NextEnt();
     if(first == null){
-      using (new Template.ChainLock())return new Template(dat, pos, 0);
+      using(new Template.ChainLock()) return new Template(dat, pos, 0);
     } else {
       if(!Level.EntityLoaders.TryGetValue(first.Name, out var loader)){
         DebugConsole.WriteFailure("Unknown template type");
