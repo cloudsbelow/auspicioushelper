@@ -11,12 +11,20 @@ using Monocle;
 namespace Celeste.Mod.auspicioushelper;
 
 public static partial class Finder{
+  static Action<Entity> sameRoomUtil(EntityData d, LevelData ld, Action<Entity> og){
+    if(d.Bool("roomOnly",false)){
+      return e=>{
+        if(ld.Name==e.SourceData?.Level?.Name) og(e);
+      };
+    } else return og;
+  }
+
   [CustomEntity("auspicioushelper/FinderDepth")]
   [MapenterEv(nameof(Search))]
   [CustomloadEntity]
   public class MarkingFlag:Entity{
-    static void Search(EntityData d){
-      Finder.watch(d.Attr("path"),(e)=>e.Depth = d.Int("depth",e.Depth));
+    static void Search(EntityData d, LevelData ld){
+      Finder.watch(d.Attr("path"), sameRoomUtil(d,ld,(e)=>e.Depth = d.Int("depth",e.Depth)));
     }
   }
 
@@ -79,8 +87,8 @@ public static partial class Finder{
         else if(restorable && IColliderWrapper.CheckEq(e.Collider, replace)) e.Collider = orig; 
       }
     }
-    static void Search(EntityData d){
-      Finder.watch(d.Attr("path"),(e)=>{
+    static void Search(EntityData d, LevelData ld){
+      Finder.watch(d.Attr("path"),sameRoomUtil(d, ld, (e)=>{
         CMod c=null;
         if(d.tryGetStr("channel", out var str)){
           e.Add(c=new CMod(d,e,str));
@@ -88,7 +96,7 @@ public static partial class Finder{
         if(Util.listparseflat(d.Attr("boundsColors","")).Map(Util.hexToColor) is {Count: >0} a){
           addingLevel.Add(new WrapperImg(e,c,a.ToArray()));
         }
-      });
+      }));
     }
 
     static Regex pattern = new Regex(@"(\w+)(?::(.+))?",RegexOptions.Compiled);

@@ -270,7 +270,6 @@ public class ConnectedBlocks:Entity{
           donot.Add(t);
           f.data.ChildEntities.Add(e.SourceData.cloneWithValues(("template",t.t)));
           remove.Add(t);
-          DebugConsole.Write("Add",t,t.t.GetType());
         }
       }
     }

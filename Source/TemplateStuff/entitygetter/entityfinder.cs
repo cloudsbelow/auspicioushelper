@@ -140,6 +140,7 @@ public static partial class Finder{
       }
     } 
   }
+  internal static void setLast(Entity e)=>last=e??last;
 
   [OnLoad.OnHook(typeof(EntityList),nameof(EntityList.Add),Util.HookTarget.Normal,[typeof(Entity)])]
   public static void AddHook(On.Monocle.EntityList.orig_Add_Entity orig, EntityList self, Entity e){

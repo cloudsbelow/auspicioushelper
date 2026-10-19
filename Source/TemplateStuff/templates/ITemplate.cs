@@ -219,11 +219,7 @@ public class Template:Entity, ITemplateChild{
       Level l = scene as Level;
       Vector2 simoffset = lastRoundloc-t.data.origin;
       foreach(EntityData w in t.data.ChildEntities){
-        Entity e = EntityParser.create(w,l,t.data.roomdat,simoffset,this,fp);
-        if(e is ITemplateChild c){
-          addEnt(c);
-        }
-        else if(e!=null)scene.Add(e);
+        EntityParser.createInto(w,l,t.data.roomdat,simoffset,this,fp);
       }
       foreach(DecalData d in t.data.decals){
         Decal e = new Decal(d.Texture, simoffset+d.Position, d.Scale, d.Depth??0, d.Rotation, d.ColorHex){

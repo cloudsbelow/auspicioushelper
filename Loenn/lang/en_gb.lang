@@ -259,6 +259,23 @@ entities.auspicioushelper/waterCopy.attributes.description.backwardsRays=Whether
 entities.auspicioushelper/waterCopy.attributes.description.verticalShrink=Whather to shrink the water's appearance vertically by 1px - vanilla does this
 entities.auspicioushelper/waterCopy.attributes.description.die=die
 
+# auspicioushelper/water
+entities.auspicioushelper/water.placements.description.fancy water (copy settings)=Water (configurable)
+entities.auspicioushelper/water.attributes.description.tempalteDrag=The factor by which to drag submerged actors when moved by template
+entities.auspicioushelper/water.attributes.description.triggerRiding=Whether swiming should be counted as riding
+entities.auspicioushelper/water.attributes.description.jumpOutSides=If checked, the player can jump out of the sides of the water
+entities.auspicioushelper/water.attributes.description.hasBottom=whether this face should have a surface. Will connect around corners.
+entities.auspicioushelper/water.attributes.description.hasTop=whether this face should have a surface. Will connect around corners.
+entities.auspicioushelper/water.attributes.description.hasLeft=whether this face should have a surface. Will connect around corners.
+entities.auspicioushelper/water.attributes.description.hasRight=whether this face should have a surface. Will connect around corners.
+entities.auspicioushelper/water.attributes.description.colors=If multiple are given, first is surface, next is fill, then all following are used for rays. If less are given, the remaining are infered
+entities.auspicioushelper/water.attributes.description.rayLength=Minimum and maximum ray length
+entities.auspicioushelper/water.attributes.description.rayWidth=Minimum and maximum ray width
+entities.auspicioushelper/water.attributes.description.rayDirection=CHANNELABLE the angle rays cast at
+entities.auspicioushelper/water.attributes.description.backwardsRays=Whether rays should also come from the opposite of the main direction
+entities.auspicioushelper/water.attributes.description.verticalShrink=Whather to shrink the water's appearance vertically by 1px - vanilla does this
+entities.auspicioushelper/water.attributes.description.die=die
+
 
 ##############
 ###  misc  ###
@@ -1020,4 +1037,6 @@ triggers.auspicioushelper/ChannelPosition.attributes.description.activeChannel=O
 triggers.auspicioushelper/ChannelPosition.attributes.description.onlyInside=Only do this when inside
 triggers.auspicioushelper/ChannelPosition.attributes.description.path=Path to entity
 triggers.auspicioushelper/ChannelPosition.attributes.description.Depth=for update ordering
+
+
 

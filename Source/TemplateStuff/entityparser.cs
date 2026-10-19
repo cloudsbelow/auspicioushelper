@@ -118,7 +118,7 @@ public static class EntityParser{
 
 
   public static Template currentParent {get; private set;} = null;
-  public static Entity create(EntityData d, Level l, LevelData ld, Vector2 simoffset, Template t, string path){
+  public static void createInto(EntityData d, Level l, LevelData ld, Vector2 simoffset, Template t, string path){
     ld=ld??DefaultLD;
     bool isTrigger = false;
     if(d is TriggerWrapping wrap){
@@ -126,16 +126,16 @@ public static class EntityParser{
       d=wrap.d;
     }
     EntityID eid = new(ld.Name,d.ID);
-    if(l?.Session?.DoNotLoad.Contains(eid)??false) return null;
+    if(l?.Session?.DoNotLoad.Contains(eid)??false) return;
     if(!parsed.TryGetValue(d.Name,out var parse) || parse.Item1==Types.initerr) parse=generateLoader_(d,ld,l);
-    if(parse.Item1==Types.unable || parse.Item1==Types.initerr) return null;
+    if(parse.Item1==Types.unable || parse.Item1==Types.initerr) return;
 
     var loader = parse.Item2;
-    if(loader == null) return null;
+    if(loader == null) return;
     if(parse.Item1 == Types.template){
       if(string.IsNullOrWhiteSpace(d.Attr("template")) && t.t.chain==null && d is not TemplateDisplacer.DisplacerData){
         DebugConsole.WriteFailure($"Empty template did not get culled from template room");
-        return null;
+        return;
       }
     }
     
@@ -144,28 +144,34 @@ public static class EntityParser{
     Entity e = null; 
     if(isTrigger) Finder.StartLoadTrigger(data, t.fullpath);
     else Finder.StartLoad(data, t.fullpath);
+    
     using (new Template.ChainLock()) e = loader(l,ld,simoffset,data);
-    if(e==null) goto done;
+    
+    currentParent = null;
+    Finder.setLast(e);
+    Finder.EndingLoad(data,l);
+    if(e==null) return;
     e.SourceData = data;
     ChildMarker.Get(e,t);
-    Finder.EndingLoad(data,l);
 
     switch(parse.Item1){
       case Types.platformbasic:
         if(e is Platform p){
-          t.addEnt(new Wrappers.BasicPlatform(p,t,simoffset+d.Position-t.roundLoc));
-          goto done;
+          t.addEnt(new BasicPlatform(p,t,simoffset+d.Position-t.roundLoc));
         }else{
           DebugConsole.Write("Wrongly classified!!! "+d.Name);
-          goto done;
         }
+        return;
       case Types.unwrapped: case Types.template:
-        currentParent = null;
-        return e;
+        if(e is ITemplateChild child){
+          t.addEnt(child);
+        }
+        else if(e!=null) l.Add(e);
+        return;
       
       case Types.basic:
         foreach(Component c in e.Components) if(c is StaticMover sm){
-          if(c is LiftspeedSm lsm) lsm.parent = currentParent;
+          if(c is LiftspeedSm lsm) lsm.parent = t;
           if(sm.SolidChecker is {} sc){
             sm.SolidChecker = s=>(s.Get<ChildMarker>()?.inTreeOf(t)??false) && sc(s);
           }
@@ -180,13 +186,8 @@ public static class EntityParser{
           };
         }
         t.AddBasicEnt(e,simoffset+d.Position-t.roundLoc);
-        goto done;
-      default:
-        goto done;
+        return;
     }
-    done:
-      currentParent = null;
-      return null;
   }
   static EntityParser(){
     DefaultLD = (LevelData)RuntimeHelpers.GetUninitializedObject(typeof(LevelData));

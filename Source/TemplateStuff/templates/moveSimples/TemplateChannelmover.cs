@@ -77,6 +77,7 @@ public class TemplateChannelmover:Template{
     } else {
       target = (float) val;
       dir = target>cur?1:-1*asym;
+      invalidTimer = 0.07f;
     }
   }
   public override void addTo(Scene scene){
@@ -155,6 +156,7 @@ public class TemplateChannelmover:Template{
       childRelposSafe();
       return bonkedLastFrame;
   }
+  float invalidTimer=0;
   public override void Update(){
     base.Update();
     if(pauseTimer>0){
@@ -172,23 +174,36 @@ public class TemplateChannelmover:Template{
       
       Under allowfraction, cfrac serves as a store of the last frame position if the target
       was reached (in order to calc liftspeed). Has no meaning if the target wasn't. 
-      Also isn't frac.
+      Also isn't frac. ok i actually don't know what it is anymore just don't touch it.
 
       In the other case, cfrac is the uneased distance and afrac the eased one. A
       ctually frac here.
     */
     if(allowFraction){
-      if(afrac == target) ownLiftspeed = Vector2.Zero;
-      else {
+      invalidTimer -= Engine.DeltaTime;
+      if(afrac == target){
+        ownLiftspeed = Vector2.Zero;
+      } else {
         bool flag1 = afrac==cfrac;
         cfrac = afrac;
-        afrac = Util.EaseOutApproach(easing, afrac, target, Math.Abs(dir*Engine.DeltaTime), out float deriv);
-        bool flag2 = afrac==target;
-        bool useFd = (flag1 && flag2) || movetime==0;
-        if(tryMoveTo(afrac, useFd? (afrac-cfrac)/MathF.Max(Engine.DeltaTime,0.001f) : dir*deriv/movetime)){
+        float deriv;
+        if(movetime == 0){
+          afrac = target;
+          deriv = (afrac-cfrac)/MathF.Max(Engine.DeltaTime,0.001f);
+        } else {
+          float maxStep = Math.Abs(dir*Engine.DeltaTime)/movetime;
+          afrac = Util.EaseOutApproach(easing, afrac, target, maxStep, out deriv);
+          deriv *= dir/movetime;
+          if(flag1 && afrac==target) deriv = (afrac-cfrac)/MathF.Max(Engine.DeltaTime,0.001f);
+        }
+        if(tryMoveTo(afrac, deriv)){
           afrac = cfrac = spos.t;
         }
-        if(flag2) Arrive();
+        if(afrac==target){
+          if(invalidTimer>0.7f) invalidTimer=0.07f;
+          if(movetime!=0 && invalidTimer<=0) Arrive();
+          cfrac=afrac;
+        } 
       }
     } else {
       if(cfrac == 0 && low == target) ownLiftspeed = Vector2.Zero;

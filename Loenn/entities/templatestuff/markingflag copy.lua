@@ -12,6 +12,7 @@ entity.placements = {
     data = {
       path = "0",
       depth = 1,
+      roomOnly = true,
     }
   }
 }

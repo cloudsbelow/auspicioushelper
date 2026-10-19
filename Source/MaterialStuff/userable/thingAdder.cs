@@ -12,7 +12,7 @@ namespace Celeste.Mod.auspicioushelper;
 [CustomEntity("auspicioushelper/MaterialApplier")]
 [MapenterEv(nameof(Search))]
 public class MaterialAdder:Entity{
-  static void Search(EntityData d, LevelData ld){
+  static void Search(EntityData d){
     if(d.Bool("can_be_ID_path",true)) foreach(var i in Util.listparseflat(d.Attr("identifier"))){
       Finder.enqueueIdent(i.Split(':')[0].TrimEnd());
     }
