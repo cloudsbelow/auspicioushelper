@@ -16,16 +16,21 @@ public class ChannelTriggerTrigger:Entity{
   Vector2[] nodes=null;
   Queue<(float, int)> enqd = new();
   UpdateHook upd;
+  ChannelTracker ctracker;
+  ChannelState.BoolCh onlyIf;
+  bool everyFrame=false;
   float ct=0;
   public ChannelTriggerTrigger(EntityData d, Vector2 o):base(d.Position+o){
     if(d.Nodes?.Length>0) nodes = d.NodesWithPosition(o);
     delay = d.Float("delay", -1);
     channel = d.Attr("channel","");
+    onlyIf = d.ChannelBool("onlyIfChannel", true);
+    everyFrame = d.Bool("everyFrame",false);
   }
   public override void Added(Scene scene) {
     base.Added(scene);
     Add(upd=new());
-    Add(new ChannelTracker(channel, OnChange, true));
+    Add(ctracker = new ChannelTracker(channel, OnChange, true));
   }
   void OnChange(double nval){
     if(delay<0) TriggerAt((int)nval);
@@ -37,8 +42,10 @@ public class ChannelTriggerTrigger:Entity{
     }
     base.Update();
     ct+=Engine.DeltaTime;
+    if(everyFrame) TriggerAt((int) ctracker.value);
   }
   void TriggerAt(int idx){
+    if(!onlyIf) return;
     Vector2 loc = Position;
     if(nodes==null){
       if(idx==0) return;

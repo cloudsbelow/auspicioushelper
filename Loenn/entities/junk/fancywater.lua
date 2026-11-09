@@ -3,6 +3,7 @@ local utils = require("utils")
 local xnaColors = require("consts.xna_colors")
 
 local entity = {}
+local refillModes = {"never", "grounded", "vanilla", "cooldown", "always"}
 
 entity.name = "auspicioushelper/water"
 entity.depth = -9999
@@ -14,8 +15,7 @@ entity.placements = {
       width = 8,
       height=8,
       templateDrag=1,
-      triggerRiding = true,
-      jumpOutSides = true,
+      depth=-8987,
       hasBottom = true,
       hasTop = true,
       hasLeft = true,
@@ -27,6 +27,11 @@ entity.placements = {
       backwardsRays = false,
       verticalShrink = true,
       die = false,
+      
+      triggerRiding = true,
+      jumpOutSides = true,
+      coyote = true,
+      refillMode = "vanilla"
     }
   }
 }
@@ -35,14 +40,17 @@ entity.fillColor = {xnaColors.LightBlue[1] * 0.3, xnaColors.LightBlue[2] * 0.3, 
 entity.borderColor = {xnaColors.LightBlue[1]*0.8,xnaColors.LightBlue[2] * 0.8, xnaColors.LightBlue[3] * 0.8, 0.8}
 
 entity.fieldOrder = {
-  "x", "y", "width", "height", "templateDrag", "triggerRiding", "jumpOutSides",
+  "x", "y", "width", "height", "templateDrag", "depth",
   "hasTop", "hasLeft", "hasBottom", "hasRight", "colors", "rayDirection",
-  "rayLength", "rayWidth"
+  "rayLength", "rayWidth", "triggerRiding", "jumpOutSides", "coyote", "die","refillMode"
 }
 entity.fieldInformation = {
   colors={
     fieldType="list",
     elementDefault="6acc"
+  },
+  refillMode={
+    options=refillModes, editable=false
   }
 }
 

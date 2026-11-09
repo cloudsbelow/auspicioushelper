@@ -24,6 +24,7 @@ public partial class FancyWater{
     const int NUMQUADS = 4096;
     static Effect effect;
     RenderTargetPool.RenderTargetHandle handle = new(false);
+    bool shouldDraw;
     public static Displacement For(Scene s){
       if(me==null) s.Add(me = new Displacement());
       return me;
@@ -36,11 +37,12 @@ public partial class FancyWater{
       AddTag(Tags.Global);
       Add(new BeforeRenderHook(Rasterize));
       Add(new DisplacementRenderHook(()=>{
-        Draw.SpriteBatch.Draw(handle, (Scene as Level).Camera.position, Color.White);
+        if(shouldDraw) Draw.SpriteBatch.Draw(handle, (Scene as Level).Camera.position, Color.White);
       }));
       Depth = -13000;
     }
     void Rasterize(){
+      shouldDraw = false;
       var cam = (Scene as Level).Camera;
       Int2 camsize = ExtendedCameraIop.cameraSize();
       FloatRect camRect = new(cam.position.X, cam.position.Y, camsize.x, camsize.y);
@@ -100,6 +102,7 @@ public partial class FancyWater{
       gd.SetRenderTarget(handle);
       gd.Clear(Color.Transparent);
       Start(cam.Matrix);
+      shouldDraw = true;
 
       for(int i=0; i<keys.Length; i++){
         foreach(var fw in byDepth[keys[i]]){

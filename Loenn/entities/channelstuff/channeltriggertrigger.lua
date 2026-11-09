@@ -13,7 +13,9 @@ entity.placements = {
     name = "Activator (on channel)",
     data = {
       channel = "",
-      delay = -1
+      onlyIfChannel = "",
+      delay = -1,
+      everyFrame = false,
     }
   }
 }

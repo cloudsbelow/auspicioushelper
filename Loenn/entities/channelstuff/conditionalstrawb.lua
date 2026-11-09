@@ -18,6 +18,7 @@ entity.placements = {
 
       fly_channel="",
       nodeSelectorCh = "",
+      carryingChannel = "",
 
       deathless=false,
       flyOnDashNormal=false,

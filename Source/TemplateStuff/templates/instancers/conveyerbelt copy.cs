@@ -19,8 +19,6 @@ public class CirculatingTemplate:TemplateInstanceable, IRemovableContainer{
   class Item{
     public Template te;
     public float offset;
-    public ITemplateChild removedChild;
-    public bool active;
   }
   List<Item> belt = new();
   EntityData dat;

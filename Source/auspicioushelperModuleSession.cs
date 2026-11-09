@@ -12,6 +12,7 @@ public class auspicioushelperModuleSession : EverestModuleSession {
   public class EntityDataId{
     public EntityData data;
     public EntityID id;
+    public Vector2 levelOffset;
     public EntityDataId(EntityData d, EntityID id){
       data = d;
       this.id = id;

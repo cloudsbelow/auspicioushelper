@@ -101,7 +101,7 @@ public partial class Anti0fZone{
 
         case Player.StDash: case Player.StRedDash:
           //DebugConsole.Write($"dash reinterpolation {p.Speed}");
-          if(!Input.Jump.Pressed || !p.CanUnDuck || Input.Jump.bufferCounter==0) return false;
+          if(!Input.Jump.Pressed || !p.CanUnDuck || Input.Jump.bufferCounter==0) return swimmy(p);
           if(p.CanUnDuck && p.jumpGraceTimer>0f && p.Speed.Y>=0 && Math.Abs(p.DashDir.Y) < 0.1f){
             p.SuperJump(); 
             DebugConsole.Write("Super jump in anti0f");
@@ -110,7 +110,7 @@ public partial class Anti0fZone{
           }
           wjcp = (alwayswjc||p.CollideCheck<Solid>(p.Position+Vector2.UnitX*5)) && p.WallJumpCheck(1);
           wjcn = (alwayswjc||p.CollideCheck<Solid>(p.Position-Vector2.UnitX*5)) && p.WallJumpCheck(-1);
-          if(!(wjcp || wjcn)) return false;
+          if(!(wjcp || wjcn)) return swimmy(p);
           if(p.SuperWallJumpAngleCheck) p.SuperWallJump(wjcp?-1:1);
           else if(wjcp){
             if(p.Facing==Facings.Right && Input.GrabCheck && p.Stamina>0f && p.Holding==null && !ClimbBlocker.Check(p.Scene, p, p.Position+Vector2.UnitX*3f)){
@@ -129,33 +129,44 @@ public partial class Anti0fZone{
           return true;
         
         case Player.StSwim:
-          var fws = p.CollideAll<FancyWater>();
-          if(fws.Count>0){
-            var og = p.Collider;
-            var nh = Math.Max(og.Height-8,3);
-            p.Collider = new Hitbox(1,nh, og.Left, og.Top);
-            bool leftFlag = fws.Any(p.CollideCheck);
-            p.Collider = new Hitbox(1,nh, og.Left+og.Width-1, og.Top);
-            bool rightFlag = fws.Any(p.CollideCheck);
-            p.Collider = og;
-
-            if(!(leftFlag && rightFlag) && Input.Jump.Pressed && fws.Any(fw=>((FancyWater)fw).jumpOut)){
-              bool can = p.CanUnDuck;
-              if((leftFlag || rightFlag) && can){
-                int dir = leftFlag? 1:-1;
-                if((int)p.Facing*dir<0 && Input.GrabCheck && !SaveData.Instance.Assists.NoGrabbing && p.Stamina>0 && p.Holding==null){
-                  p.ClimbJump();
-                } else p.WallJump(dir);
-                var ripplePos = p.Center + Vector2.UnitX*p.Width/2;
-                foreach(FancyWater fw in fws) fw.DoRipple(ripplePos,1);
-                p.StateMachine.State = Player.StNormal;
-                return true;
-              }
-            }
-          }
-          return false;
+          return swimmy(p);
       }
       return grounded;
+    }
+    bool swimmy(Player p){
+      var fws = p.CollideAll<FancyWater>();
+      if(fws.Count>0){
+        var og = p.Collider;
+        var nh = Math.Max(og.Height-8,3);
+        p.Collider = new Hitbox(1,nh, og.Left, og.Top);
+        bool leftFlag = fws.Any(p.CollideCheck);
+        p.Collider = new Hitbox(1,nh, og.Left+og.Width-1, og.Top);
+        bool rightFlag = fws.Any(p.CollideCheck);
+        p.Collider = og;
+        if(leftFlag == rightFlag) return false;
+        bool anyJump=false;
+        bool anyCoyote=false;
+        foreach(FancyWater fw in fws){
+          anyJump |= fw.jumpOut;
+          anyCoyote |= fw.coyote;
+        }
+
+        if(Input.Jump.Pressed && anyJump){
+          bool can = p.CanUnDuck;
+          if((leftFlag || rightFlag) && can){
+            int dir = leftFlag? 1:-1;
+            if((int)p.Facing*dir<0 && Input.GrabCheck && !SaveData.Instance.Assists.NoGrabbing && p.Stamina>0 && p.Holding==null){
+              p.ClimbJump();
+            } else p.WallJump(dir);
+            var ripplePos = p.Center + Vector2.UnitX*p.Width/2;
+            foreach(FancyWater fw in fws) fw.DoRipple(ripplePos,1);
+            p.StateMachine.State = Player.StNormal;
+            return true;
+          }
+        }
+        if(anyCoyote) RcbHelper.give(leftFlag, leftFlag?p.Left:p.Right, 5);
+      }
+      return false;
     }
   }
 }

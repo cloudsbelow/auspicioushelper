@@ -48,6 +48,8 @@ public class ConditionalStrawb:Entity, IStrawberry{
   public bool persistOnDie;
   VertexLight light;
   Tween lightTween;
+  string holdingCh;
+  Vector2 levelOffset;
   public ConditionalStrawb(EntityData data, Vector2 offset, EntityID id):base(data.Position+offset){
     idstr = data.Attr("strawberry_id");
     this.id=id;
@@ -76,6 +78,8 @@ public class ConditionalStrawb:Entity, IStrawberry{
     state = Strawb.hidden;
     deathless=data.Bool("deathless",false);
     persistOnDie = data.Bool("persist_on_death",false);
+    holdingCh = data.String("carryingChannel");
+    levelOffset = offset;
   }
   public void handleAppearance(EntityData e){
     if(e.tryGetStr("appear_channel", out var ch)){
@@ -135,10 +139,11 @@ public class ConditionalStrawb:Entity, IStrawberry{
     Collidable=false;
     Audio.Play(isGhost ? "event:/game/general/strawberry_blue_touch" : "event:/game/general/strawberry_touch", Position);
     p.Leader.GainFollower(follower);
+    if(!string.IsNullOrWhiteSpace(holdingCh)) ChannelState.SetChannel(holdingCh, 1);
     if(persistOnDie){
       Session session = SceneAs<Level>().Session;
       session.DoNotLoad.Add(id);
-      auspicioushelperModule.Session.PersistentFollowers.Add(new auspicioushelperModuleSession.EntityDataId(data,id));
+      auspicioushelperModule.Session.PersistentFollowers.Add(new auspicioushelperModuleSession.EntityDataId(data,id){levelOffset=levelOffset});
     }
     if(ct!=null && ct.value!=0) Fly();
   }
@@ -169,6 +174,7 @@ public class ConditionalStrawb:Entity, IStrawberry{
   public void detatch(bool doNotRestore=false){
     follower.Leader.Followers.Remove(follower);
     follower.OnLoseLeaderUtil();
+    if(!string.IsNullOrWhiteSpace(holdingCh)) ChannelState.SetChannel(holdingCh, 0);
     follower.Leader=null;
     if(persistOnDie){
       Session session = (base.Scene as Level).Session;
@@ -213,6 +219,9 @@ public class ConditionalStrawb:Entity, IStrawberry{
   public static PlayerDeadBody handleDie(On.Celeste.Player.orig_Die orig, Player p, Vector2 dir, bool b1, bool b2){
     Session session = p.level.Session;
     var e = p.Leader.Followers.FirstOrDefault(x=>x.Entity is ConditionalStrawb s && s.deathless)?.Entity;
+    foreach(var f in p.Leader.Followers) if(f.Entity is ConditionalStrawb s && !string.IsNullOrWhiteSpace(s.holdingCh)){
+      if(!string.IsNullOrWhiteSpace(s.holdingCh)) ChannelState.SetChannel(s.holdingCh, 0);
+    }
     var body = orig(p,dir,b1,b2); 
     if(e is ConditionalStrawb strawb) {
       body.HasGolden = true;
@@ -229,8 +238,9 @@ public class ConditionalStrawb:Entity, IStrawberry{
     foreach(Follower f in p.Leader.Followers) Engine.Commands.Log(f.Entity==null?"NULL":f.Entity.ToString());
   }
   public static void restoreFollower(Player p, auspicioushelperModuleSession.EntityDataId e){
-    var ent = new ConditionalStrawb(e.data, new Vector2(0,0), e.id);
+    var ent = new ConditionalStrawb(e.data, e.levelOffset, e.id);
     p.Leader.GainFollower(ent.follower);
+    if(!string.IsNullOrWhiteSpace(ent.holdingCh)) ChannelState.SetChannel(ent.holdingCh, 1);
     ent.state=Strawb.following;
     ent.Position = p.Position;
     Engine.Instance.scene.Add(ent);

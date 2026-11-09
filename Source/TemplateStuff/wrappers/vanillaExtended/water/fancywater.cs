@@ -35,17 +35,22 @@ public partial class FancyWater:Water,ISimpleEnt,ConnectedBlocks.ICustomCheckCol
   FloatRect renderBounds;
   float storedTime;
   bool verticalShrink,copy,die,inView=true,isDone;
-  public bool jumpOut;
+  public bool jumpOut, coyote;
+  enum RefillMode {
+    never=0, grounded=1, vanilla=2, cooldown=3, always=4
+  }
+  RefillMode refillMode = RefillMode.vanilla;
   MiptileCollider mtc;
   public FancyWater(EntityData d, Vector2 o):base(d.Position+o,false,false,d.Width,d.Height){
     ResetEvents.Hooks<FancyWater>.enable();
     drag = d.Float("templateDrag",1);
     jumpOut = d.Bool("jumpOutSides",false);
+    coyote = d.Bool("coyote",false);
     die = d.Bool("die",false) || d.Name=="auspicioushelper/DieWater";
     TopSurface = new FakeTopsurface(this);
     Collider = new Hitbox(d.Width,d.Height);
     Remove(Get<DisplacementRenderHook>());
-    Depth = -8987; 
+    Depth = d.Int("depth",-8987); 
     if(d.Bool("hasTop",true))edges|=Edges.top;
     if(d.Bool("hasBottom",false))edges|=Edges.bottom;
     if(d.Bool("hasLeft",false))edges|=Edges.left;
@@ -69,6 +74,7 @@ public partial class FancyWater:Water,ISimpleEnt,ConnectedBlocks.ICustomCheckCol
     doInvRays = d.Bool("backwardsRays",false);
     rayDir = d.ChannelFloat("rayDirection", 60);
     rayDensity = Util.Clamp(d.Float("rayDensity", 0.7f), 0, 2);
+    refillMode = d.Enum("refillMode",RefillMode.vanilla);
   }
   void ITemplateChild.relposTo(Vector2 loc, Vector2 ls){
     if(Scene==null || !Collidable) return;
@@ -93,10 +99,10 @@ public partial class FancyWater:Water,ISimpleEnt,ConnectedBlocks.ICustomCheckCol
     foreach(WaterInteraction w in Scene.Tracker.GetComponents<WaterInteraction>()){
       bool f1 = contains.Contains(w);
       var old = Collider;
-      bool f2 = fills.Any(x=>{
+      bool f2 = w.Check(this);/*fills.Any(x=>{
         Collider = new Hitbox(x.w,x.h,x.x,x.y);
-        return w.Check(this);
-      });
+        return w.Check(this); 
+      });*/
       Collider = old;
       if(f1!=f2){
         var loc = w.AbsoluteCenter;
@@ -110,8 +116,13 @@ public partial class FancyWater:Water,ISimpleEnt,ConnectedBlocks.ICustomCheckCol
           else Audio.Play("event:/char/madeline/water_in", loc, "deep", 0);
           w.DrippingTimer = 0f;
         }
-        if(!f1) contains.Add(w);
-        else contains.Remove(w);
+        if(!f1){
+          contains.Add(w);
+          if(w.Entity is Player p) InsideWaters.Get(p).AddWater(this);
+        } else {
+          contains.Remove(w);
+          if(w.Entity is Player p) InsideWaters.Get(p).RemoveWater(this);
+        }
       }
     }
   }
@@ -187,6 +198,8 @@ public partial class FancyWater:Water,ISimpleEnt,ConnectedBlocks.ICustomCheckCol
 
     renderBounds = FloatRect.fromCorners(min-Position, max-Position);
     isDone = true;
+    // TopSurface.Position=Position+new Vector2(8,8);
+    // TopSurface.GetSurfaceHeight(0);
   }
 
   static bool checkFancy(Player p){
@@ -256,4 +269,80 @@ public partial class FancyWater:Water,ISimpleEnt,ConnectedBlocks.ICustomCheckCol
     }
     return flag;
   } 
+
+  //We need this so that we track which water has been touched last because
+  //the player can be swimming without having touched water
+  class InsideWaters():Component(true,false){
+    HashSet<FancyWater> inside = new();
+    FancyWater lastWater = null;
+    public static InsideWaters Get(Player p){
+      if(p.Get<InsideWaters>() is not {} iw) p.Add(iw = new());
+      return iw;
+    }
+    public void AddWater(FancyWater w){
+      inside.Add(w);
+      if((int)w.refillMode >= (int)RefillMode.always) (Entity as Player).RefillDash();
+    }
+    public void RemoveWater(FancyWater w){
+      if(inside.Count == 1 && inside.Contains(w)){
+        lastWater=w;
+      }
+      inside.Remove(w);
+    }
+    static int GetThreshold(Player p){
+      if(p.Get<InsideWaters>() is not {} iw) return (int)RefillMode.vanilla;
+      if(iw.inside.Count==0) return (int)(iw.lastWater?.refillMode ?? RefillMode.vanilla);
+      int max = 0;
+      foreach(var fw in iw.inside) max = Math.Max(max, (int)fw.refillMode);
+      return max;
+    }
+    public static int SwimRefill(int st, Player p){
+      int t = GetThreshold(p);
+      bool shouldRefill = (st==3 && t>=(int)RefillMode.vanilla) || t>=(int)RefillMode.cooldown;
+      return shouldRefill? 3:0;
+    }
+    public static bool BlockGrounded(bool orig, Player p){
+      return orig && (p.StateMachine.State!=Player.StSwim || GetThreshold(p)>=(int)RefillMode.grounded);
+    }
+    public static void TryReduceDash(Player p){
+      if(GetThreshold(p) < (int)RefillMode.vanilla) p.Dashes = Math.Max(0, p.Dashes - 1);
+    }
+    public override void Update(){
+      base.Update();
+      Player p = Entity as Player;
+      if(p.StateMachine.State==3 && GetThreshold(p)>=(int)RefillMode.always) p.RefillDash();
+      lastWater = null;
+    }
+  }
+  [OnLoad.ILHook(typeof(Player),nameof(Player.orig_Update))]
+  static void HookOrigUpd(ILContext ctx){
+    var c = new ILCursor(ctx);
+    c.TryGotoNextBestFit(MoveType.After, 
+      itr=>itr.MatchLdfld<PlayerInventory>(nameof(PlayerInventory.NoRefills))
+    );
+
+    if(!c.TryGotoNextBestFit(MoveType.After,
+      itr=>itr.MatchCallvirt<StateMachine>("get_State"),
+      itr=>itr.MatchLdcI4(3)
+    )) DebugConsole.WriteFailure("Could not add water dash refill prevention hook",true);
+    c.Index--;
+    c.EmitLdarg0();
+    c.EmitCall(typeof(InsideWaters).GetMethod(nameof(InsideWaters.SwimRefill)));
+
+    if(!c.TryGotoNextBestFit(MoveType.After,
+      itr=>itr.MatchLdfld<Player>(nameof(Player.onGround))
+    )) DebugConsole.WriteFailure("Could not add grounded water dash refill prevention");
+    c.EmitLdarg0();
+    c.EmitCall(typeof(InsideWaters).GetMethod(nameof(InsideWaters.BlockGrounded)));
+  }
+  [OnLoad.ILHook(typeof(Player),nameof(Player.SwimUpdate))]
+  static void HookSwimUpd(ILContext ctx){
+    var c = new ILCursor(ctx);
+    if(!c.TryGotoNextBestFit(MoveType.Before,
+      itr=>itr.MatchLdcI4(Player.StDash),
+      itr=>itr.MatchRet()
+    )) DebugConsole.WriteFailure("Could not add water dash immediate refill blocker",true);
+    c.EmitLdarg0();
+    c.EmitCall(typeof(InsideWaters).GetMethod(nameof(InsideWaters.TryReduceDash)));
+  }
 }

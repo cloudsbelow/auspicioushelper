@@ -105,10 +105,12 @@ public partial class FancyWater{
       }
     }
     public void Render(Vector2 loc){
-      var m = (Engine.Instance.scene as Level).Camera.matrix;
-      m.M41 += loc.X;
-      m.M42 += loc.Y;
-      GFX.DrawVertices(m, mesh, mesh.Length);
+      if(parent.Scene is Level l){
+        var m = l.Camera.matrix;
+        m.M41 += loc.X;
+        m.M42 += loc.Y;
+        GFX.DrawVertices(m, mesh, mesh.Length);
+      }
     }
     float heightAt(int n)=>loop||(n>=0&&n<points.Length)? heights[Util.SafeMod(n,points.Length)]:0;
     float heightLerp(float n){

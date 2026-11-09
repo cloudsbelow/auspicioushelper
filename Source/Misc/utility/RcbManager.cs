@@ -31,7 +31,6 @@ public class RcbHelper{
   [ResetEvents.OnHook(typeof(Player),nameof(Player.WallJumpCheck))]
   public static bool walljumpCheckHook(On.Celeste.Player.orig_WallJumpCheck orig, Player p, int dir){
     bool o = orig(p,dir);
-    
     if(o || !((rightframes>0 && dir<0)||(leftframes>0 && dir>0))) return o;
     FloatRect f = new FloatRect(p);
     f.expandXto(dir<0? right:left);
